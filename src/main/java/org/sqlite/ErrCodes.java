@@ -2,6 +2,11 @@ package org.sqlite;
 
 public interface ErrCodes {
   /**
+   * Error in SQLite Wrapper
+   */
+  int WRAPPER_SPECIFIC = -1;
+
+  /**
    * Successful result
    */
   int SQLITE_OK = 0;

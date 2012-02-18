@@ -20,7 +20,10 @@ public class SQLiteException extends RuntimeException {
     if (c == null) {
       return null;
     }
-    return c.getErrMsg();
+    if (errCode >= 0) {
+      return c.getErrMsg();
+    }
+    return "Java wrapper error";
   }
 
   protected Conn getConn() {
