@@ -2,12 +2,27 @@ package org.sqlite;
 
 public class SQLiteException extends RuntimeException {
   protected final int errCode;
+  private String msg;
 
-  public SQLiteException(String message, int errCode) {
-    super(message);
+  public SQLiteException(String msg, int errCode) {
+    super();
+    this.msg = msg;
     this.errCode = errCode;
   }
-
+  
+  @Override
+  public String getMessage() {
+    final String errMsg = getErrMsg();
+    if (errMsg != null && !errMsg.isEmpty()) {
+      return errMsg;
+    } else {
+      if (errCode > 0) {
+        return String.format("%s (code %d)", msg, errCode);
+      } else {
+        return msg;
+      }
+    }
+  }
   /**
    * @return org.sqlite.ErrCodes.*
    */
@@ -23,7 +38,7 @@ public class SQLiteException extends RuntimeException {
     if (errCode >= 0) {
       return c.getErrMsg();
     }
-    return "Java wrapper error";
+    return null;
   }
 
   protected Conn getConn() {

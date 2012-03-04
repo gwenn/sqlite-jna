@@ -39,12 +39,15 @@ public class SQLite implements Library {
   static native int sqlite3_total_changes(Pointer pDb);
   static native long sqlite3_last_insert_rowid(Pointer pDb);
 
-  /*static native int sqlite3_table_column_metadata(Pointer pDb, String dbName, String tableName, String columnName,
+  static native Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt);
+
+  static native int sqlite3_table_column_metadata(Pointer pDb, String dbName, String tableName, String columnName,
       PointerByReference pzDataType, PointerByReference pzCollSeq,
-      PointerByReference pNotNull, PointerByReference pPrimaryKey, PointerByReference pAutoinc); FIXME*/
+      PointerByReference pNotNull, PointerByReference pPrimaryKey, PointerByReference pAutoinc);
 
   static native int sqlite3_prepare_v2(Pointer pDb, String sql, int nByte, PointerByReference ppStmt,
                                        PointerByReference pTail);
+  static native String sqlite3_sql(Pointer pStmt);
   static native int sqlite3_finalize(Pointer pStmt);
   static native int sqlite3_step(Pointer pStmt);
   static native int sqlite3_reset(Pointer pStmt);
@@ -55,7 +58,7 @@ public class SQLite implements Library {
   static native int sqlite3_data_count(Pointer pStmt);
   static native int sqlite3_column_type(Pointer pStmt, int iCol);
   static native String sqlite3_column_name(Pointer pStmt, int iCol);
-  //static native String sqlite3_column_table_name(Pointer pStmt, int iCol); FIXME
+  static native String sqlite3_column_table_name(Pointer pStmt, int iCol);
 
   /*
   const char *sqlite3_column_decltype(sqlite3_stmt*,int);

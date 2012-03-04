@@ -2,7 +2,7 @@ package org.sqlite;
 
 public class Main {
   public static void main(String[] args) {
-    final Conn c = Conn.open(":memory:",
+    final Conn c = Conn.open(Conn.MEMORY,
         OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_CREATE | OpenFlags.SQLITE_OPEN_FULLMUTEX, null);
     final Stmt s = c.prepare("SELECT 1 as num, 3.14, 'test où çà' WHERE :i = 1 OR :d > 0.0 OR :s = 't'");
 

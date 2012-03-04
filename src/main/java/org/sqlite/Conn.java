@@ -4,6 +4,9 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
 public class Conn {
+  public static final String MEMORY = ":memory:";
+  public static final String TEMP_FILE = "";
+
   private final String filename;
   private Pointer pDb;
 
@@ -13,7 +16,7 @@ public class Conn {
   public static String libversion() {
     return SQLite.sqlite3_libversion();
   }
-  
+
   /**
    * @param filename ":memory:" for memory db, "" for temp file db
    * @param flags org.sqlite.OpenFlags.* (TODO EnumSet or BitSet, default flags)
@@ -31,7 +34,7 @@ public class Conn {
       if (ppDb.getValue() != null) {
         SQLite.sqlite3_close(ppDb.getValue());
       }
-      throw new SQLiteException("sqlite3_open_v2", res);
+      throw new SQLiteException(String.format("error while opening a database connexion to '%s'", filename), res);
     }
     return new Conn(filename, ppDb.getValue());
   }
@@ -40,14 +43,25 @@ public class Conn {
    * @return result code (No exception is thrown).
    */
   public int close() {
-    // TODO Close dangling statements.
+    if (pDb == null) {
+      return SQLite.SQLITE_OK;
+    }
+
+    // Dangling statements
+    Pointer pStmt = SQLite.sqlite3_next_stmt(pDb, null);
+    while (pStmt != null) {
+      // SQLITE_MISUSE, "Dangling statement" TODO log
+      SQLite.sqlite3_finalize(pStmt);
+      pStmt = SQLite.sqlite3_next_stmt(pDb, pStmt);
+    }
+
     final int res = SQLite.sqlite3_close(pDb);
     if (res == SQLite.SQLITE_OK) {
       pDb = null;
     }
     return res;
   }
-  
+
   private Conn(String filename, Pointer pDb) {
     this.filename = filename;
     this.pDb = pDb;
@@ -61,9 +75,25 @@ public class Conn {
   public Stmt prepare(String sql) {
     checkOpen();
     final PointerByReference ppStmt = new PointerByReference();
-    final int res = SQLite.sqlite3_prepare_v2(pDb, sql, -1, ppStmt, null); // TODO Tail handling
-    check(res, "sqlite3_prepare_v2");
-    return new Stmt(this, ppStmt.getValue(), null); // TODO Tail handling
+    final PointerByReference ppTail = new PointerByReference();
+    final int res = SQLite.sqlite3_prepare_v2(pDb, sql, -1, ppStmt, ppTail);
+    check(res, "Error while preparing statement '%s'", sql);
+    return new Stmt(this, ppStmt.getValue(), ppTail.getValue());
+  }
+
+  public void exec(String sql) {
+    while (sql != null && sql.length() > 0) {
+      Stmt s = null;
+      try {
+        s = prepare(sql);
+        sql = s.getTail();
+        s.exec();
+      } finally {
+        if (s != null) {
+          check(s.close(), "Error while closing statement");
+        }
+      }
+    }
   }
 
   /**
@@ -102,7 +132,7 @@ public class Conn {
 
   public void setBusyTimeout(int ms) {
     checkOpen();
-    check(SQLite.sqlite3_busy_timeout(pDb, ms), "sqlite3_prepare_v2");
+    check(SQLite.sqlite3_busy_timeout(pDb, ms), "Error while setting busy timeout on '%s'", filename);
   }
 
   public String getFilename() {
@@ -125,42 +155,47 @@ public class Conn {
    */
   public void setExtendedResultCodes(boolean onoff) {
     checkOpen();
-    check(SQLite.sqlite3_extended_result_codes(pDb, onoff), "sqlite3_extended_result_codes");
+    check(SQLite.sqlite3_extended_result_codes(pDb, onoff), "Error while enabling extended result codes on '%s'", filename);
   }
 
   /**
-   * @return Extended error code
+   * @return org.sqlite.ExtErrCodes.*
    */
   public int getExtendedErrcode() {
     return SQLite.sqlite3_extended_errcode(pDb);
   }
 
-  /*boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) {
+  boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) {
     final PointerByReference pNotNull = new PointerByReference();
     final PointerByReference pPrimaryKey = new PointerByReference();
     final PointerByReference pAutoinc = new PointerByReference();
-    
+
     check(SQLite.sqlite3_table_column_metadata(pDb,
         dbName,
         tblName,
         colName,
         null, null,
-        pNotNull, pPrimaryKey, pAutoinc), "sqlite3_table_column_metadata");
-    
+        pNotNull, pPrimaryKey, pAutoinc), "Error while accessing table column metatada of '%s'", tblName);
+
     return new boolean[] {toBool(pNotNull), toBool(pPrimaryKey), toBool(pAutoinc)};
   }
   private static boolean toBool(PointerByReference p) {
     return p.getPointer().getInt(0) > 0;
-  }FIXME */
+  }
 
   private void checkOpen() {
     if (pDb == null) {
-      throw new ConnException(this, "Connection closed", ErrCodes.WRAPPER_SPECIFIC);
+      throw new ConnException(this, String.format("Connection to '%s' closed", filename), ErrCodes.WRAPPER_SPECIFIC);
     }
   }
-  private void check(int res, String name) {
+  private void check(int res, String format, String param) {
     if (res != SQLite.SQLITE_OK) {
-      throw new ConnException(this, name, res);
+      throw new ConnException(this, String.format(format, param), res);
+    }
+  }
+  private void check(int res, String msg) {
+    if (res != SQLite.SQLITE_OK) {
+      throw new ConnException(this, msg, res);
     }
   }
 }

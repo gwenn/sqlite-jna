@@ -14,10 +14,18 @@ public class Stmt {
   // cached parameters index by name
   private Map<String, Integer> params;
 
-  Stmt(Conn c, Pointer pStmt, String tail) {
+  Stmt(Conn c, Pointer pStmt, Pointer tail) {
     this.c = c;
     this.pStmt = pStmt;
-    this.tail = tail;
+    this.tail = tail.getString(0);
+  }
+
+  public String getSql() {
+    return SQLite.sqlite3_sql(pStmt);
+  }
+
+  public String getTail() {
+    return tail;
   }
 
   /**
@@ -42,12 +50,18 @@ public class Stmt {
     } else if (res == SQLite.SQLITE_DONE) {
       return false;
     }
-    throw new StmtException(this, "", res);
+    throw new StmtException(this, String.format("Error while stepping '%s'", getSql()), res);
+  }
+  public void exec() {
+    final int res = SQLite.sqlite3_step(pStmt);
+    if (res != SQLite.SQLITE_DONE) {
+      throw new StmtException(this, String.format("Error while executing '%s'", getSql()), res);
+    }
   }
 
   public void reset() {
     checkOpen();
-    check(SQLite.sqlite3_reset(pStmt), "sqlite3_reset");
+    check(SQLite.sqlite3_reset(pStmt), "Error while resetting '%s'");
   }
 
   public boolean isBusy() {
@@ -57,9 +71,9 @@ public class Stmt {
 
   public void clearBindings() {
     checkOpen();
-    check(SQLite.sqlite3_clear_bindings(pStmt), "sqlite3_clear_bindings");
+    check(SQLite.sqlite3_clear_bindings(pStmt), "Error while clearing bindings '%s'");
   }
-  
+
   /**
    * @return column count
    * @throws StmtException
@@ -97,7 +111,7 @@ public class Stmt {
     checkOpen();
     return SQLite.sqlite3_column_name(pStmt, iCol);
   }
-  
+
   public byte[] getColumnBlob(int iCol) {
     checkOpen();
     final Pointer p = SQLite.sqlite3_column_blob(pStmt, iCol);
@@ -249,7 +263,7 @@ public class Stmt {
    */
   public void bindBlob(int i, byte[] value) {
     checkOpen();
-    check(SQLite.sqlite3_bind_blob(pStmt, i, value, value.length, SQLite.SQLITE_TRANSIENT), "sqlite3_bind_blob");
+    checkBind(SQLite.sqlite3_bind_blob(pStmt, i, value, value.length, SQLite.SQLITE_TRANSIENT), "sqlite3_bind_blob", i);
   }
   /**
    * @param i The leftmost SQL parameter has an index of 1
@@ -258,7 +272,7 @@ public class Stmt {
    */
   public void bindDouble(int i, double value) {
     checkOpen();
-    check(SQLite.sqlite3_bind_double(pStmt, i, value), "sqlite3_bind_double");
+    checkBind(SQLite.sqlite3_bind_double(pStmt, i, value), "sqlite3_bind_double", i);
   }
   /**
    * @param i The leftmost SQL parameter has an index of 1
@@ -267,7 +281,7 @@ public class Stmt {
    */
   public void bindInt(int i, int value) {
     checkOpen();
-    check(SQLite.sqlite3_bind_int(pStmt, i, value), "sqlite3_bind_int");
+    checkBind(SQLite.sqlite3_bind_int(pStmt, i, value), "sqlite3_bind_int", i);
   }
   /**
    * @param i The leftmost SQL parameter has an index of 1
@@ -276,7 +290,7 @@ public class Stmt {
    */
   public void bindLong(int i, long value) {
     checkOpen();
-    check(SQLite.sqlite3_bind_int64(pStmt, i, value), "sqlite3_bind_int64");
+    checkBind(SQLite.sqlite3_bind_int64(pStmt, i, value), "sqlite3_bind_int64", i);
   }
   /**
    * @param i The leftmost SQL parameter has an index of 1
@@ -284,7 +298,7 @@ public class Stmt {
    */
   public void bindNull(int i) {
     checkOpen();
-    check(SQLite.sqlite3_bind_null(pStmt, i), "sqlite3_bind_null");
+    checkBind(SQLite.sqlite3_bind_null(pStmt, i), "sqlite3_bind_null", i);
   }
   /**
    * @param i The leftmost SQL parameter has an index of 1
@@ -293,7 +307,7 @@ public class Stmt {
    */
   public void bindText(int i, String value) {
     checkOpen();
-    check(SQLite.sqlite3_bind_text(pStmt, i, value, -1, SQLite.SQLITE_TRANSIENT), "sqlite3_bind_text");
+    checkBind(SQLite.sqlite3_bind_text(pStmt, i, value, -1, SQLite.SQLITE_TRANSIENT), "sqlite3_bind_text", i);
   }
   /**
    * @param i The leftmost SQL parameter has an index of 1
@@ -302,26 +316,31 @@ public class Stmt {
    */
   public void bindZeroblob(int i, int n) {
     checkOpen();
-    check(SQLite.sqlite3_bind_zeroblob(pStmt, i, n), "sqlite3_bind_zeroblob");
+    checkBind(SQLite.sqlite3_bind_zeroblob(pStmt, i, n), "sqlite3_bind_zeroblob", i);
   }
 
-  /*boolean[][] getMetadata() {
+  boolean[][] getMetadata() {
     final int colCount = getColumnCount();
     final boolean[][] metadata = new boolean[colCount][3];
     for (int col = 0; col < colCount; col++) {
       final String colName = getColumnName(col); // FIXME origin_name?
       final String tblName = SQLite.sqlite3_column_table_name(pStmt, col);
       if (colName != null && tblName != null) {
-        final boolean[] colMetaData = c.getTableColumnMetadata(null /*FIXME, tblName, colName);
+        final boolean[] colMetaData = c.getTableColumnMetadata(null /*FIXME*/, tblName, colName);
         metadata[col] = colMetaData;
       }
     }
     return metadata;
-  } FIXME */
+  }
 
-  private void check(int res, String name) {
+  private void check(int res, String format) {
     if (res != SQLite.SQLITE_OK) {
-      throw new StmtException(this, String.format("Method: %s, error code: %d", name, res), res);
+      throw new StmtException(this, String.format(format, getSql()), res);
+    }
+  }
+  private void checkBind(int res, String method, int i) {
+    if (res != SQLite.SQLITE_OK) {
+      throw new StmtException(this, String.format("Error while calling %s for param %d of '%s'", method, i, getSql()), res);
     }
   }
   private void checkOpen() {
