@@ -18,6 +18,7 @@ public class Stmt {
     this.c = c;
     this.pStmt = pStmt;
     this.tail = tail.getString(0);
+    System.err.println("TAIL: \"" + this.tail + '"');
   }
 
   public String getSql() {
