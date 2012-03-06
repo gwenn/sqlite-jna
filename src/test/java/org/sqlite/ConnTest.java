@@ -50,7 +50,7 @@ public class ConnTest {
   public void checkExec() {
     final Conn c = open();
     c.exec("DROP TABLE IF EXISTS test;\n" +
-        "CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT," +
+        "CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
         " d REAL, i INTEGER, s TEXT); -- bim");
     
     final boolean[] metadata = c.getTableColumnMetadata("main", "test", "id");

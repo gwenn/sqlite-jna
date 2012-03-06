@@ -18,7 +18,10 @@ public class Stmt {
     this.c = c;
     this.pStmt = pStmt;
     this.tail = tail.getString(0);
-    System.err.println("TAIL: \"" + this.tail + '"');
+  }
+
+  boolean isDumb() {
+    return pStmt == null;
   }
 
   public String getSql() {

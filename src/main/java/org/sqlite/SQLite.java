@@ -45,7 +45,7 @@ public class SQLite implements Library {
       PointerByReference pzDataType, PointerByReference pzCollSeq,
       PointerByReference pNotNull, PointerByReference pPrimaryKey, PointerByReference pAutoinc);
 
-  static native int sqlite3_prepare_v2(Pointer pDb, String sql, int nByte, PointerByReference ppStmt,
+  static native int sqlite3_prepare_v2(Pointer pDb, Pointer sql, int nByte, PointerByReference ppStmt,
                                        PointerByReference pTail);
   static native String sqlite3_sql(Pointer pStmt);
   static native int sqlite3_finalize(Pointer pStmt);
@@ -88,4 +88,12 @@ public class SQLite implements Library {
   //static native int sqlite3_bind_text16(Pointer pStmt, int i, const void*, int, void(*)(void*));
   //static native int sqlite3_bind_value(Pointer pStmt, int i, const sqlite3_value*);
   static native int sqlite3_bind_zeroblob(Pointer pStmt, int i, int n);
+
+  static Pointer nativeString(String sql) { // TODO Check encoding?
+    byte[] data = sql.getBytes();
+    final Pointer pointer = new Memory(data.length + 1);
+    pointer.write(0, data, 0, data.length);
+    pointer.setByte(data.length, (byte) 0);
+    return pointer;
+  }
 }

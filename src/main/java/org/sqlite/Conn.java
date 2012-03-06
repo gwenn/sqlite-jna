@@ -74,9 +74,10 @@ public class Conn {
    */
   public Stmt prepare(String sql) {
     checkOpen();
+    final Pointer pSql = SQLite.nativeString(sql);
     final PointerByReference ppStmt = new PointerByReference();
     final PointerByReference ppTail = new PointerByReference();
-    final int res = SQLite.sqlite3_prepare_v2(pDb, sql, -1, ppStmt, ppTail);
+    final int res = SQLite.sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail);
     check(res, "Error while preparing statement '%s'", sql);
     return new Stmt(this, ppStmt.getValue(), ppTail.getValue());
   }
@@ -87,7 +88,9 @@ public class Conn {
       try {
         s = prepare(sql);
         sql = s.getTail();
-        s.exec();
+        if (!s.isDumb()) { // this happens for a comment or white-space
+          s.exec();
+        }
       } finally {
         if (s != null) {
           check(s.close(), "Error while closing statement");
