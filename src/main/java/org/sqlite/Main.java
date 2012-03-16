@@ -9,7 +9,7 @@
 package org.sqlite;
 
 public class Main {
-  public static void main(String[] args) {
+  public static void main(String[] args) throws SQLiteException {
     final Conn c = Conn.open(Conn.MEMORY,
         OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_CREATE | OpenFlags.SQLITE_OPEN_FULLMUTEX, null);
     final Stmt s = c.prepare("SELECT 1 as num, 3.14, 'test où çà' WHERE :i = 1 OR :d > 0.0 OR :s = 't'");
@@ -47,11 +47,11 @@ public class Main {
       System.out.println("colName[" + iCol + "] = " + colName);
       System.out.println("colValue[" + iCol + "] = " + colValue);
     }
-    check(s.close(), "sqlite3_finalize");
+    check(s._close(), "sqlite3_finalize");
     check(c._close(), "sqlite3_close");
   }
 
-  private static void check(int res, String name) {
+  private static void check(int res, String name) throws ConnException {
     if (res != SQLite.SQLITE_OK) {
       throw new ConnException(null, String.format("Method: %s, error code: %d", name, res), res);
     }

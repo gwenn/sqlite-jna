@@ -97,6 +97,8 @@ public class SQLite implements Library {
   //static native int sqlite3_bind_value(Pointer pStmt, int i, const sqlite3_value*);
   static native int sqlite3_bind_zeroblob(Pointer pStmt, int i, int n);
 
+  static native String sqlite3_mprintf(String zFormat, String arg);
+  
   static Pointer nativeString(String sql) { // TODO Check encoding?
     byte[] data = sql.getBytes();
     final Pointer pointer = new Memory(data.length + 1);

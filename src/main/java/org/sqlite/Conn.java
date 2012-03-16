@@ -11,13 +11,12 @@ package org.sqlite;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
-import java.sql.Connection;
-
 public class Conn extends AbstractConn {
   public static final String MEMORY = ":memory:";
   public static final String TEMP_FILE = "";
 
   private final String filename;
+  private final boolean readonly;
   private Pointer pDb;
 
   /**
@@ -25,6 +24,10 @@ public class Conn extends AbstractConn {
    */
   public static String libversion() {
     return SQLite.sqlite3_libversion();
+  }
+  @Override
+  String mprintf(String format, String arg) {
+    return SQLite.sqlite3_mprintf(format, arg);
   }
 
   /**
@@ -34,7 +37,7 @@ public class Conn extends AbstractConn {
    * @return Opened Connection
    * @throws SQLiteException
    */
-  public static Conn open(String filename, int flags, String vfs) {
+  public static Conn open(String filename, int flags, String vfs) throws SQLiteException {
     if (!SQLite.sqlite3_threadsafe()) {
       throw new SQLiteException("sqlite library was not compiled for thread-safe operation", ErrCodes.WRAPPER_SPECIFIC);
     }
@@ -46,7 +49,8 @@ public class Conn extends AbstractConn {
       }
       throw new SQLiteException(String.format("error while opening a database connexion to '%s'", filename), res);
     }
-    return new Conn(filename, ppDb.getValue());
+    final boolean readonly = (flags & OpenFlags.SQLITE_OPEN_READONLY) != 0;
+    return new Conn(filename, readonly, ppDb.getValue());
   }
 
   /**
@@ -72,9 +76,15 @@ public class Conn extends AbstractConn {
     return res;
   }
 
-  private Conn(String filename, Pointer pDb) {
+  private Conn(String filename, boolean readonly, Pointer pDb) {
     this.filename = filename;
+    this.readonly = readonly;
     this.pDb = pDb;
+  }
+
+  @Override
+  boolean readOnly() {
+    return readonly;
   }
 
   /**
@@ -82,17 +92,17 @@ public class Conn extends AbstractConn {
    * @return Prepared Statement
    * @throws ConnException
    */
-  public Stmt prepare(String sql) {
+  public Stmt prepare(String sql) throws ConnException {
     checkOpen();
     final Pointer pSql = SQLite.nativeString(sql);
     final PointerByReference ppStmt = new PointerByReference();
     final PointerByReference ppTail = new PointerByReference();
     final int res = SQLite.sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail);
-    check(res, "Error while preparing statement '%s'", sql);
+    check(res, "error while preparing statement '%s'", sql);
     return new Stmt(this, ppStmt.getValue(), ppTail.getValue());
   }
 
-  public void exec(String sql) {
+  public void exec(String sql) throws ConnException, StmtException {
     while (sql != null && sql.length() > 0) {
       Stmt s = null;
       try {
@@ -103,7 +113,7 @@ public class Conn extends AbstractConn {
         }
       } finally {
         if (s != null) {
-          check(s.close(), "Error while closing statement");
+          s.close();
         }
       }
     }
@@ -114,7 +124,7 @@ public class Conn extends AbstractConn {
    * on the database connection specified by the first parameter.
    * @throws ConnException
    */
-  public int getChanges() {
+  public int getChanges() throws ConnException {
     checkOpen();
     return SQLite.sqlite3_changes(pDb);
   }
@@ -122,7 +132,7 @@ public class Conn extends AbstractConn {
    * @return Total number of rows modified
    * @throws ConnException
    */
-  public int getTotalChanges() {
+  public int getTotalChanges() throws ConnException {
     checkOpen();
     return SQLite.sqlite3_total_changes(pDb);
   }
@@ -130,7 +140,7 @@ public class Conn extends AbstractConn {
   /**
    * @return the rowid of the most recent successful INSERT into the database.
    */
-  public long getLastInsertRowid() {
+  public long getLastInsertRowid() throws ConnException {
     checkOpen();
     return SQLite.sqlite3_last_insert_rowid(pDb);
   }
@@ -138,14 +148,14 @@ public class Conn extends AbstractConn {
   /**
    * Interrupt a long-running query
    */
-  public void interrupt() {
+  public void interrupt() throws ConnException {
     checkOpen();
     SQLite.sqlite3_interrupt(pDb);
   }
 
-  public void setBusyTimeout(int ms) {
+  public void setBusyTimeout(int ms) throws ConnException {
     checkOpen();
-    check(SQLite.sqlite3_busy_timeout(pDb, ms), "Error while setting busy timeout on '%s'", filename);
+    check(SQLite.sqlite3_busy_timeout(pDb, ms), "error while setting busy timeout on '%s'", filename);
   }
 
   public String getFilename() {
@@ -166,9 +176,9 @@ public class Conn extends AbstractConn {
   /**
    * @param onoff Enable Or Disable Extended Result Codes
    */
-  public void setExtendedResultCodes(boolean onoff) {
+  public void setExtendedResultCodes(boolean onoff) throws ConnException {
     checkOpen();
-    check(SQLite.sqlite3_extended_result_codes(pDb, onoff), "Error while enabling extended result codes on '%s'", filename);
+    check(SQLite.sqlite3_extended_result_codes(pDb, onoff), "error while enabling extended result codes on '%s'", filename);
   }
 
   /**
@@ -178,7 +188,7 @@ public class Conn extends AbstractConn {
     return SQLite.sqlite3_extended_errcode(pDb);
   }
 
-  boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) {
+  boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) throws ConnException {
     final PointerByReference pNotNull = new PointerByReference();
     final PointerByReference pPrimaryKey = new PointerByReference();
     final PointerByReference pAutoinc = new PointerByReference();
@@ -188,7 +198,7 @@ public class Conn extends AbstractConn {
         tblName,
         colName,
         null, null,
-        pNotNull, pPrimaryKey, pAutoinc), "Error while accessing table column metatada of '%s'", tblName);
+        pNotNull, pPrimaryKey, pAutoinc), "error while accessing table column metatada of '%s'", tblName);
 
     return new boolean[] {toBool(pNotNull), toBool(pPrimaryKey), toBool(pAutoinc)};
   }
@@ -196,19 +206,22 @@ public class Conn extends AbstractConn {
     return p.getPointer().getInt(0) > 0;
   }
 
-  void checkOpen() {
-    if (pDb == null) {
-      throw new ConnException(this, String.format("Connection to '%s' closed", filename), ErrCodes.WRAPPER_SPECIFIC);
+  public boolean isClosed() throws ConnException {
+    return pDb == null;
+  }
+  void checkOpen() throws ConnException {
+    if (isClosed()) {
+      throw new ConnException(this, String.format("connection to '%s' closed", filename), ErrCodes.WRAPPER_SPECIFIC);
     }
   }
-  private void check(int res, String format, String param) {
+  private void check(int res, String format, String param) throws ConnException {
     if (res != SQLite.SQLITE_OK) {
       throw new ConnException(this, String.format(format, param), res);
     }
   }
-  private void check(int res, String msg) {
+  void check(int res, String reason) throws ConnException {
     if (res != SQLite.SQLITE_OK) {
-      throw new ConnException(this, msg, res);
+      throw new ConnException(this, reason, res);
     }
   }
 }

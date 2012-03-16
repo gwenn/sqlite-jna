@@ -11,8 +11,8 @@ package org.sqlite;
 public class StmtException extends SQLiteException {
   private final Stmt stmt;
 
-  public StmtException(Stmt stmt, String name, int errCode) {
-    super(name, errCode);
+  public StmtException(Stmt stmt, String reason, int errCode) {
+    super(reason, errCode);
     this.stmt = stmt;
   }
 

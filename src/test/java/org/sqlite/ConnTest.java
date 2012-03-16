@@ -10,7 +10,7 @@ public class ConnTest {
   }
   
   @Test
-  public void checkOpenTempFile() {
+  public void checkOpenTempFile() throws SQLiteException {
     final Conn c = Conn.open(Conn.TEMP_FILE, OpenFlags.SQLITE_OPEN_READWRITE, null);
     Assert.assertNotNull(c);
     Assert.assertEquals(Conn.TEMP_FILE, c.getFilename());
@@ -18,7 +18,7 @@ public class ConnTest {
   }
 
   @Test
-  public void checkOpenInMemoryDb() {
+  public void checkOpenInMemoryDb() throws SQLiteException {
     final Conn c = open();
     Assert.assertNotNull(c);
     Assert.assertEquals(Conn.MEMORY, c.getFilename());
@@ -26,7 +26,7 @@ public class ConnTest {
   }
   
   @Test
-  public void checkInitialState() {
+  public void checkInitialState() throws SQLiteException {
     final Conn c = open();
     Assert.assertEquals(0, c.getChanges());
     Assert.assertEquals(0, c.getTotalChanges());
@@ -38,7 +38,7 @@ public class ConnTest {
   }
 
   @Test
-  public void checkPrepare() {
+  public void checkPrepare() throws SQLiteException {
     final Conn c = open();
     final Stmt s = c.prepare("SELECT 1");
     Assert.assertNotNull(s);
@@ -47,7 +47,7 @@ public class ConnTest {
   }
 
   @Test
-  public void checkExec() {
+  public void checkExec() throws SQLiteException {
     final Conn c = open();
     c.exec("DROP TABLE IF EXISTS test;\n" +
         "CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
@@ -62,14 +62,19 @@ public class ConnTest {
 
   @Test
   public void checkGetTableColumnMetadata() {
-
+    // TODO
+  }
+  
+  @Test
+  public void checkMprintf() {
+    Assert.assertEquals("'1'", SQLite.sqlite3_mprintf("%Q", String.valueOf(1)));
   }
 
   static void checkResult(int res) {
     Assert.assertEquals(0, res);
   }
 
-  static Conn open() {
+  static Conn open() throws SQLiteException {
     return Conn.open(Conn.MEMORY, OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_FULLMUTEX, null);
   }
 }

@@ -8,14 +8,11 @@
  */
 package org.sqlite;
 
-public class SQLiteException extends RuntimeException {
-  protected final int errCode;
-  private String msg;
+import java.sql.SQLException;
 
-  public SQLiteException(String msg, int errCode) {
-    super();
-    this.msg = msg;
-    this.errCode = errCode;
+public class SQLiteException extends SQLException {
+  public SQLiteException(String reason, int errCode) {
+    super(reason, null, errCode);
   }
   
   @Override
@@ -24,26 +21,20 @@ public class SQLiteException extends RuntimeException {
     if (errMsg != null && !errMsg.isEmpty()) {
       return errMsg;
     } else {
-      if (errCode > 0) {
-        return String.format("%s (code %d)", msg, errCode);
+      if (getErrorCode() > 0) {
+        return String.format("%s (code %d)", super.getMessage(), getErrorCode());
       } else {
-        return msg;
+        return super.getMessage();
       }
     }
   }
-  /**
-   * @return org.sqlite.ErrCodes.*
-   */
-  public int getErrCode() {
-    return errCode;
-  }
-  
+
   public String getErrMsg() {
     final Conn c = getConn();
     if (c == null) {
       return null;
     }
-    if (errCode >= 0) {
+    if (getErrorCode() >= 0) {
       return c.getErrMsg();
     }
     return null;
