@@ -1,9 +1,19 @@
+/*
+ * The author disclaims copyright to this source code.  In place of
+ * a legal notice, here is a blessing:
+ *
+ *    May you do good and not evil.
+ *    May you find forgiveness for yourself and forgive others.
+ *    May you share freely, never taking more than you give.
+ */
 package org.sqlite;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
-public class Conn {
+import java.sql.Connection;
+
+public class Conn extends AbstractConn {
   public static final String MEMORY = ":memory:";
   public static final String TEMP_FILE = "";
 
@@ -42,7 +52,7 @@ public class Conn {
   /**
    * @return result code (No exception is thrown).
    */
-  public int close() {
+  public int _close() {
     if (pDb == null) {
       return SQLite.SQLITE_OK;
     }
@@ -186,7 +196,7 @@ public class Conn {
     return p.getPointer().getInt(0) > 0;
   }
 
-  private void checkOpen() {
+  void checkOpen() {
     if (pDb == null) {
       throw new ConnException(this, String.format("Connection to '%s' closed", filename), ErrCodes.WRAPPER_SPECIFIC);
     }

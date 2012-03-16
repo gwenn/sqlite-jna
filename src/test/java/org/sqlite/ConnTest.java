@@ -14,7 +14,7 @@ public class ConnTest {
     final Conn c = Conn.open(Conn.TEMP_FILE, OpenFlags.SQLITE_OPEN_READWRITE, null);
     Assert.assertNotNull(c);
     Assert.assertEquals(Conn.TEMP_FILE, c.getFilename());
-    checkResult(c.close());
+    checkResult(c._close());
   }
 
   @Test
@@ -22,7 +22,7 @@ public class ConnTest {
     final Conn c = open();
     Assert.assertNotNull(c);
     Assert.assertEquals(Conn.MEMORY, c.getFilename());
-    checkResult(c.close());
+    checkResult(c._close());
   }
   
   @Test
@@ -43,7 +43,7 @@ public class ConnTest {
     final Stmt s = c.prepare("SELECT 1");
     Assert.assertNotNull(s);
     s.close();
-    checkResult(c.close());
+    checkResult(c._close());
   }
 
   @Test
@@ -57,7 +57,7 @@ public class ConnTest {
     Assert.assertTrue(metadata[0]);
     Assert.assertTrue(metadata[1]);
     Assert.assertTrue(metadata[2]);
-    checkResult(c.close());
+    checkResult(c._close());
   }
 
   @Test

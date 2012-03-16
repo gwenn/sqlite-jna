@@ -1,3 +1,11 @@
+/*
+ * The author disclaims copyright to this source code.  In place of
+ * a legal notice, here is a blessing:
+ *
+ *    May you do good and not evil.
+ *    May you find forgiveness for yourself and forgive others.
+ *    May you share freely, never taking more than you give.
+ */
 package org.sqlite;
 
 public class Main {
@@ -40,7 +48,7 @@ public class Main {
       System.out.println("colValue[" + iCol + "] = " + colValue);
     }
     check(s.close(), "sqlite3_finalize");
-    check(c.close(), "sqlite3_close");
+    check(c._close(), "sqlite3_close");
   }
 
   private static void check(int res, String name) {
