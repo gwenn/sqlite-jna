@@ -32,6 +32,7 @@ public class Stmt extends AbstractPrepStmt {
   // cached columns index by name
   private Map<String, Integer> colIndexByName;
   private String[] columnNames;
+  private boolean autoClosed;
 
   Stmt(Conn c, Pointer pStmt, Pointer tail) {
     this.c = c;
@@ -52,6 +53,16 @@ public class Stmt extends AbstractPrepStmt {
   boolean prepared() {
     return prepared;
   }
+
+  @Override
+  void autoClose() {
+    autoClosed = true;
+  }
+  @Override
+  boolean isAutoClosed() {
+    return autoClosed;
+  }
+
   @Override
   Rows execQuery(String sql) throws ConnException, StmtException {
     close();
@@ -88,6 +99,11 @@ public class Stmt extends AbstractPrepStmt {
 
   public String getTail() {
     return tail;
+  }
+
+  @Override
+  Stmt getStmt() {
+    return this;
   }
 
   /**
@@ -135,8 +151,11 @@ public class Stmt extends AbstractPrepStmt {
 
   public void reset() throws StmtException {
     checkOpen();
-    // if (isCloseOnCompletion()) TODO
-    check(SQLite.sqlite3_reset(pStmt), "Error while resetting '%s'");
+    if (autoClosed) {
+      check(SQLite.sqlite3_close(pStmt), "Error while resetting '%s'");
+    } else {
+      check(_close(), "Error while resetting '%s'");
+    }
   }
 
   public boolean isBusy() throws StmtException {

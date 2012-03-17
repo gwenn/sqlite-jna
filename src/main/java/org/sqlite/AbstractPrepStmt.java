@@ -17,6 +17,8 @@ import java.util.Calendar;
 
 public abstract class AbstractPrepStmt extends AbstractStmt implements PreparedStatement {
   abstract Rows execQuery() throws StmtException;
+  abstract Stmt getStmt();
+
   @Override
   public ResultSet executeQuery() throws SQLException {
     Util.trace("*PreparedStatement.executeQuery");
@@ -75,7 +77,7 @@ public abstract class AbstractPrepStmt extends AbstractStmt implements PreparedS
   @Override
   public void setString(int parameterIndex, String x) throws SQLException {
     Util.trace("*PreparedStatement.setString");
-    // FIXME
+    getStmt().bindText(parameterIndex, x);
   }
   @Override
   public void setBytes(int parameterIndex, byte[] x) throws SQLException {

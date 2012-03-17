@@ -21,6 +21,8 @@ public abstract class AbstractStmt implements Statement {
   abstract int _close() throws StmtException;
   abstract void interrupt() throws ConnException;
   abstract boolean prepared();
+  abstract void autoClose();
+  abstract boolean isAutoClosed();
 
   @Override
   public ResultSet executeQuery(String sql) throws SQLException {
@@ -231,15 +233,13 @@ public abstract class AbstractStmt implements Statement {
   }
   @Override
   public void closeOnCompletion() throws SQLException {
-    Util.trace("Statement.closeOnCompletion");
     checkOpen();
-    // TODO
+    autoClose();
   }
   @Override
   public boolean isCloseOnCompletion() throws SQLException {
-    Util.trace("Statement.isCloseOnCompletion");
     checkOpen();
-    return false; // TODO
+    return isAutoClosed();
   }
   @Override
   public <T> T unwrap(Class<T> iface) throws SQLException {
