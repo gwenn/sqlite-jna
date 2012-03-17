@@ -21,11 +21,14 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   abstract void _close() throws StmtException;
   abstract boolean step() throws StmtException;
   abstract int row();
+  abstract Stmt getStmt();
+  abstract int fixCol(int columnIndex);
 
   @Override
   public boolean next() throws SQLException {
-    Util.trace("*ResultSet.next");
-    return step();
+    final boolean step = step();
+    Util.trace("*ResultSet.next -> " + step);
+    return step;
   }
   @Override
   public void close() throws StmtException {
@@ -40,7 +43,7 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   @Override
   public String getString(int columnIndex) throws SQLException {
     Util.trace("*ResultSet.getString");
-    return null; // TODO
+    return getStmt().getColumnText(fixCol(columnIndex));
   }
   @Override
   public boolean getBoolean(int columnIndex) throws SQLException {
@@ -212,8 +215,8 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public int findColumn(String columnLabel) throws SQLException {
-    Util.trace("*ResultSet.findColumn");
-    return 0; // FIXME
+    checkOpen();
+    return getStmt().findCol(columnLabel);
   }
   @Override
   public Reader getCharacterStream(int columnIndex) throws SQLException {
@@ -530,7 +533,7 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   @Override
   public Statement getStatement() throws SQLException {
     Util.trace("*ResultSet.getStatement");
-    return null; // TODO
+    return getStmt();
   }
   @Override
   public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {

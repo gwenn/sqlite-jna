@@ -54,7 +54,7 @@ public class Conn extends AbstractConn {
     // Dangling statements
     Pointer pStmt = SQLite.sqlite3_next_stmt(pDb, null);
     while (pStmt != null) {
-      // SQLITE_MISUSE, "Dangling statement" TODO log
+      Util.trace("Dangling statement: " + SQLite.sqlite3_sql(pStmt));
       SQLite.sqlite3_finalize(pStmt);
       pStmt = SQLite.sqlite3_next_stmt(pDb, pStmt);
     }

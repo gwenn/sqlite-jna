@@ -12,6 +12,16 @@ public class Rows extends AbstractRows {
   }
 
   @Override
+  Stmt getStmt() {
+    return stmt;
+  }
+
+  @Override
+  int fixCol(int columnIndex) {
+    return columnIndex - 1;
+  }
+
+  @Override
   boolean step() throws StmtException {
     checkOpen();
     if (row == -1) { // no result

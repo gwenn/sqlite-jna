@@ -25,12 +25,13 @@ public class Stmt extends AbstractPrepStmt {
   final boolean prepared;
   private Pointer pStmt;
   private String tail;
-  // cached columns index by name
-  private Map<String, Integer> cols;
   // cached parameters index by name
   private Map<String, Integer> params;
   // cached column count
-  private int columnCount;
+  private int columnCount = -1;
+  // cached columns index by name
+  private Map<String, Integer> colIndexByName;
+  private String[] columnNames;
 
   Stmt(Conn c, Pointer pStmt, Pointer tail) {
     this.c = c;
@@ -186,7 +187,13 @@ public class Stmt extends AbstractPrepStmt {
    */
   public String getColumnName(int iCol) throws StmtException {
     checkOpen();
-    return SQLite.sqlite3_column_name(pStmt, iCol);
+    if (null == columnNames) {
+      columnNames = new String[getColumnCount()];
+    } else if (columnNames[iCol] != null) {
+      return columnNames[iCol];
+    }
+    columnNames[iCol] = SQLite.sqlite3_column_name(pStmt, iCol);
+    return columnNames[iCol];
   }
 
   public byte[] getColumnBlob(int iCol) throws StmtException {
@@ -429,4 +436,34 @@ public class Stmt extends AbstractPrepStmt {
       throw new StmtException(this, "stmt finalized", ErrCodes.WRAPPER_SPECIFIC);
     }
   }
+
+  int findCol(String col) throws StmtException {
+    checkOpen();
+    Integer index = findColIndexInCache(col);
+    if (null != index) {
+      return index;
+    }
+    for (int i = 0; i < getColumnCount(); i++) {
+      if (col.equalsIgnoreCase(getColumnName(i))) {
+        addColIndexInCache(col, i + 1);
+        return i + 1;
+      }
+    }
+    throw new StmtException(this, "no such column: '" + col + "'", ErrCodes.WRAPPER_SPECIFIC);
+  }
+
+  private Integer findColIndexInCache(String col) {
+    if (null == colIndexByName) {
+      return null;
+    } else {
+      return colIndexByName.get(col);
+    }
+  }
+  private void addColIndexInCache(String col, int index) throws StmtException {
+    if (null == colIndexByName) {
+      colIndexByName = new HashMap<String, Integer>(getColumnCount());
+    }
+    colIndexByName.put(col, index);
+  }
+
 }
