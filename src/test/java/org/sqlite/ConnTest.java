@@ -5,10 +5,11 @@ import org.junit.Test;
 
 public class ConnTest {
   @Test
-  public void checkLibversion() {
-    Assert.assertTrue(Conn.libversion().startsWith("3"));
+  public void checkLibversion() throws SQLiteException {
+    final Conn c = open();
+    Assert.assertTrue(c.libversion().startsWith("3"));
   }
-  
+
   @Test
   public void checkOpenTempFile() throws SQLiteException {
     final Conn c = Conn.open(Conn.TEMP_FILE, OpenFlags.SQLITE_OPEN_READWRITE, null);
@@ -24,14 +25,14 @@ public class ConnTest {
     Assert.assertEquals(Conn.MEMORY, c.getFilename());
     checkResult(c._close());
   }
-  
+
   @Test
   public void checkInitialState() throws SQLiteException {
     final Conn c = open();
     Assert.assertEquals(0, c.getChanges());
     Assert.assertEquals(0, c.getTotalChanges());
     Assert.assertEquals(0, c.getLastInsertRowid());
-    
+
     Assert.assertEquals(0, c.getErrCode());
     Assert.assertEquals(0, c.getExtendedErrcode());
     Assert.assertEquals("not an error", c.getErrMsg());
@@ -52,7 +53,7 @@ public class ConnTest {
     c.exec("DROP TABLE IF EXISTS test;\n" +
         "CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
         " d REAL, i INTEGER, s TEXT); -- bim");
-    
+
     final boolean[] metadata = c.getTableColumnMetadata("main", "test", "id");
     Assert.assertTrue(metadata[0]);
     Assert.assertTrue(metadata[1]);
@@ -64,7 +65,7 @@ public class ConnTest {
   public void checkGetTableColumnMetadata() {
     // TODO
   }
-  
+
   @Test
   public void checkMprintf() {
     Assert.assertEquals("'1'", SQLite.sqlite3_mprintf("%Q", String.valueOf(1)));

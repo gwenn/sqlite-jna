@@ -15,30 +15,72 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Stmt extends AbstractPreparedStatement {
+/*
+- Currently, Meta#supportsMultipleResultSets returns false.
+But with the tail, we can return multiple results.
+- We need auto-close statement.
+ */
+public class Stmt extends AbstractPrepStmt {
   final Conn c;
+  final boolean prepared;
   private Pointer pStmt;
-  private final String tail;
+  private String tail;
   // cached columns index by name
   private Map<String, Integer> cols;
   // cached parameters index by name
   private Map<String, Integer> params;
+  // cached column count
+  private int columnCount;
 
   Stmt(Conn c, Pointer pStmt, Pointer tail) {
     this.c = c;
+    this.prepared = true;
     this.pStmt = pStmt;
     this.tail = tail.getString(0);
+  }
+
+  Stmt(Conn c) {
+    this.c = c;
+    this.prepared = false;
   }
 
   boolean isDumb() {
     return pStmt == null;
   }
-  
+  @Override
+  boolean prepared() {
+    return prepared;
+  }
+  @Override
+  Rows execQuery(String sql) throws ConnException, StmtException {
+    close();
+    final Stmt s = c.prepare(sql);
+    this.pStmt = s.pStmt;
+    //this.tail = s.tail;
+    return execQuery();
+  }
+  @Override
+  Rows execQuery() throws StmtException {
+    final boolean hasRow = step();
+    if (!hasRow && getColumnCount() == 0) {
+      throw new StmtException(this, "query does not return ResultSet", ErrCodes.WRAPPER_SPECIFIC);
+    }
+    return new Rows(this, hasRow);
+  }
+  @Override
+  int execUpdate(String sql) throws ConnException, StmtException {
+    close();
+    final Stmt s = c.prepare(sql);
+    this.pStmt = s.pStmt;
+    //this.tail = s.tail;
+    exec();
+    return c.getChanges();
+  }
   @Override
   public Connection getConnection() throws SQLException {
     return c;
   }
-  
+
   public String getSql() {
     return SQLite.sqlite3_sql(pStmt);
   }
@@ -50,29 +92,20 @@ public class Stmt extends AbstractPreparedStatement {
   /**
    * @return result code (No exception is thrown).
    */
-  public int _close() {
+  public int _close() throws StmtException {
+    if (pStmt == null) return SQLite.SQLITE_OK;
     final int res = SQLite.sqlite3_finalize(pStmt);
     if (res == SQLite.SQLITE_OK) {
       pStmt = null;
     }
     return res;
   }
-  
+
   @Override
   void interrupt() throws ConnException {
     c.interrupt();
   }
-  
-  @Override
-  void exec(String sql) throws SQLException {
-    throw new SQLException("method unsupported by PreparedStatement.");
-  }
-  
-  @Override
-  int getChanges() throws ConnException {
-    return c.getChanges();
-  }
-  
+
   /**
    * @return true until finished.
    * @throws StmtException
@@ -81,13 +114,19 @@ public class Stmt extends AbstractPreparedStatement {
     final int res = SQLite.sqlite3_step(pStmt);
     if (res == SQLite.SQLITE_ROW) {
       return true;
-    } else if (res == SQLite.SQLITE_DONE) {
+    }
+    SQLite.sqlite3_reset(pStmt);
+    if (res == SQLite.SQLITE_DONE) {
       return false;
     }
     throw new StmtException(this, String.format("error while stepping '%s'", getSql()), res);
   }
   public void exec() throws StmtException {
     final int res = SQLite.sqlite3_step(pStmt);
+    SQLite.sqlite3_reset(pStmt);
+    if (res == SQLite.SQLITE_ROW) {
+      throw new StmtException(this, String.format("only non SELECT expected but got '%s'", getSql()), res);
+    }
     if (res != SQLite.SQLITE_DONE) {
       throw new StmtException(this, String.format("error while executing '%s'", getSql()), res);
     }
@@ -95,6 +134,7 @@ public class Stmt extends AbstractPreparedStatement {
 
   public void reset() throws StmtException {
     checkOpen();
+    // if (isCloseOnCompletion()) TODO
     check(SQLite.sqlite3_reset(pStmt), "Error while resetting '%s'");
   }
 
@@ -114,7 +154,10 @@ public class Stmt extends AbstractPreparedStatement {
    */
   public int getColumnCount() throws StmtException {
     checkOpen();
-    return SQLite.sqlite3_column_count(pStmt);
+    if (columnCount == -1) {
+      columnCount = SQLite.sqlite3_column_count(pStmt);
+    }
+    return columnCount;
   }
 
   /**
@@ -199,7 +242,7 @@ public class Stmt extends AbstractPreparedStatement {
     return SQLite.sqlite3_column_text(pStmt, iCol);
   }
 
-  public void bind(Object ...params) throws StmtException {
+  public void bind(Object... params) throws StmtException {
     reset();
     if (params.length != getBindParameterCount()) {
       throw new StmtException(this,
@@ -211,7 +254,7 @@ public class Stmt extends AbstractPreparedStatement {
     }
   }
 
-  public void namedBind(Object ...params) throws StmtException {
+  public void namedBind(Object... params) throws StmtException {
     reset();
     if (params.length % 2 != 0) {
       throw new StmtException(this, "expected an even number of arguments", ErrCodes.WRAPPER_SPECIFIC);
@@ -291,7 +334,7 @@ public class Stmt extends AbstractPreparedStatement {
   }
 
   /**
-   * @param i The leftmost SQL parameter has an index of 1
+   * @param i     The leftmost SQL parameter has an index of 1
    * @param value SQL parameter value
    * @throws StmtException
    */
@@ -300,7 +343,7 @@ public class Stmt extends AbstractPreparedStatement {
     checkBind(SQLite.sqlite3_bind_blob(pStmt, i, value, value.length, SQLite.SQLITE_TRANSIENT), "sqlite3_bind_blob", i);
   }
   /**
-   * @param i The leftmost SQL parameter has an index of 1
+   * @param i     The leftmost SQL parameter has an index of 1
    * @param value SQL parameter value
    * @throws StmtException
    */
@@ -309,7 +352,7 @@ public class Stmt extends AbstractPreparedStatement {
     checkBind(SQLite.sqlite3_bind_double(pStmt, i, value), "sqlite3_bind_double", i);
   }
   /**
-   * @param i The leftmost SQL parameter has an index of 1
+   * @param i     The leftmost SQL parameter has an index of 1
    * @param value SQL parameter value
    * @throws StmtException
    */
@@ -318,7 +361,7 @@ public class Stmt extends AbstractPreparedStatement {
     checkBind(SQLite.sqlite3_bind_int(pStmt, i, value), "sqlite3_bind_int", i);
   }
   /**
-   * @param i The leftmost SQL parameter has an index of 1
+   * @param i     The leftmost SQL parameter has an index of 1
    * @param value SQL parameter value
    * @throws StmtException
    */
@@ -335,7 +378,7 @@ public class Stmt extends AbstractPreparedStatement {
     checkBind(SQLite.sqlite3_bind_null(pStmt, i), "sqlite3_bind_null", i);
   }
   /**
-   * @param i The leftmost SQL parameter has an index of 1
+   * @param i     The leftmost SQL parameter has an index of 1
    * @param value SQL parameter value
    * @throws StmtException
    */
@@ -378,7 +421,7 @@ public class Stmt extends AbstractPreparedStatement {
     }
   }
   @Override
-  public boolean isClosed() throws StmtException {
+  public boolean isClosed() {
     return pStmt == null;
   }
   void checkOpen() throws StmtException {

@@ -20,20 +20,9 @@ public class Conn extends AbstractConn {
   private Pointer pDb;
 
   /**
-   * @return Run-time library version number
-   */
-  public static String libversion() {
-    return SQLite.sqlite3_libversion();
-  }
-  @Override
-  String mprintf(String format, String arg) {
-    return SQLite.sqlite3_mprintf(format, arg);
-  }
-
-  /**
    * @param filename ":memory:" for memory db, "" for temp file db
-   * @param flags org.sqlite.OpenFlags.* (TODO EnumSet or BitSet, default flags)
-   * @param vfs may be null
+   * @param flags    org.sqlite.OpenFlags.* (TODO EnumSet or BitSet, default flags)
+   * @param vfs      may be null
    * @return Opened Connection
    * @throws SQLiteException
    */
@@ -56,6 +45,7 @@ public class Conn extends AbstractConn {
   /**
    * @return result code (No exception is thrown).
    */
+  @Override
   public int _close() {
     if (pDb == null) {
       return SQLite.SQLITE_OK;
@@ -92,6 +82,7 @@ public class Conn extends AbstractConn {
    * @return Prepared Statement
    * @throws ConnException
    */
+  @Override
   public Stmt prepare(String sql) throws ConnException {
     checkOpen();
     final Pointer pSql = SQLite.nativeString(sql);
@@ -102,6 +93,25 @@ public class Conn extends AbstractConn {
     return new Stmt(this, ppStmt.getValue(), ppTail.getValue());
   }
 
+  /**
+   * @return Run-time library version number
+   */
+  @Override
+  public String libversion() {
+    return SQLite.sqlite3_libversion();
+  }
+
+  @Override
+  String mprintf(String format, String arg) {
+    return SQLite.sqlite3_mprintf(format, arg);
+  }
+
+  @Override
+  Stmt create() {
+    return new Stmt(this);
+  }
+
+  @Override
   public void exec(String sql) throws ConnException, StmtException {
     while (sql != null && sql.length() > 0) {
       Stmt s = null;
@@ -121,7 +131,7 @@ public class Conn extends AbstractConn {
 
   /**
    * @return the number of database rows that were changed or inserted or deleted by the most recently completed SQL statement
-   * on the database connection specified by the first parameter.
+   *         on the database connection specified by the first parameter.
    * @throws ConnException
    */
   public int getChanges() throws ConnException {
@@ -158,6 +168,7 @@ public class Conn extends AbstractConn {
     check(SQLite.sqlite3_busy_timeout(pDb, ms), "error while setting busy timeout on '%s'", filename);
   }
 
+  @Override
   public String getFilename() {
     return filename;
   }
@@ -200,15 +211,17 @@ public class Conn extends AbstractConn {
         null, null,
         pNotNull, pPrimaryKey, pAutoinc), "error while accessing table column metatada of '%s'", tblName);
 
-    return new boolean[] {toBool(pNotNull), toBool(pPrimaryKey), toBool(pAutoinc)};
+    return new boolean[]{toBool(pNotNull), toBool(pPrimaryKey), toBool(pAutoinc)};
   }
   private static boolean toBool(PointerByReference p) {
     return p.getPointer().getInt(0) > 0;
   }
 
-  public boolean isClosed() throws ConnException {
+  @Override
+  public boolean isClosed() {
     return pDb == null;
   }
+  @Override
   void checkOpen() throws ConnException {
     if (isClosed()) {
       throw new ConnException(this, String.format("connection to '%s' closed", filename), ErrCodes.WRAPPER_SPECIFIC);
@@ -219,6 +232,7 @@ public class Conn extends AbstractConn {
       throw new ConnException(this, String.format(format, param), res);
     }
   }
+  @Override
   void check(int res, String reason) throws ConnException {
     if (res != SQLite.SQLITE_OK) {
       throw new ConnException(this, reason, res);

@@ -16,86 +16,104 @@ import java.sql.*;
 import java.util.Calendar;
 import java.util.Map;
 
-public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData {
-  abstract void checkOpen() throws SQLException;
+public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
+  abstract void checkOpen() throws StmtException;
+  abstract void _close() throws StmtException;
+  abstract boolean step() throws StmtException;
+  abstract int row();
 
   @Override
   public boolean next() throws SQLException {
-    return false; // FIXME
+    Util.trace("*ResultSet.next");
+    return step();
   }
   @Override
-  public void close() throws SQLException {
-    // FIXME
+  public void close() throws StmtException {
+    Util.trace("*ResultSet.close");
+    _close();
   }
   @Override
   public boolean wasNull() throws SQLException {
+    Util.trace("*ResultSet.wasNull");
     return false; // TODO
   }
   @Override
   public String getString(int columnIndex) throws SQLException {
+    Util.trace("*ResultSet.getString");
     return null; // TODO
   }
   @Override
   public boolean getBoolean(int columnIndex) throws SQLException {
+    Util.trace("*ResultSet.getBoolean");
     return false; // TODO
   }
   @Override
   public byte getByte(int columnIndex) throws SQLException {
+    Util.trace("*ResultSet.getByte");
     return 0; // TODO
   }
   @Override
   public short getShort(int columnIndex) throws SQLException {
+    Util.trace("*ResultSet.getShort");
     return 0; // TODO
   }
   @Override
   public int getInt(int columnIndex) throws SQLException {
+    Util.trace("*ResultSet.getInt");
     return 0; // TODO
   }
   @Override
   public long getLong(int columnIndex) throws SQLException {
+    Util.trace("*ResultSet.getLong");
     return 0; // TODO
   }
   @Override
   public float getFloat(int columnIndex) throws SQLException {
+    Util.trace("*ResultSet.getFloat");
     return 0; // TODO
   }
   @Override
   public double getDouble(int columnIndex) throws SQLException {
+    Util.trace("*ResultSet.getDouble");
     return 0; // TODO
   }
   @Override
   @SuppressWarnings("deprecation")
   public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
-    throw Util.unsupported();
+    throw Util.unsupported("Resultset.getBigDecimal(int,int)");
   }
   @Override
   public byte[] getBytes(int columnIndex) throws SQLException {
-    return new byte[0];  //To change body of implemented methods use File | Settings | File Templates.
+    Util.trace("*ResultSet.getBytes");
+    return new byte[0]; // TODO
   }
   @Override
   public Date getDate(int columnIndex) throws SQLException {
+    Util.trace("*ResultSet.getDate");
     return null; // TODO
   }
   @Override
   public Time getTime(int columnIndex) throws SQLException {
+    Util.trace("*ResultSet.getTime");
     return null; // TODO
   }
   @Override
   public Timestamp getTimestamp(int columnIndex) throws SQLException {
+    Util.trace("*ResultSet.getTimestamp");
     return null; // TODO
   }
   @Override
   public InputStream getAsciiStream(int columnIndex) throws SQLException {
-    return null; // TODO
+    throw Util.unsupported("ResultSet.getAsciiStream");
   }
   @Override
   @SuppressWarnings("deprecation")
   public InputStream getUnicodeStream(int columnIndex) throws SQLException {
-    throw Util.unsupported();
+    throw Util.unsupported("ResultSet.getUnicodeStream");
   }
   @Override
   public InputStream getBinaryStream(int columnIndex) throws SQLException {
-    return null; // TODO
+    throw Util.unsupported("ResultSet.getBinaryStream");
   }
   @Override
   public String getString(String columnLabel) throws SQLException {
@@ -132,7 +150,7 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   @Override
   @SuppressWarnings("deprecation")
   public BigDecimal getBigDecimal(String columnLabel, int scale) throws SQLException {
-    throw Util.unsupported();
+    return getBigDecimal(findColumn(columnLabel), scale);
   }
   @Override
   public byte[] getBytes(String columnLabel) throws SQLException {
@@ -157,7 +175,7 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   @Override
   @SuppressWarnings("deprecation")
   public InputStream getUnicodeStream(String columnLabel) throws SQLException {
-    throw Util.unsupported();
+    return getUnicodeStream(findColumn(columnLabel));
   }
   @Override
   public InputStream getBinaryStream(String columnLabel) throws SQLException {
@@ -174,15 +192,18 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public String getCursorName() throws SQLException {
+    Util.trace("ResultSet.getCursorName");
     checkOpen();
     return null;
   }
   @Override
   public ResultSetMetaData getMetaData() throws SQLException {
+    Util.trace("*ResultSet.getMetaData");
     return this;
   }
   @Override
   public Object getObject(int columnIndex) throws SQLException {
+    Util.trace("*ResultSet.getObject");
     return null; // TODO
   }
   @Override
@@ -191,11 +212,12 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public int findColumn(String columnLabel) throws SQLException {
+    Util.trace("*ResultSet.findColumn");
     return 0; // FIXME
   }
   @Override
   public Reader getCharacterStream(int columnIndex) throws SQLException {
-    return null; // TODO
+    throw Util.unsupported("ResultSet.getCharacterStream");
   }
   @Override
   public Reader getCharacterStream(String columnLabel) throws SQLException {
@@ -210,7 +232,7 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
       try {
         return new BigDecimal(stringValue);
       } catch (NumberFormatException e) {
-        throw new SQLException("Bad value for type BigDecimal : " + stringValue);
+        throw Util.error("Bad value for type BigDecimal : " + stringValue);
       }
     }
   }
@@ -220,18 +242,25 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public boolean isBeforeFirst() throws SQLException {
-    return false; // TODO
+    checkOpen();
+    return row() < 1;
   }
   @Override
   public boolean isAfterLast() throws SQLException {
+    Util.trace("*ResultSet.isAfterLast");
+    checkOpen();
     return false; // TODO
   }
   @Override
   public boolean isFirst() throws SQLException {
-    return false; // TODO
+    Util.trace("*ResultSet.isFirst");
+    checkOpen();
+    return row() == 1;
   }
   @Override
   public boolean isLast() throws SQLException {
+    Util.trace("*ResultSet.isLast");
+    checkOpen();
     return false; // TODO
   }
   @Override
@@ -252,7 +281,9 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public int getRow() throws SQLException {
-    return 0; // TODO
+    Util.trace("*ResultSet.getRow");
+    checkOpen();
+    return Math.max(row(), 0);
   }
   @Override
   public boolean absolute(int row) throws SQLException {
@@ -270,7 +301,7 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   public void setFetchDirection(int direction) throws SQLException {
     checkOpen();
     if (ResultSet.FETCH_FORWARD != direction) {
-      throw new SQLException("SQLite supports only FETCH_FORWARD direction");
+      throw Util.caseUnsupported("SQLite supports only FETCH_FORWARD direction");
     }
   }
   @Override
@@ -280,10 +311,10 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public void setFetchSize(int rows) throws SQLException {
-    if (rows < 0) throw new SQLException("fetch size must be >= 0");
+    if (rows < 0) throw Util.error("fetch size must be >= 0");
     checkOpen();
     if (rows != 1) {
-      throw new SQLException("SQLite does not support setting fetch size");
+      throw Util.caseUnsupported("SQLite does not support setting fetch size");
     }
   }
   @Override
@@ -498,50 +529,52 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public Statement getStatement() throws SQLException {
+    Util.trace("*ResultSet.getStatement");
     return null; // TODO
   }
   @Override
   public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
-    throw Util.unsupported();
+    throw Util.unsupported("ResultSet.getObject(int,Map)");
   }
   @Override
   public Ref getRef(int columnIndex) throws SQLException {
-    throw Util.unsupported();
+    throw Util.unsupported("ResultSet.getRef");
   }
   @Override
   public Blob getBlob(int columnIndex) throws SQLException {
-    throw Util.unsupported();
+    throw Util.unsupported("ResultSet.getBlob");
   }
   @Override
   public Clob getClob(int columnIndex) throws SQLException {
-    throw Util.unsupported();
+    throw Util.unsupported("ResultSet.getClob");
   }
   @Override
   public Array getArray(int columnIndex) throws SQLException {
-    throw Util.unsupported();
+    throw Util.unsupported("ResultSet.getArray");
   }
   @Override
   public Object getObject(String columnLabel, Map<String, Class<?>> map) throws SQLException {
-    throw Util.unsupported();
+    return getObject(findColumn(columnLabel), map);
   }
   @Override
   public Ref getRef(String columnLabel) throws SQLException {
-    throw Util.unsupported();
+    return getRef(findColumn(columnLabel));
   }
   @Override
   public Blob getBlob(String columnLabel) throws SQLException {
-    throw Util.unsupported();
+    return getBlob(findColumn(columnLabel));
   }
   @Override
   public Clob getClob(String columnLabel) throws SQLException {
-    throw Util.unsupported();
+    return getClob(findColumn(columnLabel));
   }
   @Override
   public Array getArray(String columnLabel) throws SQLException {
-    throw Util.unsupported();
+    return getArray(findColumn(columnLabel));
   }
   @Override
   public Date getDate(int columnIndex, Calendar cal) throws SQLException {
+    Util.trace("*ResultSet.getDate");
     return null; // TODO
   }
   @Override
@@ -550,6 +583,7 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public Time getTime(int columnIndex, Calendar cal) throws SQLException {
+    Util.trace("*ResultSet.getTime");
     return null; // TODO
   }
   @Override
@@ -558,6 +592,7 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
+    Util.trace("*ResultSet.getTimestamp");
     return null; // TODO
   }
   @Override
@@ -566,11 +601,11 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public URL getURL(int columnIndex) throws SQLException {
-    throw Util.unsupported();
+    throw Util.unsupported("ResultSet.getURL");
   }
   @Override
   public URL getURL(String columnLabel) throws SQLException {
-    throw Util.unsupported();
+    return getURL(findColumn(columnLabel));
   }
   @Override
   public void updateRef(int columnIndex, Ref x) throws SQLException {
@@ -606,11 +641,11 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public RowId getRowId(int columnIndex) throws SQLException {
-    throw Util.unsupported();
+    throw Util.unsupported("ResultSet.getRowId");
   }
   @Override
   public RowId getRowId(String columnLabel) throws SQLException {
-    throw Util.unsupported();
+    return getRowId(findColumn(columnLabel));
   }
   @Override
   public void updateRowId(int columnIndex, RowId x) throws SQLException {
@@ -623,10 +658,6 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   @Override
   public int getHoldability() throws SQLException {
     return CLOSE_CURSORS_AT_COMMIT;
-  }
-  @Override
-  public boolean isClosed() throws SQLException {
-    return false; // TODO
   }
   @Override
   public void updateNString(int columnIndex, String nString) throws SQLException {
@@ -646,19 +677,19 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public NClob getNClob(int columnIndex) throws SQLException {
-    throw Util.unsupported();
+    throw Util.unsupported("ResultSet.getNClob");
   }
   @Override
   public NClob getNClob(String columnLabel) throws SQLException {
-    throw Util.unsupported();
+    return getNClob(findColumn(columnLabel));
   }
   @Override
   public SQLXML getSQLXML(int columnIndex) throws SQLException {
-    throw Util.unsupported();
+    throw Util.unsupported("ResultSet.getSQLXML");
   }
   @Override
   public SQLXML getSQLXML(String columnLabel) throws SQLException {
-    throw Util.unsupported();
+    return getSQLXML(findColumn(columnLabel));
   }
   @Override
   public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
@@ -798,15 +829,15 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
-    throw Util.unsupported(); // FIXME
+    throw Util.unsupported("ResultSet.getObject(int, Class)"); // FIXME
   }
   @Override
   public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
-    throw Util.unsupported(); // FIXME
+    return getObject(findColumn(columnLabel), type);
   }
   @Override
   public <T> T unwrap(Class<T> iface) throws SQLException {
-    throw new SQLException("not a wrapper");
+    throw Util.error("not a wrapper");
   }
   @Override
   public boolean isWrapperFor(Class<?> iface) throws SQLException {
@@ -817,10 +848,12 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
 
   @Override
   public int getColumnCount() throws SQLException {
+    Util.trace("*ResultSetMetaData.getColumnCount");
     return 0; // TODO
   }
   @Override
   public boolean isAutoIncrement(int column) throws SQLException {
+    Util.trace("*ResultSetMetaData.isAutoIncrement");
     return false; // TODO
   }
   @Override
@@ -837,6 +870,7 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public int isNullable(int column) throws SQLException {
+    Util.trace("*ResultSetMetaData.isNullable");
     return 0; // TODO
   }
   @Override
@@ -845,42 +879,52 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public int getColumnDisplaySize(int column) throws SQLException {
+    Util.trace("ResultSetMetaData.getColumnDisplaySize");
     return 0; // TODO
   }
   @Override
   public String getColumnLabel(int column) throws SQLException {
+    Util.trace("ResultSetMetaData.getColumnLabel");
     return null; // TODO
   }
   @Override
   public String getColumnName(int column) throws SQLException {
+    Util.trace("*ResultSetMetaData.getColumnName");
     return null; // TODO
   }
   @Override
   public String getSchemaName(int column) throws SQLException {
+    Util.trace("ResultSetMetaData.getSchemaName");
     return ""; // TODO Validate
   }
   @Override
   public int getPrecision(int column) throws SQLException {
+    Util.trace("ResultSetMetaData.getPrecision");
     return 0; // TODO
   }
   @Override
   public int getScale(int column) throws SQLException {
+    Util.trace("ResultSetMetaData.getScale");
     return 0; // TODO
   }
   @Override
   public String getTableName(int column) throws SQLException {
+    Util.trace("*ResultSetMetaData.getTableName");
     return null; // TODO
   }
   @Override
   public String getCatalogName(int column) throws SQLException {
+    Util.trace("ResultSetMetaData.getCatalogName");
     return ""; // TODO Validate
   }
   @Override
   public int getColumnType(int column) throws SQLException {
+    Util.trace("*ResultSetMetaData.getColumnType");
     return 0; // TODO
   }
   @Override
   public String getColumnTypeName(int column) throws SQLException {
+    Util.trace("*ResultSetMetaData.getColumnTypeName");
     return null; // TODO
   }
   @Override
@@ -897,13 +941,14 @@ public abstract class AbstractResultSet implements ResultSet, ResultSetMetaData 
   }
   @Override
   public String getColumnClassName(int column) throws SQLException {
+    Util.trace("*ResultSetMetaData.getColumnClassName");
     return null; // TODO
   }
 
   private static SQLException typeForwardOnly() {
-    return new SQLException("ResultSet is TYPE_FORWARD_ONLY");
+    return Util.error("ResultSet is TYPE_FORWARD_ONLY");
   }
   private static SQLException concurReadOnly() {
-    return new SQLException("ResultSet is CONCUR_READ_ONLY");
+    return Util.error("ResultSet is CONCUR_READ_ONLY");
   }
 }

@@ -38,6 +38,7 @@ public class JDBC implements Driver {
   }
   @Override
   public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
+    Util.trace("Driver.getPropertyInfo");
     return new DriverPropertyInfo[0];  // TODO
   }
   @Override
@@ -54,6 +55,6 @@ public class JDBC implements Driver {
   }
   @Override
   public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-    throw Util.unsupported();
+    throw Util.unsupported("Driver.getParentLogger");
   }
 }
