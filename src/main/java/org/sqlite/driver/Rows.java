@@ -927,9 +927,8 @@ public class Rows implements ResultSet, ResultSetMetaData {
 // ResultSetMetaData
 
   @Override
-  public int getColumnCount() throws SQLException {
-    Util.trace("*ResultSetMetaData.getColumnCount");
-    return 0; // TODO
+  public int getColumnCount() throws SQLException { // Used by Hibernate
+    return getStmt().getColumnCount();
   }
   @Override
   public boolean isAutoIncrement(int column) throws SQLException {
