@@ -21,13 +21,13 @@ import java.util.Map;
 public class Rows implements ResultSet, ResultSetMetaData {
   private Stmt s;
   private org.sqlite.Stmt stmt;
-  private int row; // Initialized at -1 when there is no result otherwise 0
-  private int lastCol = -1;   // last column accessed, for wasNull(). -1 if none
+  private int row;
+  private Boolean wasNull;
 
   public Rows(Stmt s, boolean hasRow) throws SQLException {
     this.s = s;
     this.stmt = s.getStmt();
-    this.row = hasRow ? 0 : -1;
+    this.row = hasRow ? 0 : -1; // Initialized at -1 when there is no result otherwise 0
   }
 
   private org.sqlite.Stmt getStmt() throws SQLException {
@@ -59,19 +59,14 @@ public class Rows implements ResultSet, ResultSetMetaData {
     return hasRow;
   }
 
-  private boolean isNull(int columnIndex) throws SQLException {
-    return getStmt().getColumnType(fixCol(columnIndex)) == ColTypes.SQLITE_NULL;
-  }
   private int fixCol(int columnIndex) {
     return columnIndex - 1;
   }
 
   @Override
   public boolean next() throws SQLException {
-    lastCol = -1;
-    final boolean step = step();
-    Util.trace("*ResultSet.next -> " + step);
-    return step;
+    wasNull = null;
+    return step();
   }
   @Override
   public void close() throws SQLException {
@@ -88,12 +83,16 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public boolean wasNull() throws SQLException {
-    Util.trace("*ResultSet.wasNull");
-    return false; // TODO
+    if (wasNull == null) {
+      throw new SQLException("no column has been read");
+    }
+    return wasNull;
   }
   @Override
   public String getString(int columnIndex) throws SQLException {
-    return getStmt().getColumnText(fixCol(columnIndex));
+    final String s = getStmt().getColumnText(fixCol(columnIndex));
+    wasNull = s == null;
+    return s;
   }
   @Override
   public boolean getBoolean(int columnIndex) throws SQLException {
@@ -101,31 +100,57 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public byte getByte(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getByte");
-    return 0; // TODO
+    return (byte) getInt(columnIndex);
   }
   @Override
   public short getShort(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getShort");
-    return 0; // TODO
+    return (short) getInt(columnIndex);
   }
   @Override
   public int getInt(int columnIndex) throws SQLException {
-    return getStmt().getColumnInt(fixCol(columnIndex));
+    final org.sqlite.Stmt stmt = getStmt();
+    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
+    final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+    stmt.checkTypeMismatch(fixCol(columnIndex), sourceType, ColTypes.SQLITE_INTEGER);
+    final boolean wasNull = sourceType == ColTypes.SQLITE_NULL;
+    this.wasNull = wasNull;
+    if (wasNull) {
+      return 0;
+    } else {
+      return stmt.getColumnInt(fixCol(columnIndex));
+    }
   }
   @Override
   public long getLong(int columnIndex) throws SQLException {
-    return getStmt().getColumnLong(fixCol(columnIndex));
+    final org.sqlite.Stmt stmt = getStmt();
+    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
+    final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+    stmt.checkTypeMismatch(fixCol(columnIndex), sourceType, ColTypes.SQLITE_INTEGER);
+    final boolean wasNull = sourceType == ColTypes.SQLITE_NULL;
+    this.wasNull = wasNull;
+    if (wasNull) {
+      return 0;
+    } else {
+      return getStmt().getColumnLong(fixCol(columnIndex));
+    }
   }
   @Override
   public float getFloat(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getFloat");
-    return 0; // TODO
+    return (float) getDouble(columnIndex);
   }
   @Override
   public double getDouble(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getDouble");
-    return 0; // TODO
+    final org.sqlite.Stmt stmt = getStmt();
+    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
+    final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+    stmt.checkTypeMismatch(fixCol(columnIndex), sourceType, ColTypes.SQLITE_FLOAT);
+    final boolean wasNull = sourceType == ColTypes.SQLITE_NULL;
+    this.wasNull = wasNull;
+    if (wasNull) {
+      return 0;
+    } else {
+      return getStmt().getColumnDouble(fixCol(columnIndex));
+    }
   }
   @Override
   @SuppressWarnings("deprecation")
@@ -139,8 +164,9 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public Date getDate(int columnIndex) throws SQLException {
-    if (isNull(columnIndex)) return null;
-    return new Date(getLong(columnIndex));
+    final long ms = getLong(columnIndex);
+    if (wasNull) return null;
+    return new Date(ms);
   }
   @Override
   public Time getTime(int columnIndex) throws SQLException {
@@ -247,8 +273,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
     return null;
   }
   @Override
-  public ResultSetMetaData getMetaData() throws SQLException {
-    Util.trace("*ResultSet.getMetaData");
+  public ResultSetMetaData getMetaData() throws SQLException { // Used by Hibernate
     return this;
   }
   @Override

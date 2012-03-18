@@ -1,7 +1,6 @@
 package org.sqlite.driver;
 
 import java.sql.*;
-import java.util.Arrays;
 
 public class Meta implements DatabaseMetaData {
   private Conn c;
@@ -528,7 +527,6 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
-    Util.trace("DatabaseMetaData.getTables(" + catalog + ", " + schemaPattern + ", " + tableNamePattern + ", " + Arrays.toString(types) + ")");
     checkOpen();
     tableNamePattern = (tableNamePattern == null || "".equals(tableNamePattern)) ? "%" : tableNamePattern;
 
@@ -582,7 +580,6 @@ public class Meta implements DatabaseMetaData {
   // TODO Support multi tables
   @Override
   public ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
-    Util.trace("DatabaseMetaData.getColumns(" + catalog + "," + schemaPattern + ", " + tableNamePattern + ", " + columnNamePattern + ")");
     checkOpen();
     ResultSet rs;
     final StringBuilder sql = new StringBuilder();
@@ -653,8 +650,8 @@ public class Meta implements DatabaseMetaData {
 
         sql.append("select ").
             append(i).append(" as ordpos, ").
-            append(colNullable).append(" as colnullable, '").
-            append(colJavaType).append("' as ct, ").
+            append(colNullable).append(" as colnullable, ").
+            append(colJavaType).append(" as ct, ").
             append(quote(colName)).append(" as cn, ").
             append(quote(colType)).append(" as tn");
 
@@ -809,9 +806,8 @@ public class Meta implements DatabaseMetaData {
     return false;
   }
   @Override
-  public boolean supportsGetGeneratedKeys() throws SQLException {
-    Util.trace("DatabaseMetaData.supportsGetGeneratedKeys");
-    return true; // TODO Validate
+  public boolean supportsGetGeneratedKeys() throws SQLException { // Used by Hibernate
+    return true;
   }
   @Override
   public ResultSet getSuperTypes(String catalog, String schemaPattern, String typeNamePattern) throws SQLException {
@@ -838,7 +834,7 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public int getDatabaseMajorVersion() throws SQLException {
-    return 3; // FXIME
+    return 3; // FIXME
   }
   @Override
   public int getDatabaseMinorVersion() throws SQLException {

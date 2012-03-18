@@ -25,7 +25,6 @@ public class PrepStmt extends Stmt implements PreparedStatement {
 
   @Override
   public ResultSet executeQuery() throws SQLException {
-    Util.trace("*PreparedStatement.executeQuery");
     final org.sqlite.Stmt stmt = getStmt();
     final boolean hasRow = stmt.step();
     if (!hasRow && stmt.getColumnCount() == 0) {
@@ -35,78 +34,75 @@ public class PrepStmt extends Stmt implements PreparedStatement {
   }
   @Override
   public int executeUpdate() throws SQLException {
-    Util.trace("*PreparedStatement.executeUpdate");
-    return 0; // FIXME
+    getStmt().step();
+    return getConn().getChanges();
   }
   @Override
   public void setNull(int parameterIndex, int sqlType) throws SQLException {
-    Util.trace("*PreparedStatement.setNull");
-    // FIXME
+    getStmt().bindNull(parameterIndex);
   }
   @Override
   public void setBoolean(int parameterIndex, boolean x) throws SQLException {
-    Util.trace("*PreparedStatement.setBoolean");
-    // FIXME
+    getStmt().bindInt(parameterIndex, x ? 1 : 0);
   }
   @Override
   public void setByte(int parameterIndex, byte x) throws SQLException {
-    Util.trace("*PreparedStatement.setByte");
-    // FIXME
+    getStmt().bindInt(parameterIndex, x);
   }
   @Override
   public void setShort(int parameterIndex, short x) throws SQLException {
-    Util.trace("*PreparedStatement.setShort");
-    // FIXME
+    getStmt().bindInt(parameterIndex, x);
   }
   @Override
   public void setInt(int parameterIndex, int x) throws SQLException {
-    Util.trace("*PreparedStatement.setInt");
-    // FIXME
+    getStmt().bindInt(parameterIndex, x);
   }
   @Override
   public void setLong(int parameterIndex, long x) throws SQLException {
-    Util.trace("*PreparedStatement.setLong");
-    // FIXME
+    getStmt().bindLong(parameterIndex, x);
   }
   @Override
   public void setFloat(int parameterIndex, float x) throws SQLException {
-    Util.trace("*PreparedStatement.setFloat");
-    // FIXME
+    getStmt().bindDouble(parameterIndex, x);
   }
   @Override
   public void setDouble(int parameterIndex, double x) throws SQLException {
-    Util.trace("*PreparedStatement.setDouble");
-    // FIXME
+    getStmt().bindDouble(parameterIndex, x);
   }
   @Override
   public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
-    Util.trace("*PreparedStatement.setBigDecimal");
-    // FIXME
+    throw Util.unsupported("*PreparedStatement.setBigDecimal"); // TODO
   }
   @Override
   public void setString(int parameterIndex, String x) throws SQLException {
-    Util.trace("*PreparedStatement.setString");
     getStmt().bindText(parameterIndex, x);
   }
   @Override
   public void setBytes(int parameterIndex, byte[] x) throws SQLException {
-    Util.trace("*PreparedStatement.setBytes");
-    // FIXME
+    if (x == null) {
+      getStmt().bindNull(parameterIndex);
+    } else {
+      getStmt().bindBlob(parameterIndex, x);
+    }
   }
   @Override
   public void setDate(int parameterIndex, Date x) throws SQLException {
-    Util.trace("*PreparedStatement.setDate");
-    // FIXME
+    bindDate(parameterIndex, x);
+  }
+  private void bindDate(int parameterIndex, java.util.Date x) throws SQLException {
+    if (null == x) {
+      getStmt().bindNull(parameterIndex);
+    } else {
+      getStmt().bindLong(parameterIndex, x.getTime());
+    }
   }
   @Override
   public void setTime(int parameterIndex, Time x) throws SQLException {
-    Util.trace("*PreparedStatement.setTime");
-    // FIXME
+    bindDate(parameterIndex, x);
   }
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-    Util.trace("*PreparedStatement.setTimestamp");
-    // FIXME
+    bindDate(parameterIndex, x);
   }
   @Override
   public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
@@ -123,28 +119,23 @@ public class PrepStmt extends Stmt implements PreparedStatement {
   }
   @Override
   public void clearParameters() throws SQLException {
-    Util.trace("*PreparedStatement.clearParameters");
-    // FIXME
+    getStmt().clearBindings();
   }
   @Override
   public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
-    Util.trace("*PreparedStatement.setObject");
-    // FIXME
+    throw Util.unsupported("*PreparedStatement.setObject"); // TODO
   }
   @Override
   public void setObject(int parameterIndex, Object x) throws SQLException {
-    Util.trace("*PreparedStatement.setObject");
-    // FIXME
+    throw Util.unsupported("*PreparedStatement.setObject"); // TODO
   }
   @Override
   public boolean execute() throws SQLException {
-    Util.trace("*PreparedStatement.execute");
-    return false; // FIXME
+    throw Util.unsupported("*PreparedStatement.execute"); // TODO
   }
   @Override
   public void addBatch() throws SQLException {
-    Util.trace("*PreparedStatement.addBatch");
-    // FIXME
+    throw Util.unsupported("*PreparedStatement.addBatch"); // TODO
   }
   @Override
   public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
@@ -168,28 +159,23 @@ public class PrepStmt extends Stmt implements PreparedStatement {
   }
   @Override
   public ResultSetMetaData getMetaData() throws SQLException {
-    Util.trace("*PreparedStatement.getMetaData");
-    return null; // FIXME
+    throw Util.unsupported("*PreparedStatement.getMetaData"); // TODO
   }
   @Override
   public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
-    Util.trace("*PreparedStatement.setDate");
-    // FIXME
+    throw Util.unsupported("*PreparedStatement.setDate"); // TODO
   }
   @Override
   public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
-    Util.trace("*PreparedStatement.setTime");
-    // FIXME
+    throw Util.unsupported("*PreparedStatement.setTime"); // TODO
   }
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) throws SQLException {
-    Util.trace("*PreparedStatement.setTimestamp");
-    // FIXME
+    throw Util.unsupported("*PreparedStatement.setTimestamp"); // TODO
   }
   @Override
   public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
-    Util.trace("*PreparedStatement.setNull");
-    // FIXME
+    setNull(parameterIndex, sqlType);
   }
   @Override
   public void setURL(int parameterIndex, URL x) throws SQLException {
@@ -197,8 +183,7 @@ public class PrepStmt extends Stmt implements PreparedStatement {
   }
   @Override
   public ParameterMetaData getParameterMetaData() throws SQLException {
-    Util.trace("*PreparedStatement.getParameterMetaData");
-    return null; // FIXME
+    throw Util.unsupported("*PreparedStatement.getParameterMetaData"); // TODO
   }
   @Override
   public void setRowId(int parameterIndex, RowId x) throws SQLException {

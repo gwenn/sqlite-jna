@@ -388,4 +388,22 @@ public class Stmt {
       throw new StmtException(this, "stmt finalized", ErrCodes.WRAPPER_SPECIFIC);
     }
   }
+  // Only lossy conversion is reported as error.
+  public void checkTypeMismatch(int iCol, int sourceType, int targetType) throws StmtException {
+    switch (targetType) {
+      case ColTypes.SQLITE_INTEGER:
+        switch (sourceType) {
+          case ColTypes.SQLITE_FLOAT:
+          case ColTypes.SQLITE_TEXT:
+          case ColTypes.SQLITE_BLOB:
+            throw new StmtException(this, String.format("Type mismatch for %s, source %d vs target %d", getColumnName(iCol), sourceType, targetType), ErrCodes.WRAPPER_SPECIFIC);
+        }
+      case ColTypes.SQLITE_FLOAT:
+        switch (sourceType) {
+          case ColTypes.SQLITE_TEXT:
+          case ColTypes.SQLITE_BLOB:
+            throw new StmtException(this, String.format("Type mismatch for %s, source %d vs target %d", getColumnName(iCol), sourceType, targetType), ErrCodes.WRAPPER_SPECIFIC);
+        }
+    }
+  }
 }
