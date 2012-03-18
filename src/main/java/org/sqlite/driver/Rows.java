@@ -70,7 +70,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public void close() throws SQLException {
-    Util.trace("*ResultSet.close");
+    Util.trace("ResultSet.close");
     if (stmt != null) {
       if (s.isCloseOnCompletion()) {
         s.close();
@@ -159,8 +159,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public byte[] getBytes(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getBytes");
-    return new byte[0]; // TODO
+    return getStmt().getColumnBlob(fixCol(columnIndex));
   }
   @Override
   public Date getDate(int columnIndex) throws SQLException {
@@ -170,13 +169,15 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public Time getTime(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getTime");
-    return null; // TODO
+    final long ms = getLong(columnIndex);
+    if (wasNull) return null;
+    return new Time(ms);
   }
   @Override
   public Timestamp getTimestamp(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getTimestamp");
-    return null; // TODO
+    final long ms = getLong(columnIndex);
+    if (wasNull) return null;
+    return new Timestamp(ms);
   }
   @Override
   public InputStream getAsciiStream(int columnIndex) throws SQLException {
@@ -278,8 +279,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public Object getObject(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getObject");
-    return null; // TODO
+    throw Util.unsupported("ResultSet.getObject");
   }
   @Override
   public Object getObject(String columnLabel) throws SQLException {
@@ -322,19 +322,19 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public boolean isAfterLast() throws SQLException {
-    Util.trace("*ResultSet.isAfterLast");
+    Util.trace("ResultSet.isAfterLast");
     checkOpen();
     return false; // TODO
   }
   @Override
   public boolean isFirst() throws SQLException {
-    Util.trace("*ResultSet.isFirst");
+    Util.trace("ResultSet.isFirst");
     checkOpen();
     return row == 1;
   }
   @Override
   public boolean isLast() throws SQLException {
-    Util.trace("*ResultSet.isLast");
+    Util.trace("ResultSet.isLast");
     checkOpen();
     return false; // TODO
   }
@@ -356,7 +356,6 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public int getRow() throws SQLException {
-    Util.trace("*ResultSet.getRow");
     checkOpen();
     return Math.max(row, 0);
   }
@@ -604,7 +603,6 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public Statement getStatement() throws SQLException {
-    Util.trace("*ResultSet.getStatement");
     checkOpen();
     return s;
   }
@@ -650,8 +648,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public Date getDate(int columnIndex, Calendar cal) throws SQLException {
-    Util.trace("*ResultSet.getDate");
-    return null; // TODO
+    throw Util.unsupported("ResultSet.getDate"); // TODO
   }
   @Override
   public Date getDate(String columnLabel, Calendar cal) throws SQLException {
@@ -659,8 +656,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public Time getTime(int columnIndex, Calendar cal) throws SQLException {
-    Util.trace("*ResultSet.getTime");
-    return null; // TODO
+    throw Util.unsupported("ResultSet.getTime"); // TODO
   }
   @Override
   public Time getTime(String columnLabel, Calendar cal) throws SQLException {
@@ -668,8 +664,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
-    Util.trace("*ResultSet.getTimestamp");
-    return null; // TODO
+    throw Util.unsupported("ResultSet.getTimestamp"); // TODO
   }
   @Override
   public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
@@ -909,7 +904,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
-    throw Util.unsupported("ResultSet.getObject(int, Class)"); // FIXME
+    throw Util.unsupported("ResultSet.getObject(int, Class)"); // TODO
   }
   @Override
   public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
@@ -932,8 +927,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public boolean isAutoIncrement(int column) throws SQLException {
-    Util.trace("*ResultSetMetaData.isAutoIncrement");
-    return false; // TODO
+    throw Util.unsupported("ResultSetMetaData.isAutoIncrement"); // TODO
   }
   @Override
   public boolean isCaseSensitive(int column) throws SQLException {
@@ -949,8 +943,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public int isNullable(int column) throws SQLException {
-    Util.trace("*ResultSetMetaData.isNullable");
-    return 0; // TODO
+    throw Util.unsupported("ResultSetMetaData.isNullable"); // TODO
   }
   @Override
   public boolean isSigned(int column) throws SQLException {
@@ -958,18 +951,15 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public int getColumnDisplaySize(int column) throws SQLException {
-    Util.trace("ResultSetMetaData.getColumnDisplaySize");
-    return 0; // TODO
+    throw Util.unsupported("ResultSetMetaData.getColumnDisplaySize"); // TODO
   }
   @Override
   public String getColumnLabel(int column) throws SQLException {
-    Util.trace("ResultSetMetaData.getColumnLabel");
-    return null; // TODO
+    throw Util.unsupported("ResultSetMetaData.getColumnLabel"); // TODO
   }
   @Override
   public String getColumnName(int column) throws SQLException {
-    Util.trace("*ResultSetMetaData.getColumnName");
-    return null; // TODO
+    throw Util.unsupported("ResultSetMetaData.getColumnName"); // TODO
   }
   @Override
   public String getSchemaName(int column) throws SQLException {
@@ -988,8 +978,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public String getTableName(int column) throws SQLException {
-    Util.trace("*ResultSetMetaData.getTableName");
-    return null; // TODO
+    throw Util.unsupported("ResultSetMetaData.getTableName"); // TODO
   }
   @Override
   public String getCatalogName(int column) throws SQLException {
@@ -998,13 +987,11 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public int getColumnType(int column) throws SQLException {
-    Util.trace("*ResultSetMetaData.getColumnType");
-    return 0; // TODO
+    throw Util.unsupported("ResultSetMetaData.getColumnType"); // TODO
   }
   @Override
   public String getColumnTypeName(int column) throws SQLException {
-    Util.trace("*ResultSetMetaData.getColumnTypeName");
-    return null; // TODO
+    throw Util.unsupported("ResultSetMetaData.getColumnTypeName"); // TODO
   }
   @Override
   public boolean isReadOnly(int column) throws SQLException {
@@ -1020,8 +1007,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public String getColumnClassName(int column) throws SQLException {
-    Util.trace("*ResultSetMetaData.getColumnClassName");
-    return null; // TODO
+    throw Util.unsupported("ResultSetMetaData.getColumnClassName"); // TODO
   }
 
   private static SQLException typeForwardOnly() {

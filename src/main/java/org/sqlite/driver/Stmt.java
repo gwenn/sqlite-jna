@@ -21,7 +21,7 @@ public class Stmt implements Statement {
   private org.sqlite.Stmt stmt;
 
   // cached columns index by name
-  // FIXME to invalidate when Stmt
+  // FIXME to invalidate with Stmt
   //if (colIndexByName != null) colIndexByName.clear();
   private Map<String, Integer> colIndexByName;
   private boolean isCloseOnCompletion;
@@ -119,8 +119,7 @@ public class Stmt implements Statement {
   public void setMaxFieldSize(int max) throws SQLException {
     if (max < 0) throw Util.error("max field size must be >= 0");
     checkOpen();
-    // TODO
-    Util.trace("*Statement.setMaxFieldSize");
+    throw Util.unsupported("*Statement.setMaxFieldSize"); // TODO
   }
   @Override
   public int getMaxRows() throws SQLException { // Used by Hibernate
@@ -135,7 +134,7 @@ public class Stmt implements Statement {
   public void setEscapeProcessing(boolean enable) throws SQLException {
     checkOpen();
     // TODO
-    Util.trace("Statement.setEscapeProcessing");
+    throw Util.unsupported("Statement.setEscapeProcessing");
   }
   @Override
   public int getQueryTimeout() throws SQLException { // Used by Hibernate
@@ -146,8 +145,7 @@ public class Stmt implements Statement {
   public void setQueryTimeout(int seconds) throws SQLException {
     if (seconds < 0) throw Util.error("query timeout must be >= 0");
     checkOpen();
-    // TODO
-    Util.trace("Statement.setQueryTimeout");
+    throw Util.unsupported("Statement.setQueryTimeout"); // TODO
   }
   @Override
   public void cancel() throws SQLException {
@@ -166,7 +164,7 @@ public class Stmt implements Statement {
   public void setCursorName(String name) throws SQLException {
     checkOpen();
     // TODO
-    Util.trace("*Statement.setCursorName");
+    throw Util.unsupported("*Statement.setCursorName");
   }
   @Override
   public boolean execute(String sql) throws SQLException {
@@ -287,15 +285,13 @@ public class Stmt implements Statement {
   }
   @Override
   public void setPoolable(boolean poolable) throws SQLException {
-    Util.trace("*Statement.setPoolable");
     checkOpen();
-    // TODO
+    throw Util.unsupported("*Statement.setPoolable"); // TODO
   }
   @Override
   public boolean isPoolable() throws SQLException {
-    Util.trace("*Statement.isPoolable");
     checkOpen();
-    return false; // TODO
+    throw Util.unsupported("*Statement.isPoolable"); // TODO
   }
   @Override
   public void closeOnCompletion() throws SQLException {

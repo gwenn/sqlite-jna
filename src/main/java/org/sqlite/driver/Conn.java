@@ -116,18 +116,18 @@ public class Conn implements Connection {
   }
   @Override
   public boolean isReadOnly() throws SQLException {
-    Util.trace("*Connection.isReadOnly");
+    Util.trace("Connection.isReadOnly");
     checkOpen();
     return getConn().isReadOnly();
   }
   @Override
   public void setCatalog(String catalog) throws SQLException {
-    Util.trace("*Connection.setCatalog");
+    Util.trace("Connection.setCatalog");
     checkOpen();
   }
   @Override
   public String getCatalog() throws SQLException {
-    Util.trace("*Connection.getCatalog");
+    Util.trace("Connection.getCatalog");
     checkOpen();
     return null;
   }
@@ -273,27 +273,27 @@ public class Conn implements Connection {
   }
   @Override
   public void setClientInfo(String name, String value) throws SQLClientInfoException {
-    Util.trace("*Connection.setClientInfo(String,String)");
+    Util.trace("Connection.setClientInfo(String,String)");
     //checkOpen();
     if (clientInfo == null) return;
     clientInfo.setProperty(name, value);
   }
   @Override
   public void setClientInfo(Properties properties) throws SQLClientInfoException {
-    Util.trace("*Connection.setClientInfo(Properties)");
+    Util.trace("Connection.setClientInfo(Properties)");
     //checkOpen();
     clientInfo = new Properties(properties);
   }
   @Override
   public String getClientInfo(String name) throws SQLException {
-    Util.trace("*Connection.getClientInfo(String)");
+    Util.trace("Connection.getClientInfo(String)");
     checkOpen();
     if (clientInfo == null) return null;
     return clientInfo.getProperty(name);
   }
   @Override
   public Properties getClientInfo() throws SQLException {
-    Util.trace("*Connection.getClientInfo()");
+    Util.trace("Connection.getClientInfo()");
     checkOpen();
     if (clientInfo == null) {
       clientInfo = new Properties();
@@ -312,12 +312,12 @@ public class Conn implements Connection {
   }
   @Override
   public void setSchema(String schema) throws SQLException {
-    Util.trace("*Connection.setSchema");
+    Util.trace("Connection.setSchema");
     checkOpen();
   }
   @Override
   public String getSchema() throws SQLException {
-    Util.trace("*Connection.getSchema");
+    Util.trace("Connection.getSchema");
     checkOpen();
     return null; // TODO Validate
   }
