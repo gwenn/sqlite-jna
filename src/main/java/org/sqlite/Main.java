@@ -47,8 +47,8 @@ public class Main {
       System.out.println("colName[" + iCol + "] = " + colName);
       System.out.println("colValue[" + iCol + "] = " + colValue);
     }
-    check(s._close(), "sqlite3_finalize");
-    check(c._close(), "sqlite3_close");
+    check(s.close(), "sqlite3_finalize");
+    check(c.close(), "sqlite3_close");
   }
 
   private static void check(int res, String name) throws ConnException {

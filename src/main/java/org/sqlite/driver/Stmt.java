@@ -6,45 +6,108 @@
  *    May you find forgiveness for yourself and forgive others.
  *    May you share freely, never taking more than you give.
  */
-package org.sqlite;
+package org.sqlite.driver;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
+import org.sqlite.ErrCodes;
+import org.sqlite.StmtException;
 
-public abstract class AbstractStmt implements Statement {
-  abstract Rows execQuery(String sql) throws ConnException, StmtException;
-  abstract int execUpdate(String sql) throws ConnException, StmtException;
-  abstract void check(int res, String reason) throws StmtException;
-  abstract void checkOpen() throws StmtException;
-  abstract int _close() throws StmtException;
-  abstract void interrupt() throws ConnException;
-  abstract boolean prepared();
-  abstract void autoClose();
-  abstract boolean isAutoClosed();
+import java.sql.*;
+import java.util.HashMap;
+import java.util.Map;
+
+public class Stmt implements Statement {
+  private Conn c;
+  private final boolean prepared;
+  private org.sqlite.Stmt stmt;
+
+  // cached columns index by name
+  // FIXME to invalidate when Stmt
+  //if (colIndexByName != null) colIndexByName.clear();
+  private Map<String, Integer> colIndexByName;
+  private boolean isCloseOnCompletion;
+
+  Stmt(Conn c) {
+    this.c = c;
+    this.prepared = false;
+  }
+  Stmt(Conn c, org.sqlite.Stmt stmt) {
+    this.c = c;
+    this.stmt = stmt;
+    this.prepared = true;
+  }
+
+  org.sqlite.Stmt getStmt() throws SQLException {
+    checkOpen();
+    return stmt;
+  }
+  org.sqlite.Conn getConn() throws SQLException {
+    checkOpen();
+    return c.getConn();
+  }
+
+  private void checkOpen() throws SQLException {
+    if (stmt == null) {
+      throw new SQLException("Statement closed");
+    } else {
+      stmt.checkOpen();
+    }
+  }
+
+  int findCol(String col) throws SQLException {
+    final org.sqlite.Stmt stmt = getStmt();
+    Integer index = findColIndexInCache(col);
+    if (null != index) {
+      return index;
+    }
+    final int columnCount = stmt.getColumnCount();
+    for (int i = 0; i < columnCount; i++) {
+      if (col.equalsIgnoreCase(stmt.getColumnName(i))) {
+        addColIndexInCache(col, i + 1, columnCount);
+        return i + 1;
+      }
+    }
+    throw new StmtException(stmt, "no such column: '" + col + "'", ErrCodes.WRAPPER_SPECIFIC);
+  }
+
+  private Integer findColIndexInCache(String col) {
+    if (null == colIndexByName) {
+      return null;
+    } else {
+      return colIndexByName.get(col);
+    }
+  }
+  private void addColIndexInCache(String col, int index, int columnCount) throws StmtException {
+    if (null == colIndexByName) {
+      colIndexByName = new HashMap<String, Integer>(columnCount);
+    }
+    colIndexByName.put(col, index);
+  }
 
   @Override
   public ResultSet executeQuery(String sql) throws SQLException {
-    if (prepared()) {
+    if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
-      return execQuery(sql);
+      throw Util.unsupported("Statement.executeQuery");
     }
   }
   @Override
   public int executeUpdate(String sql) throws SQLException {
-    if (prepared()) {
+    if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
-      Util.trace("Statement.executeUpdate");
-      return execUpdate(sql);
+      throw Util.unsupported("Statement.executeUpdate");
     }
   }
   @Override
   public void close() throws StmtException {
     Util.trace("Statement.close");
-    check(_close(), "error while closing statement '%s'");
+    if (stmt != null) {
+      stmt.closeAndCheck();
+      if (colIndexByName != null) colIndexByName.clear();
+      stmt = null;
+      c = null;
+    }
   }
   @Override
   public int getMaxFieldSize() throws SQLException {
@@ -60,8 +123,7 @@ public abstract class AbstractStmt implements Statement {
     Util.trace("*Statement.setMaxFieldSize");
   }
   @Override
-  public int getMaxRows() throws SQLException {
-    Util.trace("Statement.getMaxRows");
+  public int getMaxRows() throws SQLException { // Used by Hibernate
     return 0;
   }
   @Override
@@ -76,9 +138,8 @@ public abstract class AbstractStmt implements Statement {
     Util.trace("Statement.setEscapeProcessing");
   }
   @Override
-  public int getQueryTimeout() throws SQLException {
+  public int getQueryTimeout() throws SQLException { // Used by Hibernate
     checkOpen();
-    Util.trace("Statement.getQueryTimeout");
     return 0; // TODO
   }
   @Override
@@ -90,8 +151,7 @@ public abstract class AbstractStmt implements Statement {
   }
   @Override
   public void cancel() throws SQLException {
-    checkOpen();
-    interrupt();
+    getConn().interrupt();
   }
   @Override
   public SQLWarning getWarnings() throws SQLException {
@@ -110,7 +170,7 @@ public abstract class AbstractStmt implements Statement {
   }
   @Override
   public boolean execute(String sql) throws SQLException {
-    if (prepared()) {
+    if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
       throw Util.unsupported("*Statement.execute(String)"); // TODO
@@ -163,7 +223,7 @@ public abstract class AbstractStmt implements Statement {
   }
   @Override
   public void addBatch(String sql) throws SQLException {
-    if (prepared()) {
+    if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
       throw Util.unsupported("*Statement.addBatch"); // TODO
@@ -176,6 +236,10 @@ public abstract class AbstractStmt implements Statement {
   @Override
   public int[] executeBatch() throws SQLException {
     throw Util.unsupported("*Statement.executeBatch"); // TODO
+  }
+  @Override
+  public Connection getConnection() throws SQLException {
+    return c;
   }
   @Override
   public boolean getMoreResults(int current) throws SQLException {
@@ -220,6 +284,10 @@ public abstract class AbstractStmt implements Statement {
     return ResultSet.CLOSE_CURSORS_AT_COMMIT;
   }
   @Override
+  public boolean isClosed() throws SQLException {
+    return stmt == null;
+  }
+  @Override
   public void setPoolable(boolean poolable) throws SQLException {
     Util.trace("*Statement.setPoolable");
     checkOpen();
@@ -234,12 +302,12 @@ public abstract class AbstractStmt implements Statement {
   @Override
   public void closeOnCompletion() throws SQLException {
     checkOpen();
-    autoClose();
+    isCloseOnCompletion = true;
   }
   @Override
   public boolean isCloseOnCompletion() throws SQLException {
     checkOpen();
-    return isAutoClosed();
+    return isCloseOnCompletion;
   }
   @Override
   public <T> T unwrap(Class<T> iface) throws SQLException {

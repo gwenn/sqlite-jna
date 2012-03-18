@@ -10,8 +10,6 @@ package org.sqlite;
 
 import com.sun.jna.Pointer;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,77 +18,24 @@ import java.util.Map;
 But with the tail, we can return multiple results.
 - We need auto-close statement.
  */
-public class Stmt extends AbstractPrepStmt {
+public class Stmt {
   final Conn c;
-  final boolean prepared;
   private Pointer pStmt;
   private String tail;
   // cached parameters index by name
   private Map<String, Integer> params;
   // cached column count
   private int columnCount = -1;
-  // cached columns index by name
-  private Map<String, Integer> colIndexByName;
   private String[] columnNames;
-  private boolean autoClosed;
 
   Stmt(Conn c, Pointer pStmt, Pointer tail) {
     this.c = c;
-    this.prepared = true;
     this.pStmt = pStmt;
     this.tail = tail.getString(0);
   }
 
-  Stmt(Conn c) {
-    this.c = c;
-    this.prepared = false;
-  }
-
   boolean isDumb() {
     return pStmt == null;
-  }
-  @Override
-  boolean prepared() {
-    return prepared;
-  }
-
-  @Override
-  void autoClose() {
-    autoClosed = true;
-  }
-  @Override
-  boolean isAutoClosed() {
-    return autoClosed;
-  }
-
-  @Override
-  Rows execQuery(String sql) throws ConnException, StmtException {
-    close();
-    final Stmt s = c.prepare(sql);
-    this.pStmt = s.pStmt;
-    //this.tail = s.tail;
-    return execQuery();
-  }
-  @Override
-  Rows execQuery() throws StmtException {
-    final boolean hasRow = step();
-    if (!hasRow && getColumnCount() == 0) {
-      throw new StmtException(this, "query does not return ResultSet", ErrCodes.WRAPPER_SPECIFIC);
-    }
-    return new Rows(this, hasRow);
-  }
-  @Override
-  int execUpdate(String sql) throws ConnException, StmtException {
-    close();
-    final Stmt s = c.prepare(sql);
-    this.pStmt = s.pStmt;
-    //this.tail = s.tail;
-    exec();
-    return c.getChanges();
-  }
-  @Override
-  public Connection getConnection() throws SQLException {
-    return c;
   }
 
   public String getSql() {
@@ -101,15 +46,10 @@ public class Stmt extends AbstractPrepStmt {
     return tail;
   }
 
-  @Override
-  Stmt getStmt() {
-    return this;
-  }
-
   /**
    * @return result code (No exception is thrown).
    */
-  public int _close() throws StmtException {
+  public int close() {
     if (pStmt == null) return SQLite.SQLITE_OK;
     final int res = SQLite.sqlite3_finalize(pStmt);
     if (res == SQLite.SQLITE_OK) {
@@ -117,10 +57,11 @@ public class Stmt extends AbstractPrepStmt {
     }
     return res;
   }
-
-  @Override
-  void interrupt() throws ConnException {
-    c.interrupt();
+  public void closeAndCheck() throws StmtException {
+    final int res = close();
+    if (res != ErrCodes.SQLITE_OK) {
+      throw new StmtException(this, "error while closing statement '%s'", res);
+    }
   }
 
   /**
@@ -151,11 +92,7 @@ public class Stmt extends AbstractPrepStmt {
 
   public void reset() throws StmtException {
     checkOpen();
-    if (autoClosed) {
-      check(SQLite.sqlite3_close(pStmt), "Error while resetting '%s'");
-    } else {
-      check(_close(), "Error while resetting '%s'");
-    }
+    check(SQLite.sqlite3_reset(pStmt), "Error while resetting '%s'");
   }
 
   public boolean isBusy() throws StmtException {
@@ -446,43 +383,9 @@ public class Stmt extends AbstractPrepStmt {
       throw new StmtException(this, String.format("error while calling %s for param %d of '%s'", method, i, getSql()), res);
     }
   }
-  @Override
-  public boolean isClosed() {
-    return pStmt == null;
-  }
-  void checkOpen() throws StmtException {
-    if (isClosed()) {
+  public void checkOpen() throws StmtException {
+    if (pStmt == null) {
       throw new StmtException(this, "stmt finalized", ErrCodes.WRAPPER_SPECIFIC);
     }
   }
-
-  int findCol(String col) throws StmtException {
-    checkOpen();
-    Integer index = findColIndexInCache(col);
-    if (null != index) {
-      return index;
-    }
-    for (int i = 0; i < getColumnCount(); i++) {
-      if (col.equalsIgnoreCase(getColumnName(i))) {
-        addColIndexInCache(col, i + 1);
-        return i + 1;
-      }
-    }
-    throw new StmtException(this, "no such column: '" + col + "'", ErrCodes.WRAPPER_SPECIFIC);
-  }
-
-  private Integer findColIndexInCache(String col) {
-    if (null == colIndexByName) {
-      return null;
-    } else {
-      return colIndexByName.get(col);
-    }
-  }
-  private void addColIndexInCache(String col, int index) throws StmtException {
-    if (null == colIndexByName) {
-      colIndexByName = new HashMap<String, Integer>(getColumnCount());
-    }
-    colIndexByName.put(col, index);
-  }
-
 }

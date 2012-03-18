@@ -8,10 +8,11 @@
  */
 package org.sqlite;
 
-import com.sun.jna.*;
+import com.sun.jna.Library;
+import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
-
-import java.util.Arrays;
 
 public class SQLite implements Library {
   public static final String JNA_LIBRARY_NAME = "sqlite3";
@@ -24,7 +25,7 @@ public class SQLite implements Library {
 
   public static final int SQLITE_ROW = 100;
   public static final int SQLITE_DONE = 101;
-  
+
   static final int SQLITE_TRANSIENT = -1;
 
   static native String sqlite3_libversion();
@@ -50,8 +51,8 @@ public class SQLite implements Library {
   static native Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt);
 
   static native int sqlite3_table_column_metadata(Pointer pDb, String dbName, String tableName, String columnName,
-      PointerByReference pzDataType, PointerByReference pzCollSeq,
-      PointerByReference pNotNull, PointerByReference pPrimaryKey, PointerByReference pAutoinc);
+                                                  PointerByReference pzDataType, PointerByReference pzCollSeq,
+                                                  PointerByReference pNotNull, PointerByReference pPrimaryKey, PointerByReference pAutoinc);
 
   static native int sqlite3_prepare_v2(Pointer pDb, Pointer sql, int nByte, PointerByReference ppStmt,
                                        PointerByReference pTail);
@@ -61,7 +62,7 @@ public class SQLite implements Library {
   static native int sqlite3_reset(Pointer pStmt);
   static native int sqlite3_clear_bindings(Pointer pStmt);
   static native boolean sqlite3_stmt_busy(Pointer pStmt);
-  
+
   static native int sqlite3_column_count(Pointer pStmt);
   static native int sqlite3_data_count(Pointer pStmt);
   static native int sqlite3_column_type(Pointer pStmt, int iCol);
@@ -82,7 +83,7 @@ public class SQLite implements Library {
   static native String sqlite3_column_text(Pointer pStmt, int iCol);
   //const void *sqlite3_column_text16(Pointer pStmt, int iCol);
   //sqlite3_value *sqlite3_column_value(Pointer pStmt, int iCol);
-  
+
   static native int sqlite3_bind_parameter_count(Pointer pStmt);
   static native int sqlite3_bind_parameter_index(Pointer pStmt, String name);
   static native String sqlite3_bind_parameter_name(Pointer pStmt, int i);
@@ -97,8 +98,9 @@ public class SQLite implements Library {
   //static native int sqlite3_bind_value(Pointer pStmt, int i, const sqlite3_value*);
   static native int sqlite3_bind_zeroblob(Pointer pStmt, int i, int n);
 
-  static native String sqlite3_mprintf(String zFormat, String arg);
-  
+  static native Pointer sqlite3_mprintf(String zFormat, String arg);
+  static native void sqlite3_free(Pointer p);
+
   static Pointer nativeString(String sql) { // TODO Check encoding?
     byte[] data = sql.getBytes();
     final Pointer pointer = new Memory(data.length + 1);

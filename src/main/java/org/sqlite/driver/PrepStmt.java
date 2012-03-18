@@ -6,7 +6,10 @@
  *    May you find forgiveness for yourself and forgive others.
  *    May you share freely, never taking more than you give.
  */
-package org.sqlite;
+package org.sqlite.driver;
+
+import org.sqlite.ErrCodes;
+import org.sqlite.StmtException;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -15,14 +18,20 @@ import java.net.URL;
 import java.sql.*;
 import java.util.Calendar;
 
-public abstract class AbstractPrepStmt extends AbstractStmt implements PreparedStatement {
-  abstract Rows execQuery() throws StmtException;
-  abstract Stmt getStmt();
+public class PrepStmt extends Stmt implements PreparedStatement {
+  PrepStmt(Conn c, org.sqlite.Stmt stmt) {
+    super(c, stmt);
+  }
 
   @Override
   public ResultSet executeQuery() throws SQLException {
     Util.trace("*PreparedStatement.executeQuery");
-    return execQuery();
+    final org.sqlite.Stmt stmt = getStmt();
+    final boolean hasRow = stmt.step();
+    if (!hasRow && stmt.getColumnCount() == 0) {
+      throw new StmtException(stmt, "query does not return ResultSet", ErrCodes.WRAPPER_SPECIFIC);
+    }
+    return new Rows(this, hasRow);
   }
   @Override
   public int executeUpdate() throws SQLException {

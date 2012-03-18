@@ -11,7 +11,7 @@ package org.sqlite;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
-public class Conn extends AbstractConn {
+public class Conn {
   public static final String MEMORY = ":memory:";
   public static final String TEMP_FILE = "";
 
@@ -45,8 +45,7 @@ public class Conn extends AbstractConn {
   /**
    * @return result code (No exception is thrown).
    */
-  @Override
-  public int _close() {
+  public int close() {
     if (pDb == null) {
       return SQLite.SQLITE_OK;
     }
@@ -54,7 +53,7 @@ public class Conn extends AbstractConn {
     // Dangling statements
     Pointer pStmt = SQLite.sqlite3_next_stmt(pDb, null);
     while (pStmt != null) {
-      Util.trace("Dangling statement: " + SQLite.sqlite3_sql(pStmt));
+      // "Dangling statement: " + SQLite.sqlite3_sql(pStmt); TODO log
       SQLite.sqlite3_finalize(pStmt);
       pStmt = SQLite.sqlite3_next_stmt(pDb, pStmt);
     }
@@ -65,6 +64,12 @@ public class Conn extends AbstractConn {
     }
     return res;
   }
+  public void closeAndCheck() throws ConnException {
+    final int res = close();
+    if (res != ErrCodes.SQLITE_OK) {
+      throw new ConnException(this, "error while closing connection", res);
+    }
+  }
 
   private Conn(String filename, boolean readonly, Pointer pDb) {
     this.filename = filename;
@@ -72,8 +77,7 @@ public class Conn extends AbstractConn {
     this.pDb = pDb;
   }
 
-  @Override
-  boolean readOnly() {
+  public boolean isReadOnly() {
     return readonly;
   }
 
@@ -82,7 +86,6 @@ public class Conn extends AbstractConn {
    * @return Prepared Statement
    * @throws ConnException
    */
-  @Override
   public Stmt prepare(String sql) throws ConnException {
     checkOpen();
     final Pointer pSql = SQLite.nativeString(sql);
@@ -96,22 +99,17 @@ public class Conn extends AbstractConn {
   /**
    * @return Run-time library version number
    */
-  @Override
-  public String libversion() {
+  public static String libversion() {
     return SQLite.sqlite3_libversion();
   }
 
-  @Override
-  String mprintf(String format, String arg) {
-    return SQLite.sqlite3_mprintf(format, arg);
+  public static String mprintf(String format, String arg) {
+    final Pointer p = SQLite.sqlite3_mprintf(format, arg);
+    final String s = p.getString(0);
+    SQLite.sqlite3_free(p);
+    return s;
   }
 
-  @Override
-  Stmt create() {
-    return new Stmt(this);
-  }
-
-  @Override
   public void exec(String sql) throws ConnException, StmtException {
     while (sql != null && sql.length() > 0) {
       Stmt s = null;
@@ -168,7 +166,6 @@ public class Conn extends AbstractConn {
     check(SQLite.sqlite3_busy_timeout(pDb, ms), "error while setting busy timeout on '%s'", filename);
   }
 
-  @Override
   public String getFilename() {
     return filename;
   }
@@ -217,12 +214,10 @@ public class Conn extends AbstractConn {
     return p.getPointer().getInt(0) > 0;
   }
 
-  @Override
   public boolean isClosed() {
     return pDb == null;
   }
-  @Override
-  void checkOpen() throws ConnException {
+  public void checkOpen() throws ConnException {
     if (isClosed()) {
       throw new ConnException(this, String.format("connection to '%s' closed", filename), ErrCodes.WRAPPER_SPECIFIC);
     }
@@ -230,12 +225,6 @@ public class Conn extends AbstractConn {
   private void check(int res, String format, String param) throws ConnException {
     if (res != SQLite.SQLITE_OK) {
       throw new ConnException(this, String.format(format, param), res);
-    }
-  }
-  @Override
-  void check(int res, String reason) throws ConnException {
-    if (res != SQLite.SQLITE_OK) {
-      throw new ConnException(this, reason, res);
     }
   }
 }

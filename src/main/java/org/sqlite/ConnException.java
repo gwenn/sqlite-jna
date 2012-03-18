@@ -15,10 +15,10 @@ public class ConnException extends SQLiteException {
     super(reason, errCode);
     this.c = c;
   }
-  
+
   public String getFilename() {
     if (c == null) {
-      return null; 
+      return null;
     }
     return c.getFilename();
   }

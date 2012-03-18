@@ -6,22 +6,23 @@
  *    May you find forgiveness for yourself and forgive others.
  *    May you share freely, never taking more than you give.
  */
-package org.sqlite;
+package org.sqlite.driver;
 
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 
 class Util {
-  private static PrintWriter writer;
+  private static PrintStream out;
 
   static {
     try {
-      writer = new PrintWriter("/tmp/sqlite-jna.log");
+      out = new PrintStream("/tmp/sqlite-jna.log");
     } catch (FileNotFoundException e) {
       e.printStackTrace();
     }
+    //out = System.out;
   }
 
   private Util() {
@@ -40,7 +41,7 @@ class Util {
     return new SQLFeatureNotSupportedException(String.format("%s not implemented by SQLite JDBC driver", method));
   }
   static void trace(String method) {
-    writer.println(method);
-    writer.flush();
+    out.println(method);
+    out.flush();
   }
 }

@@ -22,7 +22,7 @@ public class StmtException extends SQLiteException {
     }
     return stmt.getSql();
   }
-  
+
   @Override
   protected Conn getConn() {
     if (stmt == null) {

@@ -6,29 +6,36 @@
  *    May you find forgiveness for yourself and forgive others.
  *    May you share freely, never taking more than you give.
  */
-package org.sqlite;
+package org.sqlite.driver;
 
 import java.sql.*;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-public abstract class AbstractConn implements Connection {
+public class Conn implements Connection {
+  private org.sqlite.Conn c;
+
   private Meta meta = null;
   private Properties clientInfo = null;
   private int savepointId = 0;
   protected boolean autoCommit = true;
 
-  abstract String libversion();
-  abstract String getFilename();
-  abstract void checkOpen() throws ConnException;
-  abstract void check(int res, String reason) throws ConnException;
-  abstract int _close();
-  abstract boolean readOnly();
-  abstract void exec(String sql) throws SQLiteException;
-  abstract String mprintf(String format, String arg);
-  abstract Stmt create();
-  abstract PreparedStatement prepare(String sql) throws ConnException;
+  public Conn(org.sqlite.Conn c) {
+    this.c = c;
+  }
+
+  org.sqlite.Conn getConn() throws SQLException {
+    checkOpen();
+    return c;
+  }
+  private void checkOpen() throws SQLException {
+    if (c == null) {
+      throw new SQLException("Connection closed");
+    } else {
+      c.checkOpen();
+    }
+  }
 
   @Override
   public Statement createStatement() throws SQLException {
@@ -54,11 +61,9 @@ public abstract class AbstractConn implements Connection {
   }
   @Override
   public void setAutoCommit(boolean autoCommit) throws SQLException {
-    Util.trace("*Connection.setAutoCommit(" + autoCommit + ")");
-    checkOpen();
     if (this.autoCommit == autoCommit) return;
+    getConn().exec(autoCommit ? "COMMIT" : "BEGIN");
     this.autoCommit = autoCommit;
-    exec(autoCommit ? "COMMIT" : "BEGIN");
   }
   @Override
   public boolean getAutoCommit() throws SQLException {
@@ -67,21 +72,26 @@ public abstract class AbstractConn implements Connection {
   }
   @Override
   public void commit() throws SQLException {
-    checkOpen();
     if (autoCommit) throw Util.error("database in auto-commit mode");
-    exec("COMMIT; BEGIN");
+    getConn().exec("COMMIT; BEGIN");
   }
   @Override
   public void rollback() throws SQLException {
-    checkOpen();
     if (autoCommit) throw Util.error("database in auto-commit mode");
-    exec("ROLLBACK; BEGIN");
+    getConn().exec("ROLLBACK; BEGIN");
   }
   @Override
   public void close() throws SQLException {
-    if (meta != null) meta.close();
-    if (clientInfo != null) clientInfo.clear();
-    check(_close(), "error while closing connection");
+    if (c != null) {
+      if (meta != null) meta.close(); // statements' order matters
+      c.closeAndCheck();
+      if (clientInfo != null) clientInfo.clear();
+      c = null;
+    }
+  }
+  @Override
+  public boolean isClosed() throws SQLException {
+    return c == null;
   }
   @Override
   public DatabaseMetaData getMetaData() throws SQLException {
@@ -98,7 +108,7 @@ public abstract class AbstractConn implements Connection {
   public boolean isReadOnly() throws SQLException {
     Util.trace("*Connection.isReadOnly");
     checkOpen();
-    return readOnly();
+    return getConn().isReadOnly();
   }
   @Override
   public void setCatalog(String catalog) throws SQLException {
@@ -183,28 +193,28 @@ public abstract class AbstractConn implements Connection {
         return name;
       }
     };
-    exec(mprintf("SAVEPOINT %Q", name));
+    getConn().exec(mprintf("SAVEPOINT %Q", name));
     return savepoint;
   }
   @Override
   public void rollback(Savepoint savepoint) throws SQLException {
-    exec(mprintf("ROLLBACK TO SAVEPOINT %Q", savepoint.getSavepointName()));
+    getConn().exec(mprintf("ROLLBACK TO SAVEPOINT %Q", savepoint.getSavepointName()));
   }
   @Override
   public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-    exec(mprintf("RELEASE SAVEPOINT %Q", savepoint.getSavepointName()));
+    getConn().exec(mprintf("RELEASE SAVEPOINT %Q", savepoint.getSavepointName()));
   }
   @Override
   public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
     checkOpen();
     checkCursor(resultSetType, resultSetConcurrency, resultSetHoldability);
-    return create();
+    return new Stmt(this);
   }
   @Override
   public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
     checkOpen();
     checkCursor(resultSetType, resultSetConcurrency, resultSetHoldability);
-    return prepare(sql);
+    return new PrepStmt(this, getConn().prepare(sql));
   }
   @Override
   public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
@@ -335,5 +345,8 @@ public abstract class AbstractConn implements Connection {
         "SQLite only supports CONCUR_READ_ONLY cursors");
     if (resultSetHoldability != ResultSet.CLOSE_CURSORS_AT_COMMIT) throw Util.caseUnsupported(
         "SQLite only supports closing cursors at commit");
+  }
+  static String mprintf(String format, String arg) {
+    return org.sqlite.Conn.mprintf(format, arg);
   }
 }

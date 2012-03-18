@@ -8,6 +8,7 @@ public class ConnTest {
   public void checkLibversion() throws SQLiteException {
     final Conn c = open();
     Assert.assertTrue(c.libversion().startsWith("3"));
+    checkResult(c.close());
   }
 
   @Test
@@ -15,7 +16,7 @@ public class ConnTest {
     final Conn c = Conn.open(Conn.TEMP_FILE, OpenFlags.SQLITE_OPEN_READWRITE, null);
     Assert.assertNotNull(c);
     Assert.assertEquals(Conn.TEMP_FILE, c.getFilename());
-    checkResult(c._close());
+    checkResult(c.close());
   }
 
   @Test
@@ -23,7 +24,7 @@ public class ConnTest {
     final Conn c = open();
     Assert.assertNotNull(c);
     Assert.assertEquals(Conn.MEMORY, c.getFilename());
-    checkResult(c._close());
+    checkResult(c.close());
   }
 
   @Test
@@ -44,7 +45,7 @@ public class ConnTest {
     final Stmt s = c.prepare("SELECT 1");
     Assert.assertNotNull(s);
     s.close();
-    checkResult(c._close());
+    checkResult(c.close());
   }
 
   @Test
@@ -58,7 +59,7 @@ public class ConnTest {
     Assert.assertTrue(metadata[0]);
     Assert.assertTrue(metadata[1]);
     Assert.assertTrue(metadata[2]);
-    checkResult(c._close());
+    checkResult(c.close());
   }
 
   @Test
@@ -67,8 +68,12 @@ public class ConnTest {
   }
 
   @Test
-  public void checkMprintf() {
-    Assert.assertEquals("'1'", SQLite.sqlite3_mprintf("%Q", String.valueOf(1)));
+  public void checkMprintf() throws SQLiteException {
+    final Conn c = open();
+    for (int i = 0; i < 100; i++) {
+      Assert.assertEquals("'1'", c.mprintf("%Q", String.valueOf(1)));
+    }
+    checkResult(c.close());
   }
 
   static void checkResult(int res) {

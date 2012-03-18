@@ -112,7 +112,7 @@ public interface ErrCodes {
    */
   int SQLITE_AUTH = 23;
   /**
-   *  Auxiliary database format error
+   * Auxiliary database format error
    */
   int SQLITE_FORMAT = 24;
   /**

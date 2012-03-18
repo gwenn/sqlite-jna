@@ -14,7 +14,7 @@ public class SQLiteException extends SQLException {
   public SQLiteException(String reason, int errCode) {
     super(reason, null, errCode);
   }
-  
+
   @Override
   public String getMessage() {
     final String errMsg = getErrMsg();

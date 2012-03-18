@@ -6,7 +6,9 @@
  *    May you find forgiveness for yourself and forgive others.
  *    May you share freely, never taking more than you give.
  */
-package org.sqlite;
+package org.sqlite.driver;
+
+import org.sqlite.OpenFlags;
 
 import java.sql.*;
 import java.util.Properties;
@@ -28,9 +30,9 @@ public class JDBC implements Driver {
     if (!acceptsURL(url)) return null;
     final String vfs = null;
     final int flags = OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_CREATE | OpenFlags.SQLITE_OPEN_FULLMUTEX;
-    final Conn conn = Conn.open(url.substring(PREFIX.length()), flags, vfs);
-    // conn.setBusyTimeout(3000); TODO
-    return conn;
+    final org.sqlite.Conn conn = org.sqlite.Conn.open(url.substring(PREFIX.length()), flags, vfs);
+    conn.setBusyTimeout(3000);
+    return new Conn(conn);
   }
   @Override
   public boolean acceptsURL(String url) throws SQLException {

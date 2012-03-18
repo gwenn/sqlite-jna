@@ -6,7 +6,9 @@
  *    May you find forgiveness for yourself and forgive others.
  *    May you share freely, never taking more than you give.
  */
-package org.sqlite;
+package org.sqlite.driver;
+
+import org.sqlite.ColTypes;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -16,24 +18,73 @@ import java.sql.*;
 import java.util.Calendar;
 import java.util.Map;
 
-public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
-  abstract void checkOpen() throws StmtException;
-  abstract void _close() throws StmtException;
-  abstract boolean step() throws StmtException;
-  abstract int row();
-  abstract Stmt getStmt();
-  abstract int fixCol(int columnIndex);
+public class Rows implements ResultSet, ResultSetMetaData {
+  private Stmt s;
+  private org.sqlite.Stmt stmt;
+  private int row; // Initialized at -1 when there is no result otherwise 0
+  private int lastCol = -1;   // last column accessed, for wasNull(). -1 if none
+
+  public Rows(Stmt s, boolean hasRow) throws SQLException {
+    this.s = s;
+    this.stmt = s.getStmt();
+    this.row = hasRow ? 0 : -1;
+  }
+
+  private org.sqlite.Stmt getStmt() throws SQLException {
+    checkOpen();
+    // TODO Check Statement is opened?
+    return stmt;
+  }
+  private void checkOpen() throws SQLException {
+    if (stmt == null) {
+      throw new SQLException("resultSet closed");
+    }
+  }
+
+  private boolean step() throws SQLException {
+    checkOpen();
+    if (row == -1) { // no result
+      return false;
+    }
+    if (row == 0) {
+      row++;
+      return true;
+    }
+    final boolean hasRow = stmt.step();
+    if (hasRow) {
+      row++;
+    } else {
+      close();
+    }
+    return hasRow;
+  }
+
+  private boolean isNull(int columnIndex) throws SQLException {
+    return getStmt().getColumnType(fixCol(columnIndex)) == ColTypes.SQLITE_NULL;
+  }
+  private int fixCol(int columnIndex) {
+    return columnIndex - 1;
+  }
 
   @Override
   public boolean next() throws SQLException {
+    lastCol = -1;
     final boolean step = step();
     Util.trace("*ResultSet.next -> " + step);
     return step;
   }
   @Override
-  public void close() throws StmtException {
+  public void close() throws SQLException {
     Util.trace("*ResultSet.close");
-    _close();
+    if (stmt != null) {
+      if (s.isCloseOnCompletion()) {
+        s.close();
+      } else {
+        stmt.reset();
+      }
+      s = null;
+      stmt = null;
+    }
   }
   @Override
   public boolean wasNull() throws SQLException {
@@ -42,13 +93,11 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public String getString(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getString");
     return getStmt().getColumnText(fixCol(columnIndex));
   }
   @Override
   public boolean getBoolean(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getBoolean");
-    return false; // TODO
+    return getInt(columnIndex) != 0;
   }
   @Override
   public byte getByte(int columnIndex) throws SQLException {
@@ -62,13 +111,11 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public int getInt(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getInt");
-    return 0; // TODO
+    return getStmt().getColumnInt(fixCol(columnIndex));
   }
   @Override
   public long getLong(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getLong");
-    return 0; // TODO
+    return getStmt().getColumnLong(fixCol(columnIndex));
   }
   @Override
   public float getFloat(int columnIndex) throws SQLException {
@@ -92,8 +139,8 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public Date getDate(int columnIndex) throws SQLException {
-    Util.trace("*ResultSet.getDate");
-    return null; // TODO
+    if (isNull(columnIndex)) return null;
+    return new Date(getLong(columnIndex));
   }
   @Override
   public Time getTime(int columnIndex) throws SQLException {
@@ -216,7 +263,7 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   @Override
   public int findColumn(String columnLabel) throws SQLException {
     checkOpen();
-    return getStmt().findCol(columnLabel);
+    return s.findCol(columnLabel);
   }
   @Override
   public Reader getCharacterStream(int columnIndex) throws SQLException {
@@ -246,7 +293,7 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   @Override
   public boolean isBeforeFirst() throws SQLException {
     checkOpen();
-    return row() < 1;
+    return row < 1;
   }
   @Override
   public boolean isAfterLast() throws SQLException {
@@ -258,7 +305,7 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   public boolean isFirst() throws SQLException {
     Util.trace("*ResultSet.isFirst");
     checkOpen();
-    return row() == 1;
+    return row == 1;
   }
   @Override
   public boolean isLast() throws SQLException {
@@ -286,7 +333,7 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   public int getRow() throws SQLException {
     Util.trace("*ResultSet.getRow");
     checkOpen();
-    return Math.max(row(), 0);
+    return Math.max(row, 0);
   }
   @Override
   public boolean absolute(int row) throws SQLException {
@@ -533,7 +580,8 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   @Override
   public Statement getStatement() throws SQLException {
     Util.trace("*ResultSet.getStatement");
-    return getStmt();
+    checkOpen();
+    return s;
   }
   @Override
   public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
@@ -661,6 +709,10 @@ public abstract class AbstractRows implements ResultSet, ResultSetMetaData {
   @Override
   public int getHoldability() throws SQLException {
     return CLOSE_CURSORS_AT_COMMIT;
+  }
+  @Override
+  public boolean isClosed() {
+    return stmt == null;
   }
   @Override
   public void updateNString(int columnIndex, String nString) throws SQLException {

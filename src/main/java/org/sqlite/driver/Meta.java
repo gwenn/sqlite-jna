@@ -1,24 +1,30 @@
-package org.sqlite;
+package org.sqlite.driver;
 
 import java.sql.*;
 import java.util.Arrays;
 
 public class Meta implements DatabaseMetaData {
-  private AbstractConn conn;
-  
+  private Conn c;
+
   private PreparedStatement findTableByNamePattern;
 
-  public Meta(AbstractConn conn) {
-    this.conn = conn;
+  public Meta(Conn c) {
+    this.c = c;
   }
-  
-  void checkOpen() throws SQLException {
-    if (conn == null) throw new SQLException("connection closed"); }
+
+  private void checkOpen() throws SQLException {
+    if (c == null) throw new SQLException("connection closed");
+  }
+
+  private org.sqlite.Conn getConn() throws SQLException {
+    checkOpen();
+    return c.getConn();
+  }
 
   void close() throws SQLException {
-    if (conn == null) return;
+    if (c == null) return;
     if (findTableByNamePattern != null) findTableByNamePattern.close();
-    conn = null;
+    c = null;
   }
 
   @Override
@@ -31,7 +37,7 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public String getURL() throws SQLException {
-    return conn.getFilename();
+    return getConn().getFilename();
   }
   @Override
   public String getUserName() throws SQLException {
@@ -39,7 +45,7 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public boolean isReadOnly() throws SQLException {
-    return conn.isReadOnly();
+    return getConn().isReadOnly();
   }
   @Override
   public boolean nullsAreSortedHigh() throws SQLException {
@@ -63,7 +69,7 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public String getDatabaseProductVersion() throws SQLException {
-    return conn.libversion();
+    return org.sqlite.Conn.libversion();
   }
   @Override
   public String getDriverName() throws SQLException {
@@ -523,6 +529,7 @@ public class Meta implements DatabaseMetaData {
   @Override
   public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
     Util.trace("DatabaseMetaData.getTables(" + catalog + ", " + schemaPattern + ", " + tableNamePattern + ", " + Arrays.toString(types) + ")");
+    checkOpen();
     tableNamePattern = (tableNamePattern == null || "".equals(tableNamePattern)) ? "%" : tableNamePattern;
 
     final StringBuilder sql = new StringBuilder().append("select").
@@ -553,7 +560,7 @@ public class Meta implements DatabaseMetaData {
 
     sql.append(" order by TABLE_TYPE, TABLE_SCHEM, TABLE_NAME");
 
-    final PreparedStatement stmt = conn.prepare(sql.toString());
+    final PreparedStatement stmt = c.prepareStatement(sql.toString());
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -576,13 +583,14 @@ public class Meta implements DatabaseMetaData {
   @Override
   public ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
     Util.trace("DatabaseMetaData.getColumns(" + catalog + "," + schemaPattern + ", " + tableNamePattern + ", " + columnNamePattern + ")");
+    checkOpen();
     ResultSet rs;
     final StringBuilder sql = new StringBuilder();
 
     checkOpen();
 
     if (findTableByNamePattern == null)
-      findTableByNamePattern = conn.prepareStatement(
+      findTableByNamePattern = c.prepareStatement(
           "select tbl_name from sqlite_master where tbl_name like ?");
 
     // determine exact table name
@@ -590,7 +598,7 @@ public class Meta implements DatabaseMetaData {
     rs = findTableByNamePattern.executeQuery();
     final String tbl;
     if (rs.next()) {
-     tbl = rs.getString(1);
+      tbl = rs.getString(1);
     } else {
       tbl = null;
     }
@@ -605,17 +613,17 @@ public class Meta implements DatabaseMetaData {
         append("tn as TYPE_NAME, ").
         append("2000000000 as COLUMN_SIZE, "). // FIXME
         append("2000000000 as BUFFER_LENGTH, ").
-        append("10   as DECIMAL_DIGITS, ").
-        append("10   as NUM_PREC_RADIX, ").
+        append("10 as DECIMAL_DIGITS, ").
+        append("10 as NUM_PREC_RADIX, ").
         append("colnullable as NULLABLE, ").
         append("null as REMARKS, ").
         append("null as COLUMN_DEF, ").
-        append("0    as SQL_DATA_TYPE, ").
-        append("0    as SQL_DATETIME_SUB, ").
+        append("0 as SQL_DATA_TYPE, ").
+        append("0 as SQL_DATETIME_SUB, ").
         append("2000000000 as CHAR_OCTET_LENGTH, ").
         append("ordpos as ORDINAL_POSITION, ").
         append("(case colnullable when 0 then 'N' when 1 then 'Y' else '' end)").
-        append("    as IS_NULLABLE, ").
+        append(" as IS_NULLABLE, ").
         append("null as SCOPE_CATLOG, ").
         append("null as SCOPE_SCHEMA, ").
         append("null as SCOPE_TABLE, ").
@@ -626,17 +634,17 @@ public class Meta implements DatabaseMetaData {
       // the command "pragma table_info('tablename')" does not embed
       // like a normal select statement so we must extract the information
       // and then build a resultset from unioned select statements
-      final PreparedStatement table_info = conn.prepare("pragma table_info (" + quote(tbl) + ")");
+      final PreparedStatement table_info = c.prepareStatement("pragma table_info (" + quote(tbl) + ")");
       table_info.closeOnCompletion();
       rs = table_info.executeQuery();
 
-      for (int i=0; rs.next(); i++) {
+      for (int i = 0; rs.next(); i++) {
         String colName = rs.getString(2);
         String colType = rs.getString(3);
         String colNotNull = rs.getString(4);
 
         int colNullable = 2;
-        if (colNotNull != null) colNullable = colNotNull.equals("0") ? 1:0;
+        if (colNotNull != null) colNullable = colNotNull.equals("0") ? 1 : 0;
         if (colFound) sql.append(" union all ");
         colFound = true;
 
@@ -657,13 +665,12 @@ public class Meta implements DatabaseMetaData {
     }
 
     sql.append(colFound ? ") order by TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION" :
-        "select null as ordpos, null as colnullable, "
+        "select null as ordpos, null as colnullable, null as ct, "
             + "null as cn, null as tn) limit 0");
-    final PreparedStatement columns = conn.prepare(sql.toString());
+    final PreparedStatement columns = c.prepareStatement(sql.toString());
     columns.closeOnCompletion();
     return columns.executeQuery();
   }
-
 
   private String getSQLiteType(String colType) {
     return colType == null ? "TEXT" : colType.toUpperCase();
@@ -681,7 +688,7 @@ public class Meta implements DatabaseMetaData {
       colJavaType = Types.VARCHAR;
     return colJavaType;
   }
-  
+
   @Override
   public ResultSet getColumnPrivileges(String catalog, String schema, String table, String columnNamePattern) throws SQLException {
     Util.trace("DatabaseMetaData.getColumnPrivileges");
@@ -787,7 +794,7 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public Connection getConnection() throws SQLException {
-    return conn;
+    return c;
   }
   @Override
   public boolean supportsSavepoints() throws SQLException {
@@ -907,9 +914,9 @@ public class Meta implements DatabaseMetaData {
   public boolean isWrapperFor(Class<?> iface) throws SQLException {
     return false;
   }
-  
+
   private String quote(String data) {
     //if (data == null) return data;
-    return conn.mprintf("%Q", data);
+    return Conn.mprintf("%Q", data);
   }
 }
