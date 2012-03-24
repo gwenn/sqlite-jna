@@ -12,7 +12,7 @@ public class ConnException extends SQLiteException {
   private final Conn c;
 
   public ConnException(Conn c, String reason, int errCode) {
-    super(reason, errCode);
+    super(c, reason, errCode);
     this.c = c;
   }
 
@@ -21,10 +21,5 @@ public class ConnException extends SQLiteException {
       return null;
     }
     return c.getFilename();
-  }
-
-  @Override
-  protected Conn getConn() {
-    return c;
   }
 }

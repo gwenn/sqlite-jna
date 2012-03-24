@@ -12,7 +12,7 @@ public class StmtException extends SQLiteException {
   private final Stmt stmt;
 
   public StmtException(Stmt stmt, String reason, int errCode) {
-    super(reason, errCode);
+    super(stmt == null ? null : stmt.c, reason, errCode);
     this.stmt = stmt;
   }
 
@@ -21,13 +21,5 @@ public class StmtException extends SQLiteException {
       return null;
     }
     return stmt.getSql();
-  }
-
-  @Override
-  protected Conn getConn() {
-    if (stmt == null) {
-      return null;
-    }
-    return stmt.c;
   }
 }

@@ -11,15 +11,26 @@ package org.sqlite;
 import java.sql.SQLException;
 
 public class SQLiteException extends SQLException {
+  private final String errMsg;
+
   public SQLiteException(String reason, int errCode) {
+    this(null, reason, errCode);
+  }
+  public SQLiteException(Conn c, String reason, int errCode) {
     super(reason, null, errCode);
+    if (c == null) {
+      errMsg = null;
+    } else if (getErrorCode() >= 0) {
+      errMsg = c.getErrMsg();
+    } else {
+      errMsg = null;
+    }
   }
 
   @Override
   public String getMessage() {
-    final String errMsg = getErrMsg();
     if (errMsg != null && !errMsg.isEmpty()) {
-      return errMsg;
+      return String.format("%s (%s)", super.getMessage(), errMsg);
     } else {
       if (getErrorCode() > 0) {
         return String.format("%s (code %d)", super.getMessage(), getErrorCode());
@@ -30,17 +41,6 @@ public class SQLiteException extends SQLException {
   }
 
   public String getErrMsg() {
-    final Conn c = getConn();
-    if (c == null) {
-      return null;
-    }
-    if (getErrorCode() >= 0) {
-      return c.getErrMsg();
-    }
-    return null;
-  }
-
-  protected Conn getConn() {
-    return null;
+    return errMsg;
   }
 }
