@@ -151,6 +151,33 @@ public class Stmt {
     columnNames[iCol] = SQLite.sqlite3_column_name(pStmt, iCol);
     return columnNames[iCol];
   }
+  /**
+   * @param iCol The leftmost column is number 0.
+   * @return Column origin name
+   * @throws StmtException
+   */
+  public String getColumnOriginName(int iCol) throws StmtException {
+    checkOpen();
+    return SQLite.sqlite3_column_origin_name(pStmt, iCol);
+  }
+  /**
+   * @param iCol The leftmost column is number 0.
+   * @return Table name
+   * @throws StmtException
+   */
+  public String getColumnTableName(int iCol) throws StmtException {
+    checkOpen();
+    return SQLite.sqlite3_column_table_name(pStmt, iCol);
+  }
+  /**
+   * @param iCol The leftmost column is number 0.
+   * @return Database name
+   * @throws StmtException
+   */
+  public String getColumnDatabaseName(int iCol) throws StmtException {
+    checkOpen();
+    return SQLite.sqlite3_column_database_name(pStmt, iCol);
+  }
 
   public byte[] getColumnBlob(int iCol) throws StmtException {
     checkOpen();
@@ -359,18 +386,15 @@ public class Stmt {
     checkBind(SQLite.sqlite3_bind_zeroblob(pStmt, i, n), "sqlite3_bind_zeroblob", i);
   }
 
-  boolean[][] getMetadata() throws StmtException, ConnException {
-    final int colCount = getColumnCount();
-    final boolean[][] metadata = new boolean[colCount][3];
-    for (int col = 0; col < colCount; col++) {
-      final String colName = getColumnName(col); // FIXME origin_name?
-      final String tblName = SQLite.sqlite3_column_table_name(pStmt, col);
-      if (colName != null && tblName != null) {
-        final boolean[] colMetaData = c.getTableColumnMetadata(null /*FIXME*/, tblName, colName);
-        metadata[col] = colMetaData;
+  private static final boolean[] UNKNOWN = new boolean[3];
+  public boolean[] getMetadata(int iCol) throws StmtException, ConnException {
+      final String colName = getColumnOriginName(iCol);
+      if (colName != null) {
+        final boolean[] colMetaData = c.getTableColumnMetadata(
+          getColumnDatabaseName(iCol), getColumnTableName(iCol), colName);
+        return colMetaData;
       }
-    }
-    return metadata;
+      return UNKNOWN;
   }
 
   void check(int res, String format) throws StmtException {

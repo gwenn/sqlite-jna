@@ -41,7 +41,7 @@ public class JDBC implements Driver {
   @Override
   public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
     Util.trace("Driver.getPropertyInfo");
-    return new DriverPropertyInfo[0];  // TODO
+    return new DriverPropertyInfo[0];  // TODO vfs, mode (ro, rw, rwc), cache, encoding, foreign_keys, locking_mode, recursive_triggers, synchronous,
   }
   @Override
   public int getMajorVersion() {

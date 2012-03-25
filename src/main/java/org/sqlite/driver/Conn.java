@@ -41,7 +41,7 @@ public class Conn implements Connection {
 
   ResultSet getGeneratedKeys() throws SQLException {
     if (getGeneratedKeys == null) {
-      getGeneratedKeys = prepareStatement("select last_insert_rowid() as id");
+      getGeneratedKeys = prepareStatement("select last_insert_rowid() as id"); // FIXME 'id' name
     }
     return getGeneratedKeys.executeQuery();
   }
@@ -65,7 +65,7 @@ public class Conn implements Connection {
   }
   @Override
   public String nativeSQL(String sql) throws SQLException {
-    Util.trace("*Connection.nativeSQL");
+    Util.trace("Connection.nativeSQL");
     return sql;
   }
   @Override

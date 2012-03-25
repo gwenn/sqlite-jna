@@ -15,6 +15,7 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 
+// There is no "not prepared" statement in SQLite!
 public class Stmt implements Statement {
   private Conn c;
   private final boolean prepared;
@@ -25,6 +26,8 @@ public class Stmt implements Statement {
   //if (colIndexByName != null) colIndexByName.clear();
   private Map<String, Integer> colIndexByName;
   private boolean isCloseOnCompletion;
+  private int maxRows;
+  private int status; // 0: not a select, 1: select with row, 2: select without row
 
   Stmt(Conn c) {
     this.c = c;
@@ -88,7 +91,13 @@ public class Stmt implements Statement {
     if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
-      throw Util.unsupported("Statement.executeQuery");
+      close();
+      stmt = c.getConn().prepare(sql);
+      final boolean hasRow = stmt.step();
+      if (!hasRow && stmt.getColumnCount() == 0) {
+        throw new StmtException(stmt, "query does not return ResultSet", ErrCodes.WRAPPER_SPECIFIC);
+      }
+      return new Rows(this, hasRow);
     }
   }
   @Override
@@ -96,7 +105,16 @@ public class Stmt implements Statement {
     if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
-      throw Util.unsupported("Statement.executeUpdate");
+      close();
+      try {
+        stmt = c.getConn().prepare(sql);
+        if (stmt.step() || stmt.getColumnCount() != 0) {
+          throw new StmtException(stmt, "statement returns a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
+        }
+        return getConn().getChanges();
+      } finally {
+        close();
+      }
     }
   }
   @Override
@@ -106,7 +124,10 @@ public class Stmt implements Statement {
       stmt.closeAndCheck();
       if (colIndexByName != null) colIndexByName.clear();
       stmt = null;
-      c = null;
+      status = 0;
+      if (prepared) {
+        c = null;
+      }
     }
   }
   @Override
@@ -123,12 +144,12 @@ public class Stmt implements Statement {
   }
   @Override
   public int getMaxRows() throws SQLException { // Used by Hibernate
-    return 0;
+    return maxRows;
   }
   @Override
   public void setMaxRows(int max) throws SQLException {
     if (max < 0) throw Util.error("max row count must be >= 0");
-    throw Util.unsupported("*Statement.setMaxRows"); // TODO
+    this.maxRows = max;
   }
   @Override
   public void setEscapeProcessing(boolean enable) throws SQLException {
@@ -171,16 +192,35 @@ public class Stmt implements Statement {
     if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
-      throw Util.unsupported("*Statement.execute(String)"); // TODO
+      close();
+      stmt = c.getConn().prepare(sql);
+      if (stmt.step()) {
+        status = 1;
+      } else if (stmt.getColumnCount() != 0) {
+        status = 2;
+      } else {
+        status = 0;
+      }
+      return status != 0;
     }
   }
   @Override
   public ResultSet getResultSet() throws SQLException {
-    throw Util.unsupported("*Statement.getResultSet"); // TODO
+    if (status != 0) {
+      final boolean hasRow = status == 1;
+      status = 0;
+      return new Rows(this, hasRow);
+    } else {
+      return null;
+    }
   }
   @Override
   public int getUpdateCount() throws SQLException {
-    throw Util.unsupported("*Statement.getUpdateCount"); // TODO
+    if (status != 0) {
+      return -1;
+    } else {
+      return getConn().getChanges();
+    }
   }
   @Override
   public boolean getMoreResults() throws SQLException {

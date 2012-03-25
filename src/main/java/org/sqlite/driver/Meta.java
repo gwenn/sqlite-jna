@@ -517,8 +517,19 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
-    Util.trace("DatabaseMetaData.getProcedures");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+        "select "
+      + "null as PROCEDURE_CAT, "
+      + "null as PROCEDURE_SCHEM, "
+      + "null as PROCEDURE_NAME, "
+      + "null as UNDEF1, "
+      + "null as UNDEF2, "
+      + "null as UNDEF3, "
+      + "null as REMARKS, "
+      + "null as PROCEDURE_TYPE limit 0");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern) throws SQLException {
@@ -563,19 +574,31 @@ public class Meta implements DatabaseMetaData {
     return stmt.executeQuery();
   }
   @Override
-  public ResultSet getSchemas() throws SQLException {
-    Util.trace("DatabaseMetaData.getSchemas");
-    return null;
+  public ResultSet getSchemas() throws SQLException { // TODO main, temp, attached dbs
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+        "select "
+      + "null as TABLE_SCHEM, "
+      + "null as TABLE_CATALOG "
+      + "limit 0");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public ResultSet getCatalogs() throws SQLException {
-    Util.trace("DatabaseMetaData.getCatalogs");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+      "select null as TABLE_CAT limit 0");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public ResultSet getTableTypes() throws SQLException {
-    Util.trace("DatabaseMetaData.getTableTypes");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement("select 'TABLE' as TABLE_TYPE " +
+      "union select 'VIEW' as TABLE_TYPE");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   // TODO Support multi tables
   @Override
@@ -608,16 +631,16 @@ public class Meta implements DatabaseMetaData {
         append("cn as COLUMN_NAME, ").
         append("ct as DATA_TYPE, ").
         append("tn as TYPE_NAME, ").
-        append("2000000000 as COLUMN_SIZE, "). // FIXME
-        append("2000000000 as BUFFER_LENGTH, ").
+        append("10 as COLUMN_SIZE, "). // FIXME
+        append("10 as BUFFER_LENGTH, ").
         append("10 as DECIMAL_DIGITS, ").
         append("10 as NUM_PREC_RADIX, ").
         append("colnullable as NULLABLE, ").
         append("null as REMARKS, ").
-        append("null as COLUMN_DEF, ").
+        append("null as COLUMN_DEF, "). // TODO
         append("0 as SQL_DATA_TYPE, ").
         append("0 as SQL_DATETIME_SUB, ").
-        append("2000000000 as CHAR_OCTET_LENGTH, ").
+        append("10 as CHAR_OCTET_LENGTH, "). // FIXME
         append("ordpos as ORDINAL_POSITION, ").
         append("(case colnullable when 0 then 'N' when 1 then 'Y' else '' end)").
         append(" as IS_NULLABLE, ").
@@ -673,14 +696,14 @@ public class Meta implements DatabaseMetaData {
     return colType == null ? "TEXT" : colType.toUpperCase();
   }
 
-  private static int getJavaType(String colType) {
+  private static int getJavaType(String colType) { // FIXME http://sqlite.org/datatype3.html
     final int colJavaType;
-    if ("INT".equals(colType) || "INTEGER".equals(colType))
+    if ("INTEGER".equals(colType))
       colJavaType = Types.INTEGER;
     else if ("TEXT".equals(colType))
       colJavaType = Types.VARCHAR;
     else if ("FLOAT".equals(colType))
-      colJavaType = Types.FLOAT;
+      colJavaType = Types.REAL;
     else
       colJavaType = Types.VARCHAR;
     return colJavaType;
@@ -688,13 +711,34 @@ public class Meta implements DatabaseMetaData {
 
   @Override
   public ResultSet getColumnPrivileges(String catalog, String schema, String table, String columnNamePattern) throws SQLException {
-    Util.trace("DatabaseMetaData.getColumnPrivileges");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+        "select "
+      + "null as TABLE_CAT, "
+      + "null as TABLE_SCHEM, "
+      + "null as TABLE_NAME, "
+      + "null as COLUMN_NAME, "
+      + "null as GRANTOR, "
+      + "null as GRANTEE, "
+      + "null as PRIVILEGE, "
+      + "null as IS_GRANTABLE limit 0");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
-    Util.trace("DatabaseMetaData.getTablePrivileges");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+        "select "
+      + "null as TABLE_CAT, "
+      + "null as TABLE_SCHEM, "
+      + "null as TABLE_NAME, "
+      + "null as GRANTOR, "
+      + "null as GRANTEE, "
+      + "null as PRIVILEGE, "
+      + "null as IS_GRANTABLE limit 0");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public ResultSet getBestRowIdentifier(String catalog, String schema, String table, int scope, boolean nullable) throws SQLException {
@@ -703,8 +747,19 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getVersionColumns(String catalog, String schema, String table) throws SQLException {
-    Util.trace("DatabaseMetaData.getVersionColumns");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+        "select "
+      + "null as SCOPE, "
+      + "null as COLUMN_NAME, "
+      + "null as DATA_TYPE, "
+      + "null as TYPE_NAME, "
+      + "null as COLUMN_SIZE, "
+      + "null as BUFFER_LENGTH, "
+      + "null as DECIMAL_DIGITS, "
+      + "null as PSEUDO_COLUMN limit 0");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
@@ -728,8 +783,35 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getTypeInfo() throws SQLException {
-    Util.trace("DatabaseMetaData.getTypeInfo");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+        "select "
+      + "tn as TYPE_NAME, "
+      + "dt as DATA_TYPE, "
+      + "0 as PRECISION, "
+      + "null as LITERAL_PREFIX, "
+      + "null as LITERAL_SUFFIX, "
+      + "null as CREATE_PARAMS, "
+      + typeNullable + " as NULLABLE, "
+      + "1 as CASE_SENSITIVE, "
+      + typeSearchable + " as SEARCHABLE, "
+      + "0 as UNSIGNED_ATTRIBUTE, "
+      + "0 as FIXED_PREC_SCALE, "
+      + "0 as AUTO_INCREMENT, "
+      + "null as LOCAL_TYPE_NAME, "
+      + "0 as MINIMUM_SCALE, "
+      + "0 as MAXIMUM_SCALE, "
+      + "0 as SQL_DATA_TYPE, "
+      + "0 as SQL_DATETIME_SUB, "
+      + "10 as NUM_PREC_RADIX from ("
+      + "    select 'BLOB' as tn, " + Types.BLOB + " as dt union"
+      + "    select 'NULL' as tn, " + Types.NULL + " as dt union"
+      + "    select 'REAL' as tn, " + Types.REAL+ " as dt union"
+      + "    select 'TEXT' as tn, " + Types.VARCHAR + " as dt union"
+      + "    select 'INTEGER' as tn, "+ Types.INTEGER +" as dt"
+      + ") order by DATA_TYPE, TYPE_NAME");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException {
@@ -786,8 +868,19 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern, int[] types) throws SQLException {
-    Util.trace("DatabaseMetaData.getUDTs");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+        "select "
+      + "null as TYPE_CAT, "
+      + "null as TYPE_SCHEM, "
+      + "null as TYPE_NAME, "
+      + "null as CLASS_NAME, "
+      + "null as DATA_TYPE, "
+      + "null as REMARKS, "
+      + "null as BASE_TYPE "
+      + "limit 0");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public Connection getConnection() throws SQLException {
@@ -811,18 +904,58 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getSuperTypes(String catalog, String schemaPattern, String typeNamePattern) throws SQLException {
-    Util.trace("DatabaseMetaData.getSuperTypes");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+        "select "
+      + "null as TYPE_CAT, "
+      + "null as TYPE_SCHEM, "
+      + "null as TYPE_NAME, "
+      + "null as SUPERTYPE_CAT, "
+      + "null as SUPERTYPE_SCHEM, "
+      + "null as SUPERTYPE_NAME limit 0");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public ResultSet getSuperTables(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
-    Util.trace("DatabaseMetaData.getSuperTables");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+      "select "
+      + "null as TABLE_CAT, "
+      + "null as TABLE_SCHEM, "
+      + "null as TABLE_NAME, "
+      + "null as SUPERTABLE_NAME limit 0");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public ResultSet getAttributes(String catalog, String schemaPattern, String typeNamePattern, String attributeNamePattern) throws SQLException {
-    Util.trace("DatabaseMetaData.getAttributes");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+        "select "
+      + "null as TYPE_CAT, "
+      + "null as TYPE_SCHEM, "
+      + "null as TYPE_NAME, "
+      + "null as ATTR_NAME, "
+      + "null as DATA_TYPE, "
+      + "null as ATTR_TYPE_NAME, "
+      + "null as ATTR_SIZE, "
+      + "null as DECIMAL_DIGITS, "
+      + "null as NUM_PREC_RADIX, "
+      + "null as NULLABLE, "
+      + "null as REMARKS, "
+      + "null as ATTR_DEF, "
+      + "null as SQL_DATA_TYPE, "
+      + "null as SQL_DATETIME_SUB, "
+      + "null as CHAR_OCTET_LENGTH, "
+      + "null as ORDINAL_POSITION, "
+      + "null as IS_NULLABLE, "
+      + "null as SCOPE_CATALOG, "
+      + "null as SCOPE_SCHEMA, "
+      + "null as SCOPE_TABLE, "
+      + "null as SOURCE_DATA_TYPE limit 0");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public boolean supportsResultSetHoldability(int holdability) throws SQLException {
@@ -867,8 +1000,7 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
-    Util.trace("DatabaseMetaData.getSchemas");
-    return null;
+    return getSchemas(); // TODO
   }
   @Override
   public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
@@ -879,9 +1011,17 @@ public class Meta implements DatabaseMetaData {
     return false;
   }
   @Override
-  public ResultSet getClientInfoProperties() throws SQLException {
-    Util.trace("DatabaseMetaData.getClientInfoProperties");
-    return null;
+  public ResultSet getClientInfoProperties() throws SQLException { // TODO
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+        "select "
+      + "null as NAME, "
+      + "0 as MAX_LEN, "
+      + "null as DEFAULT_VALUE, "
+      + "null as DESCRIPTION "
+      + "limit 0");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
@@ -895,8 +1035,23 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
-    Util.trace("DatabaseMetaData.getPseudoColumns");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement( // TODO rowId?
+        "select "
+      + "null as TABLE_CAT, "
+      + "null as TABLE_SCHEM, "
+      + "null as TABLE_NAME, "
+      + "null as COLUMN_NAME, "
+      + "null as DATA_TYPE, "
+      + "null as COLUMN_SIZE, "
+      + "null as DECIMAL_DIGITS, "
+      + "null as NUM_PREC_RADIX, "
+      + "null as COLUMN_USAGE, "
+      + "null as REMARKS, "
+      + "null as CHAR_OCTET_LENGTH, "
+      + "null as IS_NULLABLE limit 0");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public boolean generatedKeyAlwaysReturned() throws SQLException {

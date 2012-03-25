@@ -67,12 +67,12 @@ public class SQLite implements Library {
   static native int sqlite3_data_count(Pointer pStmt);
   static native int sqlite3_column_type(Pointer pStmt, int iCol);
   static native String sqlite3_column_name(Pointer pStmt, int iCol);
+  static native String sqlite3_column_origin_name(Pointer pStmt, int iCol);
   static native String sqlite3_column_table_name(Pointer pStmt, int iCol);
+  static native String sqlite3_column_database_name(Pointer pStmt, int iCol);
 
   /*
   const char *sqlite3_column_decltype(sqlite3_stmt*,int);
-  const char *sqlite3_column_database_name(sqlite3_stmt*,int);
-  const char *sqlite3_column_origin_name(sqlite3_stmt*,int);
   */
 
   static native Pointer sqlite3_column_blob(Pointer pStmt, int iCol);

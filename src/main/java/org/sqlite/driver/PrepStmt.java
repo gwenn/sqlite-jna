@@ -34,7 +34,10 @@ public class PrepStmt extends Stmt implements PreparedStatement {
   }
   @Override
   public int executeUpdate() throws SQLException {
-    getStmt().step();
+    final org.sqlite.Stmt stmt = getStmt();
+    if (stmt.step() || stmt.getColumnCount() != 0) {
+      throw new StmtException(stmt, "statement returns a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
+    }
     return getConn().getChanges();
   }
   @Override

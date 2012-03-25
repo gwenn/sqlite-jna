@@ -50,6 +50,12 @@ public class Rows implements ResultSet, ResultSetMetaData {
       row++;
       return true;
     }
+    final int maxRows = s.getMaxRows();
+    if (maxRows != 0 && row >= maxRows) {
+      close();
+      return false;
+    }
+
     final boolean hasRow = stmt.step();
     if (hasRow) {
       row++;
@@ -260,12 +266,12 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public SQLWarning getWarnings() throws SQLException {
-    checkOpen();
+    // checkOpen();
     return null;
   }
   @Override
   public void clearWarnings() throws SQLException {
-    checkOpen();
+    // checkOpen();
   }
   @Override
   public String getCursorName() throws SQLException {
@@ -279,7 +285,17 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public Object getObject(int columnIndex) throws SQLException {
-    throw Util.unsupported("ResultSet.getObject");
+    final org.sqlite.Stmt stmt = getStmt();
+    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
+    final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+    switch (sourceType) {
+      case ColTypes.SQLITE_TEXT: return getString(columnIndex);
+      case ColTypes.SQLITE_INTEGER: return getLong(columnIndex);
+      case ColTypes.SQLITE_FLOAT: return getDouble(columnIndex);
+      case ColTypes.SQLITE_BLOB: return getBytes(columnIndex);
+      case ColTypes.SQLITE_NULL: return null;
+      default: throw new AssertionError(String.format("Unknown column type %d", sourceType));
+    }
   }
   @Override
   public Object getObject(String columnLabel) throws SQLException {
@@ -927,7 +943,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public boolean isAutoIncrement(int column) throws SQLException {
-    throw Util.unsupported("ResultSetMetaData.isAutoIncrement"); // TODO
+    return getStmt().getMetadata(fixCol(column))[2];
   }
   @Override
   public boolean isCaseSensitive(int column) throws SQLException {
@@ -943,7 +959,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public int isNullable(int column) throws SQLException {
-    throw Util.unsupported("ResultSetMetaData.isNullable"); // TODO
+    return getStmt().getMetadata(fixCol(column))[0] ? columnNoNulls: columnNullable;
   }
   @Override
   public boolean isSigned(int column) throws SQLException {
@@ -951,19 +967,18 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public int getColumnDisplaySize(int column) throws SQLException {
-    throw Util.unsupported("ResultSetMetaData.getColumnDisplaySize"); // TODO
+    return 10; // Like in SQLite shell in column mode
   }
   @Override
   public String getColumnLabel(int column) throws SQLException {
-    throw Util.unsupported("ResultSetMetaData.getColumnLabel"); // TODO
+    return getColumnName(column);
   }
   @Override
   public String getColumnName(int column) throws SQLException {
-    throw Util.unsupported("ResultSetMetaData.getColumnName"); // TODO
+    return getStmt().getColumnName(fixCol(column)); // TODO sqlite3_column_origin_name ?
   }
   @Override
   public String getSchemaName(int column) throws SQLException {
-    Util.trace("ResultSetMetaData.getSchemaName");
     return ""; // TODO Validate
   }
   @Override
@@ -978,20 +993,37 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public String getTableName(int column) throws SQLException {
-    throw Util.unsupported("ResultSetMetaData.getTableName"); // TODO
+    return getStmt().getColumnTableName(fixCol(column)); // TODO sqlite3_column_origin_name ?
   }
   @Override
   public String getCatalogName(int column) throws SQLException {
-    Util.trace("ResultSetMetaData.getCatalogName");
     return ""; // TODO Validate
   }
   @Override
   public int getColumnType(int column) throws SQLException {
-    throw Util.unsupported("ResultSetMetaData.getColumnType"); // TODO
+    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
+    final int sourceType = getStmt().getColumnType(fixCol(column));
+    switch (sourceType) {
+      case ColTypes.SQLITE_TEXT: return Types.VARCHAR;
+      case ColTypes.SQLITE_INTEGER: return Types.INTEGER;
+      case ColTypes.SQLITE_FLOAT: return Types.REAL;
+      case ColTypes.SQLITE_BLOB: return Types.BLOB;
+      case ColTypes.SQLITE_NULL: return Types.NULL;
+      default: throw new AssertionError(String.format("Unknown column type %d", sourceType));
+    }
   }
   @Override
   public String getColumnTypeName(int column) throws SQLException {
-    throw Util.unsupported("ResultSetMetaData.getColumnTypeName"); // TODO
+    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
+    final int sourceType = getStmt().getColumnType(fixCol(column));
+    switch (sourceType) {
+      case ColTypes.SQLITE_TEXT: return "text";
+      case ColTypes.SQLITE_INTEGER: return "integer";
+      case ColTypes.SQLITE_FLOAT: return "real";
+      case ColTypes.SQLITE_BLOB: return "blob";
+      case ColTypes.SQLITE_NULL: return "null";
+      default: throw new AssertionError(String.format("Unknown column type %d", sourceType));
+    }
   }
   @Override
   public boolean isReadOnly(int column) throws SQLException {
@@ -1007,7 +1039,16 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public String getColumnClassName(int column) throws SQLException {
-    throw Util.unsupported("ResultSetMetaData.getColumnClassName"); // TODO
+    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
+    final int sourceType = getStmt().getColumnType(fixCol(column));
+    switch (sourceType) {
+      case ColTypes.SQLITE_TEXT: return "java.lang.String";
+      case ColTypes.SQLITE_INTEGER: return "java.lang.Long";
+      case ColTypes.SQLITE_FLOAT: return "java.lang.Double";
+      case ColTypes.SQLITE_BLOB: return "[B";
+      case ColTypes.SQLITE_NULL: return null;
+      default: throw new AssertionError(String.format("Unknown column type %d", sourceType));
+    }
   }
 
   private static SQLException typeForwardOnly() {
