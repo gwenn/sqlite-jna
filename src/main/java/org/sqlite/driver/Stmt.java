@@ -119,7 +119,7 @@ public class Stmt implements Statement {
   }
   @Override
   public void close() throws StmtException {
-    Util.trace("Statement.close");
+    //Util.trace("Statement.close");
     if (stmt != null) {
       stmt.closeAndCheck();
       if (colIndexByName != null) colIndexByName.clear();
@@ -132,7 +132,6 @@ public class Stmt implements Statement {
   }
   @Override
   public int getMaxFieldSize() throws SQLException {
-    Util.trace("*Statement.getMaxFieldSize");
     checkOpen();
     return 0; // TODO
   }
@@ -224,7 +223,7 @@ public class Stmt implements Statement {
   }
   @Override
   public boolean getMoreResults() throws SQLException {
-    throw Util.unsupported("*Statement.getMoreResults"); // TODO
+    throw Util.unsupported("*Statement.getMoreResults"); // TODO tail is  not empty
   }
   @Override
   public void setFetchDirection(int direction) throws SQLException {

@@ -1,11 +1,11 @@
 package org.sqlite.driver;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Meta implements DatabaseMetaData {
   private Conn c;
-
-  private PreparedStatement findTableByNamePattern;
 
   public Meta(Conn c) {
     this.c = c;
@@ -18,12 +18,6 @@ public class Meta implements DatabaseMetaData {
   private org.sqlite.Conn getConn() throws SQLException {
     checkOpen();
     return c.getConn();
-  }
-
-  void close() throws SQLException {
-    if (c == null) return;
-    if (findTableByNamePattern != null) findTableByNamePattern.close();
-    c = null;
   }
 
   @Override
@@ -128,12 +122,11 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public String getIdentifierQuoteString() throws SQLException {
-    Util.trace("DatabaseMetaData.getIdentifierQuoteString");
-    return "\""; // TODO Validate
+    return "\""; // http://sqlite.org/lang_keywords.html
   }
   @Override
   public String getSQLKeywords() throws SQLException {
-    return ""; // TODO Validate
+    return "ABORT,ANALYZE,ATTACH,AUTOINCREMENT,CONFLICT,DATABASE,DETACH,EXCLUSIVE,EXPLAIN,FAIL,GLOB,IF,IGNORE,INDEX,INDEXED,INSTEAD,ISNULL,LIMIT,NOTNULL,OFFSET,PLAN,PRAGMA,QUERY,RAISE,REGEXP,REINDEX,RENAME,REPLACE,RESTRICT,TEMP,VACUUM,VIRTUAL";
   }
   @Override
   public String getNumericFunctions() throws SQLException {
@@ -600,29 +593,13 @@ public class Meta implements DatabaseMetaData {
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
-  // TODO Support multi tables
+  // TODO Support multi tables?
   @Override
   public ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
     checkOpen();
-    ResultSet rs;
     final StringBuilder sql = new StringBuilder();
 
-    checkOpen();
-
-    if (findTableByNamePattern == null)
-      findTableByNamePattern = c.prepareStatement(
-          "select tbl_name from sqlite_master where tbl_name like ?");
-
-    // determine exact table name
-    findTableByNamePattern.setString(1, tableNamePattern);
-    rs = findTableByNamePattern.executeQuery();
-    final String tbl;
-    if (rs.next()) {
-      tbl = rs.getString(1);
-    } else {
-      tbl = null;
-    }
-    rs.close();
+    final String tbl = getExactTableName(tableNamePattern);
 
     sql.append("select ").
         append("null as TABLE_CAT, ").
@@ -637,7 +614,7 @@ public class Meta implements DatabaseMetaData {
         append("10 as NUM_PREC_RADIX, ").
         append("colnullable as NULLABLE, ").
         append("null as REMARKS, ").
-        append("null as COLUMN_DEF, "). // TODO
+        append("cdflt as COLUMN_DEF, ").
         append("0 as SQL_DATA_TYPE, ").
         append("0 as SQL_DATETIME_SUB, ").
         append("10 as CHAR_OCTET_LENGTH, "). // FIXME
@@ -651,32 +628,25 @@ public class Meta implements DatabaseMetaData {
 
     boolean colFound = false;
     if (tbl != null) {
-      // the command "pragma table_info('tablename')" does not embed
-      // like a normal select statement so we must extract the information
-      // and then build a resultset from unioned select statements
-      final PreparedStatement table_info = c.prepareStatement("pragma table_info (" + quote(tbl) + ")");
+      // Pragma cannot be used as subquery...
+      final PreparedStatement table_info = c.prepareStatement("PRAGMA table_info(" + quote(tbl) + ")");
       table_info.closeOnCompletion();
-      rs = table_info.executeQuery();
+      ResultSet rs = table_info.executeQuery();
 
-      for (int i = 0; rs.next(); i++) {
-        String colName = rs.getString(2);
-        String colType = rs.getString(3);
-        String colNotNull = rs.getString(4);
-
-        int colNullable = 2;
-        if (colNotNull != null) colNullable = colNotNull.equals("0") ? 1 : 0;
-        if (colFound) sql.append(" union all ");
+      while (rs.next()) {
+        if (colFound) sql.append(" UNION ALL ");
         colFound = true;
 
-        colType = getSQLiteType(colType);
+        String colType = getSQLiteType(rs.getString(3));
         int colJavaType = getJavaType(colType);
 
-        sql.append("select ").
-            append(i).append(" as ordpos, ").
-            append(colNullable).append(" as colnullable, ").
-            append(colJavaType).append(" as ct, ").
-            append(quote(colName)).append(" as cn, ").
-            append(quote(colType)).append(" as tn");
+        sql.append("SELECT ").
+            append(rs.getInt(1)).append(" AS ordpos, ").
+            append(rs.getBoolean(4) ? columnNoNulls : columnNullable).append(" AS colnullable, ").
+            append(colJavaType).append(" AS ct, ").
+            append(quote(rs.getString(2))).append(" AS cn, ").
+            append(quote(colType)).append(" AS tn, ").
+            append(quote(rs.getString(5))).append(" AS cdflt");
 
         if (columnNamePattern != null)
           sql.append(" where cn like ").append(quote(columnNamePattern));
@@ -685,27 +655,60 @@ public class Meta implements DatabaseMetaData {
     }
 
     sql.append(colFound ? ") order by TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION" :
-        "select null as ordpos, null as colnullable, null as ct, "
-            + "null as cn, null as tn) limit 0");
+        "SELECT NULL AS ordpos, NULL AS colnullable, NULL AS ct, "
+            + "NULL AS cn, NULL AS tn) LIMIT 0");
     final PreparedStatement columns = c.prepareStatement(sql.toString());
     columns.closeOnCompletion();
     return columns.executeQuery();
   }
 
-  private String getSQLiteType(String colType) {
-    return colType == null ? "TEXT" : colType.toUpperCase();
+  private String getExactTableName(String tableNamePattern) throws SQLException {
+    if (tableNamePattern.contains("%") || tableNamePattern.contains("?")) {
+      PreparedStatement ps = null;
+      ResultSet rs = null;
+      try {
+        ps = c.prepareStatement("SELECT tbl_name FROM sqlite_master WHERE tbl_name LIKE ?");
+        // determine exact table name
+        ps.setString(1, tableNamePattern);
+        rs = ps.executeQuery();
+        final String tbl;
+        if (rs.next()) {
+          tbl = rs.getString(1);
+          // TODO fail if there is more than one row?
+        } else {
+          tbl = null;
+        }
+        return tbl;
+      } finally {
+        if (rs != null) {
+          rs.close();
+        }
+        if (ps != null) {
+          ps.close();
+        }
+      }
+    } else {
+      return tableNamePattern;
+    }
   }
 
-  private static int getJavaType(String colType) { // FIXME http://sqlite.org/datatype3.html
+  private String getSQLiteType(String colType) {
+    return colType == null ? "" : colType.toUpperCase();
+  }
+  // TODO Validate affinity vs java type
+  private static int getJavaType(String colType) { // http://sqlite.org/datatype3.html
     final int colJavaType;
-    if ("INTEGER".equals(colType))
+    if (colType.contains("INT")) {
       colJavaType = Types.INTEGER;
-    else if ("TEXT".equals(colType))
+    } else if (colType.contains("TEXT") || colType.contains("CHAR") || colType.contains("CLOB")) {
       colJavaType = Types.VARCHAR;
-    else if ("FLOAT".equals(colType))
+    } else if (colType.equals("") || colType.contains("BLOB")) {
+      colJavaType = Types.BLOB; // NONE doesn't exist
+    } else if (colType.contains("REAL") || colType.contains("FLOA") || colType.contains("DOUB")) {
       colJavaType = Types.REAL;
-    else
-      colJavaType = Types.VARCHAR;
+    } else {
+      colJavaType = Types.NUMERIC;
+    }
     return colJavaType;
   }
 
@@ -763,9 +766,92 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
-    Util.trace("DatabaseMetaData.getPrimaryKeys");
-    return null;
+    checkOpen();
+    final StringBuilder sql = new StringBuilder();
+
+    sql.append("select ").
+        append("null as TABLE_CAT, ").
+        append("null as TABLE_SCHEM, ").
+        append(quote(table)).append(" as TABLE_NAME, ").
+        append("cn as COLUMN_NAME, ").
+        append("seqno as KEY_SEQ, ").
+        append("null as PK_NAME from (");
+
+    // Pragma cannot be used as subquery...
+    final PreparedStatement table_info = c.prepareStatement("PRAGMA table_info(" + quote(table) + ")");
+    table_info.closeOnCompletion();
+    ResultSet rs = table_info.executeQuery();
+
+    List<String> colNames = new ArrayList<String>();
+    while (rs.next()) {
+      if (rs.getBoolean(6)) {
+        colNames.add(rs.getString(2));
+      }
+    }
+    rs.close();
+
+    if (colNames.size() == 0) {
+      sql.append("SELECT NULL AS cn, NULL AS seqno) LIMIT 0");
+    } else if (colNames.size() == 1) {
+      sql.append("SELECT ").
+          append(quote(colNames.get(0))).append(" AS cn, ").
+          append(0).append(" AS seqno)");
+    } else {
+      final PreparedStatement index_list = c.prepareStatement("PRAGMA index_list(" + quote(table) + ")");
+      index_list.closeOnCompletion();
+      rs = index_list.executeQuery();
+
+      final List<String> indexNames = new ArrayList<String>();
+      while (rs.next()) {
+        if (rs.getBoolean(3) && rs.getString(2).startsWith("sqlite_autoindex_")) {
+          indexNames.add(rs.getString(2));
+        }
+      }
+      rs.close();
+
+      boolean indexFound = false;
+      for (String indexName : indexNames) {
+        final PreparedStatement index_info = c.prepareStatement("PRAGMA index_info(" + quote(indexName) + ")");
+        index_info.closeOnCompletion();
+        rs = index_info.executeQuery();
+
+        final List<String> columns = new ArrayList<String>();
+        while (rs.next()) {
+          columns.add(rs.getInt(1), rs.getString(3));
+        }
+        rs.close();
+
+        if (areEquals(colNames, columns)) {
+          int i = 0;
+          for (String column : columns) {
+            if (i > 0) sql.append(" UNION ALL ");
+            sql.append("SELECT ").
+                append(quote(column)).append(" AS cn, ").
+                append(i).append(" AS seqno");
+            i++;
+          }
+          indexFound = true;
+          break;
+        }
+      }
+      sql.append(indexFound ? ") order by COLUMN_NAME" :
+          "SELECT NULL AS cn, NULL AS seqno) LIMIT 0");
+    }
+    final PreparedStatement columns = c.prepareStatement(sql.toString());
+    columns.closeOnCompletion();
+    return columns.executeQuery();
   }
+
+  private static boolean areEquals(List<String> pkColumns, List<String> idxColumns) {
+    if (pkColumns.size() != idxColumns.size()) return false;
+    for (String idxColumn : idxColumns) {
+      if (!pkColumns.contains(idxColumn)) { // TODO ignore case
+        return false;
+      }
+    }
+    return true;
+  }
+
   @Override
   public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
     Util.trace("DatabaseMetaData.getImportedKeys");

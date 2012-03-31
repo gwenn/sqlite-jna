@@ -76,7 +76,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public void close() throws SQLException {
-    Util.trace("ResultSet.close");
+    //Util.trace("ResultSet.close");
     if (stmt != null) {
       if (s.isCloseOnCompletion()) {
         s.close();

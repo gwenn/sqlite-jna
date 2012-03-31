@@ -92,7 +92,6 @@ public class Conn implements Connection {
   @Override
   public void close() throws SQLException {
     if (c != null) {
-      if (meta != null) meta.close(); // statements' order matters
       if (getGeneratedKeys != null) getGeneratedKeys.close();
       c.closeAndCheck();
       if (clientInfo != null) clientInfo.clear();
@@ -116,7 +115,6 @@ public class Conn implements Connection {
   }
   @Override
   public boolean isReadOnly() throws SQLException {
-    Util.trace("Connection.isReadOnly");
     checkOpen();
     return getConn().isReadOnly();
   }
@@ -127,7 +125,6 @@ public class Conn implements Connection {
   }
   @Override
   public String getCatalog() throws SQLException {
-    Util.trace("Connection.getCatalog");
     checkOpen();
     return null;
   }
