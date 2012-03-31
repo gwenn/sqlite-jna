@@ -28,7 +28,7 @@ public class PrepStmt extends Stmt implements PreparedStatement {
     final org.sqlite.Stmt stmt = getStmt();
     final boolean hasRow = stmt.step();
     if (!hasRow && stmt.getColumnCount() == 0) {
-      throw new StmtException(stmt, "query does not return ResultSet", ErrCodes.WRAPPER_SPECIFIC);
+      throw new StmtException(stmt, "query does not return a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
     }
     return new Rows(this, hasRow);
   }

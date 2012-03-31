@@ -95,7 +95,7 @@ public class Stmt implements Statement {
       stmt = c.getConn().prepare(sql);
       final boolean hasRow = stmt.step();
       if (!hasRow && stmt.getColumnCount() == 0) {
-        throw new StmtException(stmt, "query does not return ResultSet", ErrCodes.WRAPPER_SPECIFIC);
+        throw new StmtException(stmt, "query does not return a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
       }
       return new Rows(this, hasRow);
     }
@@ -223,7 +223,7 @@ public class Stmt implements Statement {
   }
   @Override
   public boolean getMoreResults() throws SQLException {
-    throw Util.unsupported("*Statement.getMoreResults"); // TODO tail is  not empty
+    throw Util.unsupported("*Statement.getMoreResults"); // TODO when tail is not empty...
   }
   @Override
   public void setFetchDirection(int direction) throws SQLException {

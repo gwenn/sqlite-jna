@@ -2,7 +2,9 @@ package org.sqlite.driver;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Meta implements DatabaseMetaData {
   private Conn c;
@@ -629,29 +631,40 @@ public class Meta implements DatabaseMetaData {
     boolean colFound = false;
     if (tbl != null) {
       // Pragma cannot be used as subquery...
-      final PreparedStatement table_info = c.prepareStatement("PRAGMA table_info(" + quote(tbl) + ")");
-      table_info.closeOnCompletion();
-      ResultSet rs = table_info.executeQuery();
+      PreparedStatement table_info = null;
+      ResultSet rs = null;
+      try {
+        table_info = c.prepareStatement("PRAGMA table_info(" + quote(tbl) + ")");
+        rs = table_info.executeQuery();
 
-      while (rs.next()) {
-        if (colFound) sql.append(" UNION ALL ");
-        colFound = true;
+        while (rs.next()) {
+          if (colFound) sql.append(" UNION ALL ");
+          colFound = true;
 
-        String colType = getSQLiteType(rs.getString(3));
-        int colJavaType = getJavaType(colType);
+          String colType = getSQLiteType(rs.getString(3));
+          int colJavaType = getJavaType(colType);
 
-        sql.append("SELECT ").
-            append(rs.getInt(1)).append(" AS ordpos, ").
-            append(rs.getBoolean(4) ? columnNoNulls : columnNullable).append(" AS colnullable, ").
-            append(colJavaType).append(" AS ct, ").
-            append(quote(rs.getString(2))).append(" AS cn, ").
-            append(quote(colType)).append(" AS tn, ").
-            append(quote(rs.getString(5))).append(" AS cdflt");
+          sql.append("SELECT ").
+              append(rs.getInt(1)).append(" AS ordpos, ").
+              append(rs.getBoolean(4) ? columnNoNulls : columnNullable).append(" AS colnullable, ").
+              append(colJavaType).append(" AS ct, ").
+              append(quote(rs.getString(2))).append(" AS cn, ").
+              append(quote(colType)).append(" AS tn, ").
+              append(quote(rs.getString(5))).append(" AS cdflt");
 
-        if (columnNamePattern != null)
-          sql.append(" where cn like ").append(quote(columnNamePattern));
+          if (columnNamePattern != null) {
+            sql.append(" where cn like ").append(quote(columnNamePattern));
+          }
+        }
+      } catch(SQLException e) { // query does not return ResultSet
+      } finally {
+        if (rs != null) {
+          rs.close();
+        }
+        if (table_info != null) {
+          table_info.close();
+        }
       }
-      rs.close();
     }
 
     sql.append(colFound ? ") order by TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION" :
@@ -778,48 +791,76 @@ public class Meta implements DatabaseMetaData {
         append("null as PK_NAME from (");
 
     // Pragma cannot be used as subquery...
-    final PreparedStatement table_info = c.prepareStatement("PRAGMA table_info(" + quote(table) + ")");
-    table_info.closeOnCompletion();
-    ResultSet rs = table_info.executeQuery();
+    final List<String> colNames = new ArrayList<String>();
+    PreparedStatement table_info = null;
+    ResultSet rs = null;
+    try {
+      table_info = c.prepareStatement("PRAGMA table_info(" + quote(table) + ")");
+      rs = table_info.executeQuery();
 
-    List<String> colNames = new ArrayList<String>();
-    while (rs.next()) {
-      if (rs.getBoolean(6)) {
-        colNames.add(rs.getString(2));
+      while (rs.next()) {
+        if (rs.getBoolean(6)) {
+          colNames.add(rs.getString(2));
+        }
+      }
+    } catch(SQLException e) { // query does not return ResultSet
+    } finally {
+      if (rs != null) {
+        rs.close();
+      }
+      if (table_info != null) {
+        table_info.close();
       }
     }
-    rs.close();
 
-    if (colNames.size() == 0) {
+    if (colNames.isEmpty()) {
       sql.append("SELECT NULL AS cn, NULL AS seqno) LIMIT 0");
     } else if (colNames.size() == 1) {
       sql.append("SELECT ").
           append(quote(colNames.get(0))).append(" AS cn, ").
           append(0).append(" AS seqno)");
     } else {
-      final PreparedStatement index_list = c.prepareStatement("PRAGMA index_list(" + quote(table) + ")");
-      index_list.closeOnCompletion();
-      rs = index_list.executeQuery();
-
       final List<String> indexNames = new ArrayList<String>();
-      while (rs.next()) {
-        if (rs.getBoolean(3) && rs.getString(2).startsWith("sqlite_autoindex_")) {
-          indexNames.add(rs.getString(2));
+      PreparedStatement index_list = null;
+      try {
+        index_list = c.prepareStatement("PRAGMA index_list(" + quote(table) + ")");
+        rs = index_list.executeQuery();
+
+        while (rs.next()) {
+          if (rs.getBoolean(3) && rs.getString(2).startsWith("sqlite_autoindex_")) {
+            indexNames.add(rs.getString(2));
+          }
+        }
+      } catch(SQLException e) { // query does not return ResultSet
+      } finally {
+        if (rs != null) {
+          rs.close();
+        }
+        if (index_list != null) {
+          index_list.close();
         }
       }
-      rs.close();
 
       boolean indexFound = false;
       for (String indexName : indexNames) {
-        final PreparedStatement index_info = c.prepareStatement("PRAGMA index_info(" + quote(indexName) + ")");
-        index_info.closeOnCompletion();
-        rs = index_info.executeQuery();
-
         final List<String> columns = new ArrayList<String>();
-        while (rs.next()) {
-          columns.add(rs.getInt(1), rs.getString(3));
+        PreparedStatement index_info = null;
+        try {
+          index_info = c.prepareStatement("PRAGMA index_info(" + quote(indexName) + ")");
+          rs = index_info.executeQuery();
+
+          while (rs.next()) {
+            columns.add(rs.getInt(1), rs.getString(3));
+          }
+        //} catch(SQLException e) { // query does not return ResultSet
+        } finally {
+          if (rs != null) {
+            rs.close();
+          }
+          if (index_info != null) {
+            index_info.close();
+          }
         }
-        rs.close();
 
         if (areEquals(colNames, columns)) {
           int i = 0;
@@ -901,8 +942,87 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException {
-    Util.trace("DatabaseMetaData.getIndexInfo");
-    return null;
+    checkOpen();
+    final StringBuilder sql = new StringBuilder();
+    sql.append("select ").
+        append("null as TABLE_CAT, ").
+        append("null as TABLE_SCHEM, ").
+        append(quote(table)).append(" as TABLE_NAME, ").
+        append("nu as NON_UNIQUE, ").
+        append("null as INDEX_QUALIFIER, ").
+        append("idx as INDEX_NAME, ").
+        append(tableIndexOther).append(" as TYPE, ").
+        append("seqno as ORDINAL_POSITION, ").
+        append("cn as COLUMN_NAME, ").
+        append("'A' as ASC_OR_DESC, ").
+        append("0 as CARDINALITY, ").
+        append("0 as PAGES, ").
+        append("null as FILTER_CONDITION ").
+        append("from (");
+
+    Map<String,Boolean> indexes = new HashMap<String, Boolean>();
+    PreparedStatement index_list = null;
+    ResultSet rs = null;
+    try {
+      index_list = c.prepareStatement("PRAGMA index_list(" + quote(table) + ")");
+      rs = index_list.executeQuery();
+      while (rs.next()) {
+        final boolean notuniq = !rs.getBoolean(3);
+        if (unique && notuniq) {
+          continue;
+        }
+        indexes.put(rs.getString(2), notuniq);
+      }
+    } catch(SQLException e) { // query does not return ResultSet
+    } finally {
+      if (rs != null) {
+        rs.close();
+      }
+      if (index_list != null) {
+        index_list.close();
+      }
+    }
+
+    if (indexes.isEmpty()) {
+      sql.append("SELECT NULL AS nu, NULL AS idx, NULL AS seqno, NULL AS cn) LIMIT 0");
+    } else {
+      boolean found = false;
+      for (final Map.Entry<String,Boolean> index : indexes.entrySet()) {
+        PreparedStatement index_info = null;
+        try {
+          index_info = c.prepareStatement("PRAGMA index_info(" + quote(index.getKey()) + ")");
+          rs = index_info.executeQuery();
+          while (rs.next()) {
+            if (found) {
+              sql.append(" UNION ALL ");
+            }
+            sql.append("SELECT ").
+                append(index.getValue() ? 1 : 0).append(" AS nu, ").
+                append(quote(index.getKey())).append(" AS idx, ").
+                append(rs.getInt(1)).append(" AS seqno, ").
+                append(quote(rs.getString(3))).append(" AS cn");
+            found = true;
+          }
+        //} catch(SQLException e) { // query does not return ResultSet
+        } finally {
+          if (rs != null) {
+            rs.close();
+          }
+          if (index_info != null) {
+            index_info.close();
+          }
+        }
+      }
+      if (found) {
+        sql.append(") order by NON_UNIQUE, TYPE, INDEX_NAME, ORDINAL_POSITION");
+      } else {
+        sql.append("SELECT NULL AS nu, NULL AS idx, NULL AS seqno, NULL AS cn) LIMIT 0");
+      }
+    }
+
+    final PreparedStatement idx = c.prepareStatement(sql.toString());
+    idx.closeOnCompletion();
+    return idx.executeQuery();
   }
   @Override
   public boolean supportsResultSetType(int type) throws SQLException {
