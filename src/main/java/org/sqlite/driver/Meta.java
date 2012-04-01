@@ -957,6 +957,10 @@ public class Meta implements DatabaseMetaData {
 
   @Override
   public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
+    return getForeignKeys(null, table, false);
+  }
+
+  private ResultSet getForeignKeys(String primaryTable, String foreignTable, boolean cross) throws SQLException {
     checkOpen();
     final StringBuilder sql = new StringBuilder();
 
@@ -967,7 +971,7 @@ public class Meta implements DatabaseMetaData {
         append("pc as PKCOLUMN_NAME, ").
         append("null as FKTABLE_CAT, ").
         append("null as FKTABLE_SCHEM, ").
-        append(quote(table)).append(" as FKTABLE_NAME, ").
+        append(quote(foreignTable)).append(" as FKTABLE_NAME, ").
         append("fc as FKCOLUMN_NAME, ").
         append("seq as KEY_SEQ, ").
         append(importedKeyNoAction).append(" as UPDATE_RULE, "). // FIXME on_update (6) NO ACTION, CASCADE
@@ -982,9 +986,12 @@ public class Meta implements DatabaseMetaData {
     PreparedStatement foreign_key_list = null;
     ResultSet rs = null;
     try {
-      foreign_key_list = c.prepareStatement("pragma foreign_key_list("+quote(table)+");");
+      foreign_key_list = c.prepareStatement("pragma foreign_key_list("+quote(foreignTable)+");");
       rs = foreign_key_list.executeQuery();
       while (rs.next()) {
+        if (cross && !primaryTable.equalsIgnoreCase(rs.getString(3))) {
+          continue;
+        }
         if (count > 0) {
           sql.append(" union all ");
         }
@@ -1008,7 +1015,11 @@ public class Meta implements DatabaseMetaData {
     if (count == 0) {
       sql.append("select null as pt, null as pc, null as fc, null as seq) LIMIT 0");
     } else {
-      sql.append(") order by PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, KEY_SEQ");
+      if (cross) {
+        sql.append(") order by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, KEY_SEQ");
+      } else {
+        sql.append(") order by PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, KEY_SEQ");
+      }
     }
     final PreparedStatement fks = c.prepareStatement(sql.toString());
     fks.closeOnCompletion();
@@ -1101,8 +1112,7 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog, String foreignSchema, String foreignTable) throws SQLException {
-    Util.trace("DatabaseMetaData.getCrossReference");
-    return null;
+    return getForeignKeys(parentTable, foreignTable, true);
   }
   @Override
   public ResultSet getTypeInfo() throws SQLException {
