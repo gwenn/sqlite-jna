@@ -957,8 +957,62 @@ public class Meta implements DatabaseMetaData {
 
   @Override
   public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
-    Util.trace("DatabaseMetaData.getImportedKeys");
-    return null;
+    checkOpen();
+    final StringBuilder sql = new StringBuilder();
+
+    sql.append("select ").
+        append("null as PKTABLE_CAT, ").
+        append("null as PKTABLE_SCHEM, ").
+        append("pt as PKTABLE_NAME, ").
+        append("pc as PKCOLUMN_NAME, ").
+        append("null as FKTABLE_CAT, ").
+        append("null as FKTABLE_SCHEM, ").
+        append(null == table ? "null" : quote(table)).append(" as FKTABLE_NAME, ").
+        append("fc as FKCOLUMN_NAME, ").
+        append("seq as KEY_SEQ, ").
+        append(importedKeyNoAction).append(" as UPDATE_RULE, ").
+        append(importedKeyNoAction).append(" as DELETE_RULE, ").
+        append("null as FK_NAME, ").
+        append("null as PK_NAME, ").
+        append(importedKeyNotDeferrable).append(" as DEFERRABILITY "). // FIXME
+        append("from (");
+
+    // Pragma cannot be used as subquery...
+    int count = 0;
+    PreparedStatement foreign_key_list = null;
+    ResultSet rs = null;
+    try {
+      foreign_key_list = c.prepareStatement("pragma foreign_key_list("+quote(table)+");");
+      rs = foreign_key_list.executeQuery();
+      while (rs.next()) {
+        if (count > 0) {
+          sql.append(" union all ");
+        }
+        sql.append("select ").
+            append(quote(rs.getString(3))).append(" as pt, ").
+            append(quote(rs.getString(5))).append(" as pc, ").
+            append(quote(rs.getString(4))).append(" as fc, ").
+            append(rs.getShort(2) + 1).append(" as seq");
+        count++;
+      }
+    } catch(SQLException e) { // query does not return ResultSet
+    } finally {
+      if (rs != null) {
+        rs.close();
+      }
+      if (foreign_key_list != null) {
+        foreign_key_list.close();
+      }
+    }
+
+    if (count == 0) {
+      sql.append("select null as pt, null as pc, null as fc, null as seq) LIMIT 0");
+    } else {
+      sql.append(") order by PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, KEY_SEQ");
+    }
+    final PreparedStatement fks = c.prepareStatement(sql.toString());
+    fks.closeOnCompletion();
+    return fks.executeQuery();
   }
   @Override
   public ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException {
