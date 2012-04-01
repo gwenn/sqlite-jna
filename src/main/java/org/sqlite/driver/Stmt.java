@@ -12,7 +12,9 @@ import org.sqlite.ErrCodes;
 import org.sqlite.StmtException;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 // There is no "not prepared" statement in SQLite!
@@ -28,6 +30,7 @@ public class Stmt implements Statement {
   private boolean isCloseOnCompletion;
   private int maxRows;
   private int status; // 0: not a select, 1: select with row, 2: select without row
+  private List<String> batch;
 
   Stmt(Conn c) {
     this.c = c;
@@ -128,6 +131,7 @@ public class Stmt implements Statement {
       if (prepared) {
         c = null;
       }
+      batch = null;
     }
   }
   @Override
@@ -263,16 +267,44 @@ public class Stmt implements Statement {
     if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
-      throw Util.unsupported("*Statement.addBatch"); // TODO
+      if (batch == null) {
+        batch = new ArrayList<String>();
+      }
+      batch.add(sql);
     }
   }
   @Override
   public void clearBatch() throws SQLException {
-    throw Util.unsupported("*Statement.clearBatch"); // TODO
+    if (batch != null) {
+      batch.clear();
+    }
   }
   @Override
   public int[] executeBatch() throws SQLException {
-    throw Util.unsupported("*Statement.executeBatch"); // TODO
+    if (batch == null || batch.isEmpty()) {
+      return new int[0];
+    }
+    int[] changes = new int[batch.size()];
+    Throwable cause = null;
+    for (int i = 0; i < batch.size(); i++) {
+      try {
+        if (execute(batch.get(i))) {
+          changes[i] = SUCCESS_NO_INFO;
+        } else {
+          changes[i] = getUpdateCount();
+        }
+      } catch (SQLException e) {
+        changes[i] = EXECUTE_FAILED;
+        if (cause == null) {
+          cause = e;
+        }
+      }
+    }
+    clearBatch();
+    if (cause != null) {
+      throw new BatchUpdateException("batch failed", changes, cause);
+    }
+    return changes;
   }
   @Override
   public Connection getConnection() throws SQLException {
