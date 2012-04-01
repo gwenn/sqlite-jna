@@ -1,3 +1,11 @@
+/*
+ * The author disclaims copyright to this source code.  In place of
+ * a legal notice, here is a blessing:
+ *
+ *    May you do good and not evil.
+ *    May you find forgiveness for yourself and forgive others.
+ *    May you share freely, never taking more than you give.
+ */
 package org.sqlite.driver;
 
 import java.sql.*;
@@ -758,8 +766,62 @@ public class Meta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getBestRowIdentifier(String catalog, String schema, String table, int scope, boolean nullable) throws SQLException {
-    Util.trace("DatabaseMetaData.getBestRowIdentifier");
-    return null;
+    checkOpen();
+    final StringBuilder sql = new StringBuilder();
+
+    sql.append("select ").
+        append(scope).append(" as SCOPE, ").
+        append("cn as COLUMN_NAME, ").
+        append("ct as DATA_TYPE, ").
+        append("tn as TYPE_NAME, ").
+        append("10 as COLUMN_SIZE, "). // FIXME
+        append("0 as BUFFER_LENGTH, ").
+        append("0 as DECIMAL_DIGITS, ").
+        append("pc as PSEUDO_COLUMN from (");
+
+    // Pragma cannot be used as subquery...
+    int count = 0;
+    String colName = null;
+    String colType = null;
+    PreparedStatement table_info = null;
+    ResultSet rs = null;
+    try {
+      table_info = c.prepareStatement("PRAGMA table_info(" + quote(table) + ")");
+      rs = table_info.executeQuery();
+
+      while (count < 2 && rs.next()) {
+        if (rs.getBoolean(6) && (nullable || rs.getBoolean(4))) {
+          colName = rs.getString(2);
+          colType = getSQLiteType(rs.getString(3));
+          count++;
+        }
+      }
+    } catch(SQLException e) { // query does not return ResultSet
+    } finally {
+      if (rs != null) {
+        rs.close();
+      }
+      if (table_info != null) {
+        table_info.close();
+      }
+    }
+
+    if (count == 1) {
+      sql.append("SELECT ").
+          append(quote(colName)).append(" as cn, ").
+          append(getJavaType(colType)).append(" as ct, ").
+          append("'").append(colType).append("' as tn, ").
+          append(bestRowNotPseudo).append(" as pc) order by SCOPE");
+    } else {
+      sql.append("SELECT ").
+          append("'ROWID' AS cn, ").
+          append(Types.INTEGER).append(" AS ct, ").
+          append("'INTEGER' AS tn, ").
+          append(bestRowPseudo).append(" AS pc) order by SCOPE");
+    }
+    final PreparedStatement columns = c.prepareStatement(sql.toString());
+    columns.closeOnCompletion();
+    return columns.executeQuery();
   }
   @Override
   public ResultSet getVersionColumns(String catalog, String schema, String table) throws SQLException {
@@ -901,6 +963,7 @@ public class Meta implements DatabaseMetaData {
   @Override
   public ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException {
     Util.trace("DatabaseMetaData.getExportedKeys");
+    // select * from sqlite_master where type = 'table' and sql like '%)%REFERENCES%table(%'
     return null;
   }
   @Override
