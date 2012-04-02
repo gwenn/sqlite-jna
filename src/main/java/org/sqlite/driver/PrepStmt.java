@@ -134,11 +134,11 @@ public class PrepStmt extends Stmt implements PreparedStatement {
   }
   @Override
   public boolean execute() throws SQLException {
-    throw Util.unsupported("*PreparedStatement.execute"); // TODO
+    return exec();
   }
   @Override
   public void addBatch() throws SQLException {
-    throw Util.unsupported("*PreparedStatement.addBatch"); // TODO
+    throw Util.unsupported("*PreparedStatement.addBatch"); // FIXME
   }
   @Override
   public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
@@ -162,7 +162,7 @@ public class PrepStmt extends Stmt implements PreparedStatement {
   }
   @Override
   public ResultSetMetaData getMetaData() throws SQLException {
-    throw Util.unsupported("*PreparedStatement.getMetaData"); // TODO
+    throw Util.unsupported("*PreparedStatement.getMetaData"); // FIXME
   }
   @Override
   public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
@@ -186,7 +186,7 @@ public class PrepStmt extends Stmt implements PreparedStatement {
   }
   @Override
   public ParameterMetaData getParameterMetaData() throws SQLException {
-    throw Util.unsupported("*PreparedStatement.getParameterMetaData"); // TODO
+    throw Util.unsupported("*PreparedStatement.getParameterMetaData"); // FIXME
   }
   @Override
   public void setRowId(int parameterIndex, RowId x) throws SQLException {

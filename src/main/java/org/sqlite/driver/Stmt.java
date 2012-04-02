@@ -197,15 +197,18 @@ public class Stmt implements Statement {
     } else {
       close();
       stmt = c.getConn().prepare(sql);
-      if (stmt.step()) {
-        status = 1;
-      } else if (stmt.getColumnCount() != 0) {
-        status = 2;
-      } else {
-        status = 0;
-      }
-      return status != 0;
+      return exec();
     }
+  }
+  protected boolean exec() throws SQLException {
+    if (stmt.step()) {
+      status = 1;
+    } else if (stmt.getColumnCount() != 0) {
+      status = 2;
+    } else {
+      status = 0;
+    }
+    return status != 0;
   }
   @Override
   public ResultSet getResultSet() throws SQLException {
@@ -315,6 +318,10 @@ public class Stmt implements Statement {
   public boolean getMoreResults(int current) throws SQLException {
     throw Util.unsupported("*Statement.getMoreResults"); // TODO
   }
+  // Limitations:
+  //  - only primary keys defined as rowid's alias work.
+  //  - primary key's name must be 'id'!
+  // With the rowid (ok) and the associated table (ko) we can fix these limitations...
   @Override
   public ResultSet getGeneratedKeys() throws SQLException { // Used by hibernate
     checkOpen();
