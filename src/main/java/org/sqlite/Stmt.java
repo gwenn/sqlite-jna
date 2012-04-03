@@ -182,7 +182,11 @@ public class Stmt {
   public byte[] getColumnBlob(int iCol) throws StmtException {
     checkOpen();
     final Pointer p = SQLite.sqlite3_column_blob(pStmt, iCol);
-    return p.getByteArray(0, getColumnBytes(iCol));
+    if (p == null) {
+      return null;
+    } else {
+      return p.getByteArray(0, getColumnBytes(iCol));
+    }
   }
 
   /**
