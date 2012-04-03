@@ -46,6 +46,11 @@ public class Stmt {
     return tail;
   }
 
+  @Override
+  protected void finalize() throws Throwable {
+    super.finalize();
+    close();
+  }
   /**
    * @return result code (No exception is thrown).
    */
@@ -392,13 +397,13 @@ public class Stmt {
 
   private static final boolean[] UNKNOWN = new boolean[3];
   public boolean[] getMetadata(int iCol) throws StmtException, ConnException {
-      final String colName = getColumnOriginName(iCol);
-      if (colName != null) {
-        final boolean[] colMetaData = c.getTableColumnMetadata(
+    final String colName = getColumnOriginName(iCol);
+    if (colName != null) {
+      final boolean[] colMetaData = c.getTableColumnMetadata(
           getColumnDatabaseName(iCol), getColumnTableName(iCol), colName);
-        return colMetaData;
-      }
-      return UNKNOWN;
+      return colMetaData;
+    }
+    return UNKNOWN;
   }
 
   void check(int res, String format) throws StmtException {

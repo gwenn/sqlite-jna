@@ -42,6 +42,11 @@ public class Conn {
     return new Conn(filename, readonly, ppDb.getValue());
   }
 
+  @Override
+  protected void finalize() throws Throwable {
+    super.finalize();
+    close();
+  }
   /**
    * @return result code (No exception is thrown).
    */
