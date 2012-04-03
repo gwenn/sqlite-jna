@@ -165,7 +165,9 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public byte[] getBytes(int columnIndex) throws SQLException {
-    return getStmt().getColumnBlob(fixCol(columnIndex));
+    final byte[] blob = getStmt().getColumnBlob(fixCol(columnIndex));
+    wasNull = blob == null;
+    return blob;
   }
   @Override
   public Date getDate(int columnIndex) throws SQLException {
@@ -289,12 +291,18 @@ public class Rows implements ResultSet, ResultSetMetaData {
     // After a type conversion, the value returned by sqlite3_column_type() is undefined.
     final int sourceType = stmt.getColumnType(fixCol(columnIndex));
     switch (sourceType) {
-      case ColTypes.SQLITE_TEXT: return getString(columnIndex);
-      case ColTypes.SQLITE_INTEGER: return getLong(columnIndex);
-      case ColTypes.SQLITE_FLOAT: return getDouble(columnIndex);
-      case ColTypes.SQLITE_BLOB: return getBytes(columnIndex);
-      case ColTypes.SQLITE_NULL: return null;
-      default: throw new AssertionError(String.format("Unknown column type %d", sourceType));
+      case ColTypes.SQLITE_TEXT:
+        return getString(columnIndex);
+      case ColTypes.SQLITE_INTEGER:
+        return getLong(columnIndex);
+      case ColTypes.SQLITE_FLOAT:
+        return getDouble(columnIndex);
+      case ColTypes.SQLITE_BLOB:
+        return getBytes(columnIndex);
+      case ColTypes.SQLITE_NULL:
+        return null;
+      default:
+        throw new AssertionError(String.format("Unknown column type %d", sourceType));
     }
   }
   @Override
@@ -959,7 +967,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public int isNullable(int column) throws SQLException {
-    return getStmt().getMetadata(fixCol(column))[0] ? columnNoNulls: columnNullable;
+    return getStmt().getMetadata(fixCol(column))[0] ? columnNoNulls : columnNullable;
   }
   @Override
   public boolean isSigned(int column) throws SQLException {
@@ -1004,12 +1012,18 @@ public class Rows implements ResultSet, ResultSetMetaData {
     // After a type conversion, the value returned by sqlite3_column_type() is undefined.
     final int sourceType = getStmt().getColumnType(fixCol(column));
     switch (sourceType) {
-      case ColTypes.SQLITE_TEXT: return Types.VARCHAR;
-      case ColTypes.SQLITE_INTEGER: return Types.INTEGER;
-      case ColTypes.SQLITE_FLOAT: return Types.REAL;
-      case ColTypes.SQLITE_BLOB: return Types.BLOB;
-      case ColTypes.SQLITE_NULL: return Types.NULL;
-      default: throw new AssertionError(String.format("Unknown column type %d", sourceType));
+      case ColTypes.SQLITE_TEXT:
+        return Types.VARCHAR;
+      case ColTypes.SQLITE_INTEGER:
+        return Types.INTEGER;
+      case ColTypes.SQLITE_FLOAT:
+        return Types.REAL;
+      case ColTypes.SQLITE_BLOB:
+        return Types.BLOB;
+      case ColTypes.SQLITE_NULL:
+        return Types.NULL;
+      default:
+        throw new AssertionError(String.format("Unknown column type %d", sourceType));
     }
   }
   @Override
@@ -1017,12 +1031,18 @@ public class Rows implements ResultSet, ResultSetMetaData {
     // After a type conversion, the value returned by sqlite3_column_type() is undefined.
     final int sourceType = getStmt().getColumnType(fixCol(column));
     switch (sourceType) {
-      case ColTypes.SQLITE_TEXT: return "text";
-      case ColTypes.SQLITE_INTEGER: return "integer";
-      case ColTypes.SQLITE_FLOAT: return "real";
-      case ColTypes.SQLITE_BLOB: return "blob";
-      case ColTypes.SQLITE_NULL: return "null";
-      default: throw new AssertionError(String.format("Unknown column type %d", sourceType));
+      case ColTypes.SQLITE_TEXT:
+        return "text";
+      case ColTypes.SQLITE_INTEGER:
+        return "integer";
+      case ColTypes.SQLITE_FLOAT:
+        return "real";
+      case ColTypes.SQLITE_BLOB:
+        return "blob";
+      case ColTypes.SQLITE_NULL:
+        return "null";
+      default:
+        throw new AssertionError(String.format("Unknown column type %d", sourceType));
     }
   }
   @Override
@@ -1042,12 +1062,18 @@ public class Rows implements ResultSet, ResultSetMetaData {
     // After a type conversion, the value returned by sqlite3_column_type() is undefined.
     final int sourceType = getStmt().getColumnType(fixCol(column));
     switch (sourceType) {
-      case ColTypes.SQLITE_TEXT: return "java.lang.String";
-      case ColTypes.SQLITE_INTEGER: return "java.lang.Long";
-      case ColTypes.SQLITE_FLOAT: return "java.lang.Double";
-      case ColTypes.SQLITE_BLOB: return "[B";
-      case ColTypes.SQLITE_NULL: return null;
-      default: throw new AssertionError(String.format("Unknown column type %d", sourceType));
+      case ColTypes.SQLITE_TEXT:
+        return "java.lang.String";
+      case ColTypes.SQLITE_INTEGER:
+        return "java.lang.Long";
+      case ColTypes.SQLITE_FLOAT:
+        return "java.lang.Double";
+      case ColTypes.SQLITE_BLOB:
+        return "[B";
+      case ColTypes.SQLITE_NULL:
+        return null;
+      default:
+        throw new AssertionError(String.format("Unknown column type %d", sourceType));
     }
   }
 
