@@ -23,9 +23,7 @@ public class Stmt implements Statement {
   private final boolean prepared;
   private org.sqlite.Stmt stmt;
 
-  // cached columns index by name
-  // FIXME to invalidate with Stmt
-  //if (colIndexByName != null) colIndexByName.clear();
+  // cached columns' index by name
   private Map<String, Integer> colIndexByName;
   private boolean isCloseOnCompletion;
   private int maxRows;
@@ -66,6 +64,10 @@ public class Stmt implements Statement {
       return index;
     }
     final int columnCount = stmt.getColumnCount();
+    if (this == c.getGeneratedKeys) { // We don't know the table's name nor the column's name but there is only one possible.
+      addColIndexInCache(col, 1, columnCount);
+      return 1;
+    }
     for (int i = 0; i < columnCount; i++) {
       if (col.equalsIgnoreCase(stmt.getColumnName(i))) {
         addColIndexInCache(col, i + 1, columnCount);

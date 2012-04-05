@@ -16,8 +16,8 @@ import java.util.concurrent.Executor;
 public class Conn implements Connection {
   private org.sqlite.Conn c;
 
-  private Meta meta = null;
-  private PreparedStatement getGeneratedKeys;
+  private DbMeta meta = null;
+  PreparedStatement getGeneratedKeys;
 
   private Properties clientInfo = null;
   private int savepointId = 0;
@@ -41,7 +41,7 @@ public class Conn implements Connection {
 
   ResultSet getGeneratedKeys() throws SQLException {
     if (getGeneratedKeys == null) {
-      getGeneratedKeys = prepareStatement("select last_insert_rowid() as id"); // FIXME 'id' name
+      getGeneratedKeys = prepareStatement("select last_insert_rowid()");
     }
     return getGeneratedKeys.executeQuery();
   }
@@ -104,7 +104,7 @@ public class Conn implements Connection {
   }
   @Override
   public DatabaseMetaData getMetaData() throws SQLException {
-    if (meta == null) meta = new Meta(this);
+    if (meta == null) meta = new DbMeta(this);
     return meta;
   }
   @Override
@@ -186,7 +186,7 @@ public class Conn implements Connection {
   }
   @Override
   public Savepoint setSavepoint() throws SQLException {
-    return setSavepoint(String.valueOf(savepointId++));
+    return setSavepoint(String.valueOf(savepointId++)); // SAVEPOINT 1; fails
   }
   @Override
   public Savepoint setSavepoint(final String name) throws SQLException {

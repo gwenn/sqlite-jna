@@ -14,10 +14,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Meta implements DatabaseMetaData {
+public class DbMeta implements DatabaseMetaData {
   private Conn c;
 
-  public Meta(Conn c) {
+  public DbMeta(Conn c) {
     this.c = c;
   }
 
@@ -157,7 +157,7 @@ public class Meta implements DatabaseMetaData {
   @Override
   public String getSearchStringEscape() throws SQLException {
     Util.trace("DatabaseMetaData.getSearchStringEscape");
-    return null; // TODO Validate
+    return null; // TODO Validate (Y LIKE X [ESCAPE Z])
   }
   @Override
   public String getExtraNameCharacters() throws SQLException {
@@ -974,8 +974,8 @@ public class Meta implements DatabaseMetaData {
         append(quote(foreignTable)).append(" as FKTABLE_NAME, ").
         append("fc as FKCOLUMN_NAME, ").
         append("seq as KEY_SEQ, ").
-        append(importedKeyNoAction).append(" as UPDATE_RULE, "). // FIXME on_update (6) NO ACTION, CASCADE
-        append(importedKeyNoAction).append(" as DELETE_RULE, "). // FIXME on_delete (7) NO ACTION, CASCADE
+        append(importedKeyNoAction).append(" as UPDATE_RULE, "). // FIXME on_update (6) SET NULL (importedKeySetNull), SET DEFAULT (importedKeySetDefault), CASCADE (importedKeyCascade), RESTRICT (importedKeyRestrict), NO ACTION (importedKeyNoAction)
+        append(importedKeyNoAction).append(" as DELETE_RULE, "). // FIXME on_delete (7)
         append("null as FK_NAME, ").
         append("null as PK_NAME, ").
         append(importedKeyNotDeferrable).append(" as DEFERRABILITY "). // FIXME
@@ -1408,7 +1408,7 @@ public class Meta implements DatabaseMetaData {
   @Override
   public RowIdLifetime getRowIdLifetime() throws SQLException {
     Util.trace("DatabaseMetaData.getRowIdLifetime");
-    return RowIdLifetime.ROWID_UNSUPPORTED; // TODO
+    return RowIdLifetime.ROWID_VALID_FOREVER; // TODO http://www.sqlite.org/autoinc.html
   }
   @Override
   public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
