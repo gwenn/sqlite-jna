@@ -13,11 +13,6 @@ import com.sun.jna.Pointer;
 import java.util.HashMap;
 import java.util.Map;
 
-/*
-- Currently, Meta#supportsMultipleResultSets returns false.
-But with the tail, we can return multiple results.
-- We need auto-close statement.
- */
 public class Stmt {
   final Conn c;
   private Pointer pStmt;
