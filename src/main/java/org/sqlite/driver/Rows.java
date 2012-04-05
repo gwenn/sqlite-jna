@@ -955,7 +955,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public boolean isCaseSensitive(int column) throws SQLException {
-    return true;
+    return true; // FIXME Collation 'NOCASE'
   }
   @Override
   public boolean isSearchable(int column) throws SQLException {
@@ -975,7 +975,7 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public int getColumnDisplaySize(int column) throws SQLException {
-    return 10; // Like in SQLite shell in column mode
+    return 10; // Like in SQLite shell with column mode
   }
   @Override
   public String getColumnLabel(int column) throws SQLException {
@@ -987,25 +987,25 @@ public class Rows implements ResultSet, ResultSetMetaData {
   }
   @Override
   public String getSchemaName(int column) throws SQLException {
-    return ""; // TODO Validate
+    return ""; // TODO sqlite3_column_database_name
   }
   @Override
   public int getPrecision(int column) throws SQLException {
     Util.trace("ResultSetMetaData.getPrecision");
-    return 0; // TODO
+    return 0; // TODO based on column type
   }
   @Override
   public int getScale(int column) throws SQLException {
     Util.trace("ResultSetMetaData.getScale");
-    return 0; // TODO
+    return 0; // TODO based on column type
   }
   @Override
   public String getTableName(int column) throws SQLException {
-    return getStmt().getColumnTableName(fixCol(column)); // TODO sqlite3_column_origin_name ?
+    return getStmt().getColumnTableName(fixCol(column));
   }
   @Override
   public String getCatalogName(int column) throws SQLException {
-    return ""; // TODO Validate
+    return "";
   }
   @Override
   public int getColumnType(int column) throws SQLException {
