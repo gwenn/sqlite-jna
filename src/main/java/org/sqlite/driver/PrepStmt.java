@@ -18,7 +18,7 @@ import java.net.URL;
 import java.sql.*;
 import java.util.Calendar;
 
-public class PrepStmt extends Stmt implements PreparedStatement {
+public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaData {
   PrepStmt(Conn c, org.sqlite.Stmt stmt) {
     super(c, stmt);
   }
@@ -188,7 +188,7 @@ public class PrepStmt extends Stmt implements PreparedStatement {
   }
   @Override
   public ParameterMetaData getParameterMetaData() throws SQLException {
-    throw Util.unsupported("*PreparedStatement.getParameterMetaData"); // FIXME
+    return this;
   }
   @Override
   public void setRowId(int parameterIndex, RowId x) throws SQLException {
@@ -265,5 +265,42 @@ public class PrepStmt extends Stmt implements PreparedStatement {
   @Override
   public void setNClob(int parameterIndex, Reader reader) throws SQLException {
     throw Util.unsupported("PreparedStatement.setNClob");
+  }
+
+  @Override
+  public int getParameterCount() throws SQLException {
+    return getStmt().getBindParameterCount();
+  }
+  @Override
+  public int isNullable(int param) throws SQLException {
+    return parameterNullableUnknown;
+  }
+  @Override
+  public boolean isSigned(int param) throws SQLException {
+    throw Util.unsupported("ParameterMetaData.isSigned");
+  }
+  @Override
+  public int getPrecision(int param) throws SQLException {
+    throw Util.unsupported("ParameterMetaData.getPrecision");
+  }
+  @Override
+  public int getScale(int param) throws SQLException {
+    throw Util.unsupported("ParameterMetaData.getScale");
+  }
+  @Override
+  public int getParameterType(int param) throws SQLException {
+    throw Util.unsupported("ParameterMetaData.getParameterType");
+  }
+  @Override
+  public String getParameterTypeName(int param) throws SQLException {
+    throw Util.unsupported("ParameterMetaData.getParameterTypeName");
+  }
+  @Override
+  public String getParameterClassName(int param) throws SQLException {
+    throw Util.unsupported("ParameterMetaData.getParameterClassName");
+  }
+  @Override
+  public int getParameterMode(int param) throws SQLException {
+    return parameterModeIn;
   }
 }
