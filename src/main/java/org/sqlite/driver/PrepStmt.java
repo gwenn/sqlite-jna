@@ -164,7 +164,7 @@ public class PrepStmt extends Stmt implements PreparedStatement {
   }
   @Override
   public ResultSetMetaData getMetaData() throws SQLException {
-    throw Util.unsupported("*PreparedStatement.getMetaData"); // FIXME
+    return new RowsMeta(getStmt());
   }
   @Override
   public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
