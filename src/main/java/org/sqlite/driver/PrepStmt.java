@@ -139,15 +139,7 @@ public class PrepStmt extends Stmt implements PreparedStatement {
 
   @Override
   public void addBatch() throws SQLException {
-    throw Util.unsupported("*PreparedStatement.addBatch"); // FIXME
-  }
-  @Override
-  public void clearBatch() throws SQLException {
-    throw Util.unsupported("*PreparedStatement.clearBatch"); // FIXME
-  }
-  @Override
-  public int[] executeBatch() throws SQLException {
-    throw Util.unsupported("*PreparedStatement.executeBatch"); // FIXME
+    throw Util.unsupported("PreparedStatement.addBatch"); // Too cumbersome to implements
   }
 
   @Override
