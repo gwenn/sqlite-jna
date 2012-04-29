@@ -23,7 +23,7 @@ public class ConnTest {
   public void checkOpenInMemoryDb() throws SQLiteException {
     final Conn c = open();
     Assert.assertNotNull(c);
-    Assert.assertEquals(Conn.MEMORY, c.getFilename());
+    Assert.assertEquals("", c.getFilename());
     checkResult(c.close());
   }
 

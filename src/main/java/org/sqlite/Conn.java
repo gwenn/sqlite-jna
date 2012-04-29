@@ -15,8 +15,6 @@ public class Conn {
   public static final String MEMORY = ":memory:";
   public static final String TEMP_FILE = "";
 
-  private final String filename;
-  private final boolean readonly;
   private Pointer pDb;
 
   /**
@@ -38,8 +36,7 @@ public class Conn {
       }
       throw new SQLiteException(String.format("error while opening a database connexion to '%s'", filename), res);
     }
-    final boolean readonly = (flags & OpenFlags.SQLITE_OPEN_READONLY) != 0;
-    return new Conn(filename, readonly, ppDb.getValue());
+    return new Conn(ppDb.getValue());
   }
 
   @Override
@@ -76,14 +73,12 @@ public class Conn {
     }
   }
 
-  private Conn(String filename, boolean readonly, Pointer pDb) {
-    this.filename = filename;
-    this.readonly = readonly;
+  private Conn(Pointer pDb) {
     this.pDb = pDb;
   }
 
   public boolean isReadOnly() {
-    return readonly;
+    return SQLite.sqlite3_db_readonly(pDb, "main") == 1;
   }
 
   /**
@@ -168,11 +163,11 @@ public class Conn {
 
   public void setBusyTimeout(int ms) throws ConnException {
     checkOpen();
-    check(SQLite.sqlite3_busy_timeout(pDb, ms), "error while setting busy timeout on '%s'", filename);
+    check(SQLite.sqlite3_busy_timeout(pDb, ms), "error while setting busy timeout on '%s'", getFilename());
   }
 
   public String getFilename() {
-    return filename;
+    return SQLite.sqlite3_db_filename(pDb, "main");
   }
 
   public String getErrMsg() {
@@ -191,7 +186,7 @@ public class Conn {
    */
   public void setExtendedResultCodes(boolean onoff) throws ConnException {
     checkOpen();
-    check(SQLite.sqlite3_extended_result_codes(pDb, onoff), "error while enabling extended result codes on '%s'", filename);
+    check(SQLite.sqlite3_extended_result_codes(pDb, onoff), "error while enabling extended result codes on '%s'", getFilename());
   }
 
   /**
@@ -224,7 +219,7 @@ public class Conn {
   }
   public void checkOpen() throws ConnException {
     if (isClosed()) {
-      throw new ConnException(this, String.format("connection to '%s' closed", filename), ErrCodes.WRAPPER_SPECIFIC);
+      throw new ConnException(this, String.format("connection to '%s' closed", getFilename()), ErrCodes.WRAPPER_SPECIFIC);
     }
   }
   private void check(int res, String format, String param) throws ConnException {

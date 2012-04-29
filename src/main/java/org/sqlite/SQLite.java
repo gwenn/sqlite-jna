@@ -48,6 +48,9 @@ public class SQLite implements Library {
   static native int sqlite3_total_changes(Pointer pDb);
   static native long sqlite3_last_insert_rowid(Pointer pDb);
 
+  static native String sqlite3_db_filename(Pointer pDb, String dbName);
+  static native int sqlite3_db_readonly(Pointer pDb, String dbName);
+
   static native Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt);
 
   static native int sqlite3_table_column_metadata(Pointer pDb, String dbName, String tableName, String columnName,
