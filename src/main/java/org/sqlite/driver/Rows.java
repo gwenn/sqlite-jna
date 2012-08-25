@@ -30,7 +30,9 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class Rows implements ResultSet {
   private Stmt s;
@@ -39,6 +41,7 @@ public class Rows implements ResultSet {
   private int row;
   private Boolean wasNull;
   private RowIdImpl rowId;
+  private Map<Integer, org.sqlite.Blob> blobByColIndex = Collections.emptyMap();
 
   public Rows(Stmt s, boolean hasRow) throws SQLException {
     this.s = s;
@@ -103,6 +106,10 @@ public class Rows implements ResultSet {
       s = null;
       stmt = null;
       meta = null;
+      for (org.sqlite.Blob blob : blobByColIndex.values()) {
+        blob.close();
+      }
+      blobByColIndex.clear();
     }
   }
   @Override
@@ -666,8 +673,21 @@ public class Rows implements ResultSet {
     if (rowId == null) {
       throw new SQLException("You must read the associated RowId before opening a Blob");
     }
-    final org.sqlite.Blob blob = getStmt().getBlob(fixCol(columnIndex), rowId.value, false);
-    return null; // FIXME
+    org.sqlite.Blob blob = blobByColIndex.get(columnIndex);
+    if (blob == null) {
+      blob = getStmt().open(fixCol(columnIndex), rowId.value, false);
+      if (blob != null) {
+        if (blobByColIndex.isEmpty()) {
+          blobByColIndex = new TreeMap<Integer, org.sqlite.Blob>();
+        }
+        blobByColIndex.put(columnIndex, blob);
+      } else {
+        throw new SQLException("No Blob!"); // TODO improve message
+      }
+    } else {
+      blob.reopen(rowId.value);
+    }
+    return new BlobImpl(blob);
   }
   @Override
   public Clob getClob(int columnIndex) throws SQLException {

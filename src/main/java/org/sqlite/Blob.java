@@ -83,6 +83,12 @@ public class Blob {
     }
     return res;
   }
+  public void closeAndCheck() throws SQLiteException {
+    final int res = close();
+    if (res != ErrCodes.SQLITE_OK) {
+      throw new SQLiteException(c, "error while closing Blob", res);
+    }
+  }
 
   public boolean isClosed() {
     return pBlob == null;
@@ -93,10 +99,30 @@ public class Blob {
     }
   }
 
-  private void check(int res, String reason) throws SQLiteException {
-    if (res != SQLite.SQLITE_OK) {
-      throw new SQLiteException(c, reason, res);
+  public OutputStream getOutputStream() throws SQLiteException {
+    return new BlobOutputStream();
+  }
+
+  public void setWriteOffset(int writeOffset) throws SQLiteException {
+    if (writeOffset < 0) {
+      throw new SQLiteException(String.format("invalid write offset: %d < 0", writeOffset), ErrCodes.WRAPPER_SPECIFIC);
+    } else if (writeOffset > getBytes()) {
+      throw new SQLiteException(String.format("invalid write offset: %d > %d", writeOffset, getBytes()), ErrCodes.WRAPPER_SPECIFIC);
     }
+    this.writeOffset = writeOffset;
+  }
+
+  public InputStream getInputStream() throws SQLiteException {
+    return new BlobInputStream();
+  }
+
+  public void setReadOffset(int readOffset) throws SQLiteException {
+    if (readOffset < 0) {
+      throw new SQLiteException(String.format("invalid read offset: %d < 0", readOffset), ErrCodes.WRAPPER_SPECIFIC);
+    } else if (readOffset > getBytes()) {
+      throw new SQLiteException(String.format("invalid read offset: %d > %d", readOffset, getBytes()), ErrCodes.WRAPPER_SPECIFIC);
+    }
+    this.readOffset = readOffset;
   }
 
   private class BlobInputStream extends InputStream {
@@ -163,7 +189,7 @@ public class Blob {
     @Override
     public void close() throws IOException {
       try {
-        check(Blob.this.close(), "error while closing blob input stream");
+        Blob.this.closeAndCheck();
       } catch (SQLiteException e) {
         throw new IOException(e);
       }
@@ -207,7 +233,7 @@ public class Blob {
     @Override
     public void close() throws IOException {
       try {
-        check(Blob.this.close(), "error while closing blob output stream");
+        Blob.this.closeAndCheck();
       } catch (SQLiteException e) {
         throw new IOException(e);
       }
