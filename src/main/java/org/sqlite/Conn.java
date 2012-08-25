@@ -127,6 +127,17 @@ public class Conn {
     }
   }
 
+  public Blob open(String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
+    final PointerByReference ppBlob = new PointerByReference();
+    final int res = SQLite.sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob);
+    if (res != SQLite.SQLITE_OK) {
+      SQLite.sqlite3_close(ppBlob.getValue());
+      throw new SQLiteException(String.format("error while opening a blob to (db: '%s', table: '%s', col: '%s', row: %d)",
+          dbName, tblName, colName, iRow), res);
+    }
+    return new Blob(this, ppBlob.getValue());
+  }
+
   /**
    * @return the number of database rows that were changed or inserted or deleted by the most recently completed SQL statement
    *         on the database connection specified by the first parameter.

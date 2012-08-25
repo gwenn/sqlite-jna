@@ -11,7 +11,11 @@ package org.sqlite.driver;
 import org.sqlite.ErrCodes;
 import org.sqlite.StmtException;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,15 +60,14 @@ public class Stmt implements Statement {
 
   int findCol(String col) throws SQLException {
     final org.sqlite.Stmt stmt = getStmt();
+    if (this == c.getGeneratedKeys) { // We don't know the table's name nor the column's name but there is only one possible.
+      return 1;
+    }
     Integer index = findColIndexInCache(col);
     if (null != index) {
       return index;
     }
     final int columnCount = stmt.getColumnCount();
-    if (this == c.getGeneratedKeys) { // We don't know the table's name nor the column's name but there is only one possible.
-      addColIndexInCache(col, 1, columnCount);
-      return 1;
-    }
     for (int i = 0; i < columnCount; i++) {
       if (col.equalsIgnoreCase(stmt.getColumnName(i))) {
         addColIndexInCache(col, i + 1, columnCount);
@@ -180,7 +183,7 @@ public class Stmt implements Statement {
   }
   @Override
   public void clearWarnings() throws SQLException {
-    checkOpen();
+    //checkOpen();
   }
   @Override
   public void setCursorName(String name) throws SQLException {
@@ -247,7 +250,7 @@ public class Stmt implements Statement {
     if (rows < 0) throw Util.error("fetch size must be >= 0");
     checkOpen();
     if (rows != 1) {
-      throw Util.caseUnsupported("SQLite does not support setting fetch size");
+      //Util.trace(String.format("SQLite does not support setting fetch size to %d", rows));
     }
   }
   @Override
@@ -290,7 +293,6 @@ public class Stmt implements Statement {
   }
   // Limitations:
   //  - only primary keys defined as rowid's alias work.
-  //  - primary key's name must be 'id'!
   // With the rowid (ok) and the associated table (ko) we can fix these limitations...
   @Override
   public ResultSet getGeneratedKeys() throws SQLException { // Used by hibernate

@@ -8,7 +8,13 @@
  */
 package org.sqlite.driver;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.RowIdLifetime;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -523,14 +529,14 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
-      + "null as PROCEDURE_CAT, "
-      + "null as PROCEDURE_SCHEM, "
-      + "null as PROCEDURE_NAME, "
-      + "null as UNDEF1, "
-      + "null as UNDEF2, "
-      + "null as UNDEF3, "
-      + "null as REMARKS, "
-      + "null as PROCEDURE_TYPE limit 0");
+            + "null as PROCEDURE_CAT, "
+            + "null as PROCEDURE_SCHEM, "
+            + "null as PROCEDURE_NAME, "
+            + "null as UNDEF1, "
+            + "null as UNDEF2, "
+            + "null as UNDEF3, "
+            + "null as REMARKS, "
+            + "null as PROCEDURE_TYPE limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -581,9 +587,9 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
-      + "null as TABLE_SCHEM, "
-      + "null as TABLE_CATALOG "
-      + "limit 0");
+            + "null as TABLE_SCHEM, "
+            + "null as TABLE_CATALOG "
+            + "limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -591,7 +597,7 @@ public class DbMeta implements DatabaseMetaData {
   public ResultSet getCatalogs() throws SQLException {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
-      "select null as TABLE_CAT limit 0");
+        "select null as TABLE_CAT limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -599,7 +605,7 @@ public class DbMeta implements DatabaseMetaData {
   public ResultSet getTableTypes() throws SQLException {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement("select 'TABLE' as TABLE_TYPE " +
-      "union select 'VIEW' as TABLE_TYPE");
+        "union select 'VIEW' as TABLE_TYPE");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -664,7 +670,7 @@ public class DbMeta implements DatabaseMetaData {
             sql.append(" where cn like ").append(quote(columnNamePattern));
           }
         }
-      } catch(SQLException e) { // query does not return ResultSet
+      } catch (SQLException e) { // query does not return ResultSet
       } finally {
         if (rs != null) {
           rs.close();
@@ -738,14 +744,14 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
-      + "null as TABLE_CAT, "
-      + "null as TABLE_SCHEM, "
-      + "null as TABLE_NAME, "
-      + "null as COLUMN_NAME, "
-      + "null as GRANTOR, "
-      + "null as GRANTEE, "
-      + "null as PRIVILEGE, "
-      + "null as IS_GRANTABLE limit 0");
+            + "null as TABLE_CAT, "
+            + "null as TABLE_SCHEM, "
+            + "null as TABLE_NAME, "
+            + "null as COLUMN_NAME, "
+            + "null as GRANTOR, "
+            + "null as GRANTEE, "
+            + "null as PRIVILEGE, "
+            + "null as IS_GRANTABLE limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -754,13 +760,13 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
-      + "null as TABLE_CAT, "
-      + "null as TABLE_SCHEM, "
-      + "null as TABLE_NAME, "
-      + "null as GRANTOR, "
-      + "null as GRANTEE, "
-      + "null as PRIVILEGE, "
-      + "null as IS_GRANTABLE limit 0");
+            + "null as TABLE_CAT, "
+            + "null as TABLE_SCHEM, "
+            + "null as TABLE_NAME, "
+            + "null as GRANTOR, "
+            + "null as GRANTEE, "
+            + "null as PRIVILEGE, "
+            + "null as IS_GRANTABLE limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -796,7 +802,7 @@ public class DbMeta implements DatabaseMetaData {
           count++;
         }
       }
-    } catch(SQLException e) { // query does not return ResultSet
+    } catch (SQLException e) { // query does not return ResultSet
     } finally {
       if (rs != null) {
         rs.close();
@@ -828,14 +834,14 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
-      + "null as SCOPE, "
-      + "null as COLUMN_NAME, "
-      + "null as DATA_TYPE, "
-      + "null as TYPE_NAME, "
-      + "null as COLUMN_SIZE, "
-      + "null as BUFFER_LENGTH, "
-      + "null as DECIMAL_DIGITS, "
-      + "null as PSEUDO_COLUMN limit 0");
+            + "null as SCOPE, "
+            + "null as COLUMN_NAME, "
+            + "null as DATA_TYPE, "
+            + "null as TYPE_NAME, "
+            + "null as COLUMN_SIZE, "
+            + "null as BUFFER_LENGTH, "
+            + "null as DECIMAL_DIGITS, "
+            + "null as PSEUDO_COLUMN limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -865,7 +871,7 @@ public class DbMeta implements DatabaseMetaData {
           colNames.add(rs.getString(2));
         }
       }
-    } catch(SQLException e) { // query does not return ResultSet
+    } catch (SQLException e) { // query does not return ResultSet
     } finally {
       if (rs != null) {
         rs.close();
@@ -893,7 +899,7 @@ public class DbMeta implements DatabaseMetaData {
             indexNames.add(rs.getString(2));
           }
         }
-      } catch(SQLException e) { // query does not return ResultSet
+      } catch (SQLException e) { // query does not return ResultSet
       } finally {
         if (rs != null) {
           rs.close();
@@ -914,7 +920,7 @@ public class DbMeta implements DatabaseMetaData {
           while (rs.next()) {
             columns.add(rs.getInt(1), rs.getString(3));
           }
-        //} catch(SQLException e) { // query does not return ResultSet
+          //} catch(SQLException e) { // query does not return ResultSet
         } finally {
           if (rs != null) {
             rs.close();
@@ -986,7 +992,7 @@ public class DbMeta implements DatabaseMetaData {
     PreparedStatement foreign_key_list = null;
     ResultSet rs = null;
     try {
-      foreign_key_list = c.prepareStatement("pragma foreign_key_list("+quote(foreignTable)+");");
+      foreign_key_list = c.prepareStatement("pragma foreign_key_list(" + quote(foreignTable) + ");");
       rs = foreign_key_list.executeQuery();
       while (rs.next()) {
         if (cross && !primaryTable.equalsIgnoreCase(rs.getString(3))) {
@@ -1002,7 +1008,7 @@ public class DbMeta implements DatabaseMetaData {
             append(rs.getShort(2) + 1).append(" as seq");
         count++;
       }
-    } catch(SQLException e) { // query does not return ResultSet
+    } catch (SQLException e) { // query does not return ResultSet
     } finally {
       if (rs != null) {
         rs.close();
@@ -1073,7 +1079,7 @@ public class DbMeta implements DatabaseMetaData {
         // Pragma cannot be used as subquery...
         PreparedStatement foreign_key_list = null;
         try {
-          foreign_key_list = c.prepareStatement("pragma foreign_key_list("+quote(fkTable)+");");
+          foreign_key_list = c.prepareStatement("pragma foreign_key_list(" + quote(fkTable) + ");");
           rs = foreign_key_list.executeQuery();
           while (rs.next()) {
             if (!rs.getString(3).equalsIgnoreCase(table)) {
@@ -1089,7 +1095,7 @@ public class DbMeta implements DatabaseMetaData {
                 append(rs.getShort(2) + 1).append(" as seq");
             count++;
           }
-        } catch(SQLException e) { // query does not return ResultSet
+        } catch (SQLException e) { // query does not return ResultSet
         } finally {
           if (rs != null) {
             rs.close();
@@ -1119,30 +1125,30 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
-      + "tn as TYPE_NAME, "
-      + "dt as DATA_TYPE, "
-      + "0 as PRECISION, "
-      + "null as LITERAL_PREFIX, "
-      + "null as LITERAL_SUFFIX, "
-      + "null as CREATE_PARAMS, "
-      + typeNullable + " as NULLABLE, "
-      + "1 as CASE_SENSITIVE, "
-      + typeSearchable + " as SEARCHABLE, "
-      + "0 as UNSIGNED_ATTRIBUTE, "
-      + "0 as FIXED_PREC_SCALE, "
-      + "0 as AUTO_INCREMENT, "
-      + "null as LOCAL_TYPE_NAME, "
-      + "0 as MINIMUM_SCALE, "
-      + "0 as MAXIMUM_SCALE, "
-      + "0 as SQL_DATA_TYPE, "
-      + "0 as SQL_DATETIME_SUB, "
-      + "10 as NUM_PREC_RADIX from ("
-      + "    select 'BLOB' as tn, " + Types.BLOB + " as dt union"
-      + "    select 'NULL' as tn, " + Types.NULL + " as dt union"
-      + "    select 'REAL' as tn, " + Types.REAL+ " as dt union"
-      + "    select 'TEXT' as tn, " + Types.VARCHAR + " as dt union"
-      + "    select 'INTEGER' as tn, "+ Types.INTEGER +" as dt"
-      + ") order by DATA_TYPE, TYPE_NAME");
+            + "tn as TYPE_NAME, "
+            + "dt as DATA_TYPE, "
+            + "0 as PRECISION, "
+            + "null as LITERAL_PREFIX, "
+            + "null as LITERAL_SUFFIX, "
+            + "null as CREATE_PARAMS, "
+            + typeNullable + " as NULLABLE, "
+            + "1 as CASE_SENSITIVE, "
+            + typeSearchable + " as SEARCHABLE, "
+            + "0 as UNSIGNED_ATTRIBUTE, "
+            + "0 as FIXED_PREC_SCALE, "
+            + "0 as AUTO_INCREMENT, "
+            + "null as LOCAL_TYPE_NAME, "
+            + "0 as MINIMUM_SCALE, "
+            + "0 as MAXIMUM_SCALE, "
+            + "0 as SQL_DATA_TYPE, "
+            + "0 as SQL_DATETIME_SUB, "
+            + "10 as NUM_PREC_RADIX from ("
+            + "    select 'BLOB' as tn, " + Types.BLOB + " as dt union"
+            + "    select 'NULL' as tn, " + Types.NULL + " as dt union"
+            + "    select 'REAL' as tn, " + Types.REAL + " as dt union"
+            + "    select 'TEXT' as tn, " + Types.VARCHAR + " as dt union"
+            + "    select 'INTEGER' as tn, " + Types.INTEGER + " as dt"
+            + ") order by DATA_TYPE, TYPE_NAME");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -1166,7 +1172,7 @@ public class DbMeta implements DatabaseMetaData {
         append("null as FILTER_CONDITION ").
         append("from (");
 
-    Map<String,Boolean> indexes = new HashMap<String, Boolean>();
+    Map<String, Boolean> indexes = new HashMap<String, Boolean>();
     PreparedStatement index_list = null;
     ResultSet rs = null;
     try {
@@ -1179,7 +1185,7 @@ public class DbMeta implements DatabaseMetaData {
         }
         indexes.put(rs.getString(2), notuniq);
       }
-    } catch(SQLException e) { // query does not return ResultSet
+    } catch (SQLException e) { // query does not return ResultSet
     } finally {
       if (rs != null) {
         rs.close();
@@ -1193,7 +1199,7 @@ public class DbMeta implements DatabaseMetaData {
       sql.append("SELECT NULL AS nu, NULL AS idx, NULL AS seqno, NULL AS cn) LIMIT 0");
     } else {
       boolean found = false;
-      for (final Map.Entry<String,Boolean> index : indexes.entrySet()) {
+      for (final Map.Entry<String, Boolean> index : indexes.entrySet()) {
         PreparedStatement index_info = null;
         try {
           index_info = c.prepareStatement("PRAGMA index_info(" + quote(index.getKey()) + ")");
@@ -1209,7 +1215,7 @@ public class DbMeta implements DatabaseMetaData {
                 append(quote(rs.getString(3))).append(" AS cn");
             found = true;
           }
-        //} catch(SQLException e) { // query does not return ResultSet
+          //} catch(SQLException e) { // query does not return ResultSet
         } finally {
           if (rs != null) {
             rs.close();
@@ -1283,14 +1289,14 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
-      + "null as TYPE_CAT, "
-      + "null as TYPE_SCHEM, "
-      + "null as TYPE_NAME, "
-      + "null as CLASS_NAME, "
-      + "null as DATA_TYPE, "
-      + "null as REMARKS, "
-      + "null as BASE_TYPE "
-      + "limit 0");
+            + "null as TYPE_CAT, "
+            + "null as TYPE_SCHEM, "
+            + "null as TYPE_NAME, "
+            + "null as CLASS_NAME, "
+            + "null as DATA_TYPE, "
+            + "null as REMARKS, "
+            + "null as BASE_TYPE "
+            + "limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -1319,12 +1325,12 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
-      + "null as TYPE_CAT, "
-      + "null as TYPE_SCHEM, "
-      + "null as TYPE_NAME, "
-      + "null as SUPERTYPE_CAT, "
-      + "null as SUPERTYPE_SCHEM, "
-      + "null as SUPERTYPE_NAME limit 0");
+            + "null as TYPE_CAT, "
+            + "null as TYPE_SCHEM, "
+            + "null as TYPE_NAME, "
+            + "null as SUPERTYPE_CAT, "
+            + "null as SUPERTYPE_SCHEM, "
+            + "null as SUPERTYPE_NAME limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -1332,11 +1338,11 @@ public class DbMeta implements DatabaseMetaData {
   public ResultSet getSuperTables(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
-      "select "
-      + "null as TABLE_CAT, "
-      + "null as TABLE_SCHEM, "
-      + "null as TABLE_NAME, "
-      + "null as SUPERTABLE_NAME limit 0");
+        "select "
+            + "null as TABLE_CAT, "
+            + "null as TABLE_SCHEM, "
+            + "null as TABLE_NAME, "
+            + "null as SUPERTABLE_NAME limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -1345,27 +1351,27 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
-      + "null as TYPE_CAT, "
-      + "null as TYPE_SCHEM, "
-      + "null as TYPE_NAME, "
-      + "null as ATTR_NAME, "
-      + "null as DATA_TYPE, "
-      + "null as ATTR_TYPE_NAME, "
-      + "null as ATTR_SIZE, "
-      + "null as DECIMAL_DIGITS, "
-      + "null as NUM_PREC_RADIX, "
-      + "null as NULLABLE, "
-      + "null as REMARKS, "
-      + "null as ATTR_DEF, "
-      + "null as SQL_DATA_TYPE, "
-      + "null as SQL_DATETIME_SUB, "
-      + "null as CHAR_OCTET_LENGTH, "
-      + "null as ORDINAL_POSITION, "
-      + "null as IS_NULLABLE, "
-      + "null as SCOPE_CATALOG, "
-      + "null as SCOPE_SCHEMA, "
-      + "null as SCOPE_TABLE, "
-      + "null as SOURCE_DATA_TYPE limit 0");
+            + "null as TYPE_CAT, "
+            + "null as TYPE_SCHEM, "
+            + "null as TYPE_NAME, "
+            + "null as ATTR_NAME, "
+            + "null as DATA_TYPE, "
+            + "null as ATTR_TYPE_NAME, "
+            + "null as ATTR_SIZE, "
+            + "null as DECIMAL_DIGITS, "
+            + "null as NUM_PREC_RADIX, "
+            + "null as NULLABLE, "
+            + "null as REMARKS, "
+            + "null as ATTR_DEF, "
+            + "null as SQL_DATA_TYPE, "
+            + "null as SQL_DATETIME_SUB, "
+            + "null as CHAR_OCTET_LENGTH, "
+            + "null as ORDINAL_POSITION, "
+            + "null as IS_NULLABLE, "
+            + "null as SCOPE_CATALOG, "
+            + "null as SCOPE_SCHEMA, "
+            + "null as SCOPE_TABLE, "
+            + "null as SOURCE_DATA_TYPE limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -1427,11 +1433,11 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
-      + "null as NAME, "
-      + "0 as MAX_LEN, "
-      + "null as DEFAULT_VALUE, "
-      + "null as DESCRIPTION "
-      + "limit 0");
+            + "null as NAME, "
+            + "0 as MAX_LEN, "
+            + "null as DEFAULT_VALUE, "
+            + "null as DESCRIPTION "
+            + "limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -1450,18 +1456,18 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement( // TODO rowId?
         "select "
-      + "null as TABLE_CAT, "
-      + "null as TABLE_SCHEM, "
-      + "null as TABLE_NAME, "
-      + "null as COLUMN_NAME, "
-      + "null as DATA_TYPE, "
-      + "null as COLUMN_SIZE, "
-      + "null as DECIMAL_DIGITS, "
-      + "null as NUM_PREC_RADIX, "
-      + "null as COLUMN_USAGE, "
-      + "null as REMARKS, "
-      + "null as CHAR_OCTET_LENGTH, "
-      + "null as IS_NULLABLE limit 0");
+            + "null as TABLE_CAT, "
+            + "null as TABLE_SCHEM, "
+            + "null as TABLE_NAME, "
+            + "null as COLUMN_NAME, "
+            + "null as DATA_TYPE, "
+            + "null as COLUMN_SIZE, "
+            + "null as DECIMAL_DIGITS, "
+            + "null as NUM_PREC_RADIX, "
+            + "null as COLUMN_USAGE, "
+            + "null as REMARKS, "
+            + "null as CHAR_OCTET_LENGTH, "
+            + "null as IS_NULLABLE limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }

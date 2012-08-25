@@ -8,7 +8,7 @@
  */
 package org.sqlite.driver;
 
-import org.sqlite.*;
+import org.sqlite.ColTypes;
 import org.sqlite.Stmt;
 
 import java.sql.ResultSetMetaData;

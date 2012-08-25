@@ -434,4 +434,12 @@ public class Stmt {
         }
     }
   }
+
+  public Blob getBlob(int iCol, long iRow, boolean rw) throws SQLiteException {
+    final String colName = getColumnOriginName(iCol);
+    if (colName != null) {
+      return c.open(getColumnDatabaseName(iCol), getColumnTableName(iCol), colName, iRow, rw);
+    }
+    return null;
+  }
 }

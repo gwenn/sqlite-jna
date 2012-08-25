@@ -14,6 +14,8 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
+import java.nio.ByteBuffer;
+
 public class SQLite implements Library {
   public static final String JNA_LIBRARY_NAME = "sqlite3";
   // public static final NativeLibrary JNA_NATIVE_LIB = NativeLibrary.getInstance(SQLite.JNA_LIBRARY_NAME);
@@ -103,6 +105,14 @@ public class SQLite implements Library {
 
   static native Pointer sqlite3_mprintf(String zFormat, String arg);
   static native void sqlite3_free(Pointer p);
+
+  static native int sqlite3_blob_open(Pointer pDb, String dbName, String tableName, String columnName,
+                                      long iRow, boolean flags, PointerByReference ppBlob);
+  static native int sqlite3_blob_reopen(Pointer pBlob, long iRow);
+  static native int sqlite3_blob_bytes(Pointer pBlob);
+  static native int sqlite3_blob_read(Pointer pBlob, ByteBuffer z, int n, int iOffset);
+  static native int sqlite3_blob_write(Pointer pBlob, ByteBuffer z, int n, int iOffset);
+  static native int sqlite3_blob_close(Pointer pBlob);
 
   static Pointer nativeString(String sql) { // TODO Check encoding?
     byte[] data = sql.getBytes();

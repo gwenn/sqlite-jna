@@ -10,7 +10,12 @@ package org.sqlite.driver;
 
 import org.sqlite.OpenFlags;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -41,7 +46,7 @@ public class JDBC implements Driver {
   @Override
   public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
     Util.trace("Driver.getPropertyInfo");
-    return new DriverPropertyInfo[0];  // TODO vfs, mode (ro, rw, rwc), cache, encoding, foreign_keys, locking_mode, recursive_triggers, synchronous,
+    return new DriverPropertyInfo[0];  // TODO vfs, mode (ro, rw, rwc), cache, encoding, foreign_keys, locking_mode, recursive_triggers, synchronous, load_extension
   }
   @Override
   public int getMajorVersion() {

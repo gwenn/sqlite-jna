@@ -14,7 +14,21 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.Date;
+import java.sql.NClob;
+import java.sql.Ref;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.RowId;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
 
@@ -24,6 +38,7 @@ public class Rows implements ResultSet {
   private RowsMeta meta;
   private int row;
   private Boolean wasNull;
+  private RowIdImpl rowId;
 
   public Rows(Stmt s, boolean hasRow) throws SQLException {
     this.s = s;
@@ -73,6 +88,7 @@ public class Rows implements ResultSet {
   @Override
   public boolean next() throws SQLException {
     wasNull = null;
+    rowId = null;
     return step();
   }
   @Override
@@ -646,7 +662,12 @@ public class Rows implements ResultSet {
   }
   @Override
   public Blob getBlob(int columnIndex) throws SQLException {
-    throw Util.unsupported("ResultSet.getBlob");
+    checkOpen();
+    if (rowId == null) {
+      throw new SQLException("You must read the associated RowId before opening a Blob");
+    }
+    final org.sqlite.Blob blob = getStmt().getBlob(fixCol(columnIndex), rowId.value, false);
+    return null; // FIXME
   }
   @Override
   public Clob getClob(int columnIndex) throws SQLException {
@@ -742,7 +763,8 @@ public class Rows implements ResultSet {
   }
   @Override
   public RowId getRowId(int columnIndex) throws SQLException {
-    throw Util.unsupported("ResultSet.getRowId");
+    rowId = new RowIdImpl(getLong(columnIndex));
+    return rowId;
   }
   @Override
   public RowId getRowId(String columnLabel) throws SQLException {
