@@ -197,6 +197,7 @@ public class Stmt implements Statement {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
       close();
+      // TODO multiple statements...
       stmt = c.getConn().prepare(sql);
       return exec();
     }

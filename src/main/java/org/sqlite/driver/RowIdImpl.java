@@ -34,4 +34,12 @@ public class RowIdImpl implements RowId {
   public int hashCode() {
     return (int) (value ^ (value >>> 32));
   }
+
+  public static long getValue(RowId rowId) {
+    if (rowId instanceof RowIdImpl) {
+      return ((RowIdImpl)rowId).value;
+    } else {
+      return Long.parseLong(rowId.toString());
+    }
+  }
 }

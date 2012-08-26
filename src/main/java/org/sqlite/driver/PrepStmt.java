@@ -31,8 +31,54 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
 
+/*
+Blob Incremental I/O:
+--------------------
+
+* Initialization:
+
+CREATE TABLE test (
+-- pk   INTEGER PRIMARY KEY -- optional ROWID alias
+-- ...
+   data BLOB
+-- ...
+);
+INSERT INTO test (data) VALUES (zeroblob(:blob_size));
+SELECT last_insert_rowid();
+-- or
+UPDATE test SET data = zeroblob(:blob_size) WHERE rowid = :rowid;
+
+* Read:
+
+SELECT [rowid,] data FROM test [WHERE rowid = :rowid ...];
+  stmt.setRowId(1, rowId); -- (1): optional if (2)
+  ...
+  ResultSet rs = stmt.getResultSet();
+
+  Blob blob;
+  while (rs.next()) {
+    rs.getRowId(1); -- (2): mandatory if not (1)
+    blob = rs.getBlob(2);
+    // ...
+  }
+  blob.free();
+  rs.close();
+
+* Write:
+
+UPDATE test SET data = :blob WHERE rowid = :rowid;
+  smt.setRowId(2, rowId); -- mandatory, first
+  smt.setBlob|setBinaryStream(1, ...);
+
+ */
 public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaData {
+  private RowId rowId; // FIXME clear/reset to null when ?
+  private Map<Integer, org.sqlite.Blob> blobByParamIndex = Collections.emptyMap();
+
   PrepStmt(Conn c, org.sqlite.Stmt stmt) {
     super(c, stmt);
   }
@@ -136,7 +182,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
       getStmt().bindNull(parameterIndex);
     }
     throw Util.unsupported("PreparedStatement.setBinaryStream"); // FIXME
-    // The data will be read from the stream as needed until end-of-file is reached.
+    // The data will be read from the stream as needed until end-of-file/length is reached.
   }
   @Override
   public void clearParameters() throws SQLException {
@@ -213,7 +259,12 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setRowId(int parameterIndex, RowId x) throws SQLException {
-    throw Util.unsupported("PreparedStatement.setRowId"); // FIXME
+    if (x == null) {
+      getStmt().bindNull(parameterIndex);
+    } else {
+      rowId = x;
+      getStmt().bindLong(parameterIndex, RowIdImpl.getValue(x));
+    }
   }
   @Override
   public void setNString(int parameterIndex, String value) throws SQLException {
@@ -271,6 +322,24 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     if (x == null) {
       getStmt().bindNull(parameterIndex);
     }
+    if (rowId == null) {
+      throw new SQLException("You must set the associated RowId before opening a Blob");
+    }
+    org.sqlite.Blob blob = blobByParamIndex.get(parameterIndex);
+    if (blob == null || blob.isClosed()) {
+      blob = getStmt().open(parameterIndex, RowIdImpl.getValue(rowId), true); // FIXME getColumnOriginName can be called only with SELECT...
+      if (blob != null) {
+        if (blobByParamIndex.isEmpty() && !(blobByParamIndex instanceof TreeMap)) {
+          blobByParamIndex = new TreeMap<Integer, org.sqlite.Blob>();
+        }
+        blobByParamIndex.put(parameterIndex, blob);
+      } else {
+        throw new SQLException("No Blob!"); // TODO improve message
+      }
+    } else {
+      blob.reopen(RowIdImpl.getValue(rowId));
+    }
+
     throw Util.unsupported("PreparedStatement.setBinaryStream"); // FIXME
     // The data will be read from the stream as needed until end-of-file is reached.
   }
