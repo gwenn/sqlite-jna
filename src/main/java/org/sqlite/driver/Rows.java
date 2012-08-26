@@ -670,11 +670,11 @@ public class Rows implements ResultSet {
   @Override
   public Blob getBlob(int columnIndex) throws SQLException {
     checkOpen();
-    if (rowId == null) {
+    if (rowId == null) { // FIXME check PrepStmt.rowId aswell...
       throw new SQLException("You must read the associated RowId before opening a Blob");
     }
     org.sqlite.Blob blob = blobByColIndex.get(columnIndex);
-    if (blob == null) {
+    if (blob == null || blob.isClosed()) {
       blob = getStmt().open(fixCol(columnIndex), rowId.value, false);
       if (blob != null) {
         if (blobByColIndex.isEmpty() && !(blobByColIndex instanceof TreeMap)) {

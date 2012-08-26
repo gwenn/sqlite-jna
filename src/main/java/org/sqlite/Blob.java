@@ -16,7 +16,7 @@ public class Blob {
   private Pointer pBlob;
   private int readOffset;
   private int writeOffset;
-  private int size;
+  private int size = -1;
 
   Blob(Conn c, Pointer pBlob) {
     this.c = c;
@@ -238,5 +238,20 @@ public class Blob {
         throw new IOException(e);
       }
     }
+  }
+
+  private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
+  public static int copy(
+          InputStream input,
+          OutputStream output)
+              throws IOException {
+      byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+      int count = 0;
+      int n = 0;
+      while (-1 != (n = input.read(buffer))) {
+          output.write(buffer, 0, n);
+          count += n;
+      }
+      return count;
   }
 }
