@@ -223,7 +223,7 @@ public class Rows implements ResultSet {
   }
   @Override
   public InputStream getBinaryStream(int columnIndex) throws SQLException {
-    throw Util.unsupported("ResultSet.getBinaryStream");
+    return getBlob(columnIndex).getBinaryStream();
   }
   @Override
   public String getString(String columnLabel) throws SQLException {
@@ -677,7 +677,7 @@ public class Rows implements ResultSet {
     if (blob == null) {
       blob = getStmt().open(fixCol(columnIndex), rowId.value, false);
       if (blob != null) {
-        if (blobByColIndex.isEmpty()) {
+        if (blobByColIndex.isEmpty() && !(blobByColIndex instanceof TreeMap)) {
           blobByColIndex = new TreeMap<Integer, org.sqlite.Blob>();
         }
         blobByColIndex.put(columnIndex, blob);

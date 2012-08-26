@@ -132,7 +132,11 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
-    throw Util.unsupported("PreparedStatement.setBinaryStream");
+    if (x == null) {
+      getStmt().bindNull(parameterIndex);
+    }
+    throw Util.unsupported("PreparedStatement.setBinaryStream"); // FIXME
+    // The data will be read from the stream as needed until end-of-file is reached.
   }
   @Override
   public void clearParameters() throws SQLException {
@@ -166,7 +170,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setBlob(int parameterIndex, Blob x) throws SQLException {
-    throw Util.unsupported("PreparedStatement.setBlob");
+    if (x == null) {
+      getStmt().bindNull(parameterIndex);
+    }
+    setBinaryStream(parameterIndex, x.getBinaryStream(), x.length());
   }
   @Override
   public void setClob(int parameterIndex, Clob x) throws SQLException {
@@ -206,7 +213,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setRowId(int parameterIndex, RowId x) throws SQLException {
-    throw Util.unsupported("PreparedStatement.setRowId");
+    throw Util.unsupported("PreparedStatement.setRowId"); // FIXME
   }
   @Override
   public void setNString(int parameterIndex, String value) throws SQLException {
@@ -226,7 +233,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
-    throw Util.unsupported("PreparedStatement.setBlob");
+    setBinaryStream(parameterIndex, inputStream, length);
   }
   @Override
   public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
@@ -246,7 +253,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
-    throw Util.unsupported("PreparedStatement.setBinaryStream");
+    if (x == null) {
+      getStmt().bindNull(parameterIndex);
+    }
+    setBinaryStream(parameterIndex, x, BlobImpl.checkLength(length));
   }
   @Override
   public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
@@ -258,7 +268,11 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
-    throw Util.unsupported("PreparedStatement.setBinaryStream");
+    if (x == null) {
+      getStmt().bindNull(parameterIndex);
+    }
+    throw Util.unsupported("PreparedStatement.setBinaryStream"); // FIXME
+    // The data will be read from the stream as needed until end-of-file is reached.
   }
   @Override
   public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
@@ -274,7 +288,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
-    throw Util.unsupported("PreparedStatement.setBlob");
+    setBinaryStream(parameterIndex, inputStream);
   }
   @Override
   public void setNClob(int parameterIndex, Reader reader) throws SQLException {
