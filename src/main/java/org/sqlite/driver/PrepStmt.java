@@ -16,6 +16,7 @@ import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Array;
+import java.sql.BatchUpdateException;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
@@ -30,8 +31,11 @@ import java.sql.SQLException;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -79,6 +83,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   private RowId rowId; // FIXME clear/reset to null when ?
   private Map<Integer, org.sqlite.Blob> blobByParamIndex = Collections.emptyMap();
 
+  private boolean batching;
+  private Object[] bindings;
+  private List<Object[]> batch; // list of bindings
+
   PrepStmt(Conn c, org.sqlite.Stmt stmt) {
     super(c, stmt);
   }
@@ -102,35 +110,35 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setNull(int parameterIndex, int sqlType) throws SQLException {
-    getStmt().bindNull(parameterIndex);
+    bindNull(parameterIndex);
   }
   @Override
   public void setBoolean(int parameterIndex, boolean x) throws SQLException {
-    getStmt().bindInt(parameterIndex, x ? 1 : 0);
+    bindInt(parameterIndex, x ? 1 : 0);
   }
   @Override
   public void setByte(int parameterIndex, byte x) throws SQLException {
-    getStmt().bindInt(parameterIndex, x);
+    bindInt(parameterIndex, x);
   }
   @Override
   public void setShort(int parameterIndex, short x) throws SQLException {
-    getStmt().bindInt(parameterIndex, x);
+    bindInt(parameterIndex, x);
   }
   @Override
   public void setInt(int parameterIndex, int x) throws SQLException {
-    getStmt().bindInt(parameterIndex, x);
+    bindInt(parameterIndex, x);
   }
   @Override
   public void setLong(int parameterIndex, long x) throws SQLException {
-    getStmt().bindLong(parameterIndex, x);
+    bindLong(parameterIndex, x);
   }
   @Override
   public void setFloat(int parameterIndex, float x) throws SQLException {
-    getStmt().bindDouble(parameterIndex, x);
+    bindDouble(parameterIndex, x);
   }
   @Override
   public void setDouble(int parameterIndex, double x) throws SQLException {
-    getStmt().bindDouble(parameterIndex, x);
+    bindDouble(parameterIndex, x);
   }
   @Override
   public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
@@ -138,14 +146,14 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setString(int parameterIndex, String x) throws SQLException {
-    getStmt().bindText(parameterIndex, x);
+    bindText(parameterIndex, x);
   }
   @Override
   public void setBytes(int parameterIndex, byte[] x) throws SQLException {
     if (x == null) {
-      getStmt().bindNull(parameterIndex);
+      bindNull(parameterIndex);
     } else {
-      getStmt().bindBlob(parameterIndex, x);
+      bindBlob(parameterIndex, x);
     }
   }
   @Override
@@ -154,9 +162,9 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   private void bindDate(int parameterIndex, java.util.Date x) throws SQLException {
     if (null == x) {
-      getStmt().bindNull(parameterIndex);
+      bindNull(parameterIndex);
     } else {
-      getStmt().bindLong(parameterIndex, x.getTime());
+      bindLong(parameterIndex, x.getTime());
     }
   }
   @Override
@@ -179,7 +187,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   @Override
   public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
     if (x == null) {
-      getStmt().bindNull(parameterIndex);
+      bindNull(parameterIndex);
     }
     throw Util.unsupported("PreparedStatement.setBinaryStream"); // FIXME
     // The data will be read from the stream as needed until end-of-file/length is reached.
@@ -187,6 +195,9 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   @Override
   public void clearParameters() throws SQLException {
     getStmt().clearBindings();
+    if (bindings != null) {
+      Arrays.fill(bindings, null);
+    }
   }
   @Override
   public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
@@ -203,7 +214,62 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
 
   @Override
   public void addBatch() throws SQLException {
-    throw Util.unsupported("PreparedStatement.addBatch"); // Too cumbersome to implements
+    if (!batching) {
+      batching = true;
+    }
+    if (batch == null) {
+      batch = new ArrayList<Object[]>();
+    }
+    if (bindings == null) {
+      batch.add(null);
+    } else {
+      batch.add(Arrays.copyOf(bindings, bindings.length));
+    }
+  }
+
+  @Override
+  public void clearBatch() throws SQLException {
+    //checkOpen();
+    if (batch != null) {
+      batch.clear();
+    }
+    batching = false;
+  }
+
+  @Override
+  public int[] executeBatch() throws SQLException {
+    final org.sqlite.Stmt stmt = getStmt();
+    batching = false;
+    if (batch == null) {
+      return new int[0];
+    }
+    final int size = batch.size();
+    Exception cause = null;
+    Object[] params;
+    final int[] changes = new int[size];
+    for (int i = 0; i < size; ++i) {
+      try {
+        params = batch.get(i);
+        if (params != null) {
+          for (int j = 0; j < params.length; j++) {
+            stmt.bindByIndex(j + 1, params[j]);
+          }
+        }
+        changes[i] = executeUpdate();
+      } catch (SQLException e) {
+        if (cause == null) {
+          cause = e;
+        }
+        changes[i] = EXECUTE_FAILED;
+      }
+    }
+    if (cause != null) {
+      for (int i = 0; i < batch.size(); i++) {
+        Util.trace(i + " = " + Arrays.toString(batch.get(i)));
+      }
+      throw new BatchUpdateException("batch failed", changes, cause);
+    }
+    return changes;
   }
 
   @Override
@@ -217,9 +283,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   @Override
   public void setBlob(int parameterIndex, Blob x) throws SQLException {
     if (x == null) {
-      getStmt().bindNull(parameterIndex);
+      bindNull(parameterIndex);
+    } else {
+      setBinaryStream(parameterIndex, x.getBinaryStream(), x.length());
     }
-    setBinaryStream(parameterIndex, x.getBinaryStream(), x.length());
   }
   @Override
   public void setClob(int parameterIndex, Clob x) throws SQLException {
@@ -260,10 +327,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   @Override
   public void setRowId(int parameterIndex, RowId x) throws SQLException {
     if (x == null) {
-      getStmt().bindNull(parameterIndex);
+      bindNull(parameterIndex);
     } else {
       rowId = x;
-      getStmt().bindLong(parameterIndex, RowIdImpl.getValue(x));
+      bindLong(parameterIndex, RowIdImpl.getValue(x));
     }
   }
   @Override
@@ -305,9 +372,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   @Override
   public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
     if (x == null) {
-      getStmt().bindNull(parameterIndex);
+      bindNull(parameterIndex);
+    } else {
+      setBinaryStream(parameterIndex, x, BlobImpl.checkLength(length));
     }
-    setBinaryStream(parameterIndex, x, BlobImpl.checkLength(length));
   }
   @Override
   public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
@@ -320,7 +388,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   @Override
   public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
     if (x == null) {
-      getStmt().bindNull(parameterIndex);
+      bindNull(parameterIndex);
     }
     if (rowId == null) {
       throw new SQLException("You must set the associated RowId before opening a Blob");
@@ -399,5 +467,48 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   @Override
   public int getParameterMode(int param) throws SQLException {
     return parameterModeIn;
+  }
+
+  private void bindNull(int parameterIndex) throws SQLException {
+    if (!batching) {
+      getStmt().bindNull(parameterIndex);
+    }
+    bind(parameterIndex, null);
+  }
+  private void bindInt(int parameterIndex, int x) throws SQLException {
+    if (!batching) {
+      getStmt().bindInt(parameterIndex, x);
+    }
+    bind(parameterIndex, x);
+  }
+  private void bindLong(int parameterIndex, long x) throws SQLException {
+    if (!batching) {
+      getStmt().bindLong(parameterIndex, x);
+    }
+    bind(parameterIndex, x);
+  }
+  private void bindDouble(int parameterIndex, double x) throws SQLException {
+    if (!batching) {
+      getStmt().bindDouble(parameterIndex, x);
+    }
+    bind(parameterIndex, x);
+  }
+  private void bindText(int parameterIndex, String x) throws SQLException {
+    if (!batching) {
+      getStmt().bindText(parameterIndex, x);
+    }
+    bind(parameterIndex, x);
+  }
+  private void bindBlob(int parameterIndex, byte[] x) throws SQLException {
+    if (!batching) {
+      getStmt().bindBlob(parameterIndex, x);
+    }
+    bind(parameterIndex, x);
+  }
+  private void bind(int parameterIndex, Object x) throws SQLException {
+    if (bindings == null) {
+      bindings = new Object[getParameterCount()];
+    }
+    bindings[parameterIndex - 1] = x;
   }
 }

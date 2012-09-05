@@ -17,6 +17,8 @@ public class Stmt {
   final Conn c;
   private Pointer pStmt;
   private String tail;
+  // cached parameter count
+  private int paramCount = -1;
   // cached parameters index by name
   private Map<String, Integer> params;
   // cached column count
@@ -261,7 +263,7 @@ public class Stmt {
     }
   }
 
-  private void bindByIndex(int i, Object value) throws StmtException {
+  public void bindByIndex(int i, Object value) throws StmtException {
     if (value == null) {
       bindNull(i);
     } else if (value instanceof String) {
@@ -293,7 +295,10 @@ public class Stmt {
    */
   public int getBindParameterCount() throws StmtException {
     checkOpen();
-    return SQLite.sqlite3_bind_parameter_count(pStmt);
+    if (paramCount == -1) {
+      paramCount = SQLite.sqlite3_bind_parameter_count(pStmt);
+    }
+    return paramCount;
   }
 
   /**

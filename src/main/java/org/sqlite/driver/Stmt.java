@@ -11,12 +11,15 @@ package org.sqlite.driver;
 import org.sqlite.ErrCodes;
 import org.sqlite.StmtException;
 
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 // There is no "not prepared" statement in SQLite!
@@ -30,6 +33,7 @@ public class Stmt implements Statement {
   private boolean isCloseOnCompletion;
   private int maxRows;
   private int status; // 0: not a select, 1: select with row, 2: select without row
+  private List<String> batch; // sql queries (see addBatch)
 
   Stmt(Conn c) {
     this.c = c;
@@ -50,7 +54,7 @@ public class Stmt implements Statement {
     return c.getConn();
   }
 
-  private void checkOpen() throws SQLException {
+  void checkOpen() throws SQLException {
     if (stmt == null) {
       throw new SQLException("Statement closed");
     } else {
@@ -123,11 +127,12 @@ public class Stmt implements Statement {
     }
   }
   @Override
-  public void close() throws StmtException {
+  public void close() throws SQLException {
     //Util.trace("Statement.close");
     if (stmt != null) {
       stmt.closeAndCheck();
       if (colIndexByName != null) colIndexByName.clear();
+      clearBatch();
       stmt = null;
       status = 0;
       if (prepared) {
@@ -272,16 +277,43 @@ public class Stmt implements Statement {
     if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
-      throw Util.unsupported("Statement.addBatch");
+      //checkOpen();
+      if (batch == null) {
+        batch = new ArrayList<String>();
+      }
+      batch.add(sql);
     }
   }
   @Override
   public void clearBatch() throws SQLException {
-    throw Util.unsupported("Statement.clearBatch");
+    //checkOpen();
+    if (batch != null) {
+      batch.clear();
+    }
   }
   @Override
   public int[] executeBatch() throws SQLException {
-    throw Util.unsupported("Statement.executeBatch");
+    //checkOpen();
+    if (batch == null) {
+      return new int[0];
+    }
+    final int size = batch.size();
+    Exception cause = null;
+    final int[] changes = new int[size];
+    for (int i = 0; i < size; ++i) {
+      try {
+        changes[i] = executeUpdate(batch.get(i));
+      } catch (SQLException e) {
+        if (cause == null) {
+          cause = e;
+        }
+        changes[i] = EXECUTE_FAILED;
+      }
+    }
+    if (cause != null) {
+      throw new BatchUpdateException("batch failed", changes, cause);
+    }
+    return changes;
   }
   @Override
   public Connection getConnection() throws SQLException {

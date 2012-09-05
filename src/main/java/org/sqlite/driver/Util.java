@@ -8,6 +8,7 @@
  */
 package org.sqlite.driver;
 
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -16,12 +17,12 @@ class Util {
   private static PrintStream out;
 
   static {
-    /*try {
-      out = new PrintStream("/tmp/sqlite-jna.log");
+    try {
+      out = new PrintStream("/tmp/sqlite-jna-" + System.currentTimeMillis() + ".log");
     } catch (FileNotFoundException e) {
       e.printStackTrace();
-    }*/
-    out = System.out;
+    }
+    //out = System.out;
   }
 
   private Util() {
@@ -41,6 +42,6 @@ class Util {
   }
   static void trace(String method) {
     out.println(method);
-    //out.flush();
+    out.flush();
   }
 }
