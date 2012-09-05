@@ -26,9 +26,8 @@ public class RowIdImpl implements RowId {
 
     RowIdImpl rowId = (RowIdImpl) o;
 
-    if (value != rowId.value) return false;
+    return value == rowId.value;
 
-    return true;
   }
   @Override
   public int hashCode() {
@@ -37,7 +36,7 @@ public class RowIdImpl implements RowId {
 
   public static long getValue(RowId rowId) {
     if (rowId instanceof RowIdImpl) {
-      return ((RowIdImpl)rowId).value;
+      return ((RowIdImpl) rowId).value;
     } else {
       return Long.parseLong(rowId.toString());
     }

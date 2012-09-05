@@ -96,7 +96,7 @@ public class BlobImpl implements Blob {
     if (pos > Integer.MAX_VALUE) {
       throw new SQLException(String.format("invalid position: %d > %d", pos, Integer.MAX_VALUE), null, ErrCodes.WRAPPER_SPECIFIC);
     }
-    return (int)(pos -1);
+    return (int) (pos - 1);
   }
   public static int checkLength(long length) throws SQLException {
     if (length < 0) {
@@ -105,6 +105,6 @@ public class BlobImpl implements Blob {
     if (length > Integer.MAX_VALUE) {
       throw new SQLException(String.format("invalid length: %d > %d", length, Integer.MAX_VALUE), null, ErrCodes.WRAPPER_SPECIFIC);
     }
-    return (int)length;
+    return (int) length;
   }
 }
