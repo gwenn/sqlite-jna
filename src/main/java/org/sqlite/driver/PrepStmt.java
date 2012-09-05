@@ -264,9 +264,6 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
       }
     }
     if (cause != null) {
-      for (int i = 0; i < batch.size(); i++) {
-        Util.trace(i + " = " + Arrays.toString(batch.get(i)));
-      }
       throw new BatchUpdateException("batch failed", changes, cause);
     }
     return changes;
