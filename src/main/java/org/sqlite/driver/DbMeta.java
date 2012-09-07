@@ -542,8 +542,24 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern) throws SQLException {
-    Util.trace("DatabaseMetaData.getProcedureColumns");
-    return null;
+    checkOpen();
+    final PreparedStatement stmt = c.prepareStatement(
+        "select "
+            + "null as PROCEDURE_CAT, "
+            + "null as PROCEDURE_SCHEM, "
+            + "null as PROCEDURE_NAME, "
+            + "null as COLUMN_NAME, "
+            + "null as COLUMN_TYPE, "
+            + "null as DATA_TYPE, "
+            + "null as TYPE_NAME, "
+            + "null as PRECISION, "
+            + "null as LENGTH, "
+            + "null as SCALE, "
+            + "null as RADIX, "
+            + "null as NULLABLE, "
+            + "null as REMARKS limit 0;");
+    stmt.closeOnCompletion();
+    return stmt.executeQuery();
   }
   @Override
   public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
@@ -683,7 +699,7 @@ public class DbMeta implements DatabaseMetaData {
 
     sql.append(colFound ? ") order by TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION" :
         "SELECT NULL AS ordpos, NULL AS colnullable, NULL AS ct, "
-            + "NULL AS cn, NULL AS tn) LIMIT 0");
+            + "NULL AS cn, NULL AS tn, NULL AS cdflt) LIMIT 0");
     final PreparedStatement columns = c.prepareStatement(sql.toString());
     columns.closeOnCompletion();
     return columns.executeQuery();
@@ -803,6 +819,7 @@ public class DbMeta implements DatabaseMetaData {
         }
       }
     } catch (SQLException e) { // query does not return ResultSet
+      count = -1;
     } finally {
       if (rs != null) {
         rs.close();
@@ -824,6 +841,9 @@ public class DbMeta implements DatabaseMetaData {
           append(Types.INTEGER).append(" AS ct, ").
           append("'INTEGER' AS tn, ").
           append(bestRowPseudo).append(" AS pc) order by SCOPE");
+      if (count < 0) {
+        sql.append(" limit 0");
+      }
     }
     final PreparedStatement columns = c.prepareStatement(sql.toString());
     columns.closeOnCompletion();

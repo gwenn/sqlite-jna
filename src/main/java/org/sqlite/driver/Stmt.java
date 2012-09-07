@@ -132,7 +132,6 @@ public class Stmt implements Statement {
     if (stmt != null) {
       stmt.closeAndCheck();
       if (colIndexByName != null) colIndexByName.clear();
-      clearBatch();
       stmt = null;
       status = 0;
       if (prepared) {
@@ -174,7 +173,7 @@ public class Stmt implements Statement {
   @Override
   public void setQueryTimeout(int seconds) throws SQLException {
     if (seconds < 0) throw Util.error("query timeout must be >= 0");
-    checkOpen();
+    //checkOpen();
     throw Util.unsupported("Statement.setQueryTimeout"); // TODO
   }
   @Override
@@ -310,6 +309,7 @@ public class Stmt implements Statement {
         changes[i] = EXECUTE_FAILED;
       }
     }
+    clearBatch();
     if (cause != null) {
       throw new BatchUpdateException("batch failed", changes, cause);
     }

@@ -98,10 +98,12 @@ public class Rows implements ResultSet {
   public void close() throws SQLException {
     //Util.trace("ResultSet.close");
     if (stmt != null) {
-      if (s.isCloseOnCompletion()) {
-        s.close();
-      } else {
-        stmt.reset();
+      if (!stmt.isClosed()) {
+        if (s.isCloseOnCompletion()) {
+          s.close();
+        } else {
+          stmt.reset();
+        }
       }
       s = null;
       stmt = null;

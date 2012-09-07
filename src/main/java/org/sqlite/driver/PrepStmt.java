@@ -263,6 +263,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
         changes[i] = EXECUTE_FAILED;
       }
     }
+    clearBatch();
     if (cause != null) {
       throw new BatchUpdateException("batch failed", changes, cause);
     }

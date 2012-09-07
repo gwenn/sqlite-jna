@@ -134,7 +134,7 @@ public class Stmt {
    * @throws StmtException
    */
   public int getColumnType(int iCol) throws StmtException {
-    checkOpen();
+    checkColumnIndex(iCol);
     return SQLite.sqlite3_column_type(pStmt, iCol);
   }
 
@@ -144,7 +144,7 @@ public class Stmt {
    * @throws StmtException
    */
   public String getColumnName(int iCol) throws StmtException {
-    checkOpen();
+    checkColumnIndex(iCol);
     if (null == columnNames) {
       columnNames = new String[getColumnCount()];
     } else if (columnNames[iCol] != null) {
@@ -159,7 +159,7 @@ public class Stmt {
    * @throws StmtException
    */
   public String getColumnOriginName(int iCol) throws StmtException {
-    checkOpen();
+    checkColumnIndex(iCol);
     return SQLite.sqlite3_column_origin_name(pStmt, iCol);
   }
   /**
@@ -168,7 +168,7 @@ public class Stmt {
    * @throws StmtException
    */
   public String getColumnTableName(int iCol) throws StmtException {
-    checkOpen();
+    checkColumnIndex(iCol);
     return SQLite.sqlite3_column_table_name(pStmt, iCol);
   }
   /**
@@ -177,12 +177,12 @@ public class Stmt {
    * @throws StmtException
    */
   public String getColumnDatabaseName(int iCol) throws StmtException {
-    checkOpen();
+    checkColumnIndex(iCol);
     return SQLite.sqlite3_column_database_name(pStmt, iCol);
   }
 
   public byte[] getColumnBlob(int iCol) throws StmtException {
-    checkOpen();
+    checkColumnIndex(iCol);
     final Pointer p = SQLite.sqlite3_column_blob(pStmt, iCol);
     if (p == null) {
       return null;
@@ -197,7 +197,7 @@ public class Stmt {
    * @throws StmtException
    */
   public int getColumnBytes(int iCol) throws StmtException {
-    checkOpen();
+    checkColumnIndex(iCol);
     return SQLite.sqlite3_column_bytes(pStmt, iCol);
   }
 
@@ -207,7 +207,7 @@ public class Stmt {
    * @throws StmtException
    */
   public double getColumnDouble(int iCol) throws StmtException {
-    checkOpen();
+    checkColumnIndex(iCol);
     return SQLite.sqlite3_column_double(pStmt, iCol);
   }
   /**
@@ -216,7 +216,7 @@ public class Stmt {
    * @throws StmtException
    */
   public int getColumnInt(int iCol) throws StmtException {
-    checkOpen();
+    checkColumnIndex(iCol);
     return SQLite.sqlite3_column_int(pStmt, iCol);
   }
   /**
@@ -225,7 +225,7 @@ public class Stmt {
    * @throws StmtException
    */
   public long getColumnLong(int iCol) throws StmtException {
-    checkOpen();
+    checkColumnIndex(iCol);
     return SQLite.sqlite3_column_int64(pStmt, iCol);
   }
   /**
@@ -234,7 +234,7 @@ public class Stmt {
    * @throws StmtException
    */
   public String getColumnText(int iCol) throws StmtException {
-    checkOpen();
+    checkColumnIndex(iCol);
     return SQLite.sqlite3_column_text(pStmt, iCol);
   }
 
@@ -420,7 +420,14 @@ public class Stmt {
     if (pStmt == null) {
       throw new StmtException(this, "stmt finalized", ErrCodes.WRAPPER_SPECIFIC);
     }
+    if (c == null || c.isClosed()) {
+      throw new StmtException(this, "connection closed", ErrCodes.WRAPPER_SPECIFIC);
+    }
   }
+  public boolean isClosed() {
+    return pStmt == null;
+  }
+
   // Only lossy conversion is reported as error.
   public void checkTypeMismatch(int iCol, int sourceType, int targetType) throws StmtException {
     switch (targetType) {
@@ -446,5 +453,11 @@ public class Stmt {
       return c.open(getColumnDatabaseName(iCol), getColumnTableName(iCol), colName, iRow, rw);
     }
     return null;
+  }
+
+  private void checkColumnIndex(int iCol) throws StmtException {
+    if (iCol >= getColumnCount()) {
+      throw new StmtException(this, String.format("column index (%d) >= column count (%d)", iCol, getColumnCount()), ErrCodes.WRAPPER_SPECIFIC);
+    }
   }
 }

@@ -20,15 +20,18 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 public class JDBC implements Driver {
-  private static final String PREFIX = "jdbc:sqlite:";
-
+  public static final String PREFIX;
   static {
+    PREFIX = "jdbc:sqlite:";
     try {
       DriverManager.registerDriver(new JDBC());
     } catch (SQLException e) {
       e.printStackTrace();
     }
   }
+
+  public static final String MEMORY = PREFIX + org.sqlite.Conn.MEMORY;
+  public static final String TEMP_FILE = PREFIX + org.sqlite.Conn.TEMP_FILE;
 
   @Override
   public Connection connect(String url, Properties info) throws SQLException {
