@@ -34,7 +34,7 @@ public class Conn {
       if (ppDb.getValue() != null) {
         SQLite.sqlite3_close(ppDb.getValue());
       }
-      throw new SQLiteException(String.format("error while opening a database connexion to '%s'", filename), res);
+      throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
     }
     return new Conn(ppDb.getValue());
   }
@@ -42,6 +42,7 @@ public class Conn {
   @Override
   protected void finalize() throws Throwable {
     super.finalize();
+    // TODO log dangling connection
     close();
   }
   /**
@@ -79,6 +80,10 @@ public class Conn {
 
   public boolean isReadOnly() {
     return SQLite.sqlite3_db_readonly(pDb, "main") == 1;
+  }
+
+  public boolean getAutoCommit() {
+    return SQLite.sqlite3_get_autocommit(pDb);
   }
 
   /**

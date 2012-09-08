@@ -45,6 +45,7 @@ public class SQLite implements Library {
   static native int sqlite3_busy_timeout(Pointer pDb, int ms);
 
   // int sqlite3_limit(sqlite3*, int id, int newVal);
+  static native boolean sqlite3_get_autocommit(Pointer pDb);
 
   static native int sqlite3_changes(Pointer pDb);
   static native int sqlite3_total_changes(Pointer pDb);

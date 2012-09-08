@@ -37,7 +37,6 @@ public class Conn implements Connection {
 
   private Properties clientInfo = null;
   private int savepointId = 0;
-  protected boolean autoCommit = true;
 
   public Conn(org.sqlite.Conn c) {
     this.c = c;
@@ -86,23 +85,21 @@ public class Conn implements Connection {
   }
   @Override
   public void setAutoCommit(boolean autoCommit) throws SQLException {
-    if (this.autoCommit == autoCommit) return;
+    if (getAutoCommit() == autoCommit) return;
     getConn().exec(autoCommit ? "COMMIT" : "BEGIN");
-    this.autoCommit = autoCommit;
   }
   @Override
   public boolean getAutoCommit() throws SQLException {
-    checkOpen();
-    return autoCommit;
+    return getConn().getAutoCommit();
   }
   @Override
   public void commit() throws SQLException {
-    if (autoCommit) throw Util.error("database in auto-commit mode");
+    if (getAutoCommit()) throw Util.error("database in auto-commit mode");
     getConn().exec("COMMIT; BEGIN");
   }
   @Override
   public void rollback() throws SQLException {
-    if (autoCommit) throw Util.error("database in auto-commit mode");
+    if (getAutoCommit()) throw Util.error("database in auto-commit mode");
     getConn().exec("ROLLBACK; BEGIN");
   }
   @Override
@@ -265,7 +262,7 @@ public class Conn implements Connection {
     throw Util.unsupported("Connection.createClob");
   }
   @Override
-  public Blob createBlob() throws SQLException {
+  public Blob createBlob() throws SQLException { // FIXME
     checkOpen();
     throw Util.unsupported("Connection.createBlob");
   }
