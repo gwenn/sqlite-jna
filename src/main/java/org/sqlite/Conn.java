@@ -58,7 +58,7 @@ public class Conn {
     while (pStmt != null) {
       // "Dangling statement: " + SQLite.sqlite3_sql(pStmt); TODO log
       SQLite.sqlite3_finalize(pStmt);
-      pStmt = SQLite.sqlite3_next_stmt(pDb, pStmt);
+      pStmt = SQLite.sqlite3_next_stmt(pDb, null);
     }
 
     final int res = SQLite.sqlite3_close(pDb);
