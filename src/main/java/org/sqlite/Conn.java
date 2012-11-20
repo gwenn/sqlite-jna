@@ -62,9 +62,9 @@ public class Conn {
     }
 
     final int res = SQLite.sqlite3_close(pDb);
-    if (res == SQLite.SQLITE_OK) {
+    //if (res == SQLite.SQLITE_OK) {
       pDb = null;
-    }
+    //}
     return res;
   }
   public void closeAndCheck() throws ConnException {
