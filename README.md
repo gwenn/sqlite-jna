@@ -4,6 +4,11 @@ There are two layers:
  - a small one matching the SQLite API (package org.sqlite)
  - a bloated one matching the JDBC API (package org.sqlite.driver)
 
+[![Build Status][1]][2]
+
+[1]: https://secure.travis-ci.org/gwenn/sqlite-jna.png
+[2]: http://www.travis-ci.org/gwenn/sqlite-jna
+
 INSTALL
 -------
 1) https://github.com/twall/jna/blob/master/www/GettingStarted.md
