@@ -96,7 +96,7 @@ public class Conn {
     final Pointer pSql = SQLite.nativeString(sql);
     final PointerByReference ppStmt = new PointerByReference();
     final PointerByReference ppTail = new PointerByReference();
-    final int res = SQLite.sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail);
+    final int res = SQLite.sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail); // FIXME nbytes + 1
     check(res, "error while preparing statement '%s'", sql);
     return new Stmt(this, ppStmt.getValue(), ppTail.getValue());
   }

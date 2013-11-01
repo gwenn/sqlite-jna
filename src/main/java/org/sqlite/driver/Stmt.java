@@ -11,12 +11,7 @@ package org.sqlite.driver;
 import org.sqlite.ErrCodes;
 import org.sqlite.StmtException;
 
-import java.sql.BatchUpdateException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -174,7 +169,7 @@ public class Stmt implements Statement {
   public void setQueryTimeout(int seconds) throws SQLException {
     if (seconds < 0) throw Util.error("query timeout must be >= 0");
     //checkOpen();
-    throw Util.unsupported("Statement.setQueryTimeout"); // TODO
+    Util.trace("Statement.setQueryTimeout"); // TODO How to do this with SQLite? progress handler ? (https://github.com/pgjdbc/pgjdbc/blob/master/org/postgresql/jdbc2/AbstractJdbc2Statement.java)
   }
   @Override
   public void cancel() throws SQLException {
@@ -192,7 +187,6 @@ public class Stmt implements Statement {
   @Override
   public void setCursorName(String name) throws SQLException {
     checkOpen();
-    // TODO
     throw Util.unsupported("*Statement.setCursorName");
   }
   @Override
@@ -236,6 +230,8 @@ public class Stmt implements Statement {
   }
   @Override
   public boolean getMoreResults() throws SQLException {
+    checkOpen();
+    // close();
     throw Util.unsupported("*Statement.getMoreResults"); // TODO when tail is not empty...
   }
   @Override
@@ -254,6 +250,9 @@ public class Stmt implements Statement {
   public void setFetchSize(int rows) throws SQLException {
     if (rows < 0) throw Util.error("fetch size must be >= 0");
     checkOpen();
+    if (rows == 0) {
+      return;
+    }
     if (rows != 1) {
       //Util.trace(String.format("SQLite does not support setting fetch size to %d", rows));
     }
@@ -322,7 +321,11 @@ public class Stmt implements Statement {
   }
   @Override
   public boolean getMoreResults(int current) throws SQLException {
-    throw Util.unsupported("*Statement.getMoreResults"); // TODO
+    checkOpen();
+    if (KEEP_CURRENT_RESULT == current || CLOSE_ALL_RESULTS == current) {
+      throw Util.caseUnsupported("SQLite supports only CLOSE_CURRENT_RESULT");
+    }
+    return getMoreResults();
   }
   // Limitations:
   //  - only primary keys defined as rowid's alias work.

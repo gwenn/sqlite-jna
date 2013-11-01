@@ -140,6 +140,25 @@ public class Stmt {
 
   /**
    * @param iCol The leftmost column is number 0.
+   * @return Column declared type
+   * @throws StmtException
+   */
+  public String getColumnDeclType(int iCol) throws StmtException {
+    checkColumnIndex(iCol);
+    return SQLite.sqlite3_column_decltype(pStmt, iCol);
+  }
+
+  /**
+   * @param iCol The leftmost column is number 0.
+   * @return org.sqlite.ColAffinities.*
+   * @throws StmtException
+   */
+  public int getColumnAffinity(int iCol) throws StmtException {
+    return SQLite.getAffinity(getColumnDeclType(iCol));
+  }
+
+  /**
+   * @param iCol The leftmost column is number 0.
    * @return Column name
    * @throws StmtException
    */

@@ -8,12 +8,11 @@
  */
 package org.sqlite.driver;
 
-import org.sqlite.ColTypes;
+import org.sqlite.ColAffinities;
 import org.sqlite.Stmt;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Types;
 
 public class RowsMeta implements ResultSetMetaData {
   private org.sqlite.Stmt stmt;
@@ -39,6 +38,12 @@ public class RowsMeta implements ResultSetMetaData {
   }
   @Override
   public boolean isCaseSensitive(int column) throws SQLException {
+    switch (getStmt().getColumnAffinity(fixCol(column))) {
+      case ColAffinities.INTEGER:
+      case ColAffinities.NUMERIC:
+      case ColAffinities.REAL:
+        return false;
+    }
     return true; // FIXME Collation 'NOCASE'
   }
   @Override
@@ -63,15 +68,15 @@ public class RowsMeta implements ResultSetMetaData {
   }
   @Override
   public String getColumnLabel(int column) throws SQLException {
-    return getColumnName(column);
+    return getStmt().getColumnName(fixCol(column));
   }
   @Override
   public String getColumnName(int column) throws SQLException {
-    return getStmt().getColumnName(fixCol(column)); // TODO sqlite3_column_origin_name ?
+    return getStmt().getColumnOriginName(fixCol(column));
   }
   @Override
   public String getSchemaName(int column) throws SQLException {
-    return ""; // TODO sqlite3_column_database_name
+    return getStmt().getColumnDatabaseName(fixCol(column));
   }
   @Override
   public int getPrecision(int column) throws SQLException {
@@ -93,41 +98,11 @@ public class RowsMeta implements ResultSetMetaData {
   }
   @Override
   public int getColumnType(int column) throws SQLException {
-    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
-    final int sourceType = getStmt().getColumnType(fixCol(column));
-    switch (sourceType) {
-      case ColTypes.SQLITE_TEXT:
-        return Types.VARCHAR;
-      case ColTypes.SQLITE_INTEGER:
-        return Types.INTEGER;
-      case ColTypes.SQLITE_FLOAT:
-        return Types.REAL;
-      case ColTypes.SQLITE_BLOB:
-        return Types.BLOB;
-      case ColTypes.SQLITE_NULL:
-        return Types.NULL;
-      default:
-        throw new AssertionError(String.format("Unknown column type %d", sourceType));
-    }
+    return DbMeta.getJavaType(getColumnTypeName(column));
   }
   @Override
   public String getColumnTypeName(int column) throws SQLException {
-    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
-    final int sourceType = getStmt().getColumnType(fixCol(column));
-    switch (sourceType) {
-      case ColTypes.SQLITE_TEXT:
-        return "text";
-      case ColTypes.SQLITE_INTEGER:
-        return "integer";
-      case ColTypes.SQLITE_FLOAT:
-        return "real";
-      case ColTypes.SQLITE_BLOB:
-        return "blob";
-      case ColTypes.SQLITE_NULL:
-        return "null";
-      default:
-        throw new AssertionError(String.format("Unknown column type %d", sourceType));
-    }
+    return getStmt().getColumnDeclType(fixCol(column));
   }
   @Override
   public boolean isReadOnly(int column) throws SQLException {
@@ -143,21 +118,18 @@ public class RowsMeta implements ResultSetMetaData {
   }
   @Override
   public String getColumnClassName(int column) throws SQLException {
-    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
-    final int sourceType = getStmt().getColumnType(fixCol(column));
-    switch (sourceType) {
-      case ColTypes.SQLITE_TEXT:
+    final int affinity = getStmt().getColumnAffinity(fixCol(column));
+    switch (affinity) {
+      case ColAffinities.TEXT:
         return "java.lang.String";
-      case ColTypes.SQLITE_INTEGER:
+      case ColAffinities.INTEGER:
         return "java.lang.Long";
-      case ColTypes.SQLITE_FLOAT:
+      case ColAffinities.REAL:
         return "java.lang.Double";
-      case ColTypes.SQLITE_BLOB:
+      case ColAffinities.NONE:
         return "[B";
-      case ColTypes.SQLITE_NULL:
-        return null;
       default:
-        throw new AssertionError(String.format("Unknown column type %d", sourceType));
+        return "java.lang.Number";
     }
   }
 

@@ -8,13 +8,10 @@
  */
 package org.sqlite.driver;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.RowIdLifetime;
-import java.sql.SQLException;
-import java.sql.Types;
+import org.sqlite.ColAffinities;
+import org.sqlite.SQLite;
+
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -223,7 +220,7 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public boolean supportsGroupByBeyondSelect() throws SQLException {
-    return false;
+    return false; // TODO Validate
   }
   @Override
   public boolean supportsLikeEscapeClause() throws SQLException {
@@ -287,7 +284,7 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public String getSchemaTerm() throws SQLException {
-    return null; // TODO
+    return "dbName";
   }
   @Override
   public String getProcedureTerm() throws SQLException {
@@ -307,7 +304,7 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public boolean supportsSchemasInDataManipulation() throws SQLException {
-    return false; // TODO
+    return true;
   }
   @Override
   public boolean supportsSchemasInProcedureCalls() throws SQLException {
@@ -315,11 +312,11 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public boolean supportsSchemasInTableDefinitions() throws SQLException {
-    return false; // TODO
+    return true;
   }
   @Override
   public boolean supportsSchemasInIndexDefinitions() throws SQLException {
-    return false; // TODO
+    return true;
   }
   @Override
   public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
@@ -414,11 +411,11 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public int getMaxBinaryLiteralLength() throws SQLException {
-    return 0;
+    return 0; // TODO sqlite3_limit
   }
   @Override
   public int getMaxCharLiteralLength() throws SQLException {
-    return 0;
+    return 0; // TODO sqlite3_limit
   }
   @Override
   public int getMaxColumnNameLength() throws SQLException {
@@ -438,11 +435,11 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public int getMaxColumnsInSelect() throws SQLException {
-    return 0;
+    return 0; // TODO sqlite3_limit
   }
   @Override
   public int getMaxColumnsInTable() throws SQLException {
-    return 0;
+    return 0; // TODO sqlite3_limit
   }
   @Override
   public int getMaxConnections() throws SQLException {
@@ -470,15 +467,15 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public int getMaxRowSize() throws SQLException {
-    return 0;
+    return 0; // TODO sqlite3_limit
   }
   @Override
   public boolean doesMaxRowSizeIncludeBlobs() throws SQLException {
-    return false;
+    return false; // ???
   }
   @Override
   public int getMaxStatementLength() throws SQLException {
-    return 0;
+    return 0; // TODO sqlite3_limit
   }
   @Override
   public int getMaxStatements() throws SQLException {
@@ -536,7 +533,8 @@ public class DbMeta implements DatabaseMetaData {
             + "null as UNDEF2, "
             + "null as UNDEF3, "
             + "null as REMARKS, "
-            + "null as PROCEDURE_TYPE limit 0");
+            + "null as PROCEDURE_TYPE, "
+            + "null as SPECIFIC_NAME limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -557,7 +555,14 @@ public class DbMeta implements DatabaseMetaData {
             + "null as SCALE, "
             + "null as RADIX, "
             + "null as NULLABLE, "
-            + "null as REMARKS limit 0;");
+            + "null as REMARKS, "
+            + "null as COLUMN_DEF, "
+            + "null as SQL_DATA_TYPE, "
+            + "null as SQL_DATETIME_SUB, "
+            + "null as CHAR_OCTET_LENGTH, "
+            + "null as ORDINAL_POSITION, "
+            + "null as IS_NULLABLE, "
+            + "null as SPECIFIC_NAME limit 0");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -585,7 +590,7 @@ public class DbMeta implements DatabaseMetaData {
       sql.append(" and TABLE_TYPE in (");
       for (int i = 0; i < types.length; i++) {
         if (i > 0) sql.append(", ");
-        sql.append("'").append(types[i].toUpperCase()).append("'");
+        sql.append(quote(types[i].toUpperCase()));
       }
       sql.append(")");
     } else {
@@ -599,7 +604,7 @@ public class DbMeta implements DatabaseMetaData {
     return stmt.executeQuery();
   }
   @Override
-  public ResultSet getSchemas() throws SQLException { // TODO main, temp, attached dbs
+  public ResultSet getSchemas() throws SQLException { // TODO main, temp, attached dbs (pragma database_list)
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
@@ -656,7 +661,9 @@ public class DbMeta implements DatabaseMetaData {
         append("null as SCOPE_CATLOG, ").
         append("null as SCOPE_SCHEMA, ").
         append("null as SCOPE_TABLE, ").
-        append("null as SOURCE_DATA_TYPE from (");
+        append("null as SOURCE_DATA_TYPE, ").
+        append("null as IS_AUTOINCREMENT, "). // TODO
+        append("null as IS_GENERATEDCOLUMN from (");
 
     boolean colFound = false;
     if (tbl != null) {
@@ -706,7 +713,7 @@ public class DbMeta implements DatabaseMetaData {
   }
 
   private String getExactTableName(String tableNamePattern) throws SQLException {
-    if (tableNamePattern.contains("%") || tableNamePattern.contains("?")) {
+    if (tableNamePattern != null && (tableNamePattern.contains("%") || tableNamePattern.contains("?"))) {
       PreparedStatement ps = null;
       ResultSet rs = null;
       try {
@@ -739,20 +746,20 @@ public class DbMeta implements DatabaseMetaData {
     return colType == null ? "" : colType.toUpperCase();
   }
   // TODO Validate affinity vs java type
-  private static int getJavaType(String colType) { // http://sqlite.org/datatype3.html
-    final int colJavaType;
-    if (colType.contains("INT")) {
-      colJavaType = Types.INTEGER;
-    } else if (colType.contains("TEXT") || colType.contains("CHAR") || colType.contains("CLOB")) {
-      colJavaType = Types.VARCHAR;
-    } else if (colType.equals("") || colType.contains("BLOB")) {
-      colJavaType = Types.BLOB; // NONE doesn't exist
-    } else if (colType.contains("REAL") || colType.contains("FLOA") || colType.contains("DOUB")) {
-      colJavaType = Types.REAL;
-    } else {
-      colJavaType = Types.NUMERIC;
+  public static int getJavaType(String colType) {
+    final int affinity = SQLite.getAffinity(colType);
+    switch (affinity) {
+      case ColAffinities.TEXT:
+        return Types.VARCHAR;
+      case ColAffinities.INTEGER:
+        return Types.INTEGER;
+      case ColAffinities.REAL:
+        return Types.REAL;
+      case ColAffinities.NONE:
+        return Types.BLOB;
+      default:
+        return Types.NUMERIC;
     }
-    return colJavaType;
   }
 
   @Override
@@ -812,7 +819,7 @@ public class DbMeta implements DatabaseMetaData {
       rs = table_info.executeQuery();
 
       while (count < 2 && rs.next()) {
-        if (rs.getBoolean(6) && (nullable || rs.getBoolean(4))) {
+        if (rs.getBoolean(6) && (nullable || rs.getBoolean(4))) { // FIXME
           colName = rs.getString(2);
           colType = getSQLiteType(rs.getString(3));
           count++;
@@ -887,7 +894,7 @@ public class DbMeta implements DatabaseMetaData {
       rs = table_info.executeQuery();
 
       while (rs.next()) {
-        if (rs.getBoolean(6)) {
+        if (rs.getBoolean(6)) { // FIXME
           colNames.add(rs.getString(2));
         }
       }

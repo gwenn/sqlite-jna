@@ -10,12 +10,7 @@ package org.sqlite.driver;
 
 import org.sqlite.OpenFlags;
 
-import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.sql.DriverPropertyInfo;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
+import java.sql.*;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -40,7 +35,7 @@ public class JDBC implements Driver {
     final int flags = OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_CREATE | OpenFlags.SQLITE_OPEN_FULLMUTEX;
     final org.sqlite.Conn conn = org.sqlite.Conn.open(url.substring(PREFIX.length()), flags, vfs);
     conn.setBusyTimeout(3000);
-    return new Conn(conn);
+    return new Conn(conn, info);
   }
   @Override
   public boolean acceptsURL(String url) throws SQLException {

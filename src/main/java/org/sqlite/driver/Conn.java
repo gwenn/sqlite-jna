@@ -8,23 +8,7 @@
  */
 package org.sqlite.driver;
 
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.CallableStatement;
-import java.sql.Clob;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.NClob;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLClientInfoException;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Savepoint;
-import java.sql.Statement;
-import java.sql.Struct;
+import java.sql.*;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -38,8 +22,9 @@ public class Conn implements Connection {
   private Properties clientInfo = null;
   private int savepointId = 0;
 
-  public Conn(org.sqlite.Conn c) {
+  public Conn(org.sqlite.Conn c, Properties info) {
     this.c = c;
+    this.clientInfo = info;
   }
 
   org.sqlite.Conn getConn() throws SQLException {
@@ -199,7 +184,23 @@ public class Conn implements Connection {
   }
   @Override
   public Savepoint setSavepoint() throws SQLException {
-    return setSavepoint(String.valueOf(savepointId++)); // SAVEPOINT 1; fails
+    final int id = savepointId++;
+    final Savepoint savepoint = new Savepoint() {
+      @Override
+      public int getSavepointId() throws SQLException {
+        return id;
+      }
+      @Override
+      public String getSavepointName() throws SQLException {
+        throw Util.error("un-named savepoint");
+      }
+      @Override
+      public String toString() {
+        return String.valueOf(id);
+      }
+    };
+    getConn().exec(mprintf("SAVEPOINT %Q", String.valueOf(id))); // SAVEPOINT 1; fails
+    return savepoint;
   }
   @Override
   public Savepoint setSavepoint(final String name) throws SQLException {
@@ -212,17 +213,21 @@ public class Conn implements Connection {
       public String getSavepointName() throws SQLException {
         return name;
       }
+      @Override
+      public String toString() {
+        return name;
+      }
     };
     getConn().exec(mprintf("SAVEPOINT %Q", name));
     return savepoint;
   }
   @Override
   public void rollback(Savepoint savepoint) throws SQLException {
-    getConn().exec(mprintf("ROLLBACK TO SAVEPOINT %Q", savepoint.getSavepointName()));
+    getConn().exec(mprintf("ROLLBACK TO SAVEPOINT %Q", savepoint.toString()));
   }
   @Override
   public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-    getConn().exec(mprintf("RELEASE SAVEPOINT %Q", savepoint.getSavepointName()));
+    getConn().exec(mprintf("RELEASE SAVEPOINT %Q", savepoint.toString()));
   }
   @Override
   public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
@@ -262,7 +267,7 @@ public class Conn implements Connection {
     throw Util.unsupported("Connection.createClob");
   }
   @Override
-  public Blob createBlob() throws SQLException { // FIXME
+  public Blob createBlob() throws SQLException { // FIXME ...
     checkOpen();
     throw Util.unsupported("Connection.createBlob");
   }
@@ -329,7 +334,7 @@ public class Conn implements Connection {
   public String getSchema() throws SQLException {
     Util.trace("Connection.getSchema");
     checkOpen();
-    return null; // TODO Validate
+    return null; // TODO
   }
   @Override
   public void abort(Executor executor) throws SQLException {
@@ -338,13 +343,11 @@ public class Conn implements Connection {
   }
   @Override
   public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
-    Util.trace("Connection.setNetworkTimeout");
-    // TODO
+    throw Util.unsupported("Connection.setNetworkTimeout");
   }
   @Override
   public int getNetworkTimeout() throws SQLException {
-    Util.trace("Connection.getNetworkTimeout");
-    return 0;  // TODO
+    throw Util.unsupported("Connection.getNetworkTimeout");
   }
   @Override
   public <T> T unwrap(Class<T> iface) throws SQLException {

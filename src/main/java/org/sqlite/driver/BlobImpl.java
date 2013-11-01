@@ -21,6 +21,7 @@ public class BlobImpl implements Blob {
   }
   @Override
   public byte[] getBytes(long pos, int length) throws SQLException {
+    checkOpen();
     if (length < 0) {
       throw new SQLException(String.format("invalid read length: %d < 0", length), null, ErrCodes.WRAPPER_SPECIFIC);
     }
@@ -90,8 +91,8 @@ public class BlobImpl implements Blob {
     }
   }
   private static int checkPosition(long pos) throws SQLException {
-    if (pos < 0) {
-      throw new SQLException(String.format("invalid position: %d < 0", pos), null, ErrCodes.WRAPPER_SPECIFIC);
+    if (pos < 1) {
+      throw new SQLException(String.format("invalid position: %d < 1", pos), null, ErrCodes.WRAPPER_SPECIFIC);
     }
     if (pos > Integer.MAX_VALUE) {
       throw new SQLException(String.format("invalid position: %d > %d", pos, Integer.MAX_VALUE), null, ErrCodes.WRAPPER_SPECIFIC);
