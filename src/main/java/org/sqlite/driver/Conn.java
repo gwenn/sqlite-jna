@@ -109,7 +109,7 @@ public class Conn implements Connection {
   public void setReadOnly(boolean readOnly) throws SQLException {
     Util.trace("Connection.setReadOnly");
     checkOpen();
-    // TODO
+    // TODO pragma query_only
   }
   @Override
   public boolean isReadOnly() throws SQLException {

@@ -411,11 +411,11 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public int getMaxBinaryLiteralLength() throws SQLException {
-    return 0; // TODO sqlite3_limit
+    return 0; // TODO http://sqlite.org/limits.html#max_length
   }
   @Override
   public int getMaxCharLiteralLength() throws SQLException {
-    return 0; // TODO sqlite3_limit
+    return 0; // TODO http://sqlite.org/limits.html#max_length
   }
   @Override
   public int getMaxColumnNameLength() throws SQLException {
@@ -423,23 +423,23 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public int getMaxColumnsInGroupBy() throws SQLException {
-    return 0;
+    return 0; // TODO http://sqlite.org/limits.html#max_column
   }
   @Override
   public int getMaxColumnsInIndex() throws SQLException {
-    return 0;
+    return 0; // TODO http://sqlite.org/limits.html#max_column
   }
   @Override
   public int getMaxColumnsInOrderBy() throws SQLException {
-    return 0;
+    return 0; // TODO http://sqlite.org/limits.html#max_column
   }
   @Override
   public int getMaxColumnsInSelect() throws SQLException {
-    return 0; // TODO sqlite3_limit
+    return 0; // TODO http://sqlite.org/limits.html#max_column
   }
   @Override
   public int getMaxColumnsInTable() throws SQLException {
-    return 0; // TODO sqlite3_limit
+    return 0; // TODO http://sqlite.org/limits.html#max_column
   }
   @Override
   public int getMaxConnections() throws SQLException {
@@ -467,15 +467,15 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public int getMaxRowSize() throws SQLException {
-    return 0; // TODO sqlite3_limit
+    return 0; // TODO http://sqlite.org/limits.html#max_length
   }
   @Override
   public boolean doesMaxRowSizeIncludeBlobs() throws SQLException {
-    return false; // ???
+    return true;
   }
   @Override
   public int getMaxStatementLength() throws SQLException {
-    return 0; // TODO sqlite3_limit
+    return 0; // TODO http://sqlite.org/limits.html#max_sql_length
   }
   @Override
   public int getMaxStatements() throws SQLException {
@@ -487,7 +487,7 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public int getMaxTablesInSelect() throws SQLException {
-    return 0;
+    return 64; // ~ http://www.sqlite.org/limits.html: Maximum Number Of Tables In A Join
   }
   @Override
   public int getMaxUserNameLength() throws SQLException {

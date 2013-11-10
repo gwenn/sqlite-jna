@@ -143,7 +143,7 @@ public class Stmt implements Statement {
   public void setMaxFieldSize(int max) throws SQLException {
     if (max < 0) throw Util.error("max field size must be >= 0");
     checkOpen();
-    throw Util.unsupported("*Statement.setMaxFieldSize"); // TODO
+    throw Util.unsupported("*Statement.setMaxFieldSize");
   }
   @Override
   public int getMaxRows() throws SQLException { // Used by Hibernate
@@ -163,13 +163,13 @@ public class Stmt implements Statement {
   @Override
   public int getQueryTimeout() throws SQLException { // Used by Hibernate
     checkOpen();
-    return 0; // TODO
+    return 0; // TODO ExecutorService#invokeAny(..., queryTimeout, TimeUnit.SECONDS);
   }
   @Override
   public void setQueryTimeout(int seconds) throws SQLException {
     if (seconds < 0) throw Util.error("query timeout must be >= 0");
     //checkOpen();
-    Util.trace("Statement.setQueryTimeout"); // TODO How to do this with SQLite? progress handler ? (https://github.com/pgjdbc/pgjdbc/blob/master/org/postgresql/jdbc2/AbstractJdbc2Statement.java)
+    Util.trace("Statement.setQueryTimeout");
   }
   @Override
   public void cancel() throws SQLException {

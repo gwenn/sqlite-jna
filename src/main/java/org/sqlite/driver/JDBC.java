@@ -32,7 +32,8 @@ public class JDBC implements Driver {
   public Connection connect(String url, Properties info) throws SQLException {
     if (!acceptsURL(url)) return null;
     final String vfs = null;
-    final int flags = OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_CREATE | OpenFlags.SQLITE_OPEN_FULLMUTEX;
+    final int flags = OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_CREATE | OpenFlags.SQLITE_OPEN_FULLMUTEX |
+        OpenFlags.SQLITE_OPEN_URI;
     final org.sqlite.Conn conn = org.sqlite.Conn.open(url.substring(PREFIX.length()), flags, vfs);
     conn.setBusyTimeout(3000);
     return new Conn(conn, info);
