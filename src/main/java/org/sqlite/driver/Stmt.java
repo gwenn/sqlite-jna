@@ -246,7 +246,7 @@ public class Stmt implements Statement {
     if (status != 0) {
       return -1;
     } else {
-      return getConn().getChanges();
+      return getConn().getChanges(); // TODO make sure that the statement has been executed
     }
   }
   @Override
