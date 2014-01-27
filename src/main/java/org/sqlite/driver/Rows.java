@@ -317,6 +317,7 @@ public class Rows implements ResultSet {
       case ColTypes.SQLITE_BLOB:
         return getBytes(columnIndex);
       case ColTypes.SQLITE_NULL:
+        wasNull = true;
         return null;
       default:
         throw new AssertionError(String.format("Unknown column type %d", sourceType));
