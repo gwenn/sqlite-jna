@@ -112,6 +112,12 @@ public class SQLite implements Library {
   static native int sqlite3_blob_write(Pointer pBlob, ByteBuffer z, int n, int iOffset);
   static native int sqlite3_blob_close(Pointer pBlob);
 
+  static native Pointer sqlite3_backup_init(Pointer pDst, String dstName, Pointer pSrc, String srcName);
+  static native int sqlite3_backup_step(Pointer pBackup, int nPage);
+  static native int sqlite3_backup_remaining(Pointer pBackup);
+  static native int sqlite3_backup_pagecount(Pointer pBackup);
+  static native int sqlite3_backup_finish(Pointer pBackup);
+
   static Pointer nativeString(String sql) { // TODO Check encoding?
     byte[] data = sql.getBytes();
     final Pointer pointer = new Memory(data.length + 1);

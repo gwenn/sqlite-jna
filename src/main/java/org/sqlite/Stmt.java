@@ -206,7 +206,7 @@ public class Stmt {
     if (p == null) {
       return null;
     } else {
-      return p.getByteArray(0, getColumnBytes(iCol));
+      return p.getByteArray(0, getColumnBytes(iCol)); // a copy is made...
     }
   }
 

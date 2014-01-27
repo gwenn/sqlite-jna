@@ -230,6 +230,14 @@ public class Conn {
     return p.getPointer().getInt(0) > 0;
   }
 
+  public static Backup open(Conn dst, String dstName, Conn src, String srcName) throws ConnException {
+    final Pointer pBackup = SQLite.sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
+    if (pBackup == null) {
+      throw new ConnException(dst, "backup init failed", dst.getErrCode());
+    }
+    return new Backup(pBackup, dst, src);
+  }
+
   public boolean isClosed() {
     return pDb == null;
   }
