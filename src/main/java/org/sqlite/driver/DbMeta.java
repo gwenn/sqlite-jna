@@ -12,10 +12,7 @@ import org.sqlite.ColAffinities;
 import org.sqlite.SQLite;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DbMeta implements DatabaseMetaData {
   private Conn c;
@@ -630,18 +627,18 @@ public class DbMeta implements DatabaseMetaData {
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
-  // TODO Support multi tables?
+
   @Override
   public ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
     checkOpen();
     final StringBuilder sql = new StringBuilder();
 
-    final String tbl = getExactTableName(tableNamePattern);
+    final Set<String> tbls = getExactTableNames(tableNamePattern);
 
     sql.append("select ").
         append("null as TABLE_CAT, ").
         append("null as TABLE_SCHEM, ").
-        append(quote(tbl)).append(" as TABLE_NAME, ").
+        append("tbl as TABLE_NAME, ").
         append("cn as COLUMN_NAME, ").
         append("ct as DATA_TYPE, ").
         append("tn as TYPE_NAME, ").
@@ -666,7 +663,7 @@ public class DbMeta implements DatabaseMetaData {
         append("null as IS_GENERATEDCOLUMN from (");
 
     boolean colFound = false;
-    if (tbl != null) {
+    for (String tbl : tbls) {
       // Pragma cannot be used as subquery...
       PreparedStatement table_info = null;
       ResultSet rs = null;
@@ -682,6 +679,7 @@ public class DbMeta implements DatabaseMetaData {
           int colJavaType = getJavaType(colType);
 
           sql.append("SELECT ").
+              append(quote(tbl)).append(" AS tbl, ").
               append(rs.getInt(1)).append(" AS ordpos, ").
               append(rs.getBoolean(4) ? columnNoNulls : columnNullable).append(" AS colnullable, ").
               append(colJavaType).append(" AS ct, ").
@@ -689,7 +687,7 @@ public class DbMeta implements DatabaseMetaData {
               append(quote(colType)).append(" AS tn, ").
               append(quote(rs.getString(5))).append(" AS cdflt");
 
-          if (columnNamePattern != null) {
+          if (columnNamePattern != null && !columnNamePattern.equals("%")) {
             sql.append(" where cn like ").append(quote(columnNamePattern));
           }
         }
@@ -712,8 +710,9 @@ public class DbMeta implements DatabaseMetaData {
     return columns.executeQuery();
   }
 
-  private String getExactTableName(String tableNamePattern) throws SQLException {
-    if (tableNamePattern != null && (tableNamePattern.contains("%") || tableNamePattern.contains("?"))) {
+  private Set<String> getExactTableNames(String tableNamePattern) throws SQLException {
+    tableNamePattern = (tableNamePattern == null || "".equals(tableNamePattern)) ? "%" : tableNamePattern;
+    if (tableNamePattern.contains("%") || tableNamePattern.contains("?")) {
       PreparedStatement ps = null;
       ResultSet rs = null;
       try {
@@ -721,14 +720,15 @@ public class DbMeta implements DatabaseMetaData {
         // determine exact table name
         ps.setString(1, tableNamePattern);
         rs = ps.executeQuery();
-        final String tbl;
-        if (rs.next()) {
-          tbl = rs.getString(1);
-          // TODO fail if there is more than one row?
-        } else {
-          tbl = null;
+        if (!rs.next()) {
+          return Collections.emptySet();
         }
-        return tbl;
+        final Set<String> tbls = new HashSet<String>();
+        tbls.add(rs.getString(1));
+        while (rs.next()) {
+          tbls.add(rs.getString(1));
+        }
+        return tbls;
       } finally {
         if (rs != null) {
           rs.close();
@@ -738,7 +738,7 @@ public class DbMeta implements DatabaseMetaData {
         }
       }
     } else {
-      return tableNamePattern;
+      return Collections.singleton(tableNamePattern);
     }
   }
 
