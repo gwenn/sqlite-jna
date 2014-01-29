@@ -11,9 +11,9 @@ There are two layers:
 
 INSTALL
 -------
-1) https://github.com/twall/jna/blob/master/www/GettingStarted.md
-2) http://www.sqlite.org/download.html
-3) Ensure JVM and SQLite match (x86 vs x86-64)
+1. https://github.com/twall/jna/blob/master/www/GettingStarted.md
+2. http://www.sqlite.org/download.html
+3. Ensure JVM and SQLite match (x86 vs x86-64)
 
 On windows, to build your own x86-64 version (with cygwin&mingw):
 ```sh
@@ -23,9 +23,9 @@ x86_64-w64-mingw32-gcc.exe -Wl,--kill-at -O -shared -o sqlite3.dll -DSQLITE_ENAB
 
 TODO
 ----
-1) Fix as many unimplemented methods as possible.
-2) JDBC J2EE compliance test suite
-3) Benchmark
+1. Fix as many unimplemented methods as possible.
+2. JDBC J2EE compliance test suite
+3. Benchmark
 
 LICENSE
 -------
