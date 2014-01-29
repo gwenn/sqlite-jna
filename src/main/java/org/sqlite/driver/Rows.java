@@ -57,7 +57,7 @@ public class Rows implements ResultSet {
     }
     final int maxRows = s.getMaxRows();
     if (maxRows != 0 && row >= maxRows) {
-      close();
+      stmt.reset();
       return false;
     }
 
@@ -65,7 +65,7 @@ public class Rows implements ResultSet {
     if (hasRow) {
       row++;
     } else {
-      close();
+      stmt.reset();
     }
     return hasRow;
   }

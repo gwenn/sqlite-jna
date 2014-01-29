@@ -883,7 +883,7 @@ public class DbMeta implements DatabaseMetaData {
         append(quote(table)).append(" as TABLE_NAME, ").
         append("cn as COLUMN_NAME, ").
         append("seqno as KEY_SEQ, ").
-        append("null as PK_NAME from (");
+        append("pk as PK_NAME from (");
 
     // Pragma cannot be used as subquery...
     final List<String> colNames = new ArrayList<String>();
@@ -909,9 +909,10 @@ public class DbMeta implements DatabaseMetaData {
     }
 
     if (colNames.isEmpty()) {
-      sql.append("SELECT NULL AS cn, NULL AS seqno) LIMIT 0");
+      sql.append("SELECT NULL as pk, NULL AS cn, NULL AS seqno) LIMIT 0");
     } else if (colNames.size() == 1) {
       sql.append("SELECT ").
+          append(quote(colNames.get(0))).append(" AS pk, ").
           append(quote(colNames.get(0))).append(" AS cn, ").
           append(0).append(" AS seqno)");
     } else {
@@ -962,6 +963,7 @@ public class DbMeta implements DatabaseMetaData {
           for (String column : columns) {
             if (i > 0) sql.append(" UNION ALL ");
             sql.append("SELECT ").
+                append(quote(indexName)).append(" AS pk, ").
                 append(quote(column)).append(" AS cn, ").
                 append(i).append(" AS seqno");
             i++;
@@ -971,7 +973,7 @@ public class DbMeta implements DatabaseMetaData {
         }
       }
       sql.append(indexFound ? ") order by COLUMN_NAME" :
-          "SELECT NULL AS cn, NULL AS seqno) LIMIT 0");
+          "SELECT NULL as pk, NULL AS cn, NULL AS seqno) LIMIT 0");
     }
     final PreparedStatement columns = c.prepareStatement(sql.toString());
     columns.closeOnCompletion();
@@ -1009,7 +1011,7 @@ public class DbMeta implements DatabaseMetaData {
         append("seq as KEY_SEQ, ").
         append(importedKeyNoAction).append(" as UPDATE_RULE, "). // FIXME on_update (6) SET NULL (importedKeySetNull), SET DEFAULT (importedKeySetDefault), CASCADE (importedKeyCascade), RESTRICT (importedKeyRestrict), NO ACTION (importedKeyNoAction)
         append(importedKeyNoAction).append(" as DELETE_RULE, "). // FIXME on_delete (7)
-        append("null as FK_NAME, ").
+        append("id as FK_NAME, ").
         append("null as PK_NAME, ").
         append(importedKeyNotDeferrable).append(" as DEFERRABILITY "). // FIXME
         append("from (");
@@ -1029,6 +1031,7 @@ public class DbMeta implements DatabaseMetaData {
           sql.append(" union all ");
         }
         sql.append("select ").
+            append(quote(rs.getString(3) + '_' + rs.getString(1))).append(" as id, ").
             append(quote(rs.getString(3))).append(" as pt, ").
             append(quote(rs.getString(5))).append(" as pc, ").
             append(quote(rs.getString(4))).append(" as fc, ").
@@ -1046,7 +1049,7 @@ public class DbMeta implements DatabaseMetaData {
     }
 
     if (count == 0) {
-      sql.append("select null as pt, null as pc, null as fc, null as seq) LIMIT 0");
+      sql.append("select null as id, null as pt, null as pc, null as fc, null as seq) LIMIT 0");
     } else {
       if (cross) {
         sql.append(") order by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, KEY_SEQ");
@@ -1075,7 +1078,7 @@ public class DbMeta implements DatabaseMetaData {
         append("seq as KEY_SEQ, ").
         append(importedKeyNoAction).append(" as UPDATE_RULE, "). // FIXME on_update (6) NO ACTION, CASCADE
         append(importedKeyNoAction).append(" as DELETE_RULE, "). // FIXME on_delete (7) NO ACTION, CASCADE
-        append("null as FK_NAME, ").
+        append("fk as FK_NAME, ").
         append("null as PK_NAME, ").
         append(importedKeyNotDeferrable).append(" as DEFERRABILITY "). // FIXME
         append("from (");
@@ -1116,6 +1119,7 @@ public class DbMeta implements DatabaseMetaData {
               sql.append(" union all ");
             }
             sql.append("select ").
+                append(quote(fkTable + '_' + rs.getString(1))).append(" as fk, ").
                 append(quote(fkTable)).append(" as ft, ").
                 append(quote(rs.getString(5))).append(" as pc, ").
                 append(quote(rs.getString(4))).append(" as fc, ").
@@ -1135,7 +1139,7 @@ public class DbMeta implements DatabaseMetaData {
     }
 
     if (count == 0) {
-      sql.append("select null as ft, null as pc, null as fc, null as seq) LIMIT 0");
+      sql.append("select null as fk, null as ft, null as pc, null as fc, null as seq) LIMIT 0");
     } else {
       sql.append(") order by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, KEY_SEQ");
     }
