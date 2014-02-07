@@ -41,9 +41,9 @@ public class Conn {
 
   @Override
   protected void finalize() throws Throwable {
-    super.finalize();
     // TODO log dangling connection
     close();
+    super.finalize();
   }
   /**
    * @return result code (No exception is thrown).

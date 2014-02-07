@@ -687,7 +687,7 @@ public class DbMeta implements DatabaseMetaData {
               append(quote(colType)).append(" AS tn, ").
               append(quote(rs.getString(5))).append(" AS cdflt");
 
-          if (columnNamePattern != null && !columnNamePattern.equals("%")) {
+          if (columnNamePattern != null && !"%".equals(columnNamePattern)) {
             sql.append(" where cn like ").append(quote(columnNamePattern));
           }
         }

@@ -109,9 +109,9 @@ public class Rows implements ResultSet {
   }
   @Override
   public String getString(int columnIndex) throws SQLException {
-    final String s = getStmt().getColumnText(fixCol(columnIndex));
-    wasNull = s == null;
-    return s;
+    final String str = getStmt().getColumnText(fixCol(columnIndex));
+    wasNull = str == null;
+    return str;
   }
   @Override
   public boolean getBoolean(int columnIndex) throws SQLException {
@@ -131,8 +131,7 @@ public class Rows implements ResultSet {
     // After a type conversion, the value returned by sqlite3_column_type() is undefined.
     final int sourceType = stmt.getColumnType(fixCol(columnIndex));
     stmt.checkTypeMismatch(fixCol(columnIndex), sourceType, ColTypes.SQLITE_INTEGER);
-    final boolean wasNull = sourceType == ColTypes.SQLITE_NULL;
-    this.wasNull = wasNull;
+    wasNull = sourceType == ColTypes.SQLITE_NULL;
     if (wasNull) {
       return 0;
     } else {
@@ -145,8 +144,7 @@ public class Rows implements ResultSet {
     // After a type conversion, the value returned by sqlite3_column_type() is undefined.
     final int sourceType = stmt.getColumnType(fixCol(columnIndex));
     stmt.checkTypeMismatch(fixCol(columnIndex), sourceType, ColTypes.SQLITE_INTEGER);
-    final boolean wasNull = sourceType == ColTypes.SQLITE_NULL;
-    this.wasNull = wasNull;
+    wasNull = sourceType == ColTypes.SQLITE_NULL;
     if (wasNull) {
       return 0;
     } else {
@@ -163,12 +161,11 @@ public class Rows implements ResultSet {
     // After a type conversion, the value returned by sqlite3_column_type() is undefined.
     final int sourceType = stmt.getColumnType(fixCol(columnIndex));
     stmt.checkTypeMismatch(fixCol(columnIndex), sourceType, ColTypes.SQLITE_FLOAT);
-    final boolean wasNull = sourceType == ColTypes.SQLITE_NULL;
-    this.wasNull = wasNull;
+    wasNull = sourceType == ColTypes.SQLITE_NULL;
     if (wasNull) {
       return 0;
     } else {
-      return getStmt().getColumnDouble(fixCol(columnIndex));
+      return stmt.getColumnDouble(fixCol(columnIndex));
     }
   }
   @Override

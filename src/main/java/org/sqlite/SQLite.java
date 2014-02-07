@@ -144,4 +144,7 @@ public class SQLite implements Library {
       return ColAffinities.NUMERIC;
     }
   }
+
+  private SQLite() {
+  }
 }

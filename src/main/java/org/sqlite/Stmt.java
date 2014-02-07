@@ -45,8 +45,8 @@ public class Stmt {
 
   @Override
   protected void finalize() throws Throwable {
-    super.finalize();
     close();
+    super.finalize();
   }
   /**
    * @return result code (No exception is thrown).
