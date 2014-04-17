@@ -132,6 +132,34 @@ public class Conn {
     }
   }
 
+  /**
+   * @param onoff
+   * @throws ConnException
+   */
+  public void enableLoadExtension(final boolean onoff) throws ConnException {
+    final int onoffI = onoff ? 1 : 0;
+    final int res = SQLite.sqlite3_enable_load_extension(pDb, onoffI);
+    if (res != ErrCodes.SQLITE_OK) {
+      throw new ConnException(this, "error while enabling loading of extensions", res);
+    }
+  }
+
+  /**
+   * @param zFile
+   * @param zProc
+   * @throws ConnException
+   */
+  public void loadExtension(final String zFile, final String zProc) throws ConnException {
+    final PointerByReference pRef = new PointerByReference();
+    final int res = SQLite.sqlite3_load_extension(pDb, zFile, zProc, pRef);
+
+    if (res != ErrCodes.SQLITE_OK) {
+      final Pointer p = pRef.getValue();
+      final String val = p.getString(0);
+      throw new ConnException(this, "error while loading extension: " + val, res);
+    }
+  }
+
   public Blob open(String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
     final PointerByReference ppBlob = new PointerByReference();
     final int res = SQLite.sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob);

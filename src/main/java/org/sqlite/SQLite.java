@@ -101,6 +101,9 @@ public class SQLite implements Library {
   //static native int sqlite3_bind_value(Pointer pStmt, int i, const sqlite3_value*);
   static native int sqlite3_bind_zeroblob(Pointer pStmt, int i, int n);
 
+  static native int sqlite3_enable_load_extension(Pointer pDb, int onoff);
+  static native int sqlite3_load_extension(Pointer pDb, String zFile, String zProc, PointerByReference pzErrMsg);
+
   static native Pointer sqlite3_mprintf(String zFormat, String arg); // no copy needed for args
   static native void sqlite3_free(Pointer p);
 
