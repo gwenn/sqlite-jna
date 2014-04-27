@@ -357,7 +357,7 @@ public class Rows implements ResultSet {
   @Override
   public boolean isBeforeFirst() throws SQLException {
     checkOpen();
-    return row < 1;
+    return row == 0;
   }
   @Override
   public boolean isAfterLast() throws SQLException {
@@ -375,6 +375,10 @@ public class Rows implements ResultSet {
   public boolean isLast() throws SQLException {
     Util.trace("ResultSet.isLast");
     checkOpen();
+    final int maxRows = s.getMaxRows();
+    if (maxRows != 0 && row == maxRows) {
+      return true;
+    }
     return false; // TODO
   }
   @Override
