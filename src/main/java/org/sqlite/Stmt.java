@@ -303,7 +303,9 @@ public class Stmt {
       bindDouble(i, (Float) value);
     } else if (value instanceof byte[]) {
       bindBlob(i, (byte[]) value);
-    } else { // TODO ZeroBlob
+    } else if (value instanceof ZeroBlob) {
+      bindZeroblob(i, ((ZeroBlob) value).n);
+    } else {
       throw new StmtException(this, String.format("unsupported type in bind: %s", value.getClass().getSimpleName()), ErrCodes.WRAPPER_SPECIFIC);
     }
   }
