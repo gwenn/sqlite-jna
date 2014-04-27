@@ -25,10 +25,13 @@ public class BlobImpl implements Blob {
     if (length < 0) {
       throw new SQLException(String.format("invalid read length: %d < 0", length), null, ErrCodes.WRAPPER_SPECIFIC);
     }
-    final byte[] bytes = new byte[length];
-    blob.setReadOffset(checkPosition(pos));
+    final int readOffset = checkPosition(pos);
+    blob.setReadOffset(readOffset);
+    final byte[] bytes = new byte[Math.min(blob.getBytes() - readOffset, length)];
     final int n = blob.read(ByteBuffer.wrap(bytes)); // read may be incomplete (n < length)...
-    // TODO Check length == n ?
+    if (n != bytes.length) {
+      throw new SQLException(String.format("short read: %d < %d", n, bytes.length), null, ErrCodes.WRAPPER_SPECIFIC);
+    }
     return bytes;
   }
   @Override
@@ -78,8 +81,11 @@ public class BlobImpl implements Blob {
   public InputStream getBinaryStream(long pos, long length) throws SQLException {
     checkLength(length);
     checkOpen();
-    blob.setReadOffset(checkPosition(pos));
-    // TODO SQLException - if pos + length is greater than the number of bytes in the Blob
+    final int readOffset = checkPosition(pos);
+    if (length + readOffset > blob.getBytes()) {
+      throw new SQLException(String.format("pos + length is greater than the number of bytes in the Blob: %d + %d > %d", pos, length, blob.getBytes()), null, ErrCodes.WRAPPER_SPECIFIC);
+    }
+    blob.setReadOffset(readOffset);
     return getBinaryStream();
   }
 
