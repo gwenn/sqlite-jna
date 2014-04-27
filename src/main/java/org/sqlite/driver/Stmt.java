@@ -28,7 +28,7 @@ public class Stmt implements Statement {
   private Map<String, Integer> colIndexByName;
   private boolean isCloseOnCompletion;
   private int maxRows;
-  private int status; // 0: not a select, 1: select with row, 2: select without row
+  private int status = -1; // -1: unknown, 0: not a select, 1: select with row, 2: select without row
   private List<String> batch; // sql queries (see addBatch)
   //private int queryTimeout;
 
@@ -52,10 +52,14 @@ public class Stmt implements Statement {
   }
 
   void checkOpen() throws SQLException {
-    if (stmt == null) {
+    if (prepared) {
+      if (stmt == null) {
+        throw new SQLException("Statement closed");
+      } else {
+        stmt.checkOpen();
+      }
+    } else if (c == null) {
       throw new SQLException("Statement closed");
-    } else {
-      stmt.checkOpen();
     }
   }
 
@@ -97,10 +101,11 @@ public class Stmt implements Statement {
     if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
-      close();
+      _close();
+      checkOpen();
       stmt = c.getConn().prepare(sql);
       final boolean hasRow = stmt.step();
-      if (!hasRow && stmt.getColumnCount() == 0) {
+      if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
         throw new StmtException(stmt, "query does not return a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
       }
       return new Rows(this, hasRow);
@@ -111,31 +116,30 @@ public class Stmt implements Statement {
     if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
-      close();
-      try {
-        stmt = c.getConn().prepare(sql);
-        if (stmt.step() || stmt.getColumnCount() != 0) {
-          throw new StmtException(stmt, "statement returns a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
-        }
-        return getConn().getChanges();
-      } finally {
-        close();
+      _close();
+      checkOpen();
+      stmt = c.getConn().prepare(sql);
+      if (stmt.step() || stmt.getColumnCount() != 0) {
+        throw new StmtException(stmt, "statement returns a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
       }
+      return getConn().getChanges();
     }
   }
   @Override
   public void close() throws SQLException {
     //Util.trace("Statement.close");
+    _close();
+    c = null;
+  }
+  private void _close() throws SQLException {
     if (stmt != null) {
       stmt.closeAndCheck();
       if (colIndexByName != null) colIndexByName.clear();
       stmt = null;
-      status = 0;
-      if (prepared) {
-        c = null;
-      }
+      status = -1;
     }
   }
+
   @Override
   public int getMaxFieldSize() throws SQLException {
     checkOpen();
@@ -149,10 +153,12 @@ public class Stmt implements Statement {
   }
   @Override
   public int getMaxRows() throws SQLException { // Used by Hibernate
+    checkOpen();
     return maxRows;
   }
   @Override
   public void setMaxRows(int max) throws SQLException {
+    checkOpen();
     if (max < 0) throw Util.error("max row count must be >= 0");
     this.maxRows = max;
   }
@@ -170,7 +176,7 @@ public class Stmt implements Statement {
   @Override
   public void setQueryTimeout(int seconds) throws SQLException {
     if (seconds < 0) throw Util.error("query timeout must be >= 0");
-    //checkOpen();
+    checkOpen();
     Util.trace("Statement.setQueryTimeout");
   }
   @Override
@@ -196,7 +202,8 @@ public class Stmt implements Statement {
     if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
-      close();
+      _close();
+      checkOpen();
       // TODO multiple statements...
       stmt = c.getConn().prepare(sql);
       return exec();
@@ -233,9 +240,10 @@ public class Stmt implements Statement {
   }*/
   @Override
   public ResultSet getResultSet() throws SQLException {
-    if (status != 0) {
+    checkOpen();
+    if (status > 0) {
       final boolean hasRow = status == 1;
-      status = 0;
+      status = -1; // This method should be called only once per result.
       return new Rows(this, hasRow);
     } else {
       return null;
@@ -243,17 +251,32 @@ public class Stmt implements Statement {
   }
   @Override
   public int getUpdateCount() throws SQLException {
+    checkOpen();
     if (status != 0) {
       return -1;
     } else {
-      return getConn().getChanges(); // TODO make sure that the statement has been executed
+      status = -1; // This method should be called only once per result.
+      return getConn().getChanges();
     }
   }
   @Override
   public boolean getMoreResults() throws SQLException {
     checkOpen();
-    // close();
-    throw Util.unsupported("*Statement.getMoreResults"); // TODO when tail is not empty...
+    if (prepared) {
+      if (stmt.getTail() == null || stmt.getTail().length()== 0) {
+        return false; // no more results
+      } else {
+        throw Util.unsupported("*Statement.getMoreResults"); // TODO
+      }
+    } else if (stmt != null) {
+      if (stmt.getTail() == null || stmt.getTail().length()== 0) {
+        _close();
+        return false; // no more results
+      } else {
+        throw Util.unsupported("*Statement.getMoreResults"); // TODO
+      }
+    }
+    return false;
   }
   @Override
   public void setFetchDirection(int direction) throws SQLException {
@@ -285,10 +308,12 @@ public class Stmt implements Statement {
   }
   @Override
   public int getResultSetConcurrency() throws SQLException {
+    checkOpen();
     return ResultSet.CONCUR_READ_ONLY;
   }
   @Override
   public int getResultSetType() throws SQLException {
+    checkOpen();
     return ResultSet.TYPE_FORWARD_ONLY;
   }
   @Override
@@ -296,7 +321,7 @@ public class Stmt implements Statement {
     if (prepared) {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
-      //checkOpen();
+      checkOpen();
       if (batch == null) {
         batch = new ArrayList<String>();
       }
@@ -305,14 +330,14 @@ public class Stmt implements Statement {
   }
   @Override
   public void clearBatch() throws SQLException {
-    //checkOpen();
+    checkOpen();
     if (batch != null) {
       batch.clear();
     }
   }
   @Override
   public int[] executeBatch() throws SQLException {
-    //checkOpen();
+    checkOpen();
     if (batch == null) {
       return new int[0];
     }
@@ -384,11 +409,12 @@ public class Stmt implements Statement {
   }
   @Override
   public int getResultSetHoldability() throws SQLException {
+    checkOpen();
     return ResultSet.CLOSE_CURSORS_AT_COMMIT;
   }
   @Override
   public boolean isClosed() throws SQLException {
-    return stmt == null;
+    return c == null;
   }
   @Override
   public void setPoolable(boolean poolable) throws SQLException {
