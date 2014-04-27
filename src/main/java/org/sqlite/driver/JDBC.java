@@ -44,8 +44,17 @@ public class JDBC implements Driver {
   }
   @Override
   public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
+    final DriverPropertyInfo vfs = new DriverPropertyInfo("vfs", info == null ? null : info.getProperty("vfs"));
+    vfs.description = "Specify the name of a VFS object that provides the operating system interface that should be used to access the database file on disk.";
+    final DriverPropertyInfo mode = new DriverPropertyInfo("mode", info == null ? null : info.getProperty("mode"));
+    mode.description = "The mode parameter may be set to either \"ro\", \"rw\", \"rwc\", or \"memory\"";
+    mode.choices = new String[]{"ro", "rw", "rwc", "memory"};
+    final DriverPropertyInfo cache = new DriverPropertyInfo("cache", info == null ? null : info.getProperty("cache"));
+    cache.description = "The cache parameter may be set to either \"shared\" or \"private\"";
+    cache.choices = new String[] {"shared", "private"};
+
     Util.trace("Driver.getPropertyInfo");
-    return new DriverPropertyInfo[0];  // TODO vfs, mode (ro, rw, rwc), cache, encoding, foreign_keys, locking_mode, recursive_triggers, synchronous, load_extension
+    return new DriverPropertyInfo[0];  // TODO encoding, foreign_keys, locking_mode, recursive_triggers, synchronous, load_extension
   }
   @Override
   public int getMajorVersion() {
