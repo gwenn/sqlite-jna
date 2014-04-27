@@ -191,13 +191,11 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public boolean supportsTableCorrelationNames() throws SQLException {
-    Util.trace("DatabaseMetaData.supportsTableCorrelationNames");
-    return false; // TODO Validate
+    return true; // table alias
   }
   @Override
   public boolean supportsDifferentTableCorrelationNames() throws SQLException {
-    Util.trace("DatabaseMetaData.supportsDifferentTableCorrelationNames");
-    return false; // TODO Validate
+    return false; // table alias can be the same
   }
   @Override
   public boolean supportsExpressionsInOrderBy() throws SQLException {
@@ -205,7 +203,7 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public boolean supportsOrderByUnrelated() throws SQLException {
-    return false; // TODO Validate
+    return true; // select name from sqlite_master order by type;
   }
   @Override
   public boolean supportsGroupBy() throws SQLException {
@@ -213,11 +211,11 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public boolean supportsGroupByUnrelated() throws SQLException {
-    return false; // TODO Validate
+    return true; // select name from sqlite_master group by type;
   }
   @Override
   public boolean supportsGroupByBeyondSelect() throws SQLException {
-    return false; // TODO Validate
+    return true; // TODO Validate
   }
   @Override
   public boolean supportsLikeEscapeClause() throws SQLException {
@@ -357,8 +355,7 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public boolean supportsSubqueriesInComparisons() throws SQLException {
-    Util.trace("DatabaseMetaData.supportsSubqueriesInComparisons");
-    return false; // TODO Validate
+    return true; // select name from sqlite_master where rootpage > (select 3);
   }
   @Override
   public boolean supportsSubqueriesInExists() throws SQLException {
@@ -375,8 +372,7 @@ public class DbMeta implements DatabaseMetaData {
   }
   @Override
   public boolean supportsCorrelatedSubqueries() throws SQLException {
-    Util.trace("DatabaseMetaData.supportsCorrelatedSubqueries");
-    return false; // TODO Validate
+    return true; // select * from sqlite_master sm where not exists (select 1 from sqlite_temp_master stm where stm.name = sm.name);
   }
   @Override
   public boolean supportsUnion() throws SQLException {
@@ -580,7 +576,7 @@ public class DbMeta implements DatabaseMetaData {
         append(" null as SELF_REFERENCING_COL_NAME,").
         append(" null as REF_GENERATION").
         append(" from (select name, type from sqlite_master union all").
-        append("       select name, type from sqlite_temp_master)").
+        append("       select name, 'temporary ' || type from sqlite_temp_master)").
         append(" where TABLE_NAME like ").append(quote(tableNamePattern));
 
     if (types != null) {
@@ -703,7 +699,7 @@ public class DbMeta implements DatabaseMetaData {
     }
 
     sql.append(colFound ? ") order by TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION" :
-        "SELECT NULL AS ordpos, NULL AS colnullable, NULL AS ct, "
+        "SELECT NULL AS tbl, NULL AS ordpos, NULL AS colnullable, NULL AS ct, "
             + "NULL AS cn, NULL AS tn, NULL AS cdflt) LIMIT 0");
     final PreparedStatement columns = c.prepareStatement(sql.toString());
     columns.closeOnCompletion();
@@ -819,7 +815,7 @@ public class DbMeta implements DatabaseMetaData {
       rs = table_info.executeQuery();
 
       while (count < 2 && rs.next()) {
-        if (rs.getBoolean(6) && (nullable || rs.getBoolean(4))) { // FIXME
+        if (rs.getBoolean(6) && (nullable || rs.getBoolean(4))) {
           colName = rs.getString(2);
           colType = getSQLiteType(rs.getString(3));
           count++;
@@ -886,7 +882,8 @@ public class DbMeta implements DatabaseMetaData {
         append("pk as PK_NAME from (");
 
     // Pragma cannot be used as subquery...
-    final List<String> colNames = new ArrayList<String>();
+    String[] colNames = new String[5];
+    int nColNames = 0;
     PreparedStatement table_info = null;
     ResultSet rs = null;
     try {
@@ -894,8 +891,13 @@ public class DbMeta implements DatabaseMetaData {
       rs = table_info.executeQuery();
 
       while (rs.next()) {
-        if (rs.getBoolean(6)) { // FIXME
-          colNames.add(rs.getString(2));
+        final int seqno = rs.getInt(6) - 1;
+        if (seqno >= 0) {
+          if (seqno >=  colNames.length) {
+            colNames = Arrays.copyOf(colNames, colNames.length * 2);
+          }
+          colNames[seqno] = rs.getString(2);
+          nColNames++;
         }
       }
     } catch (SQLException e) { // query does not return ResultSet
@@ -908,86 +910,27 @@ public class DbMeta implements DatabaseMetaData {
       }
     }
 
-    if (colNames.isEmpty()) {
+    if (nColNames == 0) {
       sql.append("SELECT NULL as pk, NULL AS cn, NULL AS seqno) LIMIT 0");
-    } else if (colNames.size() == 1) {
-      sql.append("SELECT ").
-          append(quote(colNames.get(0))).append(" AS pk, ").
-          append(quote(colNames.get(0))).append(" AS cn, ").
-          append(0).append(" AS seqno)");
     } else {
-      final List<String> indexNames = new ArrayList<String>();
-      PreparedStatement index_list = null;
-      try {
-        index_list = c.prepareStatement("PRAGMA index_list(" + quote(table) + ")");
-        rs = index_list.executeQuery();
-
-        while (rs.next()) {
-          if (rs.getBoolean(3) && rs.getString(2).startsWith("sqlite_autoindex_")) {
-            indexNames.add(rs.getString(2));
-          }
-        }
-      } catch (SQLException e) { // query does not return ResultSet
-      } finally {
-        if (rs != null) {
-          rs.close();
-        }
-        if (index_list != null) {
-          index_list.close();
-        }
+      final String pkName; // FIXME
+      if (nColNames == 1) {
+        pkName = colNames[0];
+      } else {
+        pkName = "PK";
       }
-
-      boolean indexFound = false;
-      for (String indexName : indexNames) {
-        final List<String> columns = new ArrayList<String>();
-        PreparedStatement index_info = null;
-        try {
-          index_info = c.prepareStatement("PRAGMA index_info(" + quote(indexName) + ")");
-          rs = index_info.executeQuery();
-
-          while (rs.next()) {
-            columns.add(rs.getInt(1), rs.getString(3));
-          }
-          //} catch(SQLException e) { // query does not return ResultSet
-        } finally {
-          if (rs != null) {
-            rs.close();
-          }
-          if (index_info != null) {
-            index_info.close();
-          }
-        }
-
-        if (areEquals(colNames, columns)) {
-          int i = 0;
-          for (String column : columns) {
-            if (i > 0) sql.append(" UNION ALL ");
-            sql.append("SELECT ").
-                append(quote(indexName)).append(" AS pk, ").
-                append(quote(column)).append(" AS cn, ").
-                append(i).append(" AS seqno");
-            i++;
-          }
-          indexFound = true;
-          break;
-        }
+      for (int i = 0; i < nColNames; i++) {
+        if (i > 0) sql.append(" UNION ALL ");
+        sql.append("SELECT ").
+            append(quote(pkName)).append(" AS pk, ").
+            append(quote(colNames[i])).append(" AS cn, ").
+            append(i+1).append(" AS seqno");
       }
-      sql.append(indexFound ? ") order by COLUMN_NAME" :
-          "SELECT NULL as pk, NULL AS cn, NULL AS seqno) LIMIT 0");
+      sql.append(")");
     }
     final PreparedStatement columns = c.prepareStatement(sql.toString());
     columns.closeOnCompletion();
     return columns.executeQuery();
-  }
-
-  private static boolean areEquals(List<String> pkColumns, List<String> idxColumns) {
-    if (pkColumns.size() != idxColumns.size()) return false;
-    for (String idxColumn : idxColumns) {
-      if (!pkColumns.contains(idxColumn)) { // TODO ignore case
-        return false;
-      }
-    }
-    return true;
   }
 
   @Override
