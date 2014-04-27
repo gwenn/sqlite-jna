@@ -9,7 +9,9 @@
 package org.sqlite.driver;
 
 import org.sqlite.ColAffinities;
+import org.sqlite.ErrCodes;
 import org.sqlite.Stmt;
+import org.sqlite.StmtException;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -48,10 +50,12 @@ public class RowsMeta implements ResultSetMetaData {
   }
   @Override
   public boolean isSearchable(int column) throws SQLException {
+    checkColumn(column);
     return true;
   }
   @Override
   public boolean isCurrency(int column) throws SQLException {
+    checkColumn(column);
     return false;
   }
   @Override
@@ -60,10 +64,12 @@ public class RowsMeta implements ResultSetMetaData {
   }
   @Override
   public boolean isSigned(int column) throws SQLException {
+    checkColumn(column);
     return true;
   }
   @Override
   public int getColumnDisplaySize(int column) throws SQLException {
+    checkColumn(column);
     return 10; // Like in SQLite shell with column mode
   }
   @Override
@@ -72,7 +78,11 @@ public class RowsMeta implements ResultSetMetaData {
   }
   @Override
   public String getColumnName(int column) throws SQLException {
-    return getStmt().getColumnOriginName(fixCol(column));
+    String name = getStmt().getColumnOriginName(fixCol(column));
+    if (name == null) {
+      return getColumnLabel(column);
+    }
+    return name;
   }
   @Override
   public String getSchemaName(int column) throws SQLException {
@@ -81,11 +91,13 @@ public class RowsMeta implements ResultSetMetaData {
   @Override
   public int getPrecision(int column) throws SQLException {
     Util.trace("ResultSetMetaData.getPrecision");
+    checkColumn(column);
     return 0; // TODO based on column type
   }
   @Override
   public int getScale(int column) throws SQLException {
     Util.trace("ResultSetMetaData.getScale");
+    checkColumn(column);
     return 0; // TODO based on column type
   }
   @Override
@@ -94,6 +106,7 @@ public class RowsMeta implements ResultSetMetaData {
   }
   @Override
   public String getCatalogName(int column) throws SQLException {
+    checkColumn(column);
     return "";
   }
   @Override
@@ -106,10 +119,12 @@ public class RowsMeta implements ResultSetMetaData {
   }
   @Override
   public boolean isReadOnly(int column) throws SQLException {
+    checkColumn(column);
     return false;
   }
   @Override
   public boolean isWritable(int column) throws SQLException {
+    checkColumn(column);
     return true;
   }
   @Override
@@ -140,5 +155,11 @@ public class RowsMeta implements ResultSetMetaData {
   @Override
   public boolean isWrapperFor(Class<?> iface) throws SQLException {
     return false;
+  }
+
+  private void checkColumn(int column) throws SQLException {
+    if (column >= getColumnCount()) {
+      throw new StmtException(stmt, String.format("column index (%d) > column count (%d)", column, getColumnCount()), ErrCodes.WRAPPER_SPECIFIC);
+    }
   }
 }
