@@ -75,7 +75,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   public ResultSet executeQuery() throws SQLException {
     final org.sqlite.Stmt stmt = getStmt();
     final boolean hasRow = stmt.step();
-    if (!hasRow && stmt.getColumnCount() == 0) {
+    if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
       throw new StmtException(stmt, "query does not return a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
     }
     return new Rows(this, hasRow);
@@ -172,6 +172,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
     if (x == null) {
       bindNull(parameterIndex);
+      return;
     }
     throw Util.unsupported("PreparedStatement.setBinaryStream"); // FIXME
     // The data will be read from the stream as needed until end-of-file/length is reached.
@@ -185,10 +186,14 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
-    throw Util.unsupported("*PreparedStatement.setObject"); // TODO
+    setObject(parameterIndex, x, targetSqlType, 0);
   }
   @Override
   public void setObject(int parameterIndex, Object x) throws SQLException {
+    if (x == null) {
+      bindNull(parameterIndex);
+      return;
+    }
     throw Util.unsupported("*PreparedStatement.setObject"); // TODO
   }
   @Override
@@ -213,7 +218,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
 
   @Override
   public void clearBatch() throws SQLException {
-    //checkOpen();
+    checkOpen();
     if (batch != null) {
       batch.clear();
     }
@@ -284,14 +289,25 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
+    if (x == null || cal == null) {
+      setDate(parameterIndex, x);
+      return;
+    }
     throw Util.unsupported("*PreparedStatement.setDate"); // TODO
   }
   @Override
   public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
+    if (x == null || cal == null) {
+      setTime(parameterIndex, x);
+      return;
+    }
     throw Util.unsupported("*PreparedStatement.setTime"); // TODO
   }
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) throws SQLException {
+    if (x == null || cal == null) {
+      setTimestamp(parameterIndex, x);
+    }
     throw Util.unsupported("*PreparedStatement.setTimestamp"); // TODO
   }
   @Override
@@ -345,7 +361,11 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) throws SQLException {
-    throw Util.unsupported("PreparedStatement.setObject");
+    if (x == null) {
+      bindNull(parameterIndex);
+      return;
+    }
+    throw Util.unsupported("*PreparedStatement.setObject"); // TODO
   }
   @Override
   public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
