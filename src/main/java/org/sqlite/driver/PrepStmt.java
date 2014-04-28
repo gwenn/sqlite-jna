@@ -10,6 +10,7 @@ package org.sqlite.driver;
 
 import org.sqlite.ErrCodes;
 import org.sqlite.StmtException;
+import org.sqlite.ZeroBlob;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -192,9 +193,45 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   public void setObject(int parameterIndex, Object x) throws SQLException {
     if (x == null) {
       bindNull(parameterIndex);
-      return;
+    } else if (x instanceof String) {
+      setString(parameterIndex, (String) x);
+    } else if (x instanceof Boolean) {
+      setBoolean(parameterIndex, ((Boolean) x).booleanValue());
+    } else if (x instanceof Integer) {
+      setInt(parameterIndex, ((Integer) x).intValue());
+    } else if (x instanceof Long) {
+      setLong(parameterIndex, ((Long) x).longValue());
+    } else if (x instanceof Float) {
+      setFloat(parameterIndex, ((Float) x).floatValue());
+    } else if (x instanceof Double) {
+      setDouble(parameterIndex, ((Double) x).doubleValue());
+    } else if (x instanceof Date) {
+      setDate(parameterIndex, (Date) x);
+    } else if (x instanceof Time) {
+      setTime(parameterIndex, (Time) x);
+    } else if (x instanceof Timestamp) {
+      setTimestamp(parameterIndex, (Timestamp) x);
+    } else if (x instanceof BigDecimal) {
+      setBigDecimal(parameterIndex, (BigDecimal) x);
+    } else if (x instanceof Byte) {
+      setByte(parameterIndex, ((Byte) x).byteValue());
+    } else if (x instanceof Short) {
+      setShort(parameterIndex, ((Short) x).shortValue());
+    } else if (x instanceof Character) {
+      setString(parameterIndex, x.toString());
+    } else if (x instanceof byte[]) {
+      setBytes(parameterIndex, (byte[]) x);
+    } else if (x instanceof ZeroBlob) {
+      bindZeroBlob(parameterIndex, (ZeroBlob) x);
+    } else if (x instanceof Blob) {
+      setBlob(parameterIndex, (Blob) x);
+    } else if (x instanceof Clob) {
+      setClob(parameterIndex, (Clob) x);
+    } else if (x instanceof Array) {
+      setArray(parameterIndex, (Array) x);
+    } else {
+      throw new StmtException(getStmt(), String.format("Unsupported type: %s", x.getClass().getName()), ErrCodes.WRAPPER_SPECIFIC);
     }
-    throw Util.unsupported("*PreparedStatement.setObject"); // TODO
   }
   @Override
   public boolean execute() throws SQLException {
@@ -504,6 +541,12 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   private void bindBlob(int parameterIndex, byte[] x) throws SQLException {
     if (!batching) {
       getStmt().bindBlob(parameterIndex, x);
+    }
+    bind(parameterIndex, x);
+  }
+  private void bindZeroBlob(int parameterIndex, ZeroBlob x) throws SQLException {
+    if (!batching) {
+      getStmt().bindZeroblob(parameterIndex, x.n);
     }
     bind(parameterIndex, x);
   }
