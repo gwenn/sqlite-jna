@@ -158,7 +158,7 @@ public class RowsMeta implements ResultSetMetaData {
   }
 
   private void checkColumn(int column) throws SQLException {
-    if (column >= getColumnCount()) {
+    if (column > getColumnCount()) {
       throw new StmtException(stmt, String.format("column index (%d) > column count (%d)", column, getColumnCount()), ErrCodes.WRAPPER_SPECIFIC);
     }
   }
