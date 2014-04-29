@@ -204,7 +204,6 @@ public class Stmt implements Statement {
     } else {
       _close();
       checkOpen();
-      // TODO multiple statements...
       stmt = c.getConn().prepare(sql);
       return exec();
     }
@@ -238,6 +237,7 @@ public class Stmt implements Statement {
       throw new SQLTimeoutException(e);
     }
   }*/
+  // Works only with execute (not executeQuery)
   @Override
   public ResultSet getResultSet() throws SQLException {
     checkOpen();
@@ -249,6 +249,7 @@ public class Stmt implements Statement {
       return null;
     }
   }
+  // Works only with execute (not executeUpdate)
   @Override
   public int getUpdateCount() throws SQLException {
     checkOpen();
@@ -269,11 +270,13 @@ public class Stmt implements Statement {
         throw Util.unsupported("*Statement.getMoreResults"); // TODO
       }
     } else if (stmt != null) {
-      if (stmt.getTail() == null || stmt.getTail().length()== 0) {
+      String tail = stmt.getTail();
+      if (tail == null || tail.length()== 0) {
         _close();
         return false; // no more results
       } else {
-        throw Util.unsupported("*Statement.getMoreResults"); // TODO
+        _close();
+        return execute(tail);
       }
     }
     return false;
