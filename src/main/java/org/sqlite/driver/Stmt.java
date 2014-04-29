@@ -265,19 +265,15 @@ public class Stmt implements Statement {
     checkOpen();
     if (prepared) {
       if (stmt.getTail() == null || stmt.getTail().length()== 0) {
+        stmt.reset(); // implicitly closes any current ResultSet
         return false; // no more results
       } else {
         throw Util.unsupported("*Statement.getMoreResults"); // TODO
       }
     } else if (stmt != null) {
       String tail = stmt.getTail();
-      if (tail == null || tail.length()== 0) {
-        _close();
-        return false; // no more results
-      } else {
-        _close();
-        return execute(tail);
-      }
+      _close();
+      return !(tail == null || tail.length() == 0) && execute(tail);
     }
     return false;
   }
