@@ -75,6 +75,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   @Override
   public ResultSet executeQuery() throws SQLException {
     final org.sqlite.Stmt stmt = getStmt();
+    stmt.reset();
     final boolean hasRow = stmt.step();
     if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
       throw new StmtException(stmt, "query does not return a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
@@ -84,6 +85,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   @Override
   public int executeUpdate() throws SQLException {
     final org.sqlite.Stmt stmt = getStmt();
+    stmt.reset();
     if (stmt.step() || stmt.getColumnCount() != 0) {
       throw new StmtException(stmt, "statement returns a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
     }
@@ -322,7 +324,11 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public ResultSetMetaData getMetaData() throws SQLException {
-    return new RowsMeta(getStmt());
+    org.sqlite.Stmt stmt = getStmt();
+    if (stmt.getColumnCount() == 0) {
+      return null;
+    }
+    return new RowsMeta(stmt);
   }
   @Override
   public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {

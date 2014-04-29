@@ -33,6 +33,20 @@ public class StmtTest {
     checkResult(c.close());
   }
 
+  @Test
+  public void checkMissingBind() throws SQLiteException {
+    final Conn c = ConnTest.open();
+    final Stmt s = c.prepare("SELECT ?");
+    Assert.assertNotNull(s);
+    if (s.step()) {
+      Assert.assertNull(s.getColumnText(0));
+    } else {
+      Assert.fail("No result");
+    }
+    checkResult(s.close());
+    checkResult(c.close());
+  }
+
   static void checkResult(int res) {
     Assert.assertEquals(0, res);
   }

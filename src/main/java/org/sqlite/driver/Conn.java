@@ -114,7 +114,7 @@ public class Conn implements Connection {
   @Override
   public boolean isReadOnly() throws SQLException {
     checkOpen();
-    return getConn().isReadOnly();
+    return getConn().isReadOnly(); // || query_only
   }
   @Override
   public void setCatalog(String catalog) throws SQLException {
@@ -138,7 +138,7 @@ public class Conn implements Connection {
     return TRANSACTION_SERIALIZABLE;
   }
   @Override
-  public SQLWarning getWarnings() throws SQLException {
+  public SQLWarning getWarnings() throws SQLException { // SQLITE_CONFIG_LOG
     checkOpen();
     return null;
   }
