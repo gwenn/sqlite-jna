@@ -66,6 +66,8 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
 
   private boolean batching;
   private Object[] bindings;
+  private boolean[] bound;
+  private boolean boundChecked;
   private List<Object[]> batch; // list of bindings
 
   PrepStmt(Conn c, org.sqlite.Stmt stmt) {
@@ -76,6 +78,9 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   public ResultSet executeQuery() throws SQLException {
     final org.sqlite.Stmt stmt = getStmt();
     stmt.reset();
+    if (!boundChecked) {
+      checkParameters(stmt);
+    }
     final boolean hasRow = stmt.step();
     if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
       throw new StmtException(stmt, "query does not return a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
@@ -85,7 +90,9 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   @Override
   public int executeUpdate() throws SQLException {
     final org.sqlite.Stmt stmt = getStmt();
-    stmt.reset();
+    if (!boundChecked) {
+      checkParameters(stmt);
+    }
     if (stmt.step() || stmt.getColumnCount() != 0) {
       throw new StmtException(stmt, "statement returns a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
     }
@@ -185,6 +192,8 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     getStmt().clearBindings();
     if (bindings != null) {
       Arrays.fill(bindings, null);
+      Arrays.fill(bound, false);
+      boundChecked = false;
     }
   }
   @Override
@@ -237,6 +246,11 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   }
   @Override
   public boolean execute() throws SQLException {
+    org.sqlite.Stmt stmt = getStmt();
+    stmt.reset(); // may be reset twice but I don't see how it can be avoided
+    if (!boundChecked) {
+      checkParameters(stmt);
+    }
     return exec();
   }
 
@@ -248,7 +262,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     if (batch == null) {
       batch = new ArrayList<Object[]>();
     }
-    if (bindings == null) {
+    if (!boundChecked) {
+      checkParameters(getStmt());
+    }
+    if (bindings == null) { // parameterCount == 0
       batch.add(null);
     } else {
       batch.add(Arrays.copyOf(bindings, bindings.length));
@@ -559,7 +576,32 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   private void bind(int parameterIndex, Object x) throws SQLException {
     if (bindings == null) {
       bindings = new Object[getParameterCount()];
+      bound = new boolean[bindings.length];
     }
     bindings[parameterIndex - 1] = x;
+    bound[parameterIndex - 1] = true;
+  }
+
+  /*
+  From JDBC Specification:
+  A value must be provided for each parameter marker in the PreparedStatement object before it can be executed.
+  The methods used to execute a PreparedStatement object (executeQuery, executeUpdate and execute) will throw an SQLException
+  if a value is not supplied for a parameter marker.
+   */
+  private void checkParameters(org.sqlite.Stmt stmt) throws SQLException {
+    if (stmt.getBindParameterCount() == 0) {
+      boundChecked = true;
+      return;
+    }
+    if (bindings == null) {
+      throw new StmtException(stmt, "a value must be provided for each parameter marker in the PreparedStatement object before it can be executed.", ErrCodes.WRAPPER_SPECIFIC);
+    } else {
+      for (boolean b : bound) {
+        if (!b) {
+          throw new StmtException(stmt, "a value must be provided for each parameter marker in the PreparedStatement object before it can be executed.", ErrCodes.WRAPPER_SPECIFIC);
+        }
+      }
+      boundChecked = true;
+    }
   }
 }
