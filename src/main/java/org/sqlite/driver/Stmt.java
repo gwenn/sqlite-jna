@@ -30,7 +30,7 @@ public class Stmt implements Statement {
   private int maxRows;
   private int status = -1; // -1: unknown, 0: not a select, 1: select with row, 2: select without row
   private List<String> batch; // sql queries (see addBatch)
-  //private int queryTimeout;
+  private int queryTimeout; // in seconds
 
   Stmt(Conn c) {
     this.c = c;
@@ -171,13 +171,14 @@ public class Stmt implements Statement {
   @Override
   public int getQueryTimeout() throws SQLException { // Used by Hibernate
     checkOpen();
-    return 0; // TODO ExecutorService#invokeAny(..., queryTimeout, TimeUnit.SECONDS);
+    return queryTimeout; // TODO ExecutorService#invokeAny(..., queryTimeout, TimeUnit.SECONDS);
   }
   @Override
   public void setQueryTimeout(int seconds) throws SQLException {
     if (seconds < 0) throw Util.error("query timeout must be >= 0");
     checkOpen();
     Util.trace("Statement.setQueryTimeout");
+    this.queryTimeout = seconds;
   }
   @Override
   public void cancel() throws SQLException {
