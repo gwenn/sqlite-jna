@@ -926,7 +926,7 @@ public class DbMeta implements DatabaseMetaData {
             append(quote(colNames[i])).append(" AS cn, ").
             append(i+1).append(" AS seqno");
       }
-      sql.append(")");
+      sql.append(") ORDER BY COLUMN_NAME");
     }
     final PreparedStatement columns = c.prepareStatement(sql.toString());
     columns.closeOnCompletion();
