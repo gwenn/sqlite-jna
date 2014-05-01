@@ -788,7 +788,7 @@ public class DbMeta implements DatabaseMetaData {
         append("0 as SQL_DATETIME_SUB, ").
         append("10 as CHAR_OCTET_LENGTH, "). // FIXME
         append("ordpos as ORDINAL_POSITION, ").
-        append("(case colnullable when 0 then 'N' when 1 then 'Y' else '' end)").
+        append("(case colnullable when 0 then 'NO' when 1 then 'YES' else '' end)").
         append(" as IS_NULLABLE, ").
         append("null as SCOPE_CATLOG, ").
         append("null as SCOPE_SCHEMA, ").
@@ -1060,7 +1060,7 @@ public class DbMeta implements DatabaseMetaData {
     if (nColNames == 0) {
       sql.append("SELECT NULL as pk, NULL AS cn, NULL AS seqno) LIMIT 0");
     } else {
-      final String pkName; // FIXME
+      final String pkName; // FIXME may be null
       if (nColNames == 1) {
         pkName = colNames[0];
       } else {
