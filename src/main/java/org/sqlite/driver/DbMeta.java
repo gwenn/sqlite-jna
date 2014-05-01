@@ -777,16 +777,16 @@ public class DbMeta implements DatabaseMetaData {
         append("cn as COLUMN_NAME, ").
         append("ct as DATA_TYPE, ").
         append("tn as TYPE_NAME, ").
-        append("10 as COLUMN_SIZE, "). // FIXME
-        append("10 as BUFFER_LENGTH, ").
-        append("10 as DECIMAL_DIGITS, ").
+        append("10 as COLUMN_SIZE, "). // FIXME precision or display size
+        append("null as BUFFER_LENGTH, "). // not used
+        append("10 as DECIMAL_DIGITS, "). // FIXME scale or null
         append("10 as NUM_PREC_RADIX, ").
         append("colnullable as NULLABLE, ").
         append("null as REMARKS, ").
         append("cdflt as COLUMN_DEF, ").
-        append("0 as SQL_DATA_TYPE, ").
-        append("0 as SQL_DATETIME_SUB, ").
-        append("10 as CHAR_OCTET_LENGTH, "). // FIXME
+        append("null as SQL_DATA_TYPE, "). // unused
+        append("null as SQL_DATETIME_SUB, "). // unused
+        append("10 as CHAR_OCTET_LENGTH, "). // FIXME same as COLUMN_SIZE
         append("ordpos as ORDINAL_POSITION, ").
         append("(case colnullable when 0 then 'NO' when 1 then 'YES' else '' end)").
         append(" as IS_NULLABLE, ").
@@ -883,7 +883,9 @@ public class DbMeta implements DatabaseMetaData {
 
   // TODO Validate affinity vs java type
   public static int getJavaType(String colType) {
-    final int affinity = SQLite.getAffinity(colType);
+    return getJavaType(SQLite.getAffinity(colType));
+  }
+  public static int getJavaType(int affinity) {
     switch (affinity) {
       case ColAffinities.TEXT:
         return Types.VARCHAR;
@@ -943,9 +945,9 @@ public class DbMeta implements DatabaseMetaData {
         append("cn as COLUMN_NAME, ").
         append("ct as DATA_TYPE, ").
         append("tn as TYPE_NAME, ").
-        append("10 as COLUMN_SIZE, "). // FIXME
+        append("10 as COLUMN_SIZE, "). // FIXME precision (19 for LONG, 15 for REAL) or display size (20 for LONG, 25 for REAL)
         append("0 as BUFFER_LENGTH, ").
-        append("0 as DECIMAL_DIGITS, ").
+        append("0 as DECIMAL_DIGITS, "). // FIXME scale (0 for LONG, 15 for REAL)
         append("pc as PSEUDO_COLUMN from (");
 
     // Pragma cannot be used as subquery...

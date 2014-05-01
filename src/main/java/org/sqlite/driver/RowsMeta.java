@@ -77,8 +77,13 @@ public class RowsMeta implements ResultSetMetaData {
 
   @Override
   public int getColumnDisplaySize(int column) throws SQLException {
-    checkColumn(column);
-    return 10; // Like in SQLite shell with column mode
+    switch (getStmt().getColumnAffinity(fixCol(column))) {
+      case ColAffinities.INTEGER:
+        return 20;
+      case ColAffinities.REAL:
+        return 25;
+    }
+    return 10; // Like in SQLite shell with column mode TODO
   }
 
   @Override
@@ -102,16 +107,26 @@ public class RowsMeta implements ResultSetMetaData {
 
   @Override
   public int getPrecision(int column) throws SQLException {
-    Util.trace("ResultSetMetaData.getPrecision");
-    checkColumn(column);
-    return 0; // TODO based on column type
+    switch (getStmt().getColumnAffinity(fixCol(column))) {
+      case ColAffinities.INTEGER:
+        return 19;
+      case ColAffinities.NUMERIC:
+      case ColAffinities.REAL:
+        return 15;
+    }
+    return 0;
   }
 
   @Override
   public int getScale(int column) throws SQLException {
-    Util.trace("ResultSetMetaData.getScale");
-    checkColumn(column);
-    return 0; // TODO based on column type
+    switch (getStmt().getColumnAffinity(fixCol(column))) {
+      case ColAffinities.INTEGER:
+        return 0;
+      case ColAffinities.NUMERIC:
+      case ColAffinities.REAL:
+        return 15;
+    }
+    return 0;
   }
 
   @Override
@@ -127,7 +142,8 @@ public class RowsMeta implements ResultSetMetaData {
 
   @Override
   public int getColumnType(int column) throws SQLException {
-    return DbMeta.getJavaType(getColumnTypeName(column));
+    final int affinity = getStmt().getColumnAffinity(fixCol(column));
+    return DbMeta.getJavaType(affinity);
   }
 
   @Override

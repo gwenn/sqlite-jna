@@ -10,6 +10,7 @@ package org.sqlite;
 
 import com.sun.jna.Pointer;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ public class Stmt {
   // cached column count
   private int columnCount = -1;
   private String[] columnNames;
+  private int[] columnAffinities;
 
   Stmt(Conn c, Pointer pStmt, Pointer tail) {
     this.c = c;
@@ -157,7 +159,15 @@ public class Stmt {
    * @throws StmtException
    */
   public int getColumnAffinity(int iCol) throws StmtException {
-    return SQLite.getAffinity(getColumnDeclType(iCol));
+    checkColumnIndex(iCol);
+    if (null == columnAffinities) {
+      columnAffinities = new int[getColumnCount()];
+      Arrays.fill(columnAffinities, -1);
+    } else if (columnAffinities[iCol] != -1) {
+      return columnAffinities[iCol];
+    }
+    columnAffinities[iCol] = SQLite.getAffinity(getColumnDeclType(iCol));
+    return columnAffinities[iCol];
   }
 
   /**
