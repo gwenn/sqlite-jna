@@ -127,11 +127,13 @@ public class Stmt implements Statement {
     } else {
       _close();
       checkOpen();
-      stmt = c.getConn().prepare(sql);
+      final org.sqlite.Conn c = this.c.getConn();
+      stmt = c.prepare(sql);
+      final int tc = c.getTotalChanges();
       if (stmt.step() || stmt.getColumnCount() != 0) {
         throw new StmtException(stmt, "statement returns a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
       }
-      return getConn().getChanges();
+      return c.getTotalChanges() - tc;
     }
   }
 
