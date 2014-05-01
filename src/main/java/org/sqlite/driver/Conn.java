@@ -148,7 +148,6 @@ public class Conn implements Connection {
 
   @Override
   public void setCatalog(String catalog) throws SQLException {
-    Util.trace("Connection.setCatalog");
     checkOpen();
   }
 

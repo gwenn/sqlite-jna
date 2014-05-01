@@ -83,6 +83,7 @@ public class Blob {
     }
     return res;
   }
+
   public void closeAndCheck() throws SQLiteException {
     final int res = close();
     if (res != ErrCodes.SQLITE_OK) {
@@ -93,6 +94,7 @@ public class Blob {
   public boolean isClosed() {
     return pBlob == null;
   }
+
   public void checkOpen() throws SQLiteException {
     if (isClosed()) {
       throw new SQLiteException(c, "blob already closed", ErrCodes.WRAPPER_SPECIFIC);
@@ -248,16 +250,15 @@ public class Blob {
   }
 
   private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
-  public static int copy(
-      InputStream input,
-      OutputStream output)
-      throws IOException {
-    byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+  public static int copy(InputStream input, OutputStream output, int length) throws IOException {
+    byte[] buffer = new byte[Math.min(length, DEFAULT_BUFFER_SIZE)];
     int count = 0;
-    int n;
-    while (-1 != (n = input.read(buffer))) {
+    int n = buffer.length;
+    while (length > 0 && (n = input.read(buffer, 0, n)) >= 0) {
       output.write(buffer, 0, n);
       count += n;
+      length -= n;
+      n = Math.min(length, DEFAULT_BUFFER_SIZE);
     }
     return count;
   }

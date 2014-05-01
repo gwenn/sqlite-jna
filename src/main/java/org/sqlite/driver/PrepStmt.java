@@ -12,6 +12,8 @@ import org.sqlite.ErrCodes;
 import org.sqlite.StmtException;
 import org.sqlite.ZeroBlob;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -81,7 +83,7 @@ UPDATE test SET data = :blob WHERE rowid = :rowid;
 
  */
 public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaData {
-  private RowId rowId; // FIXME clear/reset to null when ?
+  private RowId rowId;
   private Map<Integer, org.sqlite.Blob> blobByParamIndex = Collections.emptyMap();
 
   private boolean batching;
@@ -221,10 +223,42 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
     if (x == null) {
       bindNull(parameterIndex);
+    }
+    if (rowId == null) { // No streaming mode...
+      // throw new SQLException("You must set the associated RowId before opening a Blob");
+      final ByteArrayOutputStream output = new ByteArrayOutputStream();
+      try {
+        org.sqlite.Blob.copy(x, output, length);
+      } catch (IOException e) {
+        throw new SQLException("Error while reading binary stream", e);
+      }
+      setBytes(parameterIndex, output.toByteArray());
       return;
     }
-    throw Util.unsupported("PreparedStatement.setBinaryStream"); // FIXME
-    // The data will be read from the stream as needed until end-of-file/length is reached.
+    org.sqlite.Blob blob = blobByParamIndex.get(parameterIndex);
+    if (blob == null || blob.isClosed()) {
+      blob = getStmt().open(parameterIndex, RowIdImpl.getValue(rowId), true); // FIXME getColumnOriginName can be called only with SELECT...
+      if (blob != null) {
+        if (blobByParamIndex.isEmpty() && !(blobByParamIndex instanceof TreeMap)) {
+          blobByParamIndex = new TreeMap<Integer, org.sqlite.Blob>();
+        }
+        blobByParamIndex.put(parameterIndex, blob);
+      } else {
+        throw new SQLException("No Blob!"); // TODO improve message
+      }
+    } else {
+      blob.reopen(RowIdImpl.getValue(rowId));
+    }
+
+    // The data will be read from the stream as needed until end-of-file is reached.
+    try {
+      org.sqlite.Blob.copy(x, blob.getOutputStream(), length);
+    } catch (IOException e) {
+      throw new SQLException("Error while reading binary stream", e);
+    } finally {
+      blob.closeAndCheck();
+    }
+    bound[parameterIndex - 1] = true;
   }
 
   @Override
@@ -234,6 +268,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
       Arrays.fill(bindings, null);
       Arrays.fill(bound, false);
       boundChecked = false;
+      rowId = null;
     }
   }
 
@@ -517,29 +552,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
 
   @Override
   public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
-    if (x == null) {
-      bindNull(parameterIndex);
-    }
-    if (rowId == null) {
-      throw new SQLException("You must set the associated RowId before opening a Blob");
-    }
-    org.sqlite.Blob blob = blobByParamIndex.get(parameterIndex);
-    if (blob == null || blob.isClosed()) {
-      blob = getStmt().open(parameterIndex, RowIdImpl.getValue(rowId), true); // FIXME getColumnOriginName can be called only with SELECT...
-      if (blob != null) {
-        if (blobByParamIndex.isEmpty() && !(blobByParamIndex instanceof TreeMap)) {
-          blobByParamIndex = new TreeMap<Integer, org.sqlite.Blob>();
-        }
-        blobByParamIndex.put(parameterIndex, blob);
-      } else {
-        throw new SQLException("No Blob!"); // TODO improve message
-      }
-    } else {
-      blob.reopen(RowIdImpl.getValue(rowId));
-    }
-
-    throw Util.unsupported("PreparedStatement.setBinaryStream"); // FIXME
-    // The data will be read from the stream as needed until end-of-file is reached.
+    setBinaryStream(parameterIndex, x, Integer.MAX_VALUE);
   }
 
   @Override
