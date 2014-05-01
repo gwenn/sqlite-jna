@@ -26,6 +26,7 @@ public class RowsMeta implements ResultSetMetaData {
   private org.sqlite.Stmt getStmt() throws SQLException {
     return stmt;
   }
+
   private int fixCol(int columnIndex) {
     return columnIndex - 1;
   }
@@ -34,10 +35,12 @@ public class RowsMeta implements ResultSetMetaData {
   public int getColumnCount() throws SQLException { // Used by Hibernate
     return getStmt().getColumnCount();
   }
+
   @Override
   public boolean isAutoIncrement(int column) throws SQLException {
     return getStmt().getMetadata(fixCol(column))[2];
   }
+
   @Override
   public boolean isCaseSensitive(int column) throws SQLException {
     switch (getStmt().getColumnAffinity(fixCol(column))) {
@@ -48,34 +51,41 @@ public class RowsMeta implements ResultSetMetaData {
     }
     return true; // FIXME Collation 'NOCASE'
   }
+
   @Override
   public boolean isSearchable(int column) throws SQLException {
     checkColumn(column);
     return true;
   }
+
   @Override
   public boolean isCurrency(int column) throws SQLException {
     checkColumn(column);
     return false;
   }
+
   @Override
   public int isNullable(int column) throws SQLException {
     return getStmt().getMetadata(fixCol(column))[0] ? columnNoNulls : columnNullable;
   }
+
   @Override
   public boolean isSigned(int column) throws SQLException {
     checkColumn(column);
     return true;
   }
+
   @Override
   public int getColumnDisplaySize(int column) throws SQLException {
     checkColumn(column);
     return 10; // Like in SQLite shell with column mode
   }
+
   @Override
   public String getColumnLabel(int column) throws SQLException {
     return getStmt().getColumnName(fixCol(column));
   }
+
   @Override
   public String getColumnName(int column) throws SQLException {
     String name = getStmt().getColumnOriginName(fixCol(column));
@@ -84,53 +94,64 @@ public class RowsMeta implements ResultSetMetaData {
     }
     return name;
   }
+
   @Override
   public String getSchemaName(int column) throws SQLException {
     return getStmt().getColumnDatabaseName(fixCol(column));
   }
+
   @Override
   public int getPrecision(int column) throws SQLException {
     Util.trace("ResultSetMetaData.getPrecision");
     checkColumn(column);
     return 0; // TODO based on column type
   }
+
   @Override
   public int getScale(int column) throws SQLException {
     Util.trace("ResultSetMetaData.getScale");
     checkColumn(column);
     return 0; // TODO based on column type
   }
+
   @Override
   public String getTableName(int column) throws SQLException {
     return getStmt().getColumnTableName(fixCol(column));
   }
+
   @Override
   public String getCatalogName(int column) throws SQLException {
     checkColumn(column);
     return "";
   }
+
   @Override
   public int getColumnType(int column) throws SQLException {
     return DbMeta.getJavaType(getColumnTypeName(column));
   }
+
   @Override
   public String getColumnTypeName(int column) throws SQLException {
     return getStmt().getColumnDeclType(fixCol(column));
   }
+
   @Override
   public boolean isReadOnly(int column) throws SQLException {
     checkColumn(column);
     return false;
   }
+
   @Override
   public boolean isWritable(int column) throws SQLException {
     checkColumn(column);
     return true;
   }
+
   @Override
   public boolean isDefinitelyWritable(int column) throws SQLException {
     return true;
   }
+
   @Override
   public String getColumnClassName(int column) throws SQLException {
     final int affinity = getStmt().getColumnAffinity(fixCol(column));
@@ -152,6 +173,7 @@ public class RowsMeta implements ResultSetMetaData {
   public <T> T unwrap(Class<T> iface) throws SQLException {
     throw Util.error("not a wrapper");
   }
+
   @Override
   public boolean isWrapperFor(Class<?> iface) throws SQLException {
     return false;

@@ -66,7 +66,7 @@ public class BlobTest {
       final PreparedStatement pstmt = c.prepareStatement("UPDATE test SET data = :blob WHERE rowid = :rowid");
       pstmt.setRowId(2, new RowIdImpl(rowid));
       // pstmt.setBytes(1, new byte[] {1, 2, 3, 4, 5, 6});
-      pstmt.setBinaryStream(1, new ByteArrayInputStream(new byte[] {1, 2, 3, 4, 5, 6}));
+      pstmt.setBinaryStream(1, new ByteArrayInputStream(new byte[]{1, 2, 3, 4, 5, 6}));
       Assert.assertEquals(1, pstmt.executeUpdate());
     } finally {
       if (null != c) c.close();

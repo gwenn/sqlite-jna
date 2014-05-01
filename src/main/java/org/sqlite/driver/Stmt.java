@@ -11,7 +11,12 @@ package org.sqlite.driver;
 import org.sqlite.ErrCodes;
 import org.sqlite.StmtException;
 
-import java.sql.*;
+import java.sql.BatchUpdateException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +41,7 @@ public class Stmt implements Statement {
     this.c = c;
     this.prepared = false;
   }
+
   Stmt(Conn c, org.sqlite.Stmt stmt) {
     this.c = c;
     this.stmt = stmt;
@@ -46,6 +52,7 @@ public class Stmt implements Statement {
     checkOpen();
     return stmt;
   }
+
   org.sqlite.Conn getConn() throws SQLException {
     checkOpen();
     return c.getConn();
@@ -89,6 +96,7 @@ public class Stmt implements Statement {
       return colIndexByName.get(col);
     }
   }
+
   private void addColIndexInCache(String col, int index, int columnCount) throws StmtException {
     if (null == colIndexByName) {
       colIndexByName = new HashMap<String, Integer>(columnCount);
@@ -111,6 +119,7 @@ public class Stmt implements Statement {
       return new Rows(this, hasRow);
     }
   }
+
   @Override
   public int executeUpdate(String sql) throws SQLException {
     if (prepared) {
@@ -125,12 +134,14 @@ public class Stmt implements Statement {
       return getConn().getChanges();
     }
   }
+
   @Override
   public void close() throws SQLException {
     //Util.trace("Statement.close");
     _close();
     c = null;
   }
+
   private void _close() throws SQLException {
     if (stmt != null) {
       stmt.closeAndCheck();
@@ -145,34 +156,40 @@ public class Stmt implements Statement {
     checkOpen();
     return 0; // TODO
   }
+
   @Override
   public void setMaxFieldSize(int max) throws SQLException {
     if (max < 0) throw Util.error("max field size must be >= 0");
     checkOpen();
     throw Util.unsupported("*Statement.setMaxFieldSize");
   }
+
   @Override
   public int getMaxRows() throws SQLException { // Used by Hibernate
     checkOpen();
     return maxRows;
   }
+
   @Override
   public void setMaxRows(int max) throws SQLException {
     checkOpen();
     if (max < 0) throw Util.error("max row count must be >= 0");
     this.maxRows = max;
   }
+
   @Override
   public void setEscapeProcessing(boolean enable) throws SQLException {
     checkOpen();
     // TODO
     throw Util.unsupported("Statement.setEscapeProcessing");
   }
+
   @Override
   public int getQueryTimeout() throws SQLException { // Used by Hibernate
     checkOpen();
     return queryTimeout; // TODO ExecutorService#invokeAny(..., queryTimeout, TimeUnit.SECONDS);
   }
+
   @Override
   public void setQueryTimeout(int seconds) throws SQLException {
     if (seconds < 0) throw Util.error("query timeout must be >= 0");
@@ -180,24 +197,29 @@ public class Stmt implements Statement {
     Util.trace("Statement.setQueryTimeout");
     this.queryTimeout = seconds;
   }
+
   @Override
   public void cancel() throws SQLException {
     getConn().interrupt();
   }
+
   @Override
   public SQLWarning getWarnings() throws SQLException {
     checkOpen();
     return null;
   }
+
   @Override
   public void clearWarnings() throws SQLException {
     //checkOpen();
   }
+
   @Override
   public void setCursorName(String name) throws SQLException {
     checkOpen();
     throw Util.unsupported("*Statement.setCursorName");
   }
+
   @Override
   public boolean execute(String sql) throws SQLException {
     if (prepared) {
@@ -209,6 +231,7 @@ public class Stmt implements Statement {
       return exec();
     }
   }
+
   protected boolean exec() throws SQLException {
     if (stmt.step()) {
       status = 1;
@@ -219,6 +242,7 @@ public class Stmt implements Statement {
     }
     return status != 0;
   }
+
   /*protected boolean step(final org.sqlite.Stmt stmt) throws SQLException {
     if (queryTimeout == 0) {
       return stmt.step();
@@ -250,6 +274,7 @@ public class Stmt implements Statement {
       return null;
     }
   }
+
   // Works only with execute (not executeUpdate)
   @Override
   public int getUpdateCount() throws SQLException {
@@ -261,11 +286,12 @@ public class Stmt implements Statement {
       return getConn().getChanges();
     }
   }
+
   @Override
   public boolean getMoreResults() throws SQLException {
     checkOpen();
     if (prepared) {
-      if (stmt.getTail() == null || stmt.getTail().length()== 0) {
+      if (stmt.getTail() == null || stmt.getTail().length() == 0) {
         stmt.reset(); // implicitly closes any current ResultSet
         return false; // no more results
       } else {
@@ -278,6 +304,7 @@ public class Stmt implements Statement {
     }
     return false;
   }
+
   @Override
   public void setFetchDirection(int direction) throws SQLException {
     checkOpen();
@@ -285,11 +312,13 @@ public class Stmt implements Statement {
       throw Util.caseUnsupported("SQLite supports only FETCH_FORWARD direction");
     }
   }
+
   @Override
   public int getFetchDirection() throws SQLException {
     checkOpen();
     return ResultSet.FETCH_FORWARD;
   }
+
   @Override
   public void setFetchSize(int rows) throws SQLException {
     if (rows < 0) throw Util.error("fetch size must be >= 0");
@@ -301,21 +330,25 @@ public class Stmt implements Statement {
       //Util.trace(String.format("SQLite does not support setting fetch size to %d", rows));
     }
   }
+
   @Override
   public int getFetchSize() throws SQLException {
     checkOpen();
     return 1;
   }
+
   @Override
   public int getResultSetConcurrency() throws SQLException {
     checkOpen();
     return ResultSet.CONCUR_READ_ONLY;
   }
+
   @Override
   public int getResultSetType() throws SQLException {
     checkOpen();
     return ResultSet.TYPE_FORWARD_ONLY;
   }
+
   @Override
   public void addBatch(String sql) throws SQLException {
     if (prepared) {
@@ -328,6 +361,7 @@ public class Stmt implements Statement {
       batch.add(sql);
     }
   }
+
   @Override
   public void clearBatch() throws SQLException {
     checkOpen();
@@ -335,6 +369,7 @@ public class Stmt implements Statement {
       batch.clear();
     }
   }
+
   @Override
   public int[] executeBatch() throws SQLException {
     checkOpen();
@@ -360,11 +395,13 @@ public class Stmt implements Statement {
     }
     return changes;
   }
+
   @Override
   public Connection getConnection() throws SQLException {
     checkOpen();
     return c;
   }
+
   @Override
   public boolean getMoreResults(int current) throws SQLException {
     checkOpen();
@@ -373,6 +410,7 @@ public class Stmt implements Statement {
     }
     return getMoreResults();
   }
+
   // Limitations:
   //  - only primary keys defined as rowid's alias work.
   // With the rowid (ok) and the associated table (ko) we can fix these limitations...
@@ -381,65 +419,79 @@ public class Stmt implements Statement {
     checkOpen();
     return c.getGeneratedKeys();
   }
+
   @Override
   public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
     Conn.checkAutoGeneratedKeys(autoGeneratedKeys);
     return executeUpdate(sql);
   }
+
   @Override
   public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
     throw Util.unsupported("Statement.executeUpdate(String, int[])");
   }
+
   @Override
   public int executeUpdate(String sql, String[] columnNames) throws SQLException {
     throw Util.unsupported("Statement.executeUpdate(String, String[])");
   }
+
   @Override
   public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {
     Conn.checkAutoGeneratedKeys(autoGeneratedKeys);
     return execute(sql);
   }
+
   @Override
   public boolean execute(String sql, int[] columnIndexes) throws SQLException {
     throw Util.unsupported("Statement.execute(String, int[])");
   }
+
   @Override
   public boolean execute(String sql, String[] columnNames) throws SQLException {
     throw Util.unsupported("Statement.execute(String, String[])");
   }
+
   @Override
   public int getResultSetHoldability() throws SQLException {
     checkOpen();
     return ResultSet.CLOSE_CURSORS_AT_COMMIT;
   }
+
   @Override
   public boolean isClosed() throws SQLException {
     return c == null;
   }
+
   @Override
   public void setPoolable(boolean poolable) throws SQLException {
     checkOpen();
     throw Util.unsupported("*Statement.setPoolable"); // TODO
   }
+
   @Override
   public boolean isPoolable() throws SQLException {
     checkOpen();
     throw Util.unsupported("*Statement.isPoolable"); // TODO
   }
+
   @Override
   public void closeOnCompletion() throws SQLException {
     checkOpen();
     isCloseOnCompletion = true;
   }
+
   @Override
   public boolean isCloseOnCompletion() throws SQLException {
     checkOpen();
     return isCloseOnCompletion;
   }
+
   @Override
   public <T> T unwrap(Class<T> iface) throws SQLException {
     throw Util.error("not a wrapper");
   }
+
   @Override
   public boolean isWrapperFor(Class<?> iface) throws SQLException {
     return false;

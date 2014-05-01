@@ -127,6 +127,7 @@ public class Blob {
 
   private class BlobInputStream extends InputStream {
     private int mark;
+
     @Override
     public int read() throws IOException {
       if (isEOF()) {
@@ -139,6 +140,7 @@ public class Blob {
       }
       return b[0];
     }
+
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
       if (b == null) {
@@ -186,6 +188,7 @@ public class Blob {
         throw new IOException(e);
       }
     }
+
     @Override
     public void close() throws IOException {
       try {
@@ -194,6 +197,7 @@ public class Blob {
         throw new IOException(e);
       }
     }
+
     private boolean isEOF() throws IOException {
       try {
         return readOffset >= getBytes();
@@ -206,10 +210,12 @@ public class Blob {
     public boolean markSupported() {
       return true;
     }
+
     @Override
     public synchronized void mark(int _) {
       mark = readOffset;
     }
+
     @Override
     public synchronized void reset() throws IOException {
       readOffset = mark;
@@ -221,6 +227,7 @@ public class Blob {
     public void write(int b) throws IOException {
       write(new byte[]{(byte) b});
     }
+
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
       try {

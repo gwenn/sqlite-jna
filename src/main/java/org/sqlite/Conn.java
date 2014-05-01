@@ -63,7 +63,7 @@ public class Conn {
 
     final int res = SQLite.sqlite3_close(pDb);
     //if (res == SQLite.SQLITE_OK) {
-      pDb = null;
+    pDb = null;
     //}
     return res;
   }
@@ -145,7 +145,7 @@ public class Conn {
 
   /**
    * @return the number of database rows that were changed or inserted or deleted by the most recently completed SQL statement
-   *         on the database connection specified by the first parameter.
+   * on the database connection specified by the first parameter.
    * @throws ConnException
    */
   public int getChanges() throws ConnException {
@@ -226,6 +226,7 @@ public class Conn {
 
     return new boolean[]{toBool(pNotNull), toBool(pPrimaryKey), toBool(pAutoinc)};
   }
+
   private static boolean toBool(PointerByReference p) {
     return p.getPointer().getInt(0) > 0;
   }
@@ -241,11 +242,13 @@ public class Conn {
   public boolean isClosed() {
     return pDb == null;
   }
+
   public void checkOpen() throws ConnException {
     if (isClosed()) {
       throw new ConnException(this, String.format("connection to '%s' closed", getFilename()), ErrCodes.WRAPPER_SPECIFIC);
     }
   }
+
   private void check(int res, String format, String param) throws ConnException {
     if (res != SQLite.SQLITE_OK) {
       throw new ConnException(this, String.format(format, param), res);

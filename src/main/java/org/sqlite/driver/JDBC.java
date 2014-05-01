@@ -10,12 +10,18 @@ package org.sqlite.driver;
 
 import org.sqlite.OpenFlags;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
 public class JDBC implements Driver {
   public static final String PREFIX;
+
   static {
     PREFIX = "jdbc:sqlite:";
     try {
@@ -38,10 +44,12 @@ public class JDBC implements Driver {
     conn.setBusyTimeout(3000);
     return new Conn(conn, info);
   }
+
   @Override
   public boolean acceptsURL(String url) throws SQLException {
     return url.startsWith(PREFIX);
   }
+
   @Override
   public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
     final DriverPropertyInfo vfs = new DriverPropertyInfo("vfs", info == null ? null : info.getProperty("vfs"));
@@ -51,23 +59,27 @@ public class JDBC implements Driver {
     mode.choices = new String[]{"ro", "rw", "rwc", "memory"};
     final DriverPropertyInfo cache = new DriverPropertyInfo("cache", info == null ? null : info.getProperty("cache"));
     cache.description = "The cache parameter may be set to either \"shared\" or \"private\"";
-    cache.choices = new String[] {"shared", "private"};
+    cache.choices = new String[]{"shared", "private"};
 
     Util.trace("Driver.getPropertyInfo");
     return new DriverPropertyInfo[0];  // TODO encoding, foreign_keys, locking_mode, recursive_triggers, synchronous, load_extension
   }
+
   @Override
   public int getMajorVersion() {
     return 1;
   }
+
   @Override
   public int getMinorVersion() {
     return 0;
   }
+
   @Override
   public boolean jdbcCompliant() {
     return false;
   }
+
   @Override
   public Logger getParentLogger() throws SQLFeatureNotSupportedException {
     throw Util.unsupported("Driver.getParentLogger");

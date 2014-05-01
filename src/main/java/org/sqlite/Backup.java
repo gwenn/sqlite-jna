@@ -27,9 +27,9 @@ public class Backup {
   /**
    * Run starts the backup:
    * <ul>
-   *   <li>copying up to 'nPage' pages between the source and destination at each step,</li>
-   *   <li>sleeping 'millis' between steps,</li>
-   *   <li>closing the backup when done or when an error happens.</li>
+   * <li>copying up to 'nPage' pages between the source and destination at each step,</li>
+   * <li>sleeping 'millis' between steps,</li>
+   * <li>closing the backup when done or when an error happens.</li>
    * </ul>
    * Sleeping is disabled if 'sleepNs' is zero or negative.
    */

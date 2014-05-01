@@ -29,6 +29,7 @@ public class RowIdImpl implements RowId {
     return value == rowId.value;
 
   }
+
   @Override
   public int hashCode() {
     return (int) (value ^ (value >>> 32));

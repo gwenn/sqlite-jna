@@ -16,6 +16,7 @@ public class SQLiteException extends SQLException {
   public SQLiteException(String reason, int errCode) {
     this(null, reason, errCode);
   }
+
   public SQLiteException(Conn c, String reason, int errCode) {
     super(reason, null, errCode);
     if (c == null) {

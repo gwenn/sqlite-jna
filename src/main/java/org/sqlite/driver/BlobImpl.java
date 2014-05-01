@@ -14,11 +14,13 @@ public class BlobImpl implements Blob {
   public BlobImpl(org.sqlite.Blob blob) {
     this.blob = blob;
   }
+
   @Override
   public long length() throws SQLException {
     checkOpen();
     return blob.getBytes();
   }
+
   @Override
   public byte[] getBytes(long pos, int length) throws SQLException {
     checkOpen();
@@ -34,42 +36,50 @@ public class BlobImpl implements Blob {
     }
     return bytes;
   }
+
   @Override
   public InputStream getBinaryStream() throws SQLException {
     checkOpen();
     return blob.getInputStream();
   }
+
   @Override
   public long position(byte[] pattern, long start) throws SQLException {
     //checkPosition(start);
     throw Util.unsupported("*Blob.position"); // FIXME
   }
+
   @Override
   public long position(Blob pattern, long start) throws SQLException {
     //checkPosition(start);
     throw Util.unsupported("*Blob.position"); // FIXME
   }
+
   @Override
   public int setBytes(long pos, byte[] bytes) throws SQLException {
     return setBytes(pos, bytes, 0, bytes.length);
   }
+
   @Override
   public int setBytes(long pos, byte[] bytes, int offset, int len) throws SQLException {
     checkOpen();
     blob.setWriteOffset(checkPosition(pos));
     return blob.write(ByteBuffer.wrap(bytes, offset, len));
   }
+
   @Override
   public OutputStream setBinaryStream(long pos) throws SQLException {
     checkOpen();
     blob.setWriteOffset(checkPosition(pos));
     return blob.getOutputStream();
   }
+
   @Override
   public void truncate(long len) throws SQLException {
     //checkLength(len);
     throw Util.unsupported("Blob.truncate"); // TODO Validate
   }
+
   @Override
   public void free() throws SQLException {
     if (blob == null) {
@@ -77,6 +87,7 @@ public class BlobImpl implements Blob {
     }
     blob.closeAndCheck();
   }
+
   @Override
   public InputStream getBinaryStream(long pos, long length) throws SQLException {
     checkLength(length);
@@ -96,6 +107,7 @@ public class BlobImpl implements Blob {
       blob.checkOpen();
     }
   }
+
   private static int checkPosition(long pos) throws SQLException {
     if (pos < 1) {
       throw new SQLException(String.format("invalid position: %d < 1", pos), null, ErrCodes.WRAPPER_SPECIFIC);
@@ -105,6 +117,7 @@ public class BlobImpl implements Blob {
     }
     return (int) (pos - 1);
   }
+
   public static int checkLength(long length) throws SQLException {
     if (length < 0) {
       throw new SQLException(String.format("invalid length: %d < 0", length), null, ErrCodes.WRAPPER_SPECIFIC);

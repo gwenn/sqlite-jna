@@ -55,7 +55,7 @@ public class Stmt {
     if (pStmt == null) return SQLite.SQLITE_OK;
     final int res = SQLite.sqlite3_finalize(pStmt);
     //if (res == SQLite.SQLITE_OK) {
-      pStmt = null;
+    pStmt = null;
     //}
     return res;
   }

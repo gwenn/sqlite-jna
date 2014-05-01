@@ -18,6 +18,7 @@ import java.nio.ByteBuffer;
 
 public class SQLite implements Library {
   public static final String JNA_LIBRARY_NAME = "sqlite3";
+
   // public static final NativeLibrary JNA_NATIVE_LIB = NativeLibrary.getInstance(SQLite.JNA_LIBRARY_NAME);
   static {
     Native.register(JNA_LIBRARY_NAME);

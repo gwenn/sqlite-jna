@@ -33,14 +33,17 @@ class Util {
     trace(msg);
     return new SQLException(msg);
   }
+
   static SQLFeatureNotSupportedException caseUnsupported(String msg) {
     trace(msg);
     return new SQLFeatureNotSupportedException(msg);
   }
+
   static SQLFeatureNotSupportedException unsupported(String method) {
     trace(method);
     return new SQLFeatureNotSupportedException(String.format("%s not implemented by SQLite JDBC driver", method));
   }
+
   static void trace(String method) {
     out.println(method);
     out.flush();
