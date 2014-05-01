@@ -1596,7 +1596,9 @@ public class DbMeta implements DatabaseMetaData {
   }
 
   @Override
-  public ResultSet getClientInfoProperties() throws SQLException { // TODO
+  public ResultSet getClientInfoProperties() throws SQLException {
+    // TODO http://sqlite.org/pragma.html#pragma_application_id
+    // http://sqlite.org/pragma.html#pragma_user_version
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
