@@ -45,6 +45,8 @@ public class SQLite implements Library {
   static native int sqlite3_close_v2(Pointer pDb);
   static native void sqlite3_interrupt(Pointer pDb);
   static native int sqlite3_busy_timeout(Pointer pDb, int ms);
+  static native int sqlite3_db_config(Pointer pDb, int op, int v, PointerByReference pOk);
+  static native int sqlite3_enable_load_extension(Pointer pDb, boolean onoff);
 
   // int sqlite3_limit(sqlite3*, int id, int newVal);
   static native boolean sqlite3_get_autocommit(Pointer pDb);

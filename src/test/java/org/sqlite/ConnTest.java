@@ -37,6 +37,7 @@ public class ConnTest {
     Assert.assertEquals(0, c.getErrCode());
     Assert.assertEquals(0, c.getExtendedErrcode());
     Assert.assertEquals("not an error", c.getErrMsg());
+    checkResult(c.close());
   }
 
   @Test
@@ -65,6 +66,22 @@ public class ConnTest {
   @Test
   public void checkGetTableColumnMetadata() {
     // TODO
+  }
+
+  @Test
+  public void enableFKey() throws SQLiteException {
+    final Conn c = open();
+    Assert.assertFalse(c.areForeignKeysEnabled());
+    Assert.assertTrue(c.enableForeignKeys(true));
+    Assert.assertTrue(c.areForeignKeysEnabled());
+    checkResult(c.close());
+  }
+
+  @Test
+  public void enableLoadExtension() throws SQLiteException {
+    final Conn c = open();
+    c.enableLoadExtension(true);
+    checkResult(c.close());
   }
 
   @Test

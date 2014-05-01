@@ -200,7 +200,7 @@ public class Conn {
   }
 
   /**
-   * @param onoff Enable Or Disable Extended Result Codes
+   * @param onoff enable or disable extended result codes
    */
   public void setExtendedResultCodes(boolean onoff) throws ConnException {
     checkOpen();
@@ -212,6 +212,32 @@ public class Conn {
    */
   public int getExtendedErrcode() {
     return SQLite.sqlite3_extended_errcode(pDb);
+  }
+
+  /**
+   * @param onoff enable or disable foreign keys constraints
+   */
+  public boolean enableForeignKeys(boolean onoff) throws ConnException {
+    checkOpen();
+    final PointerByReference pOk = new PointerByReference();
+    check(SQLite.sqlite3_db_config(pDb, 1002, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
+    return toBool(pOk);
+  }
+  /**
+   * @return whether or not foreign keys constraints enforcement is enabled
+   */
+  public boolean areForeignKeysEnabled() throws ConnException {
+    checkOpen();
+    final PointerByReference pOk = new PointerByReference();
+    check(SQLite.sqlite3_db_config(pDb, 1002, -1, pOk), "error while querying db config on '%s'", getFilename());
+    return toBool(pOk);
+  }
+  /**
+   * @param onoff enable or disable loading extension
+   */
+  public void enableLoadExtension(boolean onoff) throws ConnException {
+    checkOpen();
+    check(SQLite.sqlite3_enable_load_extension(pDb, onoff), "error while enabling load extension on '%s'", getFilename());
   }
 
   boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) throws ConnException {
