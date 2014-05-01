@@ -42,6 +42,7 @@ public class SQLite implements Library {
 
   static native int sqlite3_open_v2(String filename, PointerByReference ppDb, int flags, String vfs); // no copy needed
   static native int sqlite3_close(Pointer pDb);
+  static native int sqlite3_close_v2(Pointer pDb);
   static native void sqlite3_interrupt(Pointer pDb);
   static native int sqlite3_busy_timeout(Pointer pDb, int ms);
 

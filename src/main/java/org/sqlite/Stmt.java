@@ -45,7 +45,10 @@ public class Stmt {
 
   @Override
   protected void finalize() throws Throwable {
-    close();
+    if (pStmt != null) {
+      //System.err.println("Dangling SQLite statement");
+      close();
+    }
     super.finalize();
   }
   /**
