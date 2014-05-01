@@ -1225,7 +1225,7 @@ public class Rows implements ResultSet {
 
   @Override
   public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
-    throw Util.unsupported("ResultSet.getObject(int, Class)"); // TODO
+    throw Util.unsupported("ResultSet.getObject(int, Class)");
   }
 
   @Override
@@ -1299,7 +1299,7 @@ public class Rows implements ResultSet {
           layout = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
         } else {
           layout = "yyyy-MM-dd HH:mm:ss.SSSXXX";
-        }
+        } // TODO DefaultTimeLayout
     }
     DateFormat df = new SimpleDateFormat(layout); // TODO thread-local cache
     final java.util.Date date;

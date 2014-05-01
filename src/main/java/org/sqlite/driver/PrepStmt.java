@@ -34,6 +34,9 @@ import java.sql.SQLException;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.sql.Types;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -194,7 +197,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     if (null == x) {
       bindNull(parameterIndex);
     } else {
-      bindLong(parameterIndex, x.getTime()); // FIXME DefaultTimeLayout
+      bindLong(parameterIndex, x.getTime()); // TODO DefaultTimeLayout
     }
   }
 
@@ -519,11 +522,34 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
 
   @Override
   public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) throws SQLException {
-    if (x == null) {
+    if (x == null || targetSqlType == Types.NULL) {
       bindNull(parameterIndex);
       return;
     }
-    throw Util.unsupported("*PreparedStatement.setObject"); // TODO
+    if (Types.VARCHAR == targetSqlType) {
+      if (x instanceof java.util.Date) {
+        setString(parameterIndex, formatDate((java.util.Date) x, scaleOrLength));
+        return;
+      }
+    } else if (Types.INTEGER == targetSqlType) {
+      if (x instanceof Number) {
+        setLong(parameterIndex, ((Number) x).longValue());
+        return;
+      } else if (x instanceof java.util.Date) {
+        setLong(parameterIndex, ((java.util.Date) x).getTime());
+        return;
+      }
+    } else if (Types.REAL == targetSqlType) {
+      if (x instanceof Number) {
+        setDouble(parameterIndex, ((Number) x).doubleValue());
+        return;
+      } else if (x instanceof java.util.Date) {
+        setDouble(parameterIndex, toJulianDay(((java.util.Date) x).getTime()));
+        return;
+      }
+    }
+    // no conversion (targetSqlTpe and scaleOrLength are ignored)
+    setObject(parameterIndex, x);
   }
 
   @Override
@@ -704,5 +730,41 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
       }
       boundChecked = true;
     }
+  }
+  private static String formatDate(java.util.Date date, int length) {
+    final String layout;
+    switch (length) {
+      case 5: // HH:MM
+        layout = "HH:mm";
+        break;
+      case 8: // HH:MM:SS
+        layout = "HH:mm:ss";
+        break;
+      case 10: // YYYY-MM-DD
+        layout = "yyyy-MM-dd";
+        break;
+      case 12: // HH:MM:SS.SSS
+        layout = "HH:mm:ss.SSS";
+        break;
+      case 16: // YYYY-MM-DDTHH:MM
+        layout = "yyyy-MM-dd HH:mm";
+        break;
+      case 19: // YYYY-MM-DDTHH:MM:SS
+        layout = "yyyy-MM-dd HH:mm:ss";
+        break;
+      case 23: // YYYY-MM-DDTHH:MM:SS.SSS
+        layout = "yyyy-MM-dd HH:mm:ss.SSS";
+        break;
+      default: // YYYY-MM-DDTHH:MM:SS.SSSZhh:mm or parse error
+        layout = "yyyy-MM-dd HH:mm:ss.SSSXXX"; // TODO DefaultTimeLayout
+    }
+    DateFormat df = new SimpleDateFormat(layout); // TODO thread-local cache
+    return df.format(date);
+  }
+
+  // 1970-01-01 00:00:00 is JD 2440587.5
+  static double toJulianDay(long ms) {
+    double adj = (ms < 0) ? 0 : 0.5;
+    return (ms + adj) / 86400000.0 + 2440587.5;
   }
 }
