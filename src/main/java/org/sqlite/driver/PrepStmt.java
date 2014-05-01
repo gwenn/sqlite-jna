@@ -192,7 +192,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     if (null == x) {
       bindNull(parameterIndex);
     } else {
-      bindLong(parameterIndex, x.getTime());
+      bindLong(parameterIndex, x.getTime()); // FIXME DefaultTimeLayout
     }
   }
 
