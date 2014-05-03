@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.sqlite.driver.Util.escapeIdentifier;
+
 public class DbMeta implements DatabaseMetaData {
   private Conn c;
 
@@ -700,8 +702,8 @@ public class DbMeta implements DatabaseMetaData {
     tableNamePattern = (tableNamePattern == null || "".equals(tableNamePattern)) ? "%" : tableNamePattern;
 
     final StringBuilder sql = new StringBuilder().append("select").
-        append(" null as TABLE_CAT,").
-        append(" null as TABLE_SCHEM,"). // TODO
+        append(" null as TABLE_CAT,"). // FIXME
+        append(" null as TABLE_SCHEM,").
         append(" name as TABLE_NAME,").
         append(" upper(type) as TABLE_TYPE,").
         append(" null as REMARKS,").
@@ -793,7 +795,7 @@ public class DbMeta implements DatabaseMetaData {
     final Set<String> tbls = getExactTableNames(tableNamePattern);
 
     sql.append("select ").
-        append("null as TABLE_CAT, ").
+        append("null as TABLE_CAT, "). // FIXME
         append("null as TABLE_SCHEM, ").
         append("tbl as TABLE_NAME, ").
         append("cn as COLUMN_NAME, ").
@@ -825,7 +827,7 @@ public class DbMeta implements DatabaseMetaData {
       PreparedStatement table_info = null;
       ResultSet rs = null;
       try {
-        table_info = c.prepareStatement("PRAGMA table_info(" + quote(tbl) + ")");
+        table_info = c.prepareStatement("PRAGMA table_info(\"" + escapeIdentifier(tbl) + "\")");
         rs = table_info.executeQuery();
 
         while (rs.next()) {
@@ -979,7 +981,7 @@ public class DbMeta implements DatabaseMetaData {
     PreparedStatement table_info = null;
     ResultSet rs = null;
     try {
-      table_info = c.prepareStatement("PRAGMA table_info(" + quote(table) + ")");
+      table_info = c.prepareStatement("PRAGMA table_info(\"" + escapeIdentifier(table) + "\")");
       rs = table_info.executeQuery();
 
       while (count < 2 && rs.next()) {
@@ -1045,7 +1047,7 @@ public class DbMeta implements DatabaseMetaData {
     final StringBuilder sql = new StringBuilder();
 
     sql.append("select ").
-        append("null as TABLE_CAT, ").
+        append("null as TABLE_CAT, "). // FIXME
         append("null as TABLE_SCHEM, ").
         append(quote(table)).append(" as TABLE_NAME, ").
         append("cn as COLUMN_NAME, ").
@@ -1058,7 +1060,7 @@ public class DbMeta implements DatabaseMetaData {
     PreparedStatement table_info = null;
     ResultSet rs = null;
     try {
-      table_info = c.prepareStatement("PRAGMA table_info(" + quote(table) + ")");
+      table_info = c.prepareStatement("PRAGMA table_info(\"" + escapeIdentifier(table) + "\")");
       rs = table_info.executeQuery();
 
       while (rs.next()) {
@@ -1106,19 +1108,19 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
-    return getForeignKeys(null, table, false);
+    return getForeignKeys(catalog, null, table, false);
   }
 
-  private ResultSet getForeignKeys(String primaryTable, String foreignTable, boolean cross) throws SQLException {
+  private ResultSet getForeignKeys(String catalog, String primaryTable, String foreignTable, boolean cross) throws SQLException {
     checkOpen();
     final StringBuilder sql = new StringBuilder();
 
     sql.append("select ").
-        append("null as PKTABLE_CAT, ").
+        append("null as PKTABLE_CAT, "). // FIXME
         append("null as PKTABLE_SCHEM, ").
         append("pt as PKTABLE_NAME, ").
         append("pc as PKCOLUMN_NAME, ").
-        append("null as FKTABLE_CAT, ").
+        append("null as FKTABLE_CAT, "). // FIXME
         append("null as FKTABLE_SCHEM, ").
         append(quote(foreignTable)).append(" as FKTABLE_NAME, ").
         append("fc as FKCOLUMN_NAME, ").
@@ -1135,7 +1137,7 @@ public class DbMeta implements DatabaseMetaData {
     PreparedStatement foreign_key_list = null;
     ResultSet rs = null;
     try {
-      foreign_key_list = c.prepareStatement("pragma foreign_key_list(" + quote(foreignTable) + ");");
+      foreign_key_list = c.prepareStatement("pragma foreign_key_list(\"" + escapeIdentifier(foreignTable) + "\");");
       rs = foreign_key_list.executeQuery();
       while (rs.next()) {
         if (cross && !primaryTable.equalsIgnoreCase(rs.getString(3))) {
@@ -1182,11 +1184,11 @@ public class DbMeta implements DatabaseMetaData {
     final StringBuilder sql = new StringBuilder();
 
     sql.append("select ").
-        append("null as PKTABLE_CAT, ").
+        append("null as PKTABLE_CAT, "). // FIXME
         append("null as PKTABLE_SCHEM, ").
         append(quote(table)).append(" as PKTABLE_NAME, ").
         append("pc as PKCOLUMN_NAME, ").
-        append("null as FKTABLE_CAT, ").
+        append("null as FKTABLE_CAT, "). // FIXME
         append("null as FKTABLE_SCHEM, ").
         append("ft as FKTABLE_NAME, ").
         append("fc as FKCOLUMN_NAME, ").
@@ -1224,7 +1226,7 @@ public class DbMeta implements DatabaseMetaData {
         // Pragma cannot be used as subquery...
         PreparedStatement foreign_key_list = null;
         try {
-          foreign_key_list = c.prepareStatement("pragma foreign_key_list(" + quote(fkTable) + ");");
+          foreign_key_list = c.prepareStatement("pragma foreign_key_list(\"" + escapeIdentifier(fkTable) + "\");");
           rs = foreign_key_list.executeQuery();
           while (rs.next()) {
             if (!rs.getString(3).equalsIgnoreCase(table)) {
@@ -1265,7 +1267,10 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog, String foreignSchema, String foreignTable) throws SQLException {
-    return getForeignKeys(parentTable, foreignTable, true);
+    if (foreignCatalog == null ? parentCatalog != null : !foreignCatalog.equals(parentCatalog)) {
+      // TODO SQLite does not support this case...
+    }
+    return getForeignKeys(parentCatalog, parentTable, foreignTable, true);
   }
 
   @Override
@@ -1307,7 +1312,7 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final StringBuilder sql = new StringBuilder();
     sql.append("select ").
-        append("null as TABLE_CAT, ").
+        append("null as TABLE_CAT, "). // FIXME
         append("null as TABLE_SCHEM, ").
         append(quote(table)).append(" as TABLE_NAME, ").
         append("nu as NON_UNIQUE, ").
@@ -1326,7 +1331,7 @@ public class DbMeta implements DatabaseMetaData {
     PreparedStatement index_list = null;
     ResultSet rs = null;
     try {
-      index_list = c.prepareStatement("PRAGMA index_list(" + quote(table) + ")");
+      index_list = c.prepareStatement("PRAGMA index_list(\"" + escapeIdentifier(table) + "\")");
       rs = index_list.executeQuery();
       while (rs.next()) {
         final boolean notuniq = !rs.getBoolean(3);
@@ -1352,7 +1357,7 @@ public class DbMeta implements DatabaseMetaData {
       for (final Map.Entry<String, Boolean> index : indexes.entrySet()) {
         PreparedStatement index_info = null;
         try {
-          index_info = c.prepareStatement("PRAGMA index_info(" + quote(index.getKey()) + ")");
+          index_info = c.prepareStatement("PRAGMA index_info(\"" + escapeIdentifier(index.getKey()) + "\")");
           rs = index_info.executeQuery();
           while (rs.next()) {
             if (found) {
@@ -1684,7 +1689,12 @@ public class DbMeta implements DatabaseMetaData {
   }
 
   private String quote(String data) {
-    //if (data == null) return data;
-    return Conn.mprintf("%Q", data);
+    if (data == null) {
+      return "NULL";
+    }
+    if (data.indexOf('\'') >= 0) { // escape quote by doubling them
+      data = data.replaceAll("'", "''");
+    }
+    return '\'' + data + '\'';
   }
 }

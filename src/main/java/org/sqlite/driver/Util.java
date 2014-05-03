@@ -48,4 +48,14 @@ class Util {
     out.println(method);
     out.flush();
   }
+
+  static String escapeIdentifier(String identifier) {
+    if (identifier == null) {
+      return "";
+    }
+    if (identifier.indexOf('"') >= 0) { // escape quote by doubling them
+      identifier = identifier.replaceAll("\"", "\"\"");
+    }
+    return identifier;
+  }
 }
