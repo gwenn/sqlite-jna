@@ -20,13 +20,11 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import static org.sqlite.driver.Util.doubleQuote;
 import static org.sqlite.driver.Util.escapeIdentifier;
 
 public class DbMeta implements DatabaseMetaData {
@@ -414,7 +412,7 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public boolean supportsCatalogsInTableDefinitions() throws SQLException { // http://sqlite.org/lang_createtable.html
-    return true;
+    return true; // ~ temporary table name must be unqualified
   }
 
   @Override
@@ -702,7 +700,7 @@ public class DbMeta implements DatabaseMetaData {
     tableNamePattern = (tableNamePattern == null || "".equals(tableNamePattern)) ? "%" : tableNamePattern;
 
     final StringBuilder sql = new StringBuilder().append("select").
-        append(" null as TABLE_CAT,"). // FIXME
+        append(" cat as TABLE_CAT,").
         append(" null as TABLE_SCHEM,").
         append(" name as TABLE_NAME,").
         append(" upper(type) as TABLE_TYPE,").
@@ -712,9 +710,25 @@ public class DbMeta implements DatabaseMetaData {
         append(" null as TYPE_NAME,").
         append(" null as SELF_REFERENCING_COL_NAME,").
         append(" null as REF_GENERATION").
-        append(" from (select name, type from sqlite_master union all").
-        append("       select name, 'temporary ' || type from sqlite_temp_master)").
-        append(" where TABLE_NAME like ").append(quote(tableNamePattern));
+        append(" from (");
+
+    final String[] catalogs = getCatalogs(catalog);
+    boolean match = false;
+    for (String s : catalogs) {
+      if (match) sql.append(" UNION ALL ");
+      if ("main".equalsIgnoreCase(s)) {
+        sql.append("SELECT 'main' as cat, name, type FROM sqlite_master UNION ALL ");
+        sql.append("SELECT 'main', 'sqlite_master', 'SYSTEM TABLE'");
+      } else if ("temp".equalsIgnoreCase(s)) {
+        sql.append("SELECT 'temp' as cat, name, type FROM sqlite_temp_master UNION ALL ");
+        sql.append("SELECT 'temp', 'sqlite_temp_master', 'SYSTEM TABLE'");
+      } else {
+        sql.append("SELECT ").append(quote(catalog)).append(" as cat, name, type FROM \"").append(escapeIdentifier(catalog)).append("\".sqlite_master UNION ALL ");
+        sql.append("SELECT ").append(quote(catalog)).append(", 'sqlite_master', 'SYSTEM TABLE'");
+      }
+      match = true;
+    }
+    sql.append(") where TABLE_NAME like ").append(quote(tableNamePattern));
 
     if (types != null) {
       sql.append(" and TABLE_TYPE in (");
@@ -724,7 +738,7 @@ public class DbMeta implements DatabaseMetaData {
       }
       sql.append(")");
     } else {
-      sql.append(" and TABLE_TYPE in ('TABLE', 'VIEW')");
+      sql.append(" and TABLE_TYPE in ('SYSTEM TABLE', 'TABLE', 'VIEW')");
     }
 
     sql.append(" order by TABLE_TYPE, TABLE_SCHEM, TABLE_NAME");
@@ -751,38 +765,57 @@ public class DbMeta implements DatabaseMetaData {
   public ResultSet getCatalogs() throws SQLException {
     checkOpen();
     final StringBuilder sql = new StringBuilder("select dbName as TABLE_CAT from (");
-    sql.append("SELECT 'temp' as dbName");
     // Pragma cannot be used as subquery...
-    PreparedStatement database_list = null;
-    ResultSet rs = null;
-    try {
-      database_list = c.prepareStatement("PRAGMA database_list");
-      rs = database_list.executeQuery();
-
-      while (rs.next()) {
-        sql.append(" UNION ALL SELECT ");
-        sql.append(quote(rs.getString(2)));
+    final String[] catalogs = getCatalogs(null);
+    for (int i = 0; i < catalogs.length; i++) {
+      if (i > 0) {
+        sql.append(" UNION ");
       }
-    } catch (SQLException e) { // query does not return ResultSet
-    } finally {
-      if (rs != null) {
-        rs.close();
-      }
-      if (database_list != null) {
-        database_list.close();
-      }
+      sql.append("SELECT ").append(quote(catalogs[i])).append(" AS dbName");
     }
     sql.append(") order by TABLE_CAT");
     final PreparedStatement stmt = c.prepareStatement(sql.toString());
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
+  private String[] getCatalogs(String catalog) throws SQLException {
+    final String[] catalogs;
+    if (catalog == null) {
+      List<String> cats = new ArrayList<String>(2);
+      cats.add("temp"); // "temp" first
+      PreparedStatement database_list = null;
+      ResultSet rs = null;
+      try {
+        database_list = c.prepareStatement("PRAGMA database_list");
+        rs = database_list.executeQuery();
+
+        while (rs.next()) {
+          cats.add(rs.getString(2));
+        }
+      } catch (SQLException e) { // query does not return ResultSet
+      } finally {
+        if (rs != null) {
+          rs.close();
+        }
+        if (database_list != null) {
+          database_list.close();
+        }
+      }
+      catalogs = cats.toArray(new String[cats.size()]);
+    } else if (catalog.length() == 0) {
+      catalogs = new String[] {"temp", "main"}; // "temp" first
+    } else {
+      catalogs = new String[] {catalog};
+    }
+    return catalogs;
+  }
+
 
   @Override
   public ResultSet getTableTypes() throws SQLException {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement("select 'TABLE' as TABLE_TYPE " +
-        "union select 'VIEW' as TABLE_TYPE");
+        "union select 'VIEW' union select 'SYSTEM TABLE'");
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -792,10 +825,11 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final StringBuilder sql = new StringBuilder();
 
-    final Set<String> tbls = getExactTableNames(tableNamePattern);
+    final String[] catalogs = getCatalogs(catalog);
+    final List<String[]> tbls = getExactTableNames(catalogs, tableNamePattern);
 
     sql.append("select ").
-        append("null as TABLE_CAT, "). // FIXME
+        append("cat as TABLE_CAT, ").
         append("null as TABLE_SCHEM, ").
         append("tbl as TABLE_NAME, ").
         append("cn as COLUMN_NAME, ").
@@ -822,12 +856,12 @@ public class DbMeta implements DatabaseMetaData {
         append("null as IS_GENERATEDCOLUMN from (");
 
     boolean colFound = false;
-    for (String tbl : tbls) {
+    for (String[] tbl : tbls) {
       // Pragma cannot be used as subquery...
       PreparedStatement table_info = null;
       ResultSet rs = null;
       try {
-        table_info = c.prepareStatement("PRAGMA table_info(\"" + escapeIdentifier(tbl) + "\")");
+        table_info = c.prepareStatement("PRAGMA " + doubleQuote(tbl[0]) + ".table_info(\"" + escapeIdentifier(tbl[1]) + "\")");
         rs = table_info.executeQuery();
 
         while (rs.next()) {
@@ -838,7 +872,8 @@ public class DbMeta implements DatabaseMetaData {
           int colJavaType = getJavaType(colType);
 
           sql.append("SELECT ").
-              append(quote(tbl)).append(" AS tbl, ").
+              append(quote(tbl[0])).append(" AS cat, ").
+              append(quote(tbl[1])).append(" AS tbl, ").
               append(rs.getInt(1)).append(" AS ordpos, ").
               append(rs.getBoolean(4) ? columnNoNulls : columnNullable).append(" AS colnullable, ").
               append(colJavaType).append(" AS ct, ").
@@ -847,7 +882,7 @@ public class DbMeta implements DatabaseMetaData {
               append(quote(rs.getString(5))).append(" AS cdflt");
 
           if (columnNamePattern != null && !"%".equals(columnNamePattern)) {
-            sql.append(" where cn like ").append(quote(columnNamePattern));
+            sql.append(" WHERE cn LIKE ").append(quote(columnNamePattern));
           }
         }
       } catch (SQLException e) { // query does not return ResultSet
@@ -862,32 +897,35 @@ public class DbMeta implements DatabaseMetaData {
     }
 
     sql.append(colFound ? ") order by TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION" :
-        "SELECT NULL AS tbl, NULL AS ordpos, NULL AS colnullable, NULL AS ct, "
-            + "NULL AS cn, NULL AS tn, NULL AS cdflt) LIMIT 0");
+        "SELECT NULL AS cat, NULL AS tbl, NULL AS ordpos, NULL AS colnullable, NULL AS ct, "
+            + "NULL AS cn, NULL AS tn, NULL AS cdflt) limit 0");
     final PreparedStatement columns = c.prepareStatement(sql.toString());
     columns.closeOnCompletion();
     return columns.executeQuery();
   }
 
-  private Set<String> getExactTableNames(String tableNamePattern) throws SQLException {
+  private List<String[]> getExactTableNames(String[] catalogs, String tableNamePattern) throws SQLException {
     tableNamePattern = (tableNamePattern == null || "".equals(tableNamePattern)) ? "%" : tableNamePattern;
-    if (tableNamePattern.contains("%") || tableNamePattern.contains("?")) {
+    final List<String[]> tbls = new ArrayList<String[]>();
+    for (String catalog : catalogs) {
       PreparedStatement ps = null;
       ResultSet rs = null;
       try {
-        ps = c.prepareStatement("SELECT tbl_name FROM sqlite_master WHERE tbl_name LIKE ?");
+        final String sql;
+        if ("main".equalsIgnoreCase(catalog)) {
+          sql = "SELECT DISTINCT tbl_name FROM sqlite_master WHERE tbl_name LIKE ?";
+        } else if ("temp".equalsIgnoreCase(catalog)) {
+          sql = "SELECT DISTINCT tbl_name FROM sqlite_temp_master WHERE tbl_name LIKE ?";
+        } else {
+            sql = "SELECT DISTINCT tbl_name FROM \"" + escapeIdentifier(catalog) + "\".sqlite_master WHERE tbl_name LIKE ?";
+        }
+        ps = c.prepareStatement(sql);
         // determine exact table name
         ps.setString(1, tableNamePattern);
         rs = ps.executeQuery();
-        if (!rs.next()) {
-          return Collections.emptySet();
-        }
-        final Set<String> tbls = new HashSet<String>();
-        tbls.add(rs.getString(1));
         while (rs.next()) {
-          tbls.add(rs.getString(1));
+          tbls.add(new String[]{catalog, rs.getString(1)});
         }
-        return tbls;
       } finally {
         if (rs != null) {
           rs.close();
@@ -896,9 +934,43 @@ public class DbMeta implements DatabaseMetaData {
           ps.close();
         }
       }
-    } else {
-      return Collections.singleton(tableNamePattern);
     }
+    return tbls;
+  }
+  private String getCatalog(String catalog, String table) throws SQLException {
+    final String[] catalogs = getCatalogs(catalog);
+    if (catalogs.length == 1) {
+      return catalogs[0];
+    }
+    for (String cat : catalogs) {
+      PreparedStatement ps = null;
+      ResultSet rs = null;
+      try {
+        final String sql;
+        if ("main".equalsIgnoreCase(cat)) {
+          sql = "SELECT DISTINCT tbl_name FROM sqlite_master WHERE tbl_name like ?";
+        } else if ("temp".equalsIgnoreCase(cat)) {
+          sql = "SELECT DISTINCT tbl_name FROM sqlite_temp_master WHERE tbl_name like ?";
+        } else {
+            sql = "SELECT DISTINCT tbl_name FROM \"" + escapeIdentifier(cat) + "\".sqlite_master WHERE tbl_name like ?";
+        }
+        ps = c.prepareStatement(sql);
+        // determine exact table name
+        ps.setString(1, table);
+        rs = ps.executeQuery();
+        if (rs.next()) {
+          return cat;
+        }
+      } finally {
+        if (rs != null) {
+          rs.close();
+        }
+        if (ps != null) {
+          ps.close();
+        }
+      }
+    }
+    return "temp"; // to avoid invalid qualified table name "".tbl
   }
 
   private String getSQLiteType(String colType) {
@@ -964,6 +1036,7 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final StringBuilder sql = new StringBuilder();
 
+    catalog = getCatalog(catalog, table);
     sql.append("select ").
         append(scope).append(" as SCOPE, ").
         append("cn as COLUMN_NAME, ").
@@ -981,7 +1054,7 @@ public class DbMeta implements DatabaseMetaData {
     PreparedStatement table_info = null;
     ResultSet rs = null;
     try {
-      table_info = c.prepareStatement("PRAGMA table_info(\"" + escapeIdentifier(table) + "\")");
+      table_info = c.prepareStatement("PRAGMA " + doubleQuote(catalog) + ".table_info(\"" + escapeIdentifier(table) + "\")");
       rs = table_info.executeQuery();
 
       while (count < 2 && rs.next()) {
@@ -1046,8 +1119,9 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final StringBuilder sql = new StringBuilder();
 
+    catalog = getCatalog(catalog, table);
     sql.append("select ").
-        append("null as TABLE_CAT, "). // FIXME
+        append(quote(catalog)).append(" as TABLE_CAT, ").
         append("null as TABLE_SCHEM, ").
         append(quote(table)).append(" as TABLE_NAME, ").
         append("cn as COLUMN_NAME, ").
@@ -1060,7 +1134,7 @@ public class DbMeta implements DatabaseMetaData {
     PreparedStatement table_info = null;
     ResultSet rs = null;
     try {
-      table_info = c.prepareStatement("PRAGMA table_info(\"" + escapeIdentifier(table) + "\")");
+      table_info = c.prepareStatement("PRAGMA " + doubleQuote(catalog) + ".table_info(\"" + escapeIdentifier(table) + "\")");
       rs = table_info.executeQuery();
 
       while (rs.next()) {
@@ -1084,7 +1158,7 @@ public class DbMeta implements DatabaseMetaData {
     }
 
     if (nColNames == 0) {
-      sql.append("SELECT NULL as pk, NULL AS cn, NULL AS seqno) LIMIT 0");
+      sql.append("SELECT NULL as pk, NULL AS cn, NULL AS seqno) limit 0");
     } else {
       final String pkName; // FIXME may be null
       if (nColNames == 1) {
@@ -1099,7 +1173,7 @@ public class DbMeta implements DatabaseMetaData {
             append(quote(colNames[i])).append(" AS cn, ").
             append(i + 1).append(" AS seqno");
       }
-      sql.append(") ORDER BY COLUMN_NAME");
+      sql.append(") order by COLUMN_NAME");
     }
     final PreparedStatement columns = c.prepareStatement(sql.toString());
     columns.closeOnCompletion();
@@ -1111,16 +1185,17 @@ public class DbMeta implements DatabaseMetaData {
     return getForeignKeys(catalog, null, table, false);
   }
 
-  private ResultSet getForeignKeys(String catalog, String primaryTable, String foreignTable, boolean cross) throws SQLException {
+  private ResultSet getForeignKeys(String foreignCatalog, String primaryTable, String foreignTable, boolean cross) throws SQLException {
     checkOpen();
     final StringBuilder sql = new StringBuilder();
 
+    foreignCatalog = getCatalog(foreignCatalog, foreignTable);
     sql.append("select ").
-        append("null as PKTABLE_CAT, "). // FIXME
+        append(quote(foreignCatalog)).append(" as PKTABLE_CAT, ").
         append("null as PKTABLE_SCHEM, ").
         append("pt as PKTABLE_NAME, ").
         append("pc as PKCOLUMN_NAME, ").
-        append("null as FKTABLE_CAT, "). // FIXME
+        append(quote(foreignCatalog)).append(" as FKTABLE_CAT, ").
         append("null as FKTABLE_SCHEM, ").
         append(quote(foreignTable)).append(" as FKTABLE_NAME, ").
         append("fc as FKCOLUMN_NAME, ").
@@ -1137,21 +1212,21 @@ public class DbMeta implements DatabaseMetaData {
     PreparedStatement foreign_key_list = null;
     ResultSet rs = null;
     try {
-      foreign_key_list = c.prepareStatement("pragma foreign_key_list(\"" + escapeIdentifier(foreignTable) + "\");");
+      foreign_key_list = c.prepareStatement("PRAGMA " + doubleQuote(foreignCatalog) + ".foreign_key_list(\"" + escapeIdentifier(foreignTable) + "\");");
       rs = foreign_key_list.executeQuery();
       while (rs.next()) {
         if (cross && !primaryTable.equalsIgnoreCase(rs.getString(3))) {
           continue;
         }
         if (count > 0) {
-          sql.append(" union all ");
+          sql.append(" UNION ALL ");
         }
-        sql.append("select ").
-            append(quote(rs.getString(3) + '_' + rs.getString(1))).append(" as id, ").
-            append(quote(rs.getString(3))).append(" as pt, ").
-            append(quote(rs.getString(5))).append(" as pc, ").
-            append(quote(rs.getString(4))).append(" as fc, ").
-            append(rs.getShort(2) + 1).append(" as seq");
+        sql.append("SELECT ").
+            append(quote(rs.getString(3) + '_' + rs.getString(1))).append(" AS id, ").
+            append(quote(rs.getString(3))).append(" AS pt, ").
+            append(quote(rs.getString(5))).append(" AS pc, ").
+            append(quote(rs.getString(4))).append(" AS fc, ").
+            append(rs.getShort(2) + 1).append(" AS seq");
         count++;
       }
     } catch (SQLException e) { // query does not return ResultSet
@@ -1165,7 +1240,7 @@ public class DbMeta implements DatabaseMetaData {
     }
 
     if (count == 0) {
-      sql.append("select null as id, null as pt, null as pc, null as fc, null as seq) LIMIT 0");
+      sql.append("SELECT NULL AS id, NULL AS pt, NULL AS pc, NULL AS fc, NULL AS seq) limit 0");
     } else {
       if (cross) {
         sql.append(") order by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, KEY_SEQ");
@@ -1183,12 +1258,13 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final StringBuilder sql = new StringBuilder();
 
+    catalog = getCatalog(catalog, table);
     sql.append("select ").
-        append("null as PKTABLE_CAT, "). // FIXME
+        append(quote(catalog)).append(" as PKTABLE_CAT, ").
         append("null as PKTABLE_SCHEM, ").
         append(quote(table)).append(" as PKTABLE_NAME, ").
         append("pc as PKCOLUMN_NAME, ").
-        append("null as FKTABLE_CAT, "). // FIXME
+        append(quote(catalog)).append(" as FKTABLE_CAT, ").
         append("null as FKTABLE_SCHEM, ").
         append("ft as FKTABLE_NAME, ").
         append("fc as FKCOLUMN_NAME, ").
@@ -1204,7 +1280,15 @@ public class DbMeta implements DatabaseMetaData {
     PreparedStatement fks = null;
     ResultSet rs = null;
     try {
-      fks = c.prepareStatement("select distinct tbl_name from sqlite_master where type = 'table' and tbl_name <> ? and sql like ?");
+      final String s;
+      if ("main".equalsIgnoreCase(catalog)) {
+        s = "SELECT DISTINCT tbl_name FROM SQLITE_MASTER WHERE type = 'table' AND tbl_name NOT LIKE ? AND sql LIKE ?";
+      } else if ("temp".equalsIgnoreCase(catalog)) {
+        s = "SELECT DISTINCT tbl_name FROM sqlite_temp_master WHERE type = 'table' AND tbl_name NOT LIKE ? AND sql LIKE ?";
+      } else {
+        s = "SELECT DISTINCT tbl_name FROM \"" + escapeIdentifier(catalog) + "\".sqlite_master WHERE type = 'table' AND tbl_name NOT LIKE ? AND sql LIKE ?";
+      }
+      fks = c.prepareStatement(s);
       fks.setString(1, table);
       fks.setString(2, "%REFERENCES%" + table + "%(%");
       rs = fks.executeQuery();
@@ -1226,21 +1310,21 @@ public class DbMeta implements DatabaseMetaData {
         // Pragma cannot be used as subquery...
         PreparedStatement foreign_key_list = null;
         try {
-          foreign_key_list = c.prepareStatement("pragma foreign_key_list(\"" + escapeIdentifier(fkTable) + "\");");
+          foreign_key_list = c.prepareStatement("PRAGMA " + doubleQuote(catalog) + ".foreign_key_list(\"" + escapeIdentifier(fkTable) + "\");");
           rs = foreign_key_list.executeQuery();
           while (rs.next()) {
             if (!rs.getString(3).equalsIgnoreCase(table)) {
               continue;
             }
             if (count > 0) {
-              sql.append(" union all ");
+              sql.append(" UNION ALL ");
             }
-            sql.append("select ").
-                append(quote(fkTable + '_' + rs.getString(1))).append(" as fk, ").
-                append(quote(fkTable)).append(" as ft, ").
-                append(quote(rs.getString(5))).append(" as pc, ").
-                append(quote(rs.getString(4))).append(" as fc, ").
-                append(rs.getShort(2) + 1).append(" as seq");
+            sql.append("SELECT ").
+                append(quote(fkTable + '_' + rs.getString(1))).append(" AS fk, ").
+                append(quote(fkTable)).append(" AS ft, ").
+                append(quote(rs.getString(5))).append(" AS pc, ").
+                append(quote(rs.getString(4))).append(" AS fc, ").
+                append(rs.getShort(2) + 1).append(" AS seq");
             count++;
           }
         } catch (SQLException e) { // query does not return ResultSet
@@ -1256,7 +1340,7 @@ public class DbMeta implements DatabaseMetaData {
     }
 
     if (count == 0) {
-      sql.append("select null as fk, null as ft, null as pc, null as fc, null as seq) LIMIT 0");
+      sql.append("SELECT NULL AS fk, NULL AS ft, NULL AS pc, NULL AS fc, NULL AS seq) limit 0");
     } else {
       sql.append(") order by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, KEY_SEQ");
     }
@@ -1270,7 +1354,7 @@ public class DbMeta implements DatabaseMetaData {
     if (foreignCatalog == null ? parentCatalog != null : !foreignCatalog.equals(parentCatalog)) {
       // TODO SQLite does not support this case...
     }
-    return getForeignKeys(parentCatalog, parentTable, foreignTable, true);
+    return getForeignKeys(foreignCatalog, parentTable, foreignTable, true);
   }
 
   @Override
@@ -1310,9 +1394,10 @@ public class DbMeta implements DatabaseMetaData {
   @Override
   public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException {
     checkOpen();
+    catalog = getCatalog(catalog, table);
     final StringBuilder sql = new StringBuilder();
     sql.append("select ").
-        append("null as TABLE_CAT, "). // FIXME
+        append(quote(catalog)).append(" as TABLE_CAT, ").
         append("null as TABLE_SCHEM, ").
         append(quote(table)).append(" as TABLE_NAME, ").
         append("nu as NON_UNIQUE, ").
@@ -1331,7 +1416,7 @@ public class DbMeta implements DatabaseMetaData {
     PreparedStatement index_list = null;
     ResultSet rs = null;
     try {
-      index_list = c.prepareStatement("PRAGMA index_list(\"" + escapeIdentifier(table) + "\")");
+      index_list = c.prepareStatement("PRAGMA " + doubleQuote(catalog) + ".index_list(\"" + escapeIdentifier(table) + "\")");
       rs = index_list.executeQuery();
       while (rs.next()) {
         final boolean notuniq = !rs.getBoolean(3);
@@ -1351,7 +1436,7 @@ public class DbMeta implements DatabaseMetaData {
     }
 
     if (indexes.isEmpty()) {
-      sql.append("SELECT NULL AS nu, NULL AS idx, NULL AS seqno, NULL AS cn) LIMIT 0");
+      sql.append("SELECT NULL AS nu, NULL AS idx, NULL AS seqno, NULL AS cn) limit 0");
     } else {
       boolean found = false;
       for (final Map.Entry<String, Boolean> index : indexes.entrySet()) {
@@ -1383,7 +1468,7 @@ public class DbMeta implements DatabaseMetaData {
       if (found) {
         sql.append(") order by NON_UNIQUE, TYPE, INDEX_NAME, ORDINAL_POSITION");
       } else {
-        sql.append("SELECT NULL AS nu, NULL AS idx, NULL AS seqno, NULL AS cn) LIMIT 0");
+        sql.append("SELECT NULL AS nu, NULL AS idx, NULL AS seqno, NULL AS cn) limit 0");
       }
     }
 

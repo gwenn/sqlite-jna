@@ -58,4 +58,13 @@ class Util {
     }
     return identifier;
   }
+  static String doubleQuote(String dbName) {
+    if (dbName == null) {
+      return "";
+    }
+    if ("main".equals(dbName) || "temp".equals(dbName)) {
+      return dbName;
+    }
+    return '"' + escapeIdentifier(dbName) + '"'; // surround identifier with quote
+  }
 }
