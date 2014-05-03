@@ -58,10 +58,8 @@ public class Stmt {
    */
   public int close() {
     if (pStmt == null) return SQLite.SQLITE_OK;
-    final int res = SQLite.sqlite3_finalize(pStmt);
-    //if (res == SQLite.SQLITE_OK) {
+    final int res = SQLite.sqlite3_finalize(pStmt); // must be called only once
     pStmt = null;
-    //}
     return res;
   }
   public void closeAndCheck() throws StmtException {

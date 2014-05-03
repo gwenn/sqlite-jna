@@ -55,18 +55,8 @@ public class Conn {
       return SQLite.SQLITE_OK;
     }
 
-    // Dangling statements
-    /*Pointer pStmt = SQLite.sqlite3_next_stmt(pDb, null);
-    while (pStmt != null) {
-      // "Dangling statement: " + SQLite.sqlite3_sql(pStmt); TODO log
-      // SQLite.sqlite3_finalize(pStmt); // must be called only once...
-      pStmt = SQLite.sqlite3_next_stmt(pDb, null);
-    }*/
-
     final int res = SQLite.sqlite3_close_v2(pDb); // must be called only once...
-    //if (res == SQLite.SQLITE_OK) {
     pDb = null;
-    //}
     return res;
   }
   public void closeAndCheck() throws ConnException {

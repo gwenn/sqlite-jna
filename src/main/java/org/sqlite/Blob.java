@@ -73,14 +73,21 @@ public class Blob {
     size = -1;
   }
 
+  @Override
+  protected void finalize() throws Throwable {
+    if (pBlob != null) {
+      //System.err.println("Dangling SQLite Blob");
+      close();
+    }
+    super.finalize();
+  }
+
   public int close() {
     if (pBlob == null) {
       return SQLite.SQLITE_OK;
     }
-    final int res = SQLite.sqlite3_blob_close(pBlob);
-    if (res == SQLite.SQLITE_OK) {
-      pBlob = null;
-    }
+    final int res = SQLite.sqlite3_blob_close(pBlob); // must be called only once
+    pBlob = null;
     return res;
   }
 

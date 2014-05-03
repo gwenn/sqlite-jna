@@ -56,11 +56,20 @@ public class Backup {
     return SQLite.sqlite3_backup_pagecount(pBackup);
   }
 
+  @Override
+  protected void finalize() throws Throwable {
+    if (pBackup != null) {
+      //System.err.println("Dangling SQLite backup");
+      finish();
+    }
+    super.finalize();
+  }
+
   public int finish() {
     if (pBackup == null) {
       return SQLite.SQLITE_OK;
     }
-    final int res = SQLite.sqlite3_backup_finish(pBackup);
+    final int res = SQLite.sqlite3_backup_finish(pBackup); // must be called only once
     pBackup = null;
     return res;
   }
