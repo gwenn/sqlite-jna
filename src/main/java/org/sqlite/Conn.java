@@ -128,7 +128,7 @@ public class Conn {
     final PointerByReference ppBlob = new PointerByReference();
     final int res = SQLite.sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob);
     if (res != SQLite.SQLITE_OK) {
-      SQLite.sqlite3_close(ppBlob.getValue());
+      SQLite.sqlite3_blob_close(ppBlob.getValue());
       throw new SQLiteException(String.format("error while opening a blob to (db: '%s', table: '%s', col: '%s', row: %d)",
           dbName, tblName, colName, iRow), res);
     }
