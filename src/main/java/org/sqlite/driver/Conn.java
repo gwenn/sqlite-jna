@@ -154,7 +154,7 @@ public class Conn implements Connection {
   @Override
   public String getCatalog() throws SQLException {
     checkOpen();
-    return "main";
+    return null; // "main" is not the default catalog ("temp" catalog is searched first)
   }
 
   @Override
