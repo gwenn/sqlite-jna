@@ -352,7 +352,7 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public String getSchemaTerm() throws SQLException {
-    return "dbName";
+    return "";
   }
 
   @Override
@@ -362,7 +362,7 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public String getCatalogTerm() throws SQLException {
-    return null;
+    return "dbName";
   }
 
   @Override
@@ -377,7 +377,7 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public boolean supportsSchemasInDataManipulation() throws SQLException {
-    return true;
+    return false;
   }
 
   @Override
@@ -387,12 +387,12 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public boolean supportsSchemasInTableDefinitions() throws SQLException {
-    return true;
+    return false;
   }
 
   @Override
   public boolean supportsSchemasInIndexDefinitions() throws SQLException {
-    return true;
+    return false;
   }
 
   @Override
@@ -401,8 +401,8 @@ public class DbMeta implements DatabaseMetaData {
   }
 
   @Override
-  public boolean supportsCatalogsInDataManipulation() throws SQLException {
-    return false;
+  public boolean supportsCatalogsInDataManipulation() throws SQLException { // http://sqlite.org/syntaxdiagrams.html#qualified-table-name
+    return true;
   }
 
   @Override
@@ -411,13 +411,13 @@ public class DbMeta implements DatabaseMetaData {
   }
 
   @Override
-  public boolean supportsCatalogsInTableDefinitions() throws SQLException {
-    return false;
+  public boolean supportsCatalogsInTableDefinitions() throws SQLException { // http://sqlite.org/lang_createtable.html
+    return true;
   }
 
   @Override
-  public boolean supportsCatalogsInIndexDefinitions() throws SQLException {
-    return false;
+  public boolean supportsCatalogsInIndexDefinitions() throws SQLException { // http://sqlite.org/lang_createindex.html
+    return true;
   }
 
   @Override
@@ -733,7 +733,7 @@ public class DbMeta implements DatabaseMetaData {
   }
 
   @Override
-  public ResultSet getSchemas() throws SQLException { // TODO main, temp, attached dbs (pragma database_list)
+  public ResultSet getSchemas() throws SQLException {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
         "select "
@@ -748,8 +748,30 @@ public class DbMeta implements DatabaseMetaData {
   @Override
   public ResultSet getCatalogs() throws SQLException {
     checkOpen();
-    final PreparedStatement stmt = c.prepareStatement(
-        "select null as TABLE_CAT limit 0");
+    final StringBuilder sql = new StringBuilder("select dbName as TABLE_CAT from (");
+    sql.append("SELECT 'temp' as dbName");
+    // Pragma cannot be used as subquery...
+    PreparedStatement database_list = null;
+    ResultSet rs = null;
+    try {
+      database_list = c.prepareStatement("PRAGMA database_list");
+      rs = database_list.executeQuery();
+
+      while (rs.next()) {
+        sql.append(" UNION ALL SELECT ");
+        sql.append(quote(rs.getString(2)));
+      }
+    } catch (SQLException e) { // query does not return ResultSet
+    } finally {
+      if (rs != null) {
+        rs.close();
+      }
+      if (database_list != null) {
+        database_list.close();
+      }
+    }
+    sql.append(") order by TABLE_CAT");
+    final PreparedStatement stmt = c.prepareStatement(sql.toString());
     stmt.closeOnCompletion();
     return stmt.executeQuery();
   }
@@ -1582,7 +1604,7 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
-    return getSchemas(); // TODO
+    return getSchemas();
   }
 
   @Override

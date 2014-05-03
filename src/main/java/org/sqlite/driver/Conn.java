@@ -154,7 +154,7 @@ public class Conn implements Connection {
   @Override
   public String getCatalog() throws SQLException {
     checkOpen();
-    return null;
+    return "main";
   }
 
   @Override
@@ -394,15 +394,13 @@ public class Conn implements Connection {
 
   @Override
   public void setSchema(String schema) throws SQLException {
-    Util.trace("Connection.setSchema");
     checkOpen();
   }
 
   @Override
   public String getSchema() throws SQLException {
-    Util.trace("Connection.getSchema");
     checkOpen();
-    return null; // TODO
+    return null;
   }
 
   @Override

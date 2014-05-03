@@ -102,7 +102,7 @@ public class RowsMeta implements ResultSetMetaData {
 
   @Override
   public String getSchemaName(int column) throws SQLException {
-    return getStmt().getColumnDatabaseName(fixCol(column));
+    return "";
   }
 
   @Override
@@ -136,8 +136,7 @@ public class RowsMeta implements ResultSetMetaData {
 
   @Override
   public String getCatalogName(int column) throws SQLException {
-    checkColumn(column);
-    return "";
+    return getStmt().getColumnDatabaseName(fixCol(column));
   }
 
   @Override
