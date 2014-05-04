@@ -782,7 +782,6 @@ public class DbMeta implements DatabaseMetaData {
     final String[] catalogs;
     if (catalog == null) {
       List<String> cats = new ArrayList<String>(2);
-      cats.add("temp"); // "temp" first
       PreparedStatement database_list = null;
       ResultSet rs = null;
       try {
@@ -790,7 +789,12 @@ public class DbMeta implements DatabaseMetaData {
         rs = database_list.executeQuery();
 
         while (rs.next()) {
-          cats.add(rs.getString(2));
+          final String dbName = rs.getString(2);
+          if ("temp".equalsIgnoreCase(dbName)) {
+            cats.add(0, dbName); // "temp" first
+          } else {
+            cats.add(dbName);
+          }
         }
       } catch (SQLException e) { // query does not return ResultSet
       } finally {
