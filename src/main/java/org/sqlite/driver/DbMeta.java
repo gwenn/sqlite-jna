@@ -913,11 +913,11 @@ public class DbMeta implements DatabaseMetaData {
       try {
         final String sql;
         if ("main".equalsIgnoreCase(catalog)) {
-          sql = "SELECT DISTINCT tbl_name FROM sqlite_master WHERE tbl_name LIKE ?";
+          sql = "SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name LIKE ?";
         } else if ("temp".equalsIgnoreCase(catalog)) {
-          sql = "SELECT DISTINCT tbl_name FROM sqlite_temp_master WHERE tbl_name LIKE ?";
+          sql = "SELECT name FROM sqlite_temp_master WHERE type IN ('table','view') AND name LIKE ?";
         } else {
-            sql = "SELECT DISTINCT tbl_name FROM \"" + escapeIdentifier(catalog) + "\".sqlite_master WHERE tbl_name LIKE ?";
+            sql = "SELECT name FROM \"" + escapeIdentifier(catalog) + "\".sqlite_master WHERE type IN ('table','view') AND name LIKE ?";
         }
         ps = c.prepareStatement(sql);
         // determine exact table name
@@ -948,11 +948,11 @@ public class DbMeta implements DatabaseMetaData {
       try {
         final String sql;
         if ("main".equalsIgnoreCase(cat)) {
-          sql = "SELECT DISTINCT tbl_name FROM sqlite_master WHERE tbl_name like ?";
+          sql = "SELECT name FROM sqlite_master WHERE type = 'table' AND name like ?"; // TODO Validate: no view
         } else if ("temp".equalsIgnoreCase(cat)) {
-          sql = "SELECT DISTINCT tbl_name FROM sqlite_temp_master WHERE tbl_name like ?";
+          sql = "SELECT name FROM sqlite_temp_master WHERE type = 'table' AND name like ?";
         } else {
-            sql = "SELECT DISTINCT tbl_name FROM \"" + escapeIdentifier(cat) + "\".sqlite_master WHERE tbl_name like ?";
+            sql = "SELECT name FROM \"" + escapeIdentifier(cat) + "\".sqlite_master WHERE type = 'table' AND name like ?";
         }
         ps = c.prepareStatement(sql);
         // determine exact table name
@@ -1282,11 +1282,11 @@ public class DbMeta implements DatabaseMetaData {
     try {
       final String s;
       if ("main".equalsIgnoreCase(catalog)) {
-        s = "SELECT DISTINCT tbl_name FROM SQLITE_MASTER WHERE type = 'table' AND tbl_name NOT LIKE ? AND sql LIKE ?";
+        s = "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE ? AND sql LIKE ?";
       } else if ("temp".equalsIgnoreCase(catalog)) {
-        s = "SELECT DISTINCT tbl_name FROM sqlite_temp_master WHERE type = 'table' AND tbl_name NOT LIKE ? AND sql LIKE ?";
+        s = "SELECT name FROM sqlite_temp_master WHERE type = 'table' AND name NOT LIKE ? AND sql LIKE ?";
       } else {
-        s = "SELECT DISTINCT tbl_name FROM \"" + escapeIdentifier(catalog) + "\".sqlite_master WHERE type = 'table' AND tbl_name NOT LIKE ? AND sql LIKE ?";
+        s = "SELECT name FROM \"" + escapeIdentifier(catalog) + "\".sqlite_master WHERE type = 'table' AND name NOT LIKE ? AND sql LIKE ?";
       }
       fks = c.prepareStatement(s);
       fks.setString(1, table);
