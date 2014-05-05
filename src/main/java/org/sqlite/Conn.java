@@ -42,7 +42,7 @@ public class Conn {
   @Override
   protected void finalize() throws Throwable {
     if (pDb != null) {
-      //System.err.println("Dangling SQLite connection");
+      SQLite.sqlite3_log(-1, "dangling SQLite connection.");
       close();
     }
     super.finalize();

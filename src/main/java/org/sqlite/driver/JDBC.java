@@ -9,6 +9,7 @@
 package org.sqlite.driver;
 
 import org.sqlite.OpenFlags;
+import org.sqlite.SQLite;
 
 import java.sql.Connection;
 import java.sql.Driver;
@@ -51,10 +52,12 @@ public class JDBC implements Driver {
     if ("on".equals(fks)) {
       if (!conn.enableForeignKeys(true)) {
         // TODO warning?
+        SQLite.sqlite3_log(-1, "cannot enable the enforcement of foreign key constraints.");
       }
     } else if ("off".equals(fks)) {
       if (conn.enableForeignKeys(false)) {
         // TODO warning?
+        SQLite.sqlite3_log(-1, "cannot disable the enforcement of foreign key constraints.");
       }
     }
     if ("on".equals(info == null ? null : info.getProperty(ENABLE_LOAD_EXTENSION))) {

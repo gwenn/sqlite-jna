@@ -8,6 +8,7 @@
  */
 package org.sqlite;
 
+import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -33,6 +34,20 @@ public class SQLite implements Library {
 
   static native String sqlite3_libversion(); // no copy needed
   static native boolean sqlite3_threadsafe();
+
+  public static final int SQLITE_CONFIG_SINGLETHREAD = 1,
+      SQLITE_CONFIG_MULTITHREAD = 2, SQLITE_CONFIG_SERIALIZED = 3,
+      SQLITE_CONFIG_MEMSTATUS = 9,
+      SQLITE_CONFIG_LOG = 16,
+      SQLITE_CONFIG_URI = 17;
+  //sqlite3_config(SQLITE_CONFIG_SINGLETHREAD|SQLITE_CONFIG_MULTITHREAD|SQLITE_CONFIG_SERIALIZED)
+  static native int sqlite3_config(int op);
+  //sqlite3_config(SQLITE_CONFIG_URI, int onoff)
+  //sqlite3_config(SQLITE_CONFIG_MEMSTATUS, int onoff)
+  static native int sqlite3_config(int op, boolean onoff);
+  //sqlite3_config(SQLITE_CONFIG_LOG, void(*)(void *udp, int err, const char *msg), void *udp)
+  public static native int sqlite3_config(int op, LogCallback func, Pointer udp);
+  public static native void sqlite3_log(int iErrCode, String msg);
 
   static native String sqlite3_errmsg(Pointer pDb); // copy needed: the error string might be overwritten or deallocated by subsequent calls to other SQLite interface functions.
   static native int sqlite3_errcode(Pointer pDb);
@@ -150,5 +165,20 @@ public class SQLite implements Library {
   }
 
   private SQLite() {
+  }
+
+  public static interface LogCallback extends Callback {
+    void invoke(Pointer udp, int err, String msg);
+  }
+  private static final LogCallback LOG_CALLBACK = new LogCallback() {
+    @Override
+    public void invoke(Pointer udp, int err, String msg) {
+      System.out.printf("%d: %s\n", err, msg);
+    }
+  };
+  static {
+    if (System.getProperty("sqlite.config.log", "").length() > 0) {
+      SQLite.sqlite3_config(SQLite.SQLITE_CONFIG_LOG, LOG_CALLBACK, null);
+    }
   }
 }

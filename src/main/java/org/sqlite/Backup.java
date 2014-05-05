@@ -14,7 +14,8 @@ public class Backup {
 
   public boolean step(int nPage) throws ConnException {
     final int res = SQLite.sqlite3_backup_step(pBackup, nPage);
-    if (res == SQLite.SQLITE_OK || res == ErrCodes.SQLITE_BUSY || res == ErrCodes.SQLITE_LOCKED) { // TODO Trace busy/locked errors
+    if (res == SQLite.SQLITE_OK || res == ErrCodes.SQLITE_BUSY || res == ErrCodes.SQLITE_LOCKED) {
+      SQLite.sqlite3_log(-1, "busy/locked error during backup.");
       return true;
     } else if (res == SQLite.SQLITE_DONE) {
       return false;
@@ -59,7 +60,7 @@ public class Backup {
   @Override
   protected void finalize() throws Throwable {
     if (pBackup != null) {
-      //System.err.println("Dangling SQLite backup");
+      SQLite.sqlite3_log(-1, "dangling SQLite backup.");
       finish();
     }
     super.finalize();

@@ -76,7 +76,7 @@ public class Blob {
   @Override
   protected void finalize() throws Throwable {
     if (pBlob != null) {
-      //System.err.println("Dangling SQLite Blob");
+      SQLite.sqlite3_log(-1, "dangling SQLite blob.");
       close();
     }
     super.finalize();
