@@ -90,18 +90,19 @@ public class JDBC implements Driver {
     final DriverPropertyInfo vfs = new DriverPropertyInfo(VFS, info == null ? null : info.getProperty(VFS));
     vfs.description = "Specify the name of a VFS object that provides the operating system interface that should be used to access the database file on disk.";
     final DriverPropertyInfo mode = new DriverPropertyInfo(MODE, info == null ? null : info.getProperty(MODE));
-    mode.description = "The mode parameter may be set to either \"ro\", \"rw\" or \"rwc\"";
+    mode.description = "Open the database for read-only/read-write (but not create) access.";
     mode.choices = new String[]{"ro", "rw", "rwc"};
     if (mode.value == null) mode.value = "rwc"; // default
     final DriverPropertyInfo cache = new DriverPropertyInfo(CACHE, info == null ? null : info.getProperty(CACHE));
-    cache.description = "The cache parameter may be set to either \"shared\" or \"private\"";
+    cache.description = "Choose to participate or not participate in shared cache mode.";
     cache.choices = new String[]{"shared", "private"};
     final DriverPropertyInfo fks = new DriverPropertyInfo(FOREIGN_KEYS, info == null ? null : info.getProperty(FOREIGN_KEYS));
-    fks.description = "The foreign_keys parameter may be set to either \"on\" or \"off\"";
+    fks.description = "Enable or disable the enforcement of foreign key constraints.";
     fks.choices = new String[]{"on", "off"};
     final DriverPropertyInfo ele = new DriverPropertyInfo(ENABLE_LOAD_EXTENSION, info == null ? null : info.getProperty(ENABLE_LOAD_EXTENSION));
-    ele.description = "The enable_load_extension parameter may be set to either \"on\" or \"off\"";
+    ele.description = "Turn extension loading on or off.";
     ele.choices = new String[]{"on", "off"};
+    if (ele.value == null) ele.value = "off"; // default
 
     return new DriverPropertyInfo[] {vfs, mode, cache, fks, ele}; // TODO encoding, locking_mode, recursive_triggers, synchronous
   }
