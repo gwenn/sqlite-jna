@@ -1,14 +1,13 @@
 package org.sqlite;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class ConnTest {
   @Test
   public void checkLibversion() throws SQLiteException {
-    final Conn c = open();
-    Assert.assertTrue(c.libversion().startsWith("3"));
-    checkResult(c.close());
+    Assert.assertTrue(Conn.libversion().startsWith("3"));
   }
 
   @Test
@@ -64,6 +63,13 @@ public class ConnTest {
   }
 
   @Test
+  public void fastExec() throws SQLiteException {
+    final Conn c = open();
+    c.fastExec("PRAGMA encoding=\"UTF-8\"");
+    checkResult(c.close());
+  }
+
+  @Test
   public void checkGetTableColumnMetadata() {
     // TODO
   }
@@ -78,19 +84,37 @@ public class ConnTest {
   }
 
   @Test
+  public void enableTriggers() throws SQLiteException {
+    final Conn c = open();
+    Assert.assertTrue(c.areTriggersEnabled());
+    Assert.assertFalse(c.enableForeignKeys(false));
+    Assert.assertFalse(c.areForeignKeysEnabled());
+    checkResult(c.close());
+  }
+
+  @Test
   public void enableLoadExtension() throws SQLiteException {
     final Conn c = open();
     c.enableLoadExtension(true);
     checkResult(c.close());
   }
 
+  @Ignore
+  @Test
+  public void loadExtension() throws SQLiteException {
+    final Conn c = open();
+    c.enableLoadExtension(true);
+    final String errMsg = c.loadExtension("/home/gwen/C/sqlite-csv-ext/csv", null);
+    Assert.assertNull(errMsg);
+    checkResult(c.close());
+  }
+
   @Test
   public void checkMprintf() throws SQLiteException {
-    final Conn c = open();
     for (int i = 0; i < 100; i++) {
-      Assert.assertEquals("'1'", c.mprintf("%Q", String.valueOf(1)));
+      Assert.assertEquals("'1'", Conn.mprintf("%Q", String.valueOf(1)));
     }
-    checkResult(c.close());
+    Assert.assertEquals("tes\"\"t", Conn.mprintf("%w", "tes\"t"));
   }
 
   static void checkResult(int res) {

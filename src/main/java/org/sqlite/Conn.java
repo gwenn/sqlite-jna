@@ -123,6 +123,11 @@ public class Conn {
       }
     }
   }
+  // FastExec executes one or many non-parameterized statement(s) (separated by semi-colon) with no control and no stmt cache.
+  public void fastExec(String sql) throws ConnException {
+    checkOpen();
+    check(SQLite.sqlite3_exec(pDb, sql, null, null, null), "error while executing '%s'", sql);
+  }
 
   public Blob open(String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
     final PointerByReference ppBlob = new PointerByReference();
@@ -223,11 +228,44 @@ public class Conn {
     return toBool(pOk);
   }
   /**
+   * @param onoff enable or disable triggers
+   */
+  public boolean enableTriggers(boolean onoff) throws ConnException {
+    checkOpen();
+    final PointerByReference pOk = new PointerByReference();
+    check(SQLite.sqlite3_db_config(pDb, 1003, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
+    return toBool(pOk);
+  }
+  /**
+   * @return whether or not triggers are enabled
+   */
+  public boolean areTriggersEnabled() throws ConnException {
+    checkOpen();
+    final PointerByReference pOk = new PointerByReference();
+    check(SQLite.sqlite3_db_config(pDb, 1003, -1, pOk), "error while querying db config on '%s'", getFilename());
+    return toBool(pOk);
+  }
+  /**
    * @param onoff enable or disable loading extension
    */
   public void enableLoadExtension(boolean onoff) throws ConnException {
     checkOpen();
     check(SQLite.sqlite3_enable_load_extension(pDb, onoff), "error while enabling load extension on '%s'", getFilename());
+  }
+
+  /**
+   * @param file path to the extension
+   * @param proc entry point (may be null)
+   * @return error message  or null
+   */
+  public String loadExtension(String file, String proc) throws ConnException {
+    checkOpen();
+    final PointerByReference pErrMsg = new PointerByReference();
+    int res = SQLite.sqlite3_load_extension(pDb, file, proc, pErrMsg);
+    if (res != SQLite.SQLITE_OK) {
+      return pErrMsg.getValue().getString(0);
+    }
+    return null;
   }
 
   boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) throws ConnException {

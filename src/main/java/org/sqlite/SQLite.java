@@ -59,9 +59,11 @@ public class SQLite implements Library {
   static native int sqlite3_close(Pointer pDb);
   static native int sqlite3_close_v2(Pointer pDb);
   static native void sqlite3_interrupt(Pointer pDb);
+
   static native int sqlite3_busy_timeout(Pointer pDb, int ms);
   static native int sqlite3_db_config(Pointer pDb, int op, int v, PointerByReference pOk);
   static native int sqlite3_enable_load_extension(Pointer pDb, boolean onoff);
+  static native int sqlite3_load_extension(Pointer pDb, String file, String proc, PointerByReference errMsg);
 
   // int sqlite3_limit(sqlite3*, int id, int newVal);
   static native boolean sqlite3_get_autocommit(Pointer pDb);
@@ -73,11 +75,13 @@ public class SQLite implements Library {
   static native String sqlite3_db_filename(Pointer pDb, String dbName); // no copy needed
   static native int sqlite3_db_readonly(Pointer pDb, String dbName); // no copy needed
 
-  static native Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt);
+  //static native Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt);
 
   static native int sqlite3_table_column_metadata(Pointer pDb, String dbName, String tableName, String columnName,
                                                   PointerByReference pzDataType, PointerByReference pzCollSeq,
                                                   PointerByReference pNotNull, PointerByReference pPrimaryKey, PointerByReference pAutoinc); // no copy needed
+
+  static native int sqlite3_exec(Pointer pDb, String cmd, Callback c, Pointer udp, PointerByReference errMsg);
 
   static native int sqlite3_prepare_v2(Pointer pDb, Pointer sql, int nByte, PointerByReference ppStmt,
                                        PointerByReference pTail);
