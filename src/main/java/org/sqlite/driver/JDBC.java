@@ -38,7 +38,9 @@ public class JDBC implements Driver {
   public static final String MODE = "mode";
   public static final String CACHE = "cache";
   public static final String FOREIGN_KEYS = "foreign_keys";
+  public static final String ENABLE_TRIGGERS = "enable_triggers";
   public static final String ENABLE_LOAD_EXTENSION = "enable_load_extension";
+  public static final String ENCODING = "encoding";
 
   @Override
   public Connection connect(String url, Properties info) throws SQLException {
@@ -48,16 +50,28 @@ public class JDBC implements Driver {
         info == null ? null : info.getProperty(CACHE));
     final org.sqlite.Conn conn = org.sqlite.Conn.open(url.substring(PREFIX.length()), flags, vfs);
     conn.setBusyTimeout(3000);
+    final String encoding = info == null ? null : info.getProperty(ENCODING);
+    if (encoding != null && encoding.length() > 0) {
+      conn.fastExec(org.sqlite.Conn.mprintf("PRAGMA encoding=\"%w\"", encoding));
+    }
     final String fks = info == null ? null : info.getProperty(FOREIGN_KEYS);
     if ("on".equals(fks)) {
       if (!conn.enableForeignKeys(true)) {
-        // TODO warning?
-        SQLite.sqlite3_log(-1, "cannot enable the enforcement of foreign key constraints.");
+        SQLite.sqlite3_log(-1, "cannot enable the enforcement of foreign key constraints."); // TODO warning?
       }
     } else if ("off".equals(fks)) {
       if (conn.enableForeignKeys(false)) {
-        // TODO warning?
-        SQLite.sqlite3_log(-1, "cannot disable the enforcement of foreign key constraints.");
+        SQLite.sqlite3_log(-1, "cannot disable the enforcement of foreign key constraints."); // TODO warning?
+      }
+    }
+    final String triggers = info == null ? null : info.getProperty(ENABLE_TRIGGERS);
+    if ("on".equals(triggers)) {
+      if (!conn.enableTriggers(true)) {
+        SQLite.sqlite3_log(-1, "cannot enable triggers."); // TODO warning?
+      }
+    } else if ("off".equals(fks)) {
+      if (conn.enableTriggers(false)) {
+        SQLite.sqlite3_log(-1, "cannot disable triggers."); // TODO warning?
       }
     }
     if ("on".equals(info == null ? null : info.getProperty(ENABLE_LOAD_EXTENSION))) {
@@ -102,12 +116,18 @@ public class JDBC implements Driver {
     final DriverPropertyInfo fks = new DriverPropertyInfo(FOREIGN_KEYS, info == null ? null : info.getProperty(FOREIGN_KEYS));
     fks.description = "Enable or disable the enforcement of foreign key constraints.";
     fks.choices = new String[]{"on", "off"};
+    final DriverPropertyInfo triggers = new DriverPropertyInfo(ENABLE_TRIGGERS, info == null ? null : info.getProperty(ENABLE_TRIGGERS));
+    triggers.description = "Enable or disable triggers.";
+    triggers.choices = new String[]{"on", "off"};
     final DriverPropertyInfo ele = new DriverPropertyInfo(ENABLE_LOAD_EXTENSION, info == null ? null : info.getProperty(ENABLE_LOAD_EXTENSION));
     ele.description = "Turn extension loading on or off.";
     ele.choices = new String[]{"on", "off"};
     if (ele.value == null) ele.value = "off"; // default
+    final DriverPropertyInfo encoding = new DriverPropertyInfo(ENCODING, info == null ? null : info.getProperty(ENCODING));
+    encoding.description = "Set the encoding.";
+    encoding.choices = new String[]{"UTF-8", "UTF-16", "UTF-16le", "UTF-16be"};
 
-    return new DriverPropertyInfo[] {vfs, mode, cache, fks, ele}; // TODO encoding, locking_mode, recursive_triggers, synchronous
+    return new DriverPropertyInfo[] {vfs, mode, cache, fks, triggers, ele, encoding}; // TODO locking_mode, recursive_triggers, synchronous
   }
 
   @Override
