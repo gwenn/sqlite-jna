@@ -8,6 +8,7 @@
  */
 package org.sqlite.driver;
 
+import org.sqlite.ConnException;
 import org.sqlite.OpenFlags;
 import org.sqlite.SQLite;
 
@@ -50,33 +51,7 @@ public class JDBC implements Driver {
         info == null ? null : info.getProperty(CACHE));
     final org.sqlite.Conn conn = org.sqlite.Conn.open(url.substring(PREFIX.length()), flags, vfs);
     conn.setBusyTimeout(3000);
-    final String encoding = info == null ? null : info.getProperty(ENCODING);
-    if (encoding != null && encoding.length() > 0) {
-      conn.fastExec(org.sqlite.Conn.mprintf("PRAGMA encoding=\"%w\"", encoding));
-    }
-    final String fks = info == null ? null : info.getProperty(FOREIGN_KEYS);
-    if ("on".equals(fks)) {
-      if (!conn.enableForeignKeys(true)) {
-        SQLite.sqlite3_log(-1, "cannot enable the enforcement of foreign key constraints."); // TODO warning?
-      }
-    } else if ("off".equals(fks)) {
-      if (conn.enableForeignKeys(false)) {
-        SQLite.sqlite3_log(-1, "cannot disable the enforcement of foreign key constraints."); // TODO warning?
-      }
-    }
-    final String triggers = info == null ? null : info.getProperty(ENABLE_TRIGGERS);
-    if ("on".equals(triggers)) {
-      if (!conn.enableTriggers(true)) {
-        SQLite.sqlite3_log(-1, "cannot enable triggers."); // TODO warning?
-      }
-    } else if ("off".equals(fks)) {
-      if (conn.enableTriggers(false)) {
-        SQLite.sqlite3_log(-1, "cannot disable triggers."); // TODO warning?
-      }
-    }
-    if ("on".equals(info == null ? null : info.getProperty(ENABLE_LOAD_EXTENSION))) {
-      conn.enableLoadExtension(true);
-    } // disabled by default
+    setup(conn, info);
     return new Conn(conn, info);
   }
 
@@ -128,6 +103,39 @@ public class JDBC implements Driver {
     encoding.choices = new String[]{"UTF-8", "UTF-16", "UTF-16le", "UTF-16be"};
 
     return new DriverPropertyInfo[] {vfs, mode, cache, fks, triggers, ele, encoding}; // TODO locking_mode, recursive_triggers, synchronous
+  }
+
+  private static void setup(org.sqlite.Conn conn, Properties info) throws ConnException {
+    if (info == null) {
+      return;
+    }
+    final String encoding = info.getProperty(ENCODING);
+    if (encoding != null && encoding.length() > 0) {
+      conn.fastExec(org.sqlite.Conn.mprintf("PRAGMA encoding=\"%w\"", encoding));
+    }
+    final String fks = info.getProperty(FOREIGN_KEYS);
+    if ("on".equals(fks)) {
+      if (!conn.enableForeignKeys(true)) {
+        SQLite.sqlite3_log(-1, "cannot enable the enforcement of foreign key constraints."); // TODO warning?
+      }
+    } else if ("off".equals(fks)) {
+      if (conn.enableForeignKeys(false)) {
+        SQLite.sqlite3_log(-1, "cannot disable the enforcement of foreign key constraints."); // TODO warning?
+      }
+    }
+    final String triggers = info.getProperty(ENABLE_TRIGGERS);
+    if ("on".equals(triggers)) {
+      if (!conn.enableTriggers(true)) {
+        SQLite.sqlite3_log(-1, "cannot enable triggers."); // TODO warning?
+      }
+    } else if ("off".equals(fks)) {
+      if (conn.enableTriggers(false)) {
+        SQLite.sqlite3_log(-1, "cannot disable triggers."); // TODO warning?
+      }
+    }
+    if ("on".equals(info.getProperty(ENABLE_LOAD_EXTENSION))) {
+      conn.enableLoadExtension(true);
+    } // disabled by default
   }
 
   @Override

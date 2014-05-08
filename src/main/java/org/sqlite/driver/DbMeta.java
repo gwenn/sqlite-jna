@@ -507,12 +507,12 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public int getMaxBinaryLiteralLength() throws SQLException {
-    return 0; // TODO http://sqlite.org/limits.html#max_length
+    return getConn().getLimit(SQLite.SQLITE_LIMIT_LENGTH); // http://sqlite.org/limits.html#max_length
   }
 
   @Override
   public int getMaxCharLiteralLength() throws SQLException {
-    return 0; // TODO http://sqlite.org/limits.html#max_length
+    return getConn().getLimit(SQLite.SQLITE_LIMIT_LENGTH); // http://sqlite.org/limits.html#max_length
   }
 
   @Override
@@ -522,27 +522,27 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public int getMaxColumnsInGroupBy() throws SQLException {
-    return 0; // TODO http://sqlite.org/limits.html#max_column
+    return getConn().getLimit(SQLite.SQLITE_LIMIT_COLUMN); // http://sqlite.org/limits.html#max_column
   }
 
   @Override
   public int getMaxColumnsInIndex() throws SQLException {
-    return 0; // TODO http://sqlite.org/limits.html#max_column
+    return getConn().getLimit(SQLite.SQLITE_LIMIT_COLUMN); // http://sqlite.org/limits.html#max_column
   }
 
   @Override
   public int getMaxColumnsInOrderBy() throws SQLException {
-    return 0; // TODO http://sqlite.org/limits.html#max_column
+    return getConn().getLimit(SQLite.SQLITE_LIMIT_COLUMN); // http://sqlite.org/limits.html#max_column
   }
 
   @Override
   public int getMaxColumnsInSelect() throws SQLException {
-    return 0; // TODO http://sqlite.org/limits.html#max_column
+    return getConn().getLimit(SQLite.SQLITE_LIMIT_COLUMN); // http://sqlite.org/limits.html#max_column
   }
 
   @Override
   public int getMaxColumnsInTable() throws SQLException {
-    return 0; // TODO http://sqlite.org/limits.html#max_column
+    return getConn().getLimit(SQLite.SQLITE_LIMIT_COLUMN); // http://sqlite.org/limits.html#max_column
   }
 
   @Override
@@ -577,7 +577,7 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public int getMaxRowSize() throws SQLException {
-    return 0; // TODO http://sqlite.org/limits.html#max_length
+    return getConn().getLimit(SQLite.SQLITE_LIMIT_LENGTH); // http://sqlite.org/limits.html#max_length
   }
 
   @Override
@@ -587,7 +587,7 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public int getMaxStatementLength() throws SQLException {
-    return 0; // TODO http://sqlite.org/limits.html#max_sql_length
+    return getConn().getLimit(SQLite.SQLITE_LIMIT_SQL_LENGTH); // http://sqlite.org/limits.html#max_sql_length
   }
 
   @Override

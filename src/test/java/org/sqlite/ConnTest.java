@@ -110,6 +110,16 @@ public class ConnTest {
   }
 
   @Test
+  public void limit() throws SQLiteException {
+    final Conn c = open();
+    Assert.assertEquals(999, c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER));
+    Assert.assertEquals(999, c.setLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER, 9999));
+    Assert.assertEquals(999, c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER)); // SQLITE_MAX_VARIABLE_NUMBER
+    Assert.assertEquals(999, c.setLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER, 99));
+    Assert.assertEquals(99, c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER));
+  }
+
+  @Test
   public void checkMprintf() throws SQLiteException {
     for (int i = 0; i < 100; i++) {
       Assert.assertEquals("'1'", Conn.mprintf("%Q", String.valueOf(1)));

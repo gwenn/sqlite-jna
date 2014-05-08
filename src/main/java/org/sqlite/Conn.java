@@ -268,6 +268,15 @@ public class Conn {
     return null;
   }
 
+  public int getLimit(int id) throws ConnException {
+    checkOpen();
+    return SQLite.sqlite3_limit(pDb, id, -1);
+  }
+  public int setLimit(int id, int newVal) throws ConnException {
+    checkOpen();
+    return SQLite.sqlite3_limit(pDb, id, newVal);
+  }
+
   boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) throws ConnException {
     final PointerByReference pNotNull = new PointerByReference();
     final PointerByReference pPrimaryKey = new PointerByReference();

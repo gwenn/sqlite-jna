@@ -64,8 +64,11 @@ public class SQLite implements Library {
   static native int sqlite3_db_config(Pointer pDb, int op, int v, PointerByReference pOk);
   static native int sqlite3_enable_load_extension(Pointer pDb, boolean onoff);
   static native int sqlite3_load_extension(Pointer pDb, String file, String proc, PointerByReference errMsg);
-
-  // int sqlite3_limit(sqlite3*, int id, int newVal);
+  public static final int SQLITE_LIMIT_LENGTH = 0, SQLITE_LIMIT_SQL_LENGTH = 1, SQLITE_LIMIT_COLUMN = 2,
+      SQLITE_LIMIT_EXPR_DEPTH = 3, SQLITE_LIMIT_COMPOUND_SELECT = 4, SQLITE_LIMIT_VDBE_OP = 5,
+      SQLITE_LIMIT_FUNCTION_ARG = 6, SQLITE_LIMIT_ATTACHED = 7, SQLITE_LIMIT_LIKE_PATTERN_LENGTH = 8,
+      SQLITE_LIMIT_VARIABLE_NUMBER = 9, SQLITE_LIMIT_TRIGGER_DEPTH = 10;
+  static native int sqlite3_limit(Pointer pDb, int id, int newVal);
   static native boolean sqlite3_get_autocommit(Pointer pDb);
 
   static native int sqlite3_changes(Pointer pDb);
@@ -182,6 +185,7 @@ public class SQLite implements Library {
   };
   static {
     if (System.getProperty("sqlite.config.log", "").length() > 0) {
+      //DriverManager.setLogStream(System.out);
       SQLite.sqlite3_config(SQLite.SQLITE_CONFIG_LOG, LOG_CALLBACK, null);
     }
   }

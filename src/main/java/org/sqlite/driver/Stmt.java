@@ -9,6 +9,7 @@
 package org.sqlite.driver;
 
 import org.sqlite.ErrCodes;
+import org.sqlite.SQLite;
 import org.sqlite.StmtException;
 
 import java.sql.BatchUpdateException;
@@ -159,7 +160,7 @@ public class Stmt implements Statement {
   @Override
   public int getMaxFieldSize() throws SQLException {
     checkOpen();
-    return 0; // TODO
+    return getConn().getLimit(SQLite.SQLITE_LIMIT_LENGTH);
   }
 
   @Override
