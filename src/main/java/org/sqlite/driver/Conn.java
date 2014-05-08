@@ -8,6 +8,9 @@
  */
 package org.sqlite.driver;
 
+import org.sqlite.ConnException;
+import org.sqlite.ErrCodes;
+
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -104,13 +107,13 @@ public class Conn implements Connection {
 
   @Override
   public void commit() throws SQLException {
-    if (getAutoCommit()) throw Util.error("database in auto-commit mode");
+    if (getAutoCommit()) throw new ConnException(c, "database in auto-commit mode", ErrCodes.WRAPPER_SPECIFIC);
     getConn().exec("COMMIT; BEGIN");
   }
 
   @Override
   public void rollback() throws SQLException {
-    if (getAutoCommit()) throw Util.error("database in auto-commit mode");
+    if (getAutoCommit()) throw new ConnException(c, "database in auto-commit mode", ErrCodes.WRAPPER_SPECIFIC);
     getConn().exec("ROLLBACK; BEGIN");
   }
 
@@ -237,7 +240,7 @@ public class Conn implements Connection {
 
       @Override
       public String getSavepointName() throws SQLException {
-        throw Util.error("un-named savepoint");
+        throw new ConnException(c, "un-named savepoint", ErrCodes.WRAPPER_SPECIFIC);
       }
 
       @Override
@@ -254,7 +257,7 @@ public class Conn implements Connection {
     final Savepoint savepoint = new Savepoint() {
       @Override
       public int getSavepointId() throws SQLException {
-        throw Util.error("named savepoint");
+        throw new ConnException(c, "named savepoint", ErrCodes.WRAPPER_SPECIFIC);
       }
 
       @Override
@@ -344,9 +347,10 @@ public class Conn implements Connection {
   }
 
   @Override
-  public boolean isValid(int timeout) throws SQLException {
+  public boolean isValid(int seconds) throws SQLException {
     Util.trace("Connection.isValid");
-    return false;  // TODO
+    if (seconds < 0) throw Util.error("timeout must be >= 0");
+    return !isClosed();
   }
 
   @Override

@@ -9,6 +9,8 @@
 package org.sqlite.driver;
 
 import org.sqlite.ColTypes;
+import org.sqlite.ErrCodes;
+import org.sqlite.StmtException;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -459,7 +461,7 @@ public class Rows implements ResultSet {
       try {
         return new BigDecimal(stringValue);
       } catch (NumberFormatException e) {
-        throw Util.error("Bad value for type BigDecimal : " + stringValue);
+        throw new StmtException(getStmt(), "Bad value for type BigDecimal : " + stringValue, ErrCodes.WRAPPER_SPECIFIC);
       }
     }
   }

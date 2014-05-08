@@ -25,7 +25,6 @@ import java.util.Map;
 
 // There is no "not prepared" statement in SQLite!
 public class Stmt implements Statement {
-  //private static final ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
   private Conn c;
   private final boolean prepared;
   private org.sqlite.Stmt stmt;
@@ -193,7 +192,7 @@ public class Stmt implements Statement {
   @Override
   public int getQueryTimeout() throws SQLException { // Used by Hibernate
     checkOpen();
-    return queryTimeout; // TODO ExecutorService#invokeAny(..., queryTimeout, TimeUnit.SECONDS);
+    return queryTimeout; // TODO
   }
 
   @Override
@@ -249,25 +248,6 @@ public class Stmt implements Statement {
     return status != 0;
   }
 
-  /*protected boolean step(final org.sqlite.Stmt stmt) throws SQLException {
-    if (queryTimeout == 0) {
-      return stmt.step();
-    }
-    // TODO Validate usage of stmt in a different thread:
-    try {
-      return EXECUTOR_SERVICE.invokeAny(Collections.singleton(new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          return stmt.step();
-        }
-      }), queryTimeout, TimeUnit.SECONDS);
-    } catch (InterruptedException | ExecutionException e) {
-      throw new SQLException(e);
-    } catch (TimeoutException e) {
-      getConn().interrupt();
-      throw new SQLTimeoutException(e);
-    }
-  }*/
   // Works only with execute (not executeQuery)
   @Override
   public ResultSet getResultSet() throws SQLException {
