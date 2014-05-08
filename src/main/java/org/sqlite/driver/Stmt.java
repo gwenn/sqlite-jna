@@ -36,16 +36,19 @@ public class Stmt implements Statement {
   private int status = -1; // -1: unknown, 0: not a select, 1: select with row, 2: select without row
   private List<String> batch; // sql queries (see addBatch)
   private int queryTimeout; // in seconds
+  private boolean poolable;
 
   Stmt(Conn c) {
     this.c = c;
     this.prepared = false;
+    this.poolable = false;
   }
 
   Stmt(Conn c, org.sqlite.Stmt stmt) {
     this.c = c;
     this.stmt = stmt;
     this.prepared = true;
+    this.poolable = true;
   }
 
   org.sqlite.Stmt getStmt() throws SQLException {
@@ -468,13 +471,13 @@ public class Stmt implements Statement {
   @Override
   public void setPoolable(boolean poolable) throws SQLException {
     checkOpen();
-    throw Util.unsupported("*Statement.setPoolable"); // TODO
+    this.poolable = poolable;
   }
 
   @Override
   public boolean isPoolable() throws SQLException {
     checkOpen();
-    throw Util.unsupported("*Statement.isPoolable"); // TODO
+    return poolable;
   }
 
   @Override
