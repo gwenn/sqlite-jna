@@ -40,6 +40,23 @@ public class ConnTest {
   }
 
   @Test
+  public void readOnly() throws SQLiteException {
+    final Conn c = open();
+    Assert.assertFalse("not read only", c.isReadOnly(null));
+    Assert.assertFalse("not read only", c.isReadOnly("main"));
+    checkResult(c.close());
+  }
+
+  @Test
+  public void queryOnly() throws SQLiteException {
+    final Conn c = open();
+    Assert.assertFalse("not query only", c.isQueryOnly(null));
+    c.setQueryOnly(null, true);
+    Assert.assertTrue("query only", c.isQueryOnly(null));
+    checkResult(c.close());
+  }
+
+  @Test
   public void checkPrepare() throws SQLiteException {
     final Conn c = open();
     final Stmt s = c.prepare("SELECT 1");

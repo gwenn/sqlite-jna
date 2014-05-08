@@ -11,6 +11,8 @@ package org.sqlite;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
+import static org.sqlite.SQLite.qualify;
+
 public class Conn {
   public static final String MEMORY = ":memory:";
   public static final String TEMP_FILE = "";
@@ -70,8 +72,30 @@ public class Conn {
     this.pDb = pDb;
   }
 
-  public boolean isReadOnly() {
-    return SQLite.sqlite3_db_readonly(pDb, "main") == 1;
+  public boolean isReadOnly(String dbName) throws ConnException {
+    final int res = SQLite.sqlite3_db_readonly(pDb, dbName);
+    if (res < 0) {
+      throw new ConnException(this, String.format("'%s' is not the name of a database", dbName), ErrCodes.WRAPPER_SPECIFIC);
+    }
+    return res == 1;
+  }
+
+  public boolean isQueryOnly(String dbName) throws SQLiteException {
+    Stmt s = null;
+    try {
+      s = prepare("PRAGMA " + qualify(dbName) + "query_only");
+      if (!s.step()) {
+        throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
+      }
+      return s.getColumnInt(0) == 1;
+    } finally {
+      if (s != null) {
+        s.close();
+      }
+    }
+  }
+  public void setQueryOnly(String dbName, boolean queryOnly) throws ConnException {
+    fastExec("PRAGMA " + qualify(dbName) + "query_only=" + (queryOnly ? 1 : 0));
   }
 
   public boolean getAutoCommit() {

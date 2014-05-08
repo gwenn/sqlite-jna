@@ -24,8 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.sqlite.driver.Util.doubleQuote;
-import static org.sqlite.driver.Util.escapeIdentifier;
+import static org.sqlite.SQLite.doubleQuote;
+import static org.sqlite.SQLite.escapeIdentifier;
 
 public class DbMeta implements DatabaseMetaData {
   private Conn c;
@@ -65,7 +65,7 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public boolean isReadOnly() throws SQLException {
-    return getConn().isReadOnly();
+    return getConn().isReadOnly(null);
   }
 
   @Override

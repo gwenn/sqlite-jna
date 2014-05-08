@@ -175,6 +175,35 @@ public class SQLite implements Library {
   private SQLite() {
   }
 
+  public static String escapeIdentifier(String identifier) {
+    if (identifier == null) {
+      return "";
+    }
+    if (identifier.indexOf('"') >= 0) { // escape quote by doubling them
+      identifier = identifier.replaceAll("\"", "\"\"");
+    }
+    return identifier;
+  }
+
+  public static String doubleQuote(String dbName) {
+    if (dbName == null) {
+      return "";
+    }
+    if ("main".equals(dbName) || "temp".equals(dbName)) {
+      return dbName;
+    }
+    return '"' + escapeIdentifier(dbName) + '"'; // surround identifier with quote
+  }
+  public static String qualify(String dbName) {
+    if (dbName == null) {
+      return "";
+    }
+    if ("main".equals(dbName) || "temp".equals(dbName)) {
+      return dbName + '.';
+    }
+    return '"' + escapeIdentifier(dbName) + '"' + '.'; // surround identifier with quote
+  }
+
   public static interface LogCallback extends Callback {
     void invoke(Pointer udp, int err, String msg);
   }

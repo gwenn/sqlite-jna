@@ -35,23 +35,4 @@ class Util {
   static void trace(String method) {
     SQLite.sqlite3_log(0, method);
   }
-
-  static String escapeIdentifier(String identifier) {
-    if (identifier == null) {
-      return "";
-    }
-    if (identifier.indexOf('"') >= 0) { // escape quote by doubling them
-      identifier = identifier.replaceAll("\"", "\"\"");
-    }
-    return identifier;
-  }
-  static String doubleQuote(String dbName) {
-    if (dbName == null) {
-      return "";
-    }
-    if ("main".equals(dbName) || "temp".equals(dbName)) {
-      return dbName;
-    }
-    return '"' + escapeIdentifier(dbName) + '"'; // surround identifier with quote
-  }
 }

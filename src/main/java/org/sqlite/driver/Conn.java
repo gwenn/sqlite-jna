@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import static org.sqlite.driver.Util.escapeIdentifier;
+import static org.sqlite.SQLite.escapeIdentifier;
 
 public class Conn implements Connection {
   private org.sqlite.Conn c;
@@ -42,6 +42,7 @@ public class Conn implements Connection {
 
   private Properties clientInfo = null;
   private int savepointId = 0;
+  private SQLWarning warnings;
 
   public Conn(org.sqlite.Conn c, Properties info) {
     this.c = c;
@@ -142,13 +143,21 @@ public class Conn implements Connection {
   public void setReadOnly(boolean readOnly) throws SQLException {
     Util.trace("Connection.setReadOnly");
     checkOpen();
-    // TODO pragma query_only
+    final boolean ro = getConn().isReadOnly(null);
+    if (ro == readOnly) {
+      return;
+    }
+    if (ro) {
+      addWarning(new SQLWarning("readOnly mode cannot be reset"));
+    } else {
+      getConn().setQueryOnly(null, readOnly);
+    }
   }
 
   @Override
   public boolean isReadOnly() throws SQLException {
     checkOpen();
-    return getConn().isReadOnly(); // || query_only
+    return getConn().isReadOnly(null) || getConn().isQueryOnly(null);
   }
 
   @Override
@@ -175,15 +184,24 @@ public class Conn implements Connection {
     return TRANSACTION_SERIALIZABLE;
   }
 
+  public void addWarning(SQLWarning warn) {
+    if (warnings != null) {
+      warnings.setNextWarning(warn);
+    } else {
+      warnings = warn;
+    }
+  }
+
   @Override
   public SQLWarning getWarnings() throws SQLException { // SQLITE_CONFIG_LOG
     checkOpen();
-    return null;
+    return warnings;
   }
 
   @Override
   public void clearWarnings() throws SQLException {
     checkOpen();
+    warnings = null;
   }
 
   @Override
