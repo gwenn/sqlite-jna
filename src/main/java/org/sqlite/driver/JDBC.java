@@ -52,7 +52,7 @@ public class JDBC implements Driver {
     final org.sqlite.Conn conn = org.sqlite.Conn.open(url.substring(PREFIX.length()), flags, vfs);
     conn.setBusyTimeout(3000);
     setup(conn, info);
-    return new Conn(conn, info);
+    return new Conn(conn);
   }
 
   private static int getOpenFlags(String mode, String cache) {

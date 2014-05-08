@@ -40,13 +40,12 @@ public class Conn implements Connection {
   private DbMeta meta = null;
   PreparedStatement getGeneratedKeys;
 
-  private Properties clientInfo = null;
+  private Properties clientInfo;
   private int savepointId = 0;
   private SQLWarning warnings;
 
-  public Conn(org.sqlite.Conn c, Properties info) {
+  public Conn(org.sqlite.Conn c) {
     this.c = c;
-    this.clientInfo = info;
   }
 
   org.sqlite.Conn getConn() throws SQLException {
