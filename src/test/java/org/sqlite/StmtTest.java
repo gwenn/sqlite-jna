@@ -47,6 +47,20 @@ public class StmtTest {
     checkResult(c.close());
   }
 
+  @Test
+  public void readOnly() throws SQLiteException {
+    final Conn c = ConnTest.open();
+    final String[] sqls = { "SELECT 1", "PRAGMA encoding", "PRAGMA database_list",
+        "PRAGMA table_info('sqlite_master')", "PRAGMA foreign_key_list('sqlite_master')",
+        "PRAGMA index_list('sqlite_master')", "BEGIN", "ROLLBACK"};
+    for (String sql : sqls) {
+      final Stmt s = c.prepare(sql);
+      Assert.assertTrue("readOnly expected", s.isReadOnly());
+      checkResult(s.close());
+    }
+    checkResult(c.close());
+  }
+
   static void checkResult(int res) {
     Assert.assertEquals(0, res);
   }

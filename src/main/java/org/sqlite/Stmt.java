@@ -105,6 +105,11 @@ public class Stmt {
     return SQLite.sqlite3_stmt_busy(pStmt);
   }
 
+  public boolean isReadOnly() throws StmtException {
+    checkOpen();
+    return SQLite.sqlite3_stmt_readonly(pStmt);
+  }
+
   public void clearBindings() throws StmtException {
     checkOpen();
     check(SQLite.sqlite3_clear_bindings(pStmt), "Error while clearing bindings '%s'");

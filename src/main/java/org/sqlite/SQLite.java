@@ -94,6 +94,7 @@ public class SQLite implements Library {
   static native int sqlite3_reset(Pointer pStmt);
   static native int sqlite3_clear_bindings(Pointer pStmt);
   static native boolean sqlite3_stmt_busy(Pointer pStmt);
+  static native boolean sqlite3_stmt_readonly(Pointer pStmt);
 
   static native int sqlite3_column_count(Pointer pStmt);
   static native int sqlite3_data_count(Pointer pStmt);
