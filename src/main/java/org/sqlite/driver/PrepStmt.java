@@ -35,8 +35,6 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -194,25 +192,32 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
 
   @Override
   public void setDate(int parameterIndex, Date x) throws SQLException {
-    bindDate(parameterIndex, x);
+    bindDate(parameterIndex, x, 0);
   }
 
-  private void bindDate(int parameterIndex, java.util.Date x) throws SQLException {
+  private void bindDate(int parameterIndex, java.util.Date x, int cfgIdx) throws SQLException {
     if (null == x) {
       bindNull(parameterIndex);
     } else {
-      bindLong(parameterIndex, x.getTime()); // TODO DefaultTimeLayout
+      final String fmt = conn().dateTimeConfig[cfgIdx];
+      if (fmt == null || DateUtil.UNIXEPOCH.equals(fmt)) {
+        bindLong(parameterIndex, x.getTime());
+      } else if (DateUtil.JULIANDAY.equals(fmt)) {
+        bindDouble(parameterIndex, DateUtil.toJulianDay(x.getTime()));
+      } else {
+        bindText(parameterIndex, DateUtil.formatDate(x, fmt));
+      }
     }
   }
 
   @Override
   public void setTime(int parameterIndex, Time x) throws SQLException {
-    bindDate(parameterIndex, x);
+    bindDate(parameterIndex, x, 1);
   }
 
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-    bindDate(parameterIndex, x);
+    bindDate(parameterIndex, x, 2);
   }
 
   @Override
@@ -532,7 +537,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     }
     if (Types.VARCHAR == targetSqlType) {
       if (x instanceof java.util.Date) {
-        setString(parameterIndex, formatDate((java.util.Date) x, scaleOrLength));
+        setString(parameterIndex, DateUtil.formatDate((java.util.Date) x, scaleOrLength));
         return;
       }
     } else if (Types.INTEGER == targetSqlType) {
@@ -548,7 +553,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
         setDouble(parameterIndex, ((Number) x).doubleValue());
         return;
       } else if (x instanceof java.util.Date) {
-        setDouble(parameterIndex, toJulianDay(((java.util.Date) x).getTime()));
+        setDouble(parameterIndex, DateUtil.toJulianDay(((java.util.Date) x).getTime()));
         return;
       }
     }
@@ -734,41 +739,5 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
       }
       boundChecked = true;
     }
-  }
-  private static String formatDate(java.util.Date date, int length) {
-    final String layout;
-    switch (length) {
-      case 5: // HH:MM
-        layout = "HH:mm";
-        break;
-      case 8: // HH:MM:SS
-        layout = "HH:mm:ss";
-        break;
-      case 10: // YYYY-MM-DD
-        layout = "yyyy-MM-dd";
-        break;
-      case 12: // HH:MM:SS.SSS
-        layout = "HH:mm:ss.SSS";
-        break;
-      case 16: // YYYY-MM-DDTHH:MM
-        layout = "yyyy-MM-dd HH:mm";
-        break;
-      case 19: // YYYY-MM-DDTHH:MM:SS
-        layout = "yyyy-MM-dd HH:mm:ss";
-        break;
-      case 23: // YYYY-MM-DDTHH:MM:SS.SSS
-        layout = "yyyy-MM-dd HH:mm:ss.SSS";
-        break;
-      default: // YYYY-MM-DDTHH:MM:SS.SSSZhh:mm or parse error
-        layout = "yyyy-MM-dd HH:mm:ss.SSSXXX"; // TODO DefaultTimeLayout
-    }
-    DateFormat df = new SimpleDateFormat(layout); // TODO thread-local cache
-    return df.format(date);
-  }
-
-  // 1970-01-01 00:00:00 is JD 2440587.5
-  static double toJulianDay(long ms) {
-    double adj = (ms < 0) ? 0 : 0.5;
-    return (ms + adj) / 86400000.0 + 2440587.5;
   }
 }

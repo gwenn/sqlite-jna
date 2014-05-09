@@ -36,6 +36,7 @@ import static org.sqlite.SQLite.escapeIdentifier;
 
 public class Conn implements Connection {
   private org.sqlite.Conn c;
+  final String[] dateTimeConfig;
 
   private DbMeta meta = null;
   PreparedStatement getGeneratedKeys;
@@ -44,8 +45,9 @@ public class Conn implements Connection {
   private int savepointId = 0;
   private SQLWarning warnings;
 
-  public Conn(org.sqlite.Conn c) {
+  public Conn(org.sqlite.Conn c, String[] dateTimeConfig) {
     this.c = c;
+    this.dateTimeConfig = dateTimeConfig;
   }
 
   org.sqlite.Conn getConn() throws SQLException {

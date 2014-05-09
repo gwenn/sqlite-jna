@@ -31,9 +31,6 @@ import java.sql.SQLXML;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
@@ -223,14 +220,14 @@ public class Rows implements ResultSet {
         return null;
       case ColTypes.SQLITE_TEXT: // does not work as expected if column type affinity is TEXT but inserted value was a numeric
         final String txt = stmt.getColumnText(fixCol(columnIndex));
-        final java.util.Date date = parseDate(txt);
+        final java.util.Date date = DateUtil.parseDate(txt);
         return new Date(date.getTime());
       case ColTypes.SQLITE_INTEGER:
         final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
         return new Date(unixepoch);
       case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
         final double jd = stmt.getColumnDouble(fixCol(columnIndex));
-        return new Date(fromJulianDay(jd));
+        return new Date(DateUtil.fromJulianDay(jd));
       default:
         throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
     }
@@ -247,14 +244,14 @@ public class Rows implements ResultSet {
         return null;
       case ColTypes.SQLITE_TEXT: // does not work as expected if column type affinity is TEXT but inserted value was a numeric
         final String txt = stmt.getColumnText(fixCol(columnIndex));
-        final java.util.Date date = parseDate(txt);
+        final java.util.Date date = DateUtil.parseDate(txt);
         return new Time(date.getTime());
       case ColTypes.SQLITE_INTEGER:
         final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
         return new Time(unixepoch);
       case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
         final double jd = stmt.getColumnDouble(fixCol(columnIndex));
-        return new Time(fromJulianDay(jd));
+        return new Time(DateUtil.fromJulianDay(jd));
       default:
         throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
     }
@@ -271,14 +268,14 @@ public class Rows implements ResultSet {
         return null;
       case ColTypes.SQLITE_TEXT: // does not work as expected if column type affinity is TEXT but inserted value was a numeric
         final String txt = stmt.getColumnText(fixCol(columnIndex));
-        final java.util.Date date = parseDate(txt);
+        final java.util.Date date = DateUtil.parseDate(txt);
         return new Timestamp(date.getTime());
       case ColTypes.SQLITE_INTEGER:
         final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
         return new Timestamp(unixepoch);
       case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
         final double jd = stmt.getColumnDouble(fixCol(columnIndex));
-        return new Timestamp(fromJulianDay(jd));
+        return new Timestamp(DateUtil.fromJulianDay(jd));
       default:
         throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
     }
@@ -1251,65 +1248,5 @@ public class Rows implements ResultSet {
 
   private static SQLException concurReadOnly() {
     return Util.error("ResultSet is CONCUR_READ_ONLY");
-  }
-
-  // 1970-01-01 00:00:00 is JD 2440587.5
-  private static long fromJulianDay(double jd) {
-    jd -= 2440587.5;
-    jd *= 86400000.0;
-    return (long) jd;
-  }
-
-  private static java.util.Date parseDate(String txt) throws SQLException {
-    final String layout;
-    switch (txt.length()) {
-      case 5: // HH:MM
-        layout = "HH:mm";
-        break;
-      case 8: // HH:MM:SS
-        layout = "HH:mm:ss";
-        break;
-      case 10: // YYYY-MM-DD
-        layout = "yyyy-MM-dd";
-        break;
-      case 12: // HH:MM:SS.SSS
-        layout = "HH:mm:ss.SSS";
-        break;
-      case 16: // YYYY-MM-DDTHH:MM
-        if (txt.charAt(10) == 'T') {
-          layout = "yyyy-MM-dd'T'HH:mm";
-        } else {
-          layout = "yyyy-MM-dd HH:mm";
-        }
-        break;
-      case 19: // YYYY-MM-DDTHH:MM:SS
-        if (txt.charAt(10) == 'T') {
-          layout = "yyyy-MM-dd'T'HH:mm:ss";
-        } else {
-          layout = "yyyy-MM-dd HH:mm:ss";
-        }
-        break;
-      case 23: // YYYY-MM-DDTHH:MM:SS.SSS
-        if (txt.charAt(10) == 'T') {
-          layout = "yyyy-MM-dd'T'HH:mm:ss.SSS";
-        } else {
-          layout = "yyyy-MM-dd HH:mm:ss.SSS";
-        }
-        break;
-      default: // YYYY-MM-DDTHH:MM:SS.SSSZhh:mm or parse error
-        if (txt.length() > 10 && txt.charAt(10) == 'T') {
-          layout = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
-        } else {
-          layout = "yyyy-MM-dd HH:mm:ss.SSSXXX";
-        } // TODO DefaultTimeLayout
-    }
-    DateFormat df = new SimpleDateFormat(layout); // TODO thread-local cache
-    final java.util.Date date;
-    try {
-      date = df.parse(txt);
-    } catch (ParseException e) {
-      throw new SQLException(String.format("Unsupported timestamp format: '%s'", txt), e);
-    }
-    return date;
   }
 }

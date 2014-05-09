@@ -52,7 +52,7 @@ public class JDBC implements Driver {
     final org.sqlite.Conn conn = org.sqlite.Conn.open(url.substring(PREFIX.length()), flags, vfs);
     conn.setBusyTimeout(3000);
     setup(conn, info);
-    return new Conn(conn);
+    return new Conn(conn, DateUtil.config(info));
   }
 
   private static int getOpenFlags(String mode, String cache) {
@@ -81,28 +81,41 @@ public class JDBC implements Driver {
   public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
     final DriverPropertyInfo vfs = new DriverPropertyInfo(VFS, info == null ? null : info.getProperty(VFS));
     vfs.description = "Specify the name of a VFS object that provides the operating system interface that should be used to access the database file on disk.";
+
     final DriverPropertyInfo mode = new DriverPropertyInfo(MODE, info == null ? null : info.getProperty(MODE));
     mode.description = "Open the database for read-only/read-write (but not create) access.";
     mode.choices = new String[]{"ro", "rw", "rwc"};
     if (mode.value == null) mode.value = "rwc"; // default
+
     final DriverPropertyInfo cache = new DriverPropertyInfo(CACHE, info == null ? null : info.getProperty(CACHE));
     cache.description = "Choose to participate or not participate in shared cache mode.";
     cache.choices = new String[]{"shared", "private"};
+
     final DriverPropertyInfo fks = new DriverPropertyInfo(FOREIGN_KEYS, info == null ? null : info.getProperty(FOREIGN_KEYS));
     fks.description = "Enable or disable the enforcement of foreign key constraints.";
     fks.choices = new String[]{"on", "off"};
+
     final DriverPropertyInfo triggers = new DriverPropertyInfo(ENABLE_TRIGGERS, info == null ? null : info.getProperty(ENABLE_TRIGGERS));
     triggers.description = "Enable or disable triggers.";
     triggers.choices = new String[]{"on", "off"};
+
     final DriverPropertyInfo ele = new DriverPropertyInfo(ENABLE_LOAD_EXTENSION, info == null ? null : info.getProperty(ENABLE_LOAD_EXTENSION));
     ele.description = "Turn extension loading on or off.";
     ele.choices = new String[]{"on", "off"};
     if (ele.value == null) ele.value = "off"; // default
+
     final DriverPropertyInfo encoding = new DriverPropertyInfo(ENCODING, info == null ? null : info.getProperty(ENCODING));
     encoding.description = "Set the encoding.";
     encoding.choices = new String[]{"UTF-8", "UTF-16", "UTF-16le", "UTF-16be"};
 
-    return new DriverPropertyInfo[] {vfs, mode, cache, fks, triggers, ele, encoding}; // TODO locking_mode, recursive_triggers, synchronous
+    final DriverPropertyInfo df = new DriverPropertyInfo(DateUtil.DATE_FORMAT, info == null ? null : info.getProperty(DateUtil.DATE_FORMAT));
+    df.description = "Specify the format used to persist date ('" + DateUtil.JULIANDAY + "', '" + DateUtil.UNIXEPOCH + "', 'yyyy-MM-dd', '...').";
+    final DriverPropertyInfo tf = new DriverPropertyInfo(DateUtil.TIME_FORMAT, info == null ? null : info.getProperty(DateUtil.TIME_FORMAT));
+    tf.description = "Specify the format used to persist time ('" + DateUtil.JULIANDAY + "', '" + DateUtil.UNIXEPOCH + "', 'HH:mm:ss.SSSXXX', '...').";
+    final DriverPropertyInfo tsf = new DriverPropertyInfo(DateUtil.TIMESTAMP_FORMAT, info == null ? null : info.getProperty(DateUtil.TIMESTAMP_FORMAT));
+    tsf.description = "Specify the format used to persist timestamp ('" + DateUtil.JULIANDAY + "', '" + DateUtil.UNIXEPOCH + "', 'yyyy-MM-dd HH:mm:ss.SSSXXX', '...').";
+
+    return new DriverPropertyInfo[] {vfs, mode, cache, fks, triggers, ele, encoding, df, tf, tsf}; // TODO locking_mode, recursive_triggers, synchronous
   }
 
   private static void setup(org.sqlite.Conn conn, Properties info) throws ConnException {

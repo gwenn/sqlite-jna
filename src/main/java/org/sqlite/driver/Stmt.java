@@ -60,6 +60,10 @@ public class Stmt implements Statement {
     checkOpen();
     return c.getConn();
   }
+  Conn conn() throws SQLException {
+    checkOpen();
+    return c;
+  }
 
   void checkOpen() throws SQLException {
     if (prepared) {
@@ -113,8 +117,7 @@ public class Stmt implements Statement {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
       _close();
-      checkOpen();
-      stmt = c.getConn().prepare(sql);
+      stmt = getConn().prepare(sql);
       final boolean hasRow = stmt.step();
       if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
         if (stmt.isReadOnly()) {
@@ -133,8 +136,7 @@ public class Stmt implements Statement {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
       _close();
-      checkOpen();
-      final org.sqlite.Conn c = this.c.getConn();
+      final org.sqlite.Conn c = getConn();
       stmt = c.prepare(sql);
       final int tc = c.getTotalChanges();
       if (stmt.step() || stmt.getColumnCount() != 0) {
@@ -235,8 +237,7 @@ public class Stmt implements Statement {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
       _close();
-      checkOpen();
-      stmt = c.getConn().prepare(sql);
+      stmt = getConn().prepare(sql);
       return exec();
     }
   }
