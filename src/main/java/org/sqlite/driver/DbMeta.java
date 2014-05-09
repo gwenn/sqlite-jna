@@ -714,16 +714,18 @@ public class DbMeta implements DatabaseMetaData {
 
     final String[] catalogs = getCatalogs(catalog);
     boolean match = false;
+    final String typeExpr = "CASE WHEN like('sqlite_%', name) THEN 'system ' || type ELSE type END as type";
     for (String s : catalogs) {
       if (match) sql.append(" UNION ALL ");
       if ("main".equalsIgnoreCase(s)) {
-        sql.append("SELECT 'main' as cat, name, type FROM sqlite_master UNION ALL ");
+        sql.append("SELECT 'main' as cat, name, ").append(typeExpr).append(" FROM sqlite_master UNION ALL ");
         sql.append("SELECT 'main', 'sqlite_master', 'SYSTEM TABLE'");
       } else if ("temp".equalsIgnoreCase(s)) {
-        sql.append("SELECT 'temp' as cat, name, type FROM sqlite_temp_master UNION ALL ");
+        sql.append("SELECT 'temp' as cat, name, ").append(typeExpr).append(" FROM sqlite_temp_master UNION ALL ");
         sql.append("SELECT 'temp', 'sqlite_temp_master', 'SYSTEM TABLE'");
       } else {
-        sql.append("SELECT ").append(quote(catalog)).append(" as cat, name, type FROM \"").append(escapeIdentifier(catalog)).append("\".sqlite_master UNION ALL ");
+        sql.append("SELECT ").append(quote(catalog)).append(" as cat, name, ").append(typeExpr).append(" FROM \"").
+            append(escapeIdentifier(catalog)).append("\".sqlite_master UNION ALL ");
         sql.append("SELECT ").append(quote(catalog)).append(", 'sqlite_master', 'SYSTEM TABLE'");
       }
       match = true;
@@ -786,7 +788,7 @@ public class DbMeta implements DatabaseMetaData {
       ResultSet rs = null;
       try {
         database_list = c.prepareStatement("PRAGMA database_list");
-        rs = database_list.executeQuery();
+        rs = database_list.executeQuery(); // 1:seq|2:name|3:file
 
         while (rs.next()) {
           final String dbName = rs.getString(2);
@@ -866,7 +868,7 @@ public class DbMeta implements DatabaseMetaData {
       ResultSet rs = null;
       try {
         table_info = c.prepareStatement("PRAGMA " + doubleQuote(tbl[0]) + ".table_info(\"" + escapeIdentifier(tbl[1]) + "\")");
-        rs = table_info.executeQuery();
+        rs = table_info.executeQuery(); // 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
 
         while (rs.next()) {
           if (colFound) sql.append(" UNION ALL ");
@@ -917,15 +919,16 @@ public class DbMeta implements DatabaseMetaData {
       try {
         final String sql;
         if ("main".equalsIgnoreCase(catalog)) {
-          sql = "SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name LIKE ?";
+          sql = "SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name LIKE ? UNION SELECT 'sqlite_master' WHERE 'sqlite_master' LIKE ?";
         } else if ("temp".equalsIgnoreCase(catalog)) {
-          sql = "SELECT name FROM sqlite_temp_master WHERE type IN ('table','view') AND name LIKE ?";
+          sql = "SELECT name FROM sqlite_temp_master WHERE type IN ('table','view') AND name LIKE ? UNION SELECT 'sqlite_temp_master' WHERE 'sqlite_temp_master' LIKE ?";
         } else {
-            sql = "SELECT name FROM \"" + escapeIdentifier(catalog) + "\".sqlite_master WHERE type IN ('table','view') AND name LIKE ?";
+            sql = "SELECT name FROM \"" + escapeIdentifier(catalog) + "\".sqlite_master WHERE type IN ('table','view') AND name LIKE ? UNION SELECT 'sqlite_master' WHERE 'sqlite_master' LIKE ?";
         }
         ps = c.prepareStatement(sql);
         // determine exact table name
         ps.setString(1, tableNamePattern);
+        ps.setString(2, tableNamePattern);
         rs = ps.executeQuery();
         while (rs.next()) {
           tbls.add(new String[]{catalog, rs.getString(1)});
@@ -942,6 +945,15 @@ public class DbMeta implements DatabaseMetaData {
     return tbls;
   }
   private String getCatalog(String catalog, String table) throws SQLException {
+    if ("sqlite_temp_master".equals(table)) {
+      return "temp";
+    } else if ("sqlite_master".equals(table)) {
+      if (catalog == null || catalog.equals("")) {
+        return "main";
+      } else {
+        return catalog;
+      }
+    }
     final String[] catalogs = getCatalogs(catalog);
     if (catalogs.length == 1) {
       return catalogs[0];
@@ -1059,7 +1071,7 @@ public class DbMeta implements DatabaseMetaData {
     ResultSet rs = null;
     try {
       table_info = c.prepareStatement("PRAGMA " + doubleQuote(catalog) + ".table_info(\"" + escapeIdentifier(table) + "\")");
-      rs = table_info.executeQuery();
+      rs = table_info.executeQuery(); // 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
 
       while (count < 2 && rs.next()) {
         if (rs.getBoolean(6) && (nullable || rs.getBoolean(4))) {
@@ -1139,7 +1151,7 @@ public class DbMeta implements DatabaseMetaData {
     ResultSet rs = null;
     try {
       table_info = c.prepareStatement("PRAGMA " + doubleQuote(catalog) + ".table_info(\"" + escapeIdentifier(table) + "\")");
-      rs = table_info.executeQuery();
+      rs = table_info.executeQuery(); // 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
 
       while (rs.next()) {
         final int seqno = rs.getInt(6) - 1;
@@ -1217,7 +1229,7 @@ public class DbMeta implements DatabaseMetaData {
     ResultSet rs = null;
     try {
       foreign_key_list = c.prepareStatement("PRAGMA " + doubleQuote(foreignCatalog) + ".foreign_key_list(\"" + escapeIdentifier(foreignTable) + "\");");
-      rs = foreign_key_list.executeQuery();
+      rs = foreign_key_list.executeQuery(); // 1:id|2:seq|3:table|4:from|5:to|6:on_update|7:on_delete|8:match
       while (rs.next()) {
         if (cross && !primaryTable.equalsIgnoreCase(rs.getString(3))) {
           continue;
@@ -1226,7 +1238,7 @@ public class DbMeta implements DatabaseMetaData {
           sql.append(" UNION ALL ");
         }
         sql.append("SELECT ").
-            append(quote(rs.getString(3) + '_' + rs.getString(1))).append(" AS id, ").
+            append(quote(foreignTable + '_' + rs.getString(3) + '_' + rs.getString(1))).append(" AS id, "). // to be kept in sync with getExportedKeys
             append(quote(rs.getString(3))).append(" AS pt, ").
             append(quote(rs.getString(5))).append(" AS pc, ").
             append(quote(rs.getString(4))).append(" AS fc, ").
@@ -1315,7 +1327,7 @@ public class DbMeta implements DatabaseMetaData {
         PreparedStatement foreign_key_list = null;
         try {
           foreign_key_list = c.prepareStatement("PRAGMA " + doubleQuote(catalog) + ".foreign_key_list(\"" + escapeIdentifier(fkTable) + "\");");
-          rs = foreign_key_list.executeQuery();
+          rs = foreign_key_list.executeQuery(); // 1:id|2:seq|3:table|4:from|5:to|6:on_update|7:on_delete|8:match
           while (rs.next()) {
             if (!rs.getString(3).equalsIgnoreCase(table)) {
               continue;
@@ -1324,7 +1336,7 @@ public class DbMeta implements DatabaseMetaData {
               sql.append(" UNION ALL ");
             }
             sql.append("SELECT ").
-                append(quote(fkTable + '_' + rs.getString(1))).append(" AS fk, ").
+                append(quote(fkTable + '_' + table + '_' + rs.getString(1))).append(" AS fk, "). // to be kept in sync with getForeignKeys
                 append(quote(fkTable)).append(" AS ft, ").
                 append(quote(rs.getString(5))).append(" AS pc, ").
                 append(quote(rs.getString(4))).append(" AS fc, ").
@@ -1421,7 +1433,7 @@ public class DbMeta implements DatabaseMetaData {
     ResultSet rs = null;
     try {
       index_list = c.prepareStatement("PRAGMA " + doubleQuote(catalog) + ".index_list(\"" + escapeIdentifier(table) + "\")");
-      rs = index_list.executeQuery();
+      rs = index_list.executeQuery(); // 1:seq|2:name|3:unique
       while (rs.next()) {
         final boolean notuniq = !rs.getBoolean(3);
         if (unique && notuniq) {
@@ -1447,7 +1459,7 @@ public class DbMeta implements DatabaseMetaData {
         PreparedStatement index_info = null;
         try {
           index_info = c.prepareStatement("PRAGMA index_info(\"" + escapeIdentifier(index.getKey()) + "\")");
-          rs = index_info.executeQuery();
+          rs = index_info.executeQuery(); // 1:seqno|2:cid|3:name
           while (rs.next()) {
             if (found) {
               sql.append(" UNION ALL ");
