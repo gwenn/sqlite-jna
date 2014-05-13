@@ -1006,7 +1006,7 @@ public class DbMeta implements DatabaseMetaData {
       case ColAffinities.REAL:
         return Types.REAL;
       case ColAffinities.NONE:
-        return Types.BLOB;
+        return Types.OTHER;
       default:
         return Types.NUMERIC;
     }
@@ -1396,7 +1396,7 @@ public class DbMeta implements DatabaseMetaData {
             + "0 as SQL_DATA_TYPE, "
             + "0 as SQL_DATETIME_SUB, "
             + "10 as NUM_PREC_RADIX from ("
-            + "    select 'BLOB' as tn, " + Types.BLOB + " as dt union"
+            + "    select 'BLOB' as tn, " + Types.OTHER + " as dt union"
             + "    select 'NULL' as tn, " + Types.NULL + " as dt union"
             + "    select 'REAL' as tn, " + Types.REAL + " as dt union"
             + "    select 'TEXT' as tn, " + Types.VARCHAR + " as dt union"
