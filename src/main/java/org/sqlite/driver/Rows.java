@@ -415,7 +415,11 @@ public class Rows implements ResultSet {
       case ColTypes.SQLITE_TEXT:
         return getString(columnIndex);
       case ColTypes.SQLITE_INTEGER:
-        return getLong(columnIndex);
+        final long l = getLong(columnIndex);
+        if (l <= Integer.MAX_VALUE && l >= Integer.MIN_VALUE) {
+          return (int)l;
+        }
+        return l;
       case ColTypes.SQLITE_FLOAT:
         return getDouble(columnIndex);
       case ColTypes.SQLITE_BLOB:
