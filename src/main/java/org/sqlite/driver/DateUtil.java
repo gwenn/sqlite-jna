@@ -4,6 +4,8 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class DateUtil {
@@ -13,6 +15,13 @@ public class DateUtil {
   public static final String JULIANDAY = "julianday";
   public static final String UNIXEPOCH = "unixepoch";
   public static final String DEFAULT_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"; // ISO-8601
+
+  private static final ThreadLocal<Map<String, DateFormat>> DATE_FORMATS = new ThreadLocal<Map<String, DateFormat>>() {
+    @Override
+    protected Map<String, DateFormat> initialValue() {
+      return new HashMap<String, DateFormat>();
+    }
+  };
 
   static String[] config(Properties info) {
     if (info == null) {
@@ -81,7 +90,7 @@ public class DateUtil {
           layout = "yyyy-MM-dd HH:mm:ss.SSSXXX";
         }
     }
-    DateFormat df = new SimpleDateFormat(layout); // TODO thread-local cache
+    DateFormat df = getDateFormat(layout);
     final java.util.Date date;
     try {
       date = df.parse(txt);
@@ -122,7 +131,15 @@ public class DateUtil {
   }
 
   static String formatDate(java.util.Date date, String layout) {
-    DateFormat df = new SimpleDateFormat(layout); // TODO thread-local cache
-    return df.format(date);
+    return getDateFormat(layout).format(date);
+  }
+
+  private static DateFormat getDateFormat(String layout) {
+    DateFormat df = DATE_FORMATS.get().get(layout);
+    if (df == null) {
+      df = new SimpleDateFormat(layout);
+      DATE_FORMATS.get().put(layout, df);
+    }
+    return df;
   }
 }
