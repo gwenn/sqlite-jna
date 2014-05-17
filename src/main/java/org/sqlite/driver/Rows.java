@@ -87,7 +87,12 @@ public class Rows implements ResultSet {
     return hasRow;
   }
 
-  private int fixCol(int columnIndex) {
+  private int fixCol(int columnIndex) throws StmtException {
+    if (row == -1) {
+      throw new StmtException(stmt, "No data available", ErrCodes.WRAPPER_SPECIFIC);
+    } else if (row == 0) {
+      throw new StmtException(stmt, "No data available until next() is called.", ErrCodes.WRAPPER_SPECIFIC);
+    }
     return columnIndex - 1;
   }
 
