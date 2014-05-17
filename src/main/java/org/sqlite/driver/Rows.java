@@ -40,7 +40,7 @@ public class Rows implements ResultSet {
   private Stmt s;
   private org.sqlite.Stmt stmt;
   private RowsMeta meta;
-  private int row;
+  private int row; // -1: no data, 0: before first, 1: first, ..., -2: after last
   private Boolean wasNull;
   private RowIdImpl rowId;
   private Map<Integer, org.sqlite.Blob> blobByColIndex = Collections.emptyMap();
@@ -65,7 +65,7 @@ public class Rows implements ResultSet {
 
   private boolean step() throws SQLException {
     checkOpen();
-    if (row == -1) { // no result
+    if (row < 0) { // no result or after last
       return false;
     }
     if (row == 0) {
@@ -74,6 +74,7 @@ public class Rows implements ResultSet {
     }
     final int maxRows = s.getMaxRows();
     if (maxRows != 0 && row >= maxRows) {
+      row = -2;
       stmt.reset();
       return false;
     }
@@ -82,13 +83,14 @@ public class Rows implements ResultSet {
     if (hasRow) {
       row++;
     } else {
+      row = -2;
       stmt.reset();
     }
     return hasRow;
   }
 
   private int fixCol(int columnIndex) throws StmtException {
-    if (row == -1) {
+    if (row < 0) {
       throw new StmtException(stmt, "No data available", ErrCodes.WRAPPER_SPECIFIC);
     } else if (row == 0) {
       throw new StmtException(stmt, "No data available until next() is called.", ErrCodes.WRAPPER_SPECIFIC);
@@ -487,7 +489,7 @@ public class Rows implements ResultSet {
   public boolean isAfterLast() throws SQLException {
     Util.trace("ResultSet.isAfterLast");
     checkOpen();
-    return false; // TODO
+    return row == -2;
   }
 
   @Override
