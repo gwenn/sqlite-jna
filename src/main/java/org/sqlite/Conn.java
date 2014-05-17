@@ -18,6 +18,7 @@ public class Conn {
   public static final String TEMP_FILE = "";
 
   private Pointer pDb;
+  private final boolean sharedCacheMode;
 
   /**
    * @param filename ":memory:" for memory db, "" for temp file db
@@ -38,7 +39,9 @@ public class Conn {
       }
       throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
     }
-    return new Conn(ppDb.getValue());
+    // TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
+    boolean sharedCacheMode = filename.contains("cache=shared") || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
+    return new Conn(ppDb.getValue(), sharedCacheMode);
   }
 
   @Override
@@ -68,8 +71,9 @@ public class Conn {
     }
   }
 
-  private Conn(Pointer pDb) {
+  private Conn(Pointer pDb, boolean sharedCacheMode) {
     this.pDb = pDb;
+    this.sharedCacheMode = sharedCacheMode;
   }
 
   public boolean isReadOnly(String dbName) throws ConnException {
@@ -81,21 +85,22 @@ public class Conn {
   }
 
   public boolean isQueryOnly(String dbName) throws SQLiteException {
-    Stmt s = null;
-    try {
-      s = prepare("PRAGMA " + qualify(dbName) + "query_only");
-      if (!s.step()) {
-        throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
-      }
-      return s.getColumnInt(0) == 1;
-    } finally {
-      if (s != null) {
-        s.close();
-      }
-    }
+    return pragma(dbName, "query_only");
   }
+
   public void setQueryOnly(String dbName, boolean queryOnly) throws ConnException {
-    fastExec("PRAGMA " + qualify(dbName) + "query_only=" + (queryOnly ? 1 : 0));
+    pragma(dbName, "query_only", queryOnly);
+  }
+
+  public boolean isSharedCacheMode() {
+    return sharedCacheMode;
+  }
+
+  public boolean getReadUncommitted(String dbName) throws SQLiteException {
+    return pragma(dbName, "read_uncommitted");
+  }
+  public void setReadUncommitted(String dbName, boolean flag) throws SQLiteException {
+    pragma(dbName, "read_uncommitted", flag);
   }
 
   public boolean getAutoCommit() {
@@ -342,5 +347,23 @@ public class Conn {
     if (res != SQLite.SQLITE_OK) {
       throw new ConnException(this, String.format(format, param), res);
     }
+  }
+
+  private boolean pragma(String dbName, String name) throws ConnException, StmtException {
+    Stmt s = null;
+    try {
+      s = prepare("PRAGMA " + qualify(dbName) + name);
+      if (!s.step()) {
+        throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
+      }
+      return s.getColumnInt(0) == 1;
+    } finally {
+      if (s != null) {
+        s.close();
+      }
+    }
+  }
+  private void pragma(String dbName, String name, boolean value) throws ConnException {
+    fastExec("PRAGMA " + qualify(dbName) + name + "=" + (value ? 1 : 0));
   }
 }

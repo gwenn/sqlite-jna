@@ -121,9 +121,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     if (!boundChecked) {
       checkParameters(stmt);
     }
-    if (stmt.step() || stmt.getColumnCount() != 0) {
-      throw new StmtException(stmt, "statement returns a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
-    }
+    step(true);
     return getConn().getChanges();
   }
 

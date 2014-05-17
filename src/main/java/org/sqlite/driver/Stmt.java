@@ -16,6 +16,7 @@ import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -139,9 +140,7 @@ public class Stmt implements Statement {
       final org.sqlite.Conn c = getConn();
       stmt = c.prepare(sql);
       final int tc = c.getTotalChanges();
-      if (stmt.step() || stmt.getColumnCount() != 0) {
-        throw new StmtException(stmt, "statement returns a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
-      }
+      step(true);
       return c.getTotalChanges() - tc;
     }
   }
@@ -242,8 +241,22 @@ public class Stmt implements Statement {
     }
   }
 
+  protected boolean step(boolean updateOnly) throws SQLException {
+    final int res = stmt.stepNoCheck();
+    if (updateOnly && (res == SQLite.SQLITE_ROW || stmt.getColumnCount() != 0)) {
+      throw new StmtException(stmt, "statement returns a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
+    } else if (res == SQLite.SQLITE_ROW) {
+      return true;
+    } else if (res == SQLite.SQLITE_DONE) {
+      return false;
+    } else if (res == ErrCodes.SQLITE_CONSTRAINT) {
+      throw new SQLIntegrityConstraintViolationException(stmt.getErrMsg(), null, res);
+    }
+    throw new StmtException(stmt, String.format("error while stepping '%s'", stmt.getSql()), res);
+  }
+
   protected boolean exec() throws SQLException {
-    if (stmt.step()) {
+    if (step(false)) {
       status = 1;
     } else if (stmt.getColumnCount() != 0) {
       status = 2;

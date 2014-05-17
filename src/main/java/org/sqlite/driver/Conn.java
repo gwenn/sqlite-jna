@@ -44,6 +44,7 @@ public class Conn implements Connection {
   private Properties clientInfo;
   private int savepointId = 0;
   private SQLWarning warnings;
+  private int transactionIsolation = TRANSACTION_SERIALIZABLE;
 
   public Conn(org.sqlite.Conn c, String[] dateTimeConfig) {
     this.c = c;
@@ -96,6 +97,7 @@ public class Conn implements Connection {
     return sql;
   }
 
+  // FIXME By default, new connections should be in auto-commit mode.
   @Override
   public void setAutoCommit(boolean autoCommit) throws SQLException {
     if (getAutoCommit() == autoCommit) return;
@@ -136,21 +138,25 @@ public class Conn implements Connection {
 
   @Override
   public DatabaseMetaData getMetaData() throws SQLException {
+    checkOpen();
     if (meta == null) meta = new DbMeta(this);
     return meta;
   }
 
   @Override
   public void setReadOnly(boolean readOnly) throws SQLException {
-    Util.trace("Connection.setReadOnly");
     checkOpen();
     final boolean ro = getConn().isReadOnly(null);
-    if (ro == readOnly) {
+    final boolean qo = getConn().isQueryOnly(null);
+    if (ro == readOnly && qo == readOnly) {
       return;
     }
-    if (ro) {
+    if (ro && !readOnly) {
       addWarning(new SQLWarning("readOnly mode cannot be reset"));
     } else {
+      if (!getAutoCommit()) {
+        throw new ConnException(c, "setReadOnly is called during a transaction", ErrCodes.WRAPPER_SPECIFIC);
+      }
       getConn().setQueryOnly(null, readOnly);
     }
   }
@@ -164,6 +170,7 @@ public class Conn implements Connection {
   @Override
   public void setCatalog(String catalog) throws SQLException {
     checkOpen();
+    addWarning(new SQLWarning("catalog cannot be set"));
   }
 
   @Override
@@ -174,15 +181,27 @@ public class Conn implements Connection {
 
   @Override
   public void setTransactionIsolation(int level) throws SQLException {
-    // TODO http://sqlite.org/pragma.html#pragma_read_uncommitted
-    if (TRANSACTION_SERIALIZABLE != level) {
-      throw Util.error("SQLite supports only TRANSACTION_SERIALIZABLE.");
+    checkOpen();
+    if (level == transactionIsolation) {
+      return;
     }
+    if (level == TRANSACTION_SERIALIZABLE) {
+      c.setReadUncommitted(null, false);
+    } else if (level == TRANSACTION_READ_UNCOMMITTED) {
+      if (!c.isSharedCacheMode()) {
+        addWarning(new SQLWarning("read_uncommitted is effective only in shared-cache mode."));
+      }
+      c.setReadUncommitted(null, true);
+    } else {
+      throw Util.error("SQLite supports only TRANSACTION_SERIALIZABLE or TRANSACTION_READ_UNCOMMITTED.");
+    }
+    transactionIsolation = level;
   }
 
   @Override
   public int getTransactionIsolation() throws SQLException {
-    return TRANSACTION_SERIALIZABLE;
+    checkOpen();
+    return transactionIsolation;
   }
 
   public void addWarning(SQLWarning warn) {
@@ -248,6 +267,9 @@ public class Conn implements Connection {
     return ResultSet.CLOSE_CURSORS_AT_COMMIT;
   }
 
+  // A SAVEPOINT can be started either within or outside of a BEGIN...COMMIT.
+  // When a SAVEPOINT is the outer-most savepoint and it is not within a BEGIN...COMMIT
+  // then the behavior is the same as BEGIN DEFERRED TRANSACTION.
   @Override
   public Savepoint setSavepoint() throws SQLException {
     final int id = savepointId++;

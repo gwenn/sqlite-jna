@@ -40,9 +40,15 @@ public class Stmt {
   public String getSql() {
     return SQLite.sqlite3_sql(pStmt);
   }
-
   public String getTail() {
     return tail;
+  }
+
+  public String getErrMsg() {
+    if (c == null) {
+      return null;
+    }
+    return c.getErrMsg();
   }
 
   @Override
@@ -83,6 +89,14 @@ public class Stmt {
       return false;
     }
     throw new StmtException(this, String.format("error while stepping '%s'", getSql()), res);
+  }
+  public int stepNoCheck() {
+    final int res = SQLite.sqlite3_step(pStmt);
+    if (res == SQLite.SQLITE_ROW) {
+      return res;
+    }
+    SQLite.sqlite3_reset(pStmt);
+    return res;
   }
   public void exec() throws StmtException {
     final int res = SQLite.sqlite3_step(pStmt);
