@@ -55,7 +55,7 @@ public class DbMeta implements DatabaseMetaData {
 
   @Override
   public String getURL() throws SQLException {
-    return getConn().getFilename();
+    return JDBC.PREFIX + getConn().getFilename();
   }
 
   @Override
