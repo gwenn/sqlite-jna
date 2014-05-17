@@ -858,8 +858,8 @@ public class DbMeta implements DatabaseMetaData {
         append("null as SCOPE_SCHEMA, ").
         append("null as SCOPE_TABLE, ").
         append("null as SOURCE_DATA_TYPE, ").
-        append("null as IS_AUTOINCREMENT, "). // TODO
-        append("null as IS_GENERATEDCOLUMN from (");
+        append("'' as IS_AUTOINCREMENT, "). // TODO
+        append("'' as IS_GENERATEDCOLUMN from (");
 
     boolean colFound = false;
     for (String[] tbl : tbls) {
@@ -880,7 +880,7 @@ public class DbMeta implements DatabaseMetaData {
           sql.append("SELECT ").
               append(quote(tbl[0])).append(" AS cat, ").
               append(quote(tbl[1])).append(" AS tbl, ").
-              append(rs.getInt(1)).append(" AS ordpos, ").
+              append(rs.getInt(1)+1).append(" AS ordpos, ").
               append(rs.getBoolean(4) ? columnNoNulls : columnNullable).append(" AS colnullable, ").
               append(colJavaType).append(" AS ct, ").
               append(quote(rs.getString(2))).append(" AS cn, ").
