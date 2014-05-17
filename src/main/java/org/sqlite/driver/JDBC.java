@@ -29,7 +29,7 @@ public class JDBC implements Driver {
     try {
       DriverManager.registerDriver(new JDBC());
     } catch (SQLException e) {
-      e.printStackTrace();
+      e.printStackTrace(); // TODO trace
     }
   }
 
@@ -52,6 +52,8 @@ public class JDBC implements Driver {
     final org.sqlite.Conn conn = org.sqlite.Conn.open(url.substring(PREFIX.length()), flags, vfs);
     conn.setBusyTimeout(3000);
     setup(conn, info);
+    // check database format (the pragma fails if the file header is not valid):
+    conn.fastExec("PRAGMA schema_version");
     return new Conn(conn, DateUtil.config(info));
   }
 
@@ -79,6 +81,7 @@ public class JDBC implements Driver {
 
   @Override
   public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
+    // TODO parse url
     final DriverPropertyInfo vfs = new DriverPropertyInfo(VFS, info == null ? null : info.getProperty(VFS));
     vfs.description = "Specify the name of a VFS object that provides the operating system interface that should be used to access the database file on disk.";
 
