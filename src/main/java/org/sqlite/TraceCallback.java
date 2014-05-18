@@ -8,10 +8,14 @@
  */
 package org.sqlite;
 
-public interface ColAffinities {
-  int INTEGER = 0;
-  int TEXT = 1;
-  int NONE = 2;
-  int REAL = 3;
-  int NUMERIC = 4;
+import com.sun.jna.Callback;
+import com.sun.jna.Pointer;
+
+public abstract class TraceCallback implements Callback {
+  @SuppressWarnings("unused")
+  public void invoke(Pointer arg, String sql) {
+    trace(sql);
+  }
+
+  protected abstract void trace(String sql);
 }

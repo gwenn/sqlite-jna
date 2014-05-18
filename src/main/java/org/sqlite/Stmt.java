@@ -76,10 +76,12 @@ public class Stmt {
   }
 
   /**
+   * @param timeout in seconds
    * @return true until finished.
    * @throws StmtException
    */
-  public boolean step() throws StmtException {
+  public boolean step(int timeout) throws SQLiteException {
+    c.setQueryTimeout(timeout);
     final int res = SQLite.sqlite3_step(pStmt);
     if (res == SQLite.SQLITE_ROW) {
       return true;
@@ -90,7 +92,12 @@ public class Stmt {
     }
     throw new StmtException(this, String.format("error while stepping '%s'", getSql()), res);
   }
-  public int stepNoCheck() {
+
+  /**
+   * @param timeout in seconds
+   */
+  public int stepNoCheck(int timeout) throws SQLiteException {
+    c.setQueryTimeout(timeout);
     final int res = SQLite.sqlite3_step(pStmt);
     if (res == SQLite.SQLITE_ROW) {
       return res;
@@ -98,7 +105,8 @@ public class Stmt {
     SQLite.sqlite3_reset(pStmt);
     return res;
   }
-  public void exec() throws StmtException {
+  public void exec() throws SQLiteException {
+    c.setQueryTimeout(0);
     final int res = SQLite.sqlite3_step(pStmt);
     SQLite.sqlite3_reset(pStmt);
     if (res == SQLite.SQLITE_ROW) {
@@ -450,6 +458,7 @@ public class Stmt {
   public boolean[] getMetadata(int iCol) throws StmtException, ConnException {
     final String colName = getColumnOriginName(iCol);
     if (colName != null) {
+      checkConnOpen();
       final boolean[] colMetaData = c.getTableColumnMetadata(
           getColumnDatabaseName(iCol), getColumnTableName(iCol), colName);
       return colMetaData;
@@ -471,10 +480,15 @@ public class Stmt {
     if (pStmt == null) {
       throw new StmtException(this, "stmt finalized", ErrCodes.WRAPPER_SPECIFIC);
     }
+    checkConnOpen();
+  }
+
+  public void checkConnOpen() throws StmtException {
     if (c == null || c.isClosed()) {
       throw new StmtException(this, "connection closed", ErrCodes.WRAPPER_SPECIFIC);
     }
   }
+
   public boolean isClosed() {
     return pStmt == null;
   }
@@ -501,6 +515,7 @@ public class Stmt {
   public Blob open(int iCol, long iRow, boolean rw) throws SQLiteException {
     final String colName = getColumnOriginName(iCol);
     if (colName != null) {
+      checkConnOpen();
       return c.open(getColumnDatabaseName(iCol), getColumnTableName(iCol), colName, iRow, rw);
     }
     return null;

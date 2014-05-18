@@ -17,6 +17,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.SQLTimeoutException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -119,7 +120,7 @@ public class Stmt implements Statement {
     } else {
       _close();
       stmt = getConn().prepare(sql);
-      final boolean hasRow = stmt.step();
+      final boolean hasRow = step(false);
       if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
         if (stmt.isReadOnly()) {
           throw new StmtException(stmt, "query does not return a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
@@ -195,16 +196,16 @@ public class Stmt implements Statement {
   }
 
   @Override
-  public int getQueryTimeout() throws SQLException { // Used by Hibernate
+  public int
+  getQueryTimeout() throws SQLException { // Used by Hibernate
     checkOpen();
-    return queryTimeout; // TODO
+    return queryTimeout;
   }
 
   @Override
   public void setQueryTimeout(int seconds) throws SQLException {
     if (seconds < 0) throw Util.error("query timeout must be >= 0");
     checkOpen();
-    Util.trace("Statement.setQueryTimeout");
     this.queryTimeout = seconds;
   }
 
@@ -242,7 +243,7 @@ public class Stmt implements Statement {
   }
 
   protected boolean step(boolean updateOnly) throws SQLException {
-    final int res = stmt.stepNoCheck();
+    final int res = stmt.stepNoCheck(queryTimeout);
     if (updateOnly && (res == SQLite.SQLITE_ROW || stmt.getColumnCount() != 0)) {
       throw new StmtException(stmt, "statement returns a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
     } else if (res == SQLite.SQLITE_ROW) {
@@ -251,6 +252,8 @@ public class Stmt implements Statement {
       return false;
     } else if (res == ErrCodes.SQLITE_CONSTRAINT) {
       throw new SQLIntegrityConstraintViolationException(stmt.getErrMsg(), null, res);
+    } else if (res == ErrCodes.SQLITE_INTERRUPT) {
+      throw new SQLTimeoutException(stmt.getErrMsg(), null, res);
     }
     throw new StmtException(stmt, String.format("error while stepping '%s'", stmt.getSql()), res);
   }

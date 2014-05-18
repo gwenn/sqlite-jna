@@ -79,12 +79,11 @@ public class Rows implements ResultSet {
       return false;
     }
 
-    final boolean hasRow = stmt.step();
+    final boolean hasRow = s.step(false);
     if (hasRow) {
       row++;
     } else {
       row = -2;
-      stmt.reset();
     }
     return hasRow;
   }

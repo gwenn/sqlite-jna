@@ -8,10 +8,11 @@
  */
 package org.sqlite;
 
-public interface ColAffinities {
-  int INTEGER = 0;
-  int TEXT = 1;
-  int NONE = 2;
-  int REAL = 3;
-  int NUMERIC = 4;
+import com.sun.jna.Callback;
+import com.sun.jna.Pointer;
+
+public interface ScalarCallback extends Callback {
+  //void (*)(sqlite3_context*,int,sqlite3_value**),
+  @SuppressWarnings("unused")
+  void invoke(Pointer pCtx, int nArg, Pointer args);
 }

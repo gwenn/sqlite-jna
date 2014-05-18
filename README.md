@@ -24,8 +24,17 @@ x86_64-w64-mingw32-gcc.exe -Wl,--kill-at -O -shared -o sqlite3.dll -DSQLITE_ENAB
 TODO
 ----
 1. Fix as many unimplemented methods as possible.
-2. JDBC J2EE compliance test suite
-3. Benchmark
+2. Benchmark
+
+LINKS
+-----
+* https://bitbucket.org/xerial/sqlite-jdbc (JNI)
+* http://www.ch-werner.de/javasqlite/ (JNI)
+* https://code.google.com/p/sqlite4java/ (JNI, no JDBC)
+* https://github.com/lyubo/jdbc-lite (JNA)
+* https://code.google.com/p/nativelibs4java/issues/detail?id=47 (Bridj)
+* https://github.com/tstack/SqliteJdbcNG (Bridj)
+* https://github.com/jnr/jnr-ffi
 
 LICENSE
 -------

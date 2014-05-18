@@ -104,7 +104,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     if (!boundChecked) {
       checkParameters(stmt);
     }
-    final boolean hasRow = stmt.step();
+    final boolean hasRow = step(false);
     if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
       if (stmt.isReadOnly()) {
         throw new StmtException(stmt, "query does not return a ResultSet", ErrCodes.WRAPPER_SPECIFIC);

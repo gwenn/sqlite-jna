@@ -19,6 +19,7 @@ public class Conn {
 
   private Pointer pDb;
   private final boolean sharedCacheMode;
+  private TimeoutProgressCallback timeoutProgressCallback;
 
   /**
    * @param filename ":memory:" for memory db, "" for temp file db
@@ -136,7 +137,7 @@ public class Conn {
     return s;
   }
 
-  public void exec(String sql) throws ConnException, StmtException {
+  public void exec(String sql) throws SQLiteException {
     while (sql != null && sql.length() > 0) {
       Stmt s = null;
       try {
@@ -333,6 +334,35 @@ public class Conn {
     return new Backup(pBackup, dst, src);
   }
 
+  /**
+   * @param timeout in seconds
+   */
+  public void setQueryTimeout(int timeout) throws ConnException {
+    if (timeout == 0) {
+      if (timeoutProgressCallback == null) {
+        return; // nothing to do
+      }
+    }
+    if (timeoutProgressCallback == null) {
+      checkOpen();
+      timeoutProgressCallback = new TimeoutProgressCallback();
+      SQLite.sqlite3_progress_handler(pDb, 100, timeoutProgressCallback, null);
+    }
+    timeoutProgressCallback.setTimeout(timeout * 1000);
+  }
+
+  public void trace(TraceCallback tc, Pointer arg) throws ConnException {
+    checkOpen();
+    SQLite.sqlite3_trace(pDb, tc, arg);
+  }
+
+  public void createScalarFunction(String name, int nArg, ScalarCallback xFunc) throws ConnException {
+    checkOpen();
+    // TODO SQLITE_DETERMINISTIC
+    // TODO SQLITE_UTF8 versus SQLITE_UTF16LE
+    SQLite.sqlite3_create_function_v2(pDb, name, nArg, 1, null, xFunc, null, null, null);
+  }
+
   public boolean isClosed() {
     return pDb == null;
   }
@@ -349,11 +379,11 @@ public class Conn {
     }
   }
 
-  private boolean pragma(String dbName, String name) throws ConnException, StmtException {
+  private boolean pragma(String dbName, String name) throws SQLiteException {
     Stmt s = null;
     try {
       s = prepare("PRAGMA " + qualify(dbName) + name);
-      if (!s.step()) {
+      if (!s.step(0)) {
         throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
       }
       return s.getColumnInt(0) == 1;
