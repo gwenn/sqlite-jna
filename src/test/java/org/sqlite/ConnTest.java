@@ -62,7 +62,7 @@ public class ConnTest {
   @Test
   public void checkPrepare() throws SQLiteException {
     final Conn c = open();
-    final Stmt s = c.prepare("SELECT 1");
+    final Stmt s = c.prepare("SELECT 1", false);
     assertNotNull(s);
     s.close();
     checkResult(c.close());
@@ -181,6 +181,12 @@ public class ConnTest {
     assertEquals("tes\"\"t", Conn.mprintf("%w", "tes\"t"));
   }
 
+  @Test(expected = ConnException.class)
+  public void closedConn() throws SQLiteException {
+    final Conn c = open();
+    c.close();
+    c.getAutoCommit();
+  }
   static void checkResult(int res) {
     assertEquals(0, res);
   }

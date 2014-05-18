@@ -27,6 +27,7 @@ public class Blob {
   private int size = -1;
 
   Blob(Conn c, Pointer pBlob) {
+    assert c != null;
     this.c = c;
     this.pBlob = pBlob;
   }

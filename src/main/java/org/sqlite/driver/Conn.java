@@ -46,9 +46,10 @@ public class Conn implements Connection {
   private SQLWarning warnings;
   private int transactionIsolation = TRANSACTION_SERIALIZABLE;
 
-  public Conn(org.sqlite.Conn c, String[] dateTimeConfig) {
+  Conn(org.sqlite.Conn c, String[] dateTimeConfig, SQLWarning warnings) {
     this.c = c;
     this.dateTimeConfig = dateTimeConfig;
+    this.warnings = warnings;
   }
 
   org.sqlite.Conn getConn() throws SQLException {
@@ -336,7 +337,7 @@ public class Conn implements Connection {
   public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
     checkOpen();
     checkCursor(resultSetType, resultSetConcurrency, resultSetHoldability);
-    return new PrepStmt(this, getConn().prepare(sql));
+    return new PrepStmt(this, getConn().prepare(sql, true));
   }
 
   @Override

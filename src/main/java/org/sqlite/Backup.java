@@ -15,12 +15,14 @@ public class Backup {
   private final Conn dst, src;
 
   Backup(Pointer pBackup, Conn dst, Conn src) {
+    assert pBackup != null && dst != null && src != null;
     this.pBackup = pBackup;
     this.dst = dst;
     this.src = src;
   }
 
   public boolean step(int nPage) throws ConnException {
+    checkInit();
     final int res = SQLite.sqlite3_backup_step(pBackup, nPage);
     if (res == SQLite.SQLITE_OK || res == ErrCodes.SQLITE_BUSY || res == ErrCodes.SQLITE_LOCKED) {
       SQLite.sqlite3_log(-1, "busy/locked error during backup.");
@@ -57,11 +59,13 @@ public class Backup {
     }
   }
 
-  public int remaining() {
+  public int remaining() throws ConnException {
+    checkInit();
     return SQLite.sqlite3_backup_remaining(pBackup);
   }
 
-  public int pageCount() {
+  public int pageCount() throws ConnException {
+    checkInit();
     return SQLite.sqlite3_backup_pagecount(pBackup);
   }
 
@@ -87,6 +91,16 @@ public class Backup {
     final int res = finish();
     if (res != SQLite.SQLITE_OK) {
       throw new ConnException(dst, "backup finish failed", res);
+    }
+  }
+
+  public boolean isFinished() {
+    return pBackup == null;
+  }
+
+  public void checkInit() throws ConnException {
+    if (isFinished()) {
+      throw new ConnException(dst, "backup already finished", ErrCodes.WRAPPER_SPECIFIC);
     }
   }
 }

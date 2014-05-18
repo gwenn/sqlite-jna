@@ -12,7 +12,7 @@ public class Main {
   public static void main(String[] args) throws SQLiteException {
     final Conn c = Conn.open(Conn.MEMORY,
         OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_CREATE | OpenFlags.SQLITE_OPEN_FULLMUTEX, null);
-    final Stmt s = c.prepare("SELECT 1 as num, 3.14, 'test où çà', null WHERE :i = 1 OR :d > 0.0 OR :s = 't'");
+    final Stmt s = c.prepare("SELECT 1 as num, 3.14, 'test où çà', null WHERE :i = 1 OR :d > 0.0 OR :s = 't'", false);
 
     final Tuple params = new Tuple(1, 3, "t");
     s.bind(params.i, params.d, params.s);

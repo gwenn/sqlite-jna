@@ -73,12 +73,14 @@ public class Conn {
   }
 
   private Conn(Pointer pDb, boolean sharedCacheMode) {
+    assert pDb != null;
     this.pDb = pDb;
     this.sharedCacheMode = sharedCacheMode;
   }
 
   public boolean isReadOnly(String dbName) throws ConnException {
-    final int res = SQLite.sqlite3_db_readonly(pDb, dbName);
+    checkOpen();
+    final int res = SQLite.sqlite3_db_readonly(pDb, dbName); // ko if pDb is null
     if (res < 0) {
       throw new ConnException(this, String.format("'%s' is not the name of a database", dbName), ErrCodes.WRAPPER_SPECIFIC);
     }
@@ -104,8 +106,9 @@ public class Conn {
     pragma(dbName, "read_uncommitted", flag);
   }
 
-  public boolean getAutoCommit() {
-    return SQLite.sqlite3_get_autocommit(pDb);
+  public boolean getAutoCommit() throws ConnException {
+    checkOpen();
+    return SQLite.sqlite3_get_autocommit(pDb); // ko if pDb is null
   }
 
   /**
@@ -113,14 +116,14 @@ public class Conn {
    * @return Prepared Statement
    * @throws ConnException
    */
-  public Stmt prepare(String sql) throws ConnException {
+  public Stmt prepare(String sql, boolean cacheable) throws ConnException {
     checkOpen();
     final Pointer pSql = SQLite.nativeString(sql);
     final PointerByReference ppStmt = new PointerByReference();
     final PointerByReference ppTail = new PointerByReference();
     final int res = SQLite.sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail); // FIXME nbytes + 1
     check(res, "error while preparing statement '%s'", sql);
-    return new Stmt(this, ppStmt.getValue(), ppTail.getValue());
+    return new Stmt(this, ppStmt.getValue(), ppTail.getValue(), cacheable);
   }
 
   /**
@@ -141,7 +144,7 @@ public class Conn {
     while (sql != null && sql.length() > 0) {
       Stmt s = null;
       try {
-        s = prepare(sql);
+        s = prepare(sql, false);
         sql = s.getTail();
         if (!s.isDumb()) { // this happens for a comment or white-space
           s.exec();
@@ -160,8 +163,9 @@ public class Conn {
   }
 
   public Blob open(String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
+    checkOpen();
     final PointerByReference ppBlob = new PointerByReference();
-    final int res = SQLite.sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob);
+    final int res = SQLite.sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob); // ko if pDb is null
     if (res != SQLite.SQLITE_OK) {
       SQLite.sqlite3_blob_close(ppBlob.getValue());
       throw new SQLiteException(String.format("error while opening a blob to (db: '%s', table: '%s', col: '%s', row: %d)",
@@ -210,18 +214,21 @@ public class Conn {
   }
 
   public String getFilename() {
-    return SQLite.sqlite3_db_filename(pDb, "main");
+    if (pDb == null) {
+      return null;
+    }
+    return SQLite.sqlite3_db_filename(pDb, "main"); // ko if pDb is null
   }
 
   public String getErrMsg() {
-    return SQLite.sqlite3_errmsg(pDb);
+    return SQLite.sqlite3_errmsg(pDb); // ok if pDb is null => SQLITE_NOMEM
   }
 
   /**
    * @return org.sqlite.ErrCodes.*
    */
   public int getErrCode() {
-    return SQLite.sqlite3_errcode(pDb);
+    return SQLite.sqlite3_errcode(pDb); // ok if pDb is null => SQLITE_NOMEM
   }
 
   /**
@@ -229,14 +236,14 @@ public class Conn {
    */
   public void setExtendedResultCodes(boolean onoff) throws ConnException {
     checkOpen();
-    check(SQLite.sqlite3_extended_result_codes(pDb, onoff), "error while enabling extended result codes on '%s'", getFilename());
+    check(SQLite.sqlite3_extended_result_codes(pDb, onoff), "error while enabling extended result codes on '%s'", getFilename()); // ko if pDb is null
   }
 
   /**
    * @return org.sqlite.ExtErrCodes.*
    */
   public int getExtendedErrcode() {
-    return SQLite.sqlite3_extended_errcode(pDb);
+    return SQLite.sqlite3_extended_errcode(pDb); // ok if pDb is null => SQLITE_NOMEM
   }
 
   /**
@@ -308,6 +315,7 @@ public class Conn {
   }
 
   boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) throws ConnException {
+    checkOpen();
     final PointerByReference pNotNull = new PointerByReference();
     final PointerByReference pPrimaryKey = new PointerByReference();
     final PointerByReference pAutoinc = new PointerByReference();
@@ -327,6 +335,8 @@ public class Conn {
   }
 
   public static Backup open(Conn dst, String dstName, Conn src, String srcName) throws ConnException {
+    dst.checkOpen();
+    src.checkOpen();
     final Pointer pBackup = SQLite.sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
     if (pBackup == null) {
       throw new ConnException(dst, "backup init failed", dst.getErrCode());
@@ -369,7 +379,7 @@ public class Conn {
 
   public void checkOpen() throws ConnException {
     if (isClosed()) {
-      throw new ConnException(this, String.format("connection to '%s' closed", getFilename()), ErrCodes.WRAPPER_SPECIFIC);
+      throw new ConnException(this, "connection closed", ErrCodes.WRAPPER_SPECIFIC);
     }
   }
 
@@ -382,7 +392,7 @@ public class Conn {
   private boolean pragma(String dbName, String name) throws SQLiteException {
     Stmt s = null;
     try {
-      s = prepare("PRAGMA " + qualify(dbName) + name);
+      s = prepare("PRAGMA " + qualify(dbName) + name, false);
       if (!s.step(0)) {
         throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
       }
@@ -395,5 +405,10 @@ public class Conn {
   }
   private void pragma(String dbName, String name, boolean value) throws ConnException {
     fastExec("PRAGMA " + qualify(dbName) + name + "=" + (value ? 1 : 0));
+  }
+
+  boolean cache(Stmt stmt) {
+    // TODO ...
+    return false;
   }
 }

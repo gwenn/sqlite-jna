@@ -486,14 +486,12 @@ public class Rows implements ResultSet {
 
   @Override
   public boolean isAfterLast() throws SQLException {
-    Util.trace("ResultSet.isAfterLast");
     checkOpen();
     return row == -2;
   }
 
   @Override
   public boolean isFirst() throws SQLException {
-    Util.trace("ResultSet.isFirst");
     checkOpen();
     return row == 1;
   }

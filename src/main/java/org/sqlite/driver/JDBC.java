@@ -9,6 +9,7 @@
 package org.sqlite.driver;
 
 import org.sqlite.ConnException;
+import org.sqlite.ErrCodes;
 import org.sqlite.OpenFlags;
 import org.sqlite.SQLite;
 
@@ -18,6 +19,7 @@ import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLWarning;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -51,10 +53,10 @@ public class JDBC implements Driver {
         info == null ? null : info.getProperty(CACHE));
     final org.sqlite.Conn conn = org.sqlite.Conn.open(url.substring(PREFIX.length()), flags, vfs);
     conn.setBusyTimeout(3000);
-    setup(conn, info);
+    final SQLWarning warnings = setup(conn, info);
     // check database format (the pragma fails if the file header is not valid):
     conn.fastExec("PRAGMA schema_version");
-    return new Conn(conn, DateUtil.config(info));
+    return new Conn(conn, DateUtil.config(info), warnings);
   }
 
   private static int getOpenFlags(String mode, String cache) {
@@ -121,10 +123,11 @@ public class JDBC implements Driver {
     return new DriverPropertyInfo[] {vfs, mode, cache, fks, triggers, ele, encoding, df, tf, tsf}; // TODO locking_mode, recursive_triggers, synchronous
   }
 
-  private static void setup(org.sqlite.Conn conn, Properties info) throws ConnException {
+  private static SQLWarning setup(org.sqlite.Conn conn, Properties info) throws ConnException {
     if (info == null) {
-      return;
+      return null;
     }
+    SQLWarning warnings = null;
     final String encoding = info.getProperty(ENCODING);
     if (encoding != null && encoding.length() > 0) {
       conn.fastExec(org.sqlite.Conn.mprintf("PRAGMA encoding=\"%w\"", encoding));
@@ -132,26 +135,39 @@ public class JDBC implements Driver {
     final String fks = info.getProperty(FOREIGN_KEYS);
     if ("on".equals(fks)) {
       if (!conn.enableForeignKeys(true)) {
-        SQLite.sqlite3_log(-1, "cannot enable the enforcement of foreign key constraints."); // TODO warning?
+        warnings = addWarning(warnings, new SQLWarning("cannot enable the enforcement of foreign key constraints.", null, ErrCodes.WRAPPER_SPECIFIC));
+        SQLite.sqlite3_log(-1, "cannot enable the enforcement of foreign key constraints.");
       }
     } else if ("off".equals(fks)) {
       if (conn.enableForeignKeys(false)) {
-        SQLite.sqlite3_log(-1, "cannot disable the enforcement of foreign key constraints."); // TODO warning?
+        warnings = addWarning(warnings, new SQLWarning("cannot disable the enforcement of foreign key constraints.", null, ErrCodes.WRAPPER_SPECIFIC));
+        SQLite.sqlite3_log(-1, "cannot disable the enforcement of foreign key constraints.");
       }
     }
     final String triggers = info.getProperty(ENABLE_TRIGGERS);
     if ("on".equals(triggers)) {
       if (!conn.enableTriggers(true)) {
-        SQLite.sqlite3_log(-1, "cannot enable triggers."); // TODO warning?
+        warnings = addWarning(warnings, new SQLWarning("cannot enable triggers.", null, ErrCodes.WRAPPER_SPECIFIC));
+        SQLite.sqlite3_log(-1, "cannot enable triggers.");
       }
     } else if ("off".equals(fks)) {
       if (conn.enableTriggers(false)) {
-        SQLite.sqlite3_log(-1, "cannot disable triggers."); // TODO warning?
+        warnings = addWarning(warnings, new SQLWarning("cannot disable triggers.", null, ErrCodes.WRAPPER_SPECIFIC));
+        SQLite.sqlite3_log(-1, "cannot disable triggers.");
       }
     }
     if ("on".equals(info.getProperty(ENABLE_LOAD_EXTENSION))) {
       conn.enableLoadExtension(true);
     } // disabled by default
+    return warnings;
+  }
+  private static SQLWarning addWarning(SQLWarning current, SQLWarning next) {
+    if (current != null) {
+      current.setNextWarning(next);
+    } else {
+      current = next;
+    }
+    return current;
   }
 
   @Override

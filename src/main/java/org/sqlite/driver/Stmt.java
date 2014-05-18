@@ -38,19 +38,16 @@ public class Stmt implements Statement {
   private int status = -1; // -1: unknown, 0: not a select, 1: select with row, 2: select without row
   private List<String> batch; // sql queries (see addBatch)
   private int queryTimeout; // in seconds
-  private boolean poolable;
 
   Stmt(Conn c) {
     this.c = c;
     this.prepared = false;
-    this.poolable = false;
   }
 
   Stmt(Conn c, org.sqlite.Stmt stmt) {
     this.c = c;
     this.stmt = stmt;
     this.prepared = true;
-    this.poolable = true;
   }
 
   org.sqlite.Stmt getStmt() throws SQLException {
@@ -119,7 +116,7 @@ public class Stmt implements Statement {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
       _close();
-      stmt = getConn().prepare(sql);
+      stmt = getConn().prepare(sql, false);
       final boolean hasRow = step(false);
       if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
         if (stmt.isReadOnly()) {
@@ -139,7 +136,7 @@ public class Stmt implements Statement {
     } else {
       _close();
       final org.sqlite.Conn c = getConn();
-      stmt = c.prepare(sql);
+      stmt = c.prepare(sql, false);
       final int tc = c.getTotalChanges();
       step(true);
       return c.getTotalChanges() - tc;
@@ -237,7 +234,7 @@ public class Stmt implements Statement {
       throw new SQLException("method not supported by PreparedStatement");
     } else {
       _close();
-      stmt = getConn().prepare(sql);
+      stmt = getConn().prepare(sql, false);
       return exec();
     }
   }
@@ -470,16 +467,19 @@ public class Stmt implements Statement {
     return c == null;
   }
 
+  // only prepared statement are poolable...
   @Override
   public void setPoolable(boolean poolable) throws SQLException {
     checkOpen();
-    this.poolable = poolable;
+    if (prepared) {
+      stmt.setCacheable(poolable);
+    }
   }
 
   @Override
   public boolean isPoolable() throws SQLException {
     checkOpen();
-    return poolable;
+    return prepared && stmt.isCacheable();
   }
 
   @Override
