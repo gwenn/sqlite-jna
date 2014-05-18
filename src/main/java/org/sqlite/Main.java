@@ -26,7 +26,7 @@ public class Main {
       System.out.println("colType[" + iCol + "] = " + colType);
     }
 */
-    final boolean b = s.step();
+    final boolean b = s.step(0);
     System.out.println("b = " + b);
     for (int iCol = 0; iCol < columnCount; iCol++) {
       final int colType = s.getColumnType(iCol);
