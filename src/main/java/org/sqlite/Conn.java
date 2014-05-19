@@ -11,6 +11,9 @@ package org.sqlite;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+
 import static org.sqlite.SQLite.qualify;
 
 public class Conn {
@@ -20,6 +23,9 @@ public class Conn {
   private Pointer pDb;
   private final boolean sharedCacheMode;
   private TimeoutProgressCallback timeoutProgressCallback;
+
+  private final LinkedList<Stmt> cache = new LinkedList<>();
+  private int maxCacheSize = 100; // TODO parameterize
 
   /**
    * @param filename ":memory:" for memory db, "" for temp file db
@@ -61,6 +67,7 @@ public class Conn {
       return SQLite.SQLITE_OK;
     }
 
+    flush();
     final int res = SQLite.sqlite3_close_v2(pDb); // must be called only once...
     pDb = null;
     return res;
@@ -118,6 +125,12 @@ public class Conn {
    */
   public Stmt prepare(String sql, boolean cacheable) throws ConnException {
     checkOpen();
+    if (cacheable) {
+      final Stmt stmt = find(sql);
+      if (stmt != null) {
+        return stmt;
+      }
+    }
     final Pointer pSql = SQLite.nativeString(sql);
     final PointerByReference ppStmt = new PointerByReference();
     final PointerByReference ppTail = new PointerByReference();
@@ -407,8 +420,75 @@ public class Conn {
     fastExec("PRAGMA " + qualify(dbName) + name + "=" + (value ? 1 : 0));
   }
 
-  boolean cache(Stmt stmt) {
-    // TODO ...
-    return false;
+  // To be called in Conn.prepare
+  Stmt find(String sql) {
+    if (maxCacheSize <= 0) {
+      return null;
+    }
+    synchronized (this) {
+      final Iterator<Stmt> it = cache.iterator();
+      while (it.hasNext()) {
+        Stmt stmt = it.next();
+        if (stmt.getSql().equals(sql)) { // TODO s.SQL() may have been trimmed by SQLite
+          it.remove();
+          return stmt;
+        }
+      }
+    }
+    return null;
+  }
+
+  // To be called in Stmt.close
+  boolean release(Stmt stmt) {
+    if (maxCacheSize <= 0 || stmt.isDumb() || stmt.isBusy()) {
+      return false;
+    }
+    synchronized (this) {
+      cache.push(stmt);
+      while (cache.size() > maxCacheSize) {
+        cache.removeLast().close(true);
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Prepared statements cache is turned off when max size is 0
+   */
+  public int getMaxCacheSize() {
+    return maxCacheSize;
+  }
+  /**
+   * Prepared statements cache size
+   */
+  public int getCacheSize() {
+    return cache.size();
+  }
+
+  /** sets the size of prepared statements cache.
+   * Cache is turned off (and flushed) when size <= 0
+   */
+  public void setMaxCacheSize(int maxCacheSize) {
+    if (maxCacheSize <= 0) {
+      flush();
+    }
+    this.maxCacheSize = maxCacheSize;
+  }
+  /**
+   * Finalize and free the cached prepared statements
+   * To be called in Conn.close
+   */
+  private void flush() {
+    if (maxCacheSize <= 0) {
+      return;
+    }
+    synchronized (this) {
+      final Iterator<Stmt> it = cache.iterator();
+      while (it.hasNext()) {
+        Stmt stmt = it.next();
+        stmt.close(true);
+        it.remove();
+      }
+    }
   }
 }

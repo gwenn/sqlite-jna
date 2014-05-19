@@ -67,8 +67,12 @@ public class Stmt {
   }
   public int close(boolean force) {
     if (pStmt == null) return SQLite.SQLITE_OK;
-    if (!force && cacheable && !isBusy() && c.cache(this)) {
-      SQLite.sqlite3_log(0, "statement cached");
+    if (!force && cacheable) {
+      if (SQLite.sqlite3_reset(pStmt) == SQLite.SQLITE_OK &&
+          SQLite.sqlite3_clear_bindings(pStmt) == SQLite.SQLITE_OK &&
+          c.release(this)) {
+        return SQLite.SQLITE_OK;
+      }
     }
     final int res = SQLite.sqlite3_finalize(pStmt); // must be called only once
     pStmt = null;
