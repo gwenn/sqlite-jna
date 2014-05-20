@@ -440,7 +440,7 @@ public class Conn {
 
   // To be called in Stmt.close
   boolean release(Stmt stmt) {
-    if (maxCacheSize <= 0 || stmt.isDumb() || stmt.isBusy()) {
+    if (maxCacheSize <= 0) {
       return false;
     }
     synchronized (this) {

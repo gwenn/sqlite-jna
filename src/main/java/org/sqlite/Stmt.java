@@ -67,7 +67,7 @@ public class Stmt {
   }
   public int close(boolean force) {
     if (pStmt == null) return SQLite.SQLITE_OK;
-    if (!force && cacheable) {
+    if (!force && cacheable && (tail == null || tail.length() == 0) && !isBusy()) {
       if (SQLite.sqlite3_reset(pStmt) == SQLite.SQLITE_OK &&
           SQLite.sqlite3_clear_bindings(pStmt) == SQLite.SQLITE_OK &&
           c.release(this)) {

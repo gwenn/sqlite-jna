@@ -467,11 +467,10 @@ public class Stmt implements Statement {
     return c == null;
   }
 
-  // only prepared statement are poolable...
   @Override
   public void setPoolable(boolean poolable) throws SQLException {
     checkOpen();
-    if (prepared) {
+    if (stmt != null) {
       stmt.setCacheable(poolable);
     }
   }
@@ -479,7 +478,7 @@ public class Stmt implements Statement {
   @Override
   public boolean isPoolable() throws SQLException {
     checkOpen();
-    return prepared && stmt.isCacheable();
+    return stmt != null && stmt.isCacheable();
   }
 
   @Override
