@@ -96,6 +96,7 @@ public class Stmt {
     if (res == SQLite.SQLITE_ROW) {
       return true;
     }
+    // Release implicit lock as soon as possible
     SQLite.sqlite3_reset(pStmt); // ok if pStmt is null
     if (res == SQLite.SQLITE_DONE) {
       return false;
@@ -112,12 +113,14 @@ public class Stmt {
     if (res == SQLite.SQLITE_ROW) {
       return res;
     }
+    // Release implicit lock as soon as possible
     SQLite.sqlite3_reset(pStmt); // ok if pStmt is null
     return res;
   }
   public void exec() throws SQLiteException {
     c.setQueryTimeout(0);
     final int res = SQLite.sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
+    // Release implicit lock as soon as possible
     SQLite.sqlite3_reset(pStmt); // ok if pStmt is null
     if (res == SQLite.SQLITE_ROW) {
       throw new StmtException(this, String.format("only non SELECT expected but got '%s'", getSql()), res);

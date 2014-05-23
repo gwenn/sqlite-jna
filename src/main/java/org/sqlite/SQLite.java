@@ -34,6 +34,7 @@ public class SQLite implements Library {
 
   static native String sqlite3_libversion(); // no copy needed
   static native boolean sqlite3_threadsafe();
+  static native boolean sqlite3_compileoption_used(String optName);
 
   public static final int SQLITE_CONFIG_SINGLETHREAD = 1,
       SQLITE_CONFIG_MULTITHREAD = 2, SQLITE_CONFIG_SERIALIZED = 3,
