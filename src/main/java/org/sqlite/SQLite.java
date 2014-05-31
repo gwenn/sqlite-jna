@@ -13,6 +13,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 import java.nio.ByteBuffer;
@@ -62,7 +63,7 @@ public class SQLite implements Library {
   static native void sqlite3_interrupt(Pointer pDb);
 
   static native int sqlite3_busy_timeout(Pointer pDb, int ms);
-  static native int sqlite3_db_config(Pointer pDb, int op, int v, PointerByReference pOk);
+  static native int sqlite3_db_config(Pointer pDb, int op, int v, IntByReference pOk);
   static native int sqlite3_enable_load_extension(Pointer pDb, boolean onoff);
   static native int sqlite3_load_extension(Pointer pDb, String file, String proc, PointerByReference errMsg);
   public static final int SQLITE_LIMIT_LENGTH = 0, SQLITE_LIMIT_SQL_LENGTH = 1, SQLITE_LIMIT_COLUMN = 2,
@@ -83,7 +84,7 @@ public class SQLite implements Library {
 
   static native int sqlite3_table_column_metadata(Pointer pDb, String dbName, String tableName, String columnName,
                                                   PointerByReference pzDataType, PointerByReference pzCollSeq,
-                                                  PointerByReference pNotNull, PointerByReference pPrimaryKey, PointerByReference pAutoinc); // no copy needed
+                                                  IntByReference pNotNull, IntByReference pPrimaryKey, IntByReference pAutoinc); // no copy needed
 
   static native int sqlite3_exec(Pointer pDb, String cmd, Callback c, Pointer udp, PointerByReference errMsg);
 

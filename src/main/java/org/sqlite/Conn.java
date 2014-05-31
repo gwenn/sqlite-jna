@@ -9,6 +9,7 @@
 package org.sqlite;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 import java.util.Iterator;
@@ -264,7 +265,7 @@ public class Conn {
    */
   public boolean enableForeignKeys(boolean onoff) throws ConnException {
     checkOpen();
-    final PointerByReference pOk = new PointerByReference();
+    final IntByReference pOk = new IntByReference();
     check(SQLite.sqlite3_db_config(pDb, 1002, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
     return toBool(pOk);
   }
@@ -273,7 +274,7 @@ public class Conn {
    */
   public boolean areForeignKeysEnabled() throws ConnException {
     checkOpen();
-    final PointerByReference pOk = new PointerByReference();
+    final IntByReference pOk = new IntByReference();
     check(SQLite.sqlite3_db_config(pDb, 1002, -1, pOk), "error while querying db config on '%s'", getFilename());
     return toBool(pOk);
   }
@@ -282,7 +283,7 @@ public class Conn {
    */
   public boolean enableTriggers(boolean onoff) throws ConnException {
     checkOpen();
-    final PointerByReference pOk = new PointerByReference();
+    final IntByReference pOk = new IntByReference();
     check(SQLite.sqlite3_db_config(pDb, 1003, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
     return toBool(pOk);
   }
@@ -291,7 +292,7 @@ public class Conn {
    */
   public boolean areTriggersEnabled() throws ConnException {
     checkOpen();
-    final PointerByReference pOk = new PointerByReference();
+    final IntByReference pOk = new IntByReference();
     check(SQLite.sqlite3_db_config(pDb, 1003, -1, pOk), "error while querying db config on '%s'", getFilename());
     return toBool(pOk);
   }
@@ -329,9 +330,9 @@ public class Conn {
 
   boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) throws ConnException {
     checkOpen();
-    final PointerByReference pNotNull = new PointerByReference();
-    final PointerByReference pPrimaryKey = new PointerByReference();
-    final PointerByReference pAutoinc = new PointerByReference();
+    final IntByReference pNotNull = new IntByReference();
+    final IntByReference pPrimaryKey = new IntByReference();
+    final IntByReference pAutoinc = new IntByReference();
 
     check(SQLite.sqlite3_table_column_metadata(pDb,
         dbName,
@@ -343,8 +344,8 @@ public class Conn {
     return new boolean[]{toBool(pNotNull), toBool(pPrimaryKey), toBool(pAutoinc)};
   }
 
-  private static boolean toBool(PointerByReference p) {
-    return p.getPointer().getInt(0) > 0;
+  private static boolean toBool(IntByReference p) {
+    return p.getValue() > 0;
   }
 
   public static Backup open(Conn dst, String dstName, Conn src, String srcName) throws ConnException {
