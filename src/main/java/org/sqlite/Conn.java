@@ -345,7 +345,7 @@ public class Conn {
   }
 
   private static boolean toBool(IntByReference p) {
-    return p.getValue() > 0;
+    return p.getValue() != 0;
   }
 
   public static Backup open(Conn dst, String dstName, Conn src, String srcName) throws ConnException {
