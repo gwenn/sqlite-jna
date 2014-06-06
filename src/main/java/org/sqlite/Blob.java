@@ -15,6 +15,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
+import static org.sqlite.SQLite.*;
+
 /*
  blob   0         offset    size
  byte[] 0   offset        length
@@ -38,7 +40,7 @@ public class Blob {
   public int getBytes() throws SQLiteException {
     checkOpen();
     if (size < 0) {
-      size = SQLite.sqlite3_blob_bytes(pBlob);
+      size = sqlite3_blob_bytes(pBlob);
     }
     return size;
   }
@@ -49,8 +51,8 @@ public class Blob {
     }
     checkOpen();
     final int n = b.remaining();
-    final int res = SQLite.sqlite3_blob_read(pBlob, b, n, readOffset);
-    if (res != SQLite.SQLITE_OK) {
+    final int res = sqlite3_blob_read(pBlob, b, n, readOffset);
+    if (res != SQLITE_OK) {
       throw new SQLiteException(c, "error while reading blob", res);
     }
     readOffset += n;
@@ -63,8 +65,8 @@ public class Blob {
     }
     checkOpen();
     final int n = b.remaining();
-    final int res = SQLite.sqlite3_blob_write(pBlob, b, n, writeOffset);
-    if (res != SQLite.SQLITE_OK) {
+    final int res = sqlite3_blob_write(pBlob, b, n, writeOffset);
+    if (res != SQLITE_OK) {
       throw new SQLiteException(c, "error while writing blob", res);
     }
     writeOffset += n;
@@ -73,8 +75,8 @@ public class Blob {
 
   public void reopen(long iRow) throws SQLiteException {
     checkOpen();
-    final int res = SQLite.sqlite3_blob_reopen(pBlob, iRow);
-    if (res != SQLite.SQLITE_OK) {
+    final int res = sqlite3_blob_reopen(pBlob, iRow);
+    if (res != SQLITE_OK) {
       throw new SQLiteException(c, "error while reopening blob", res);
     }
     readOffset = 0;
@@ -85,7 +87,7 @@ public class Blob {
   @Override
   protected void finalize() throws Throwable {
     if (pBlob != null) {
-      SQLite.sqlite3_log(-1, "dangling SQLite blob.");
+      sqlite3_log(-1, "dangling SQLite blob.");
       close();
     }
     super.finalize();
@@ -93,9 +95,9 @@ public class Blob {
 
   public int close() {
     if (pBlob == null) {
-      return SQLite.SQLITE_OK;
+      return SQLITE_OK;
     }
-    final int res = SQLite.sqlite3_blob_close(pBlob); // must be called only once
+    final int res = sqlite3_blob_close(pBlob); // must be called only once
     pBlob = null;
     return res;
   }

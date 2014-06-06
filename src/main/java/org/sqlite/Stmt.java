@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.sqlite.SQLite.*;
+
 public class Stmt {
   final Conn c;
   private Pointer pStmt;
@@ -41,7 +43,7 @@ public class Stmt {
   }
 
   public String getSql() {
-    return SQLite.sqlite3_sql(pStmt); // ok if pStmt is null
+    return sqlite3_sql(pStmt); // ok if pStmt is null
   }
   public String getTail() {
     return tail;
@@ -54,7 +56,7 @@ public class Stmt {
   @Override
   protected void finalize() throws Throwable {
     if (pStmt != null) {
-      SQLite.sqlite3_log(-1, "dangling SQLite statement.");
+      sqlite3_log(-1, "dangling SQLite statement.");
       close(true);
     }
     super.finalize();
@@ -66,15 +68,15 @@ public class Stmt {
     return close(false);
   }
   public int close(boolean force) {
-    if (pStmt == null) return SQLite.SQLITE_OK;
+    if (pStmt == null) return SQLITE_OK;
     if (!force && cacheable && (tail == null || tail.length() == 0) && !isBusy()) {
-      if (SQLite.sqlite3_reset(pStmt) == SQLite.SQLITE_OK &&
-          SQLite.sqlite3_clear_bindings(pStmt) == SQLite.SQLITE_OK &&
+      if (sqlite3_reset(pStmt) == SQLITE_OK &&
+          sqlite3_clear_bindings(pStmt) == SQLITE_OK &&
           c.release(this)) {
-        return SQLite.SQLITE_OK;
+        return SQLITE_OK;
       }
     }
-    final int res = SQLite.sqlite3_finalize(pStmt); // must be called only once
+    final int res = sqlite3_finalize(pStmt); // must be called only once
     pStmt = null;
     return res;
   }
@@ -92,13 +94,13 @@ public class Stmt {
    */
   public boolean step(int timeout) throws SQLiteException {
     c.setQueryTimeout(timeout);
-    final int res = SQLite.sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
-    if (res == SQLite.SQLITE_ROW) {
+    final int res = sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
+    if (res == SQLITE_ROW) {
       return true;
     }
     // Release implicit lock as soon as possible
-    SQLite.sqlite3_reset(pStmt); // ok if pStmt is null
-    if (res == SQLite.SQLITE_DONE) {
+    sqlite3_reset(pStmt); // ok if pStmt is null
+    if (res == SQLITE_DONE) {
       return false;
     }
     throw new StmtException(this, String.format("error while stepping '%s'", getSql()), res);
@@ -109,37 +111,37 @@ public class Stmt {
    */
   public int stepNoCheck(int timeout) throws SQLiteException {
     c.setQueryTimeout(timeout);
-    final int res = SQLite.sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
-    if (res == SQLite.SQLITE_ROW) {
+    final int res = sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
+    if (res == SQLITE_ROW) {
       return res;
     }
     // Release implicit lock as soon as possible
-    SQLite.sqlite3_reset(pStmt); // ok if pStmt is null
+    sqlite3_reset(pStmt); // ok if pStmt is null
     return res;
   }
   public void exec() throws SQLiteException {
     c.setQueryTimeout(0);
-    final int res = SQLite.sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
+    final int res = sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
     // Release implicit lock as soon as possible
-    SQLite.sqlite3_reset(pStmt); // ok if pStmt is null
-    if (res == SQLite.SQLITE_ROW) {
+    sqlite3_reset(pStmt); // ok if pStmt is null
+    if (res == SQLITE_ROW) {
       throw new StmtException(this, String.format("only non SELECT expected but got '%s'", getSql()), res);
     }
-    if (res != SQLite.SQLITE_DONE) {
+    if (res != SQLITE_DONE) {
       throw new StmtException(this, String.format("error while executing '%s'", getSql()), res);
     }
   }
 
   public void reset() throws StmtException {
-    check(SQLite.sqlite3_reset(pStmt), "Error while resetting '%s'"); // ok if pStmt is null
+    check(sqlite3_reset(pStmt), "Error while resetting '%s'"); // ok if pStmt is null
   }
 
   public boolean isBusy() {
-    return SQLite.sqlite3_stmt_busy(pStmt); // ok if pStmt is null
+    return sqlite3_stmt_busy(pStmt); // ok if pStmt is null
   }
 
   public boolean isReadOnly() {
-    return SQLite.sqlite3_stmt_readonly(pStmt); // ok if pStmt is null
+    return sqlite3_stmt_readonly(pStmt); // ok if pStmt is null
   }
 
   public boolean isCacheable() {
@@ -152,7 +154,7 @@ public class Stmt {
 
   public void clearBindings() throws StmtException {
     checkOpen();
-    check(SQLite.sqlite3_clear_bindings(pStmt), "Error while clearing bindings '%s'");
+    check(sqlite3_clear_bindings(pStmt), "Error while clearing bindings '%s'");
   }
 
   /**
@@ -160,7 +162,7 @@ public class Stmt {
    */
   public int getColumnCount() {
     if (columnCount == -1) {
-      columnCount = SQLite.sqlite3_column_count(pStmt); // ok if pStmt is null
+      columnCount = sqlite3_column_count(pStmt); // ok if pStmt is null
     }
     return columnCount;
   }
@@ -169,7 +171,7 @@ public class Stmt {
    * @return data count
    */
   public int getDataCount() {
-    return SQLite.sqlite3_data_count(pStmt); // ok if pStmt is null
+    return sqlite3_data_count(pStmt); // ok if pStmt is null
   }
 
   /**
@@ -179,7 +181,7 @@ public class Stmt {
    */
   public int getColumnType(int iCol) throws StmtException {
     checkColumnIndex(iCol);
-    return SQLite.sqlite3_column_type(pStmt, iCol); // ok if pStmt is null
+    return sqlite3_column_type(pStmt, iCol); // ok if pStmt is null
   }
 
   /**
@@ -190,7 +192,7 @@ public class Stmt {
   public String getColumnDeclType(int iCol) throws StmtException {
     checkOpen();
     checkColumnIndex(iCol);
-    return SQLite.sqlite3_column_decltype(pStmt, iCol); // ko if pStmt is null
+    return sqlite3_column_decltype(pStmt, iCol); // ko if pStmt is null
   }
 
   /**
@@ -206,7 +208,7 @@ public class Stmt {
     } else if (columnAffinities[iCol] != -1) {
       return columnAffinities[iCol];
     }
-    columnAffinities[iCol] = SQLite.getAffinity(getColumnDeclType(iCol));
+    columnAffinities[iCol] = getAffinity(getColumnDeclType(iCol));
     return columnAffinities[iCol];
   }
 
@@ -223,7 +225,7 @@ public class Stmt {
     } else if (columnNames[iCol] != null) {
       return columnNames[iCol];
     }
-    columnNames[iCol] = SQLite.sqlite3_column_name(pStmt, iCol); // ko if pStmt is null
+    columnNames[iCol] = sqlite3_column_name(pStmt, iCol); // ko if pStmt is null
     return columnNames[iCol];
   }
   /**
@@ -234,7 +236,7 @@ public class Stmt {
   public String getColumnOriginName(int iCol) throws StmtException {
     checkOpen();
     checkColumnIndex(iCol);
-    return SQLite.sqlite3_column_origin_name(pStmt, iCol); // ko if pStmt is null
+    return sqlite3_column_origin_name(pStmt, iCol); // ko if pStmt is null
   }
   /**
    * @param iCol The leftmost column is number 0.
@@ -244,7 +246,7 @@ public class Stmt {
   public String getColumnTableName(int iCol) throws StmtException {
     checkOpen();
     checkColumnIndex(iCol);
-    return SQLite.sqlite3_column_table_name(pStmt, iCol); // ko if pStmt is null
+    return sqlite3_column_table_name(pStmt, iCol); // ko if pStmt is null
   }
   /**
    * @param iCol The leftmost column is number 0.
@@ -254,12 +256,12 @@ public class Stmt {
   public String getColumnDatabaseName(int iCol) throws StmtException {
     checkOpen();
     checkColumnIndex(iCol);
-    return SQLite.sqlite3_column_database_name(pStmt, iCol); // ko if pStmt is null
+    return sqlite3_column_database_name(pStmt, iCol); // ko if pStmt is null
   }
 
   public byte[] getColumnBlob(int iCol) throws StmtException {
     checkColumnIndex(iCol);
-    final Pointer p = SQLite.sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
+    final Pointer p = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
     if (p == null) {
       return null;
     } else {
@@ -274,7 +276,7 @@ public class Stmt {
    */
   public int getColumnBytes(int iCol) throws StmtException {
     checkColumnIndex(iCol);
-    return SQLite.sqlite3_column_bytes(pStmt, iCol); // ok if pStmt is null
+    return sqlite3_column_bytes(pStmt, iCol); // ok if pStmt is null
   }
 
   /**
@@ -284,7 +286,7 @@ public class Stmt {
    */
   public double getColumnDouble(int iCol) throws StmtException {
     checkColumnIndex(iCol);
-    return SQLite.sqlite3_column_double(pStmt, iCol); // ok if pStmt is null
+    return sqlite3_column_double(pStmt, iCol); // ok if pStmt is null
   }
   /**
    * @param iCol The leftmost column is number 0.
@@ -293,7 +295,7 @@ public class Stmt {
    */
   public int getColumnInt(int iCol) throws StmtException {
     checkColumnIndex(iCol);
-    return SQLite.sqlite3_column_int(pStmt, iCol); // ok if pStmt is null
+    return sqlite3_column_int(pStmt, iCol); // ok if pStmt is null
   }
   /**
    * @param iCol The leftmost column is number 0.
@@ -302,7 +304,7 @@ public class Stmt {
    */
   public long getColumnLong(int iCol) throws StmtException {
     checkColumnIndex(iCol);
-    return SQLite.sqlite3_column_int64(pStmt, iCol); // ok if pStmt is null
+    return sqlite3_column_int64(pStmt, iCol); // ok if pStmt is null
   }
   /**
    * @param iCol The leftmost column is number 0.
@@ -311,7 +313,7 @@ public class Stmt {
    */
   public String getColumnText(int iCol) throws StmtException {
     checkColumnIndex(iCol);
-    return SQLite.sqlite3_column_text(pStmt, iCol); // ok if pStmt is null
+    return sqlite3_column_text(pStmt, iCol); // ok if pStmt is null
   }
 
   public void bind(Object... params) throws StmtException {
@@ -372,7 +374,7 @@ public class Stmt {
    */
   public int getBindParameterCount() {
     if (paramCount == -1) {
-      paramCount = SQLite.sqlite3_bind_parameter_count(pStmt); // ok if pStmt is null
+      paramCount = sqlite3_bind_parameter_count(pStmt); // ok if pStmt is null
     }
     return paramCount;
   }
@@ -389,7 +391,7 @@ public class Stmt {
     if (index != null) {
       return index;
     }
-    final int i = SQLite.sqlite3_bind_parameter_index(pStmt, name); // ok if pStmt is null
+    final int i = sqlite3_bind_parameter_index(pStmt, name); // ok if pStmt is null
     if (i == 0) { // Invalid name
       return i;
     }
@@ -401,7 +403,7 @@ public class Stmt {
    * @return SQL parameter name or null.
    */
   public String getBindParameterName(int i) { // TODO Cache?
-    return SQLite.sqlite3_bind_parameter_name(pStmt, i); // ok if pStmt is null
+    return sqlite3_bind_parameter_name(pStmt, i); // ok if pStmt is null
   }
 
   /**
@@ -411,7 +413,7 @@ public class Stmt {
    */
   public void bindBlob(int i, byte[] value) throws StmtException {
     // ok if pStmt is null => SQLITE_MISUSE
-    checkBind(SQLite.sqlite3_bind_blob(pStmt, i, value, value.length, SQLite.SQLITE_TRANSIENT), "sqlite3_bind_blob", i);
+    checkBind(sqlite3_bind_blob(pStmt, i, value, value.length, SQLITE_TRANSIENT), "sqlite3_bind_blob", i);
   }
   /**
    * @param i     The leftmost SQL parameter has an index of 1
@@ -420,7 +422,7 @@ public class Stmt {
    */
   public void bindDouble(int i, double value) throws StmtException {
     // ok if pStmt is null => SQLITE_MISUSE
-    checkBind(SQLite.sqlite3_bind_double(pStmt, i, value), "sqlite3_bind_double", i);
+    checkBind(sqlite3_bind_double(pStmt, i, value), "sqlite3_bind_double", i);
   }
   /**
    * @param i     The leftmost SQL parameter has an index of 1
@@ -429,7 +431,7 @@ public class Stmt {
    */
   public void bindInt(int i, int value) throws StmtException {
     // ok if pStmt is null => SQLITE_MISUSE
-    checkBind(SQLite.sqlite3_bind_int(pStmt, i, value), "sqlite3_bind_int", i);
+    checkBind(sqlite3_bind_int(pStmt, i, value), "sqlite3_bind_int", i);
   }
   /**
    * @param i     The leftmost SQL parameter has an index of 1
@@ -438,7 +440,7 @@ public class Stmt {
    */
   public void bindLong(int i, long value) throws StmtException {
     // ok if pStmt is null => SQLITE_MISUSE
-    checkBind(SQLite.sqlite3_bind_int64(pStmt, i, value), "sqlite3_bind_int64", i);
+    checkBind(sqlite3_bind_int64(pStmt, i, value), "sqlite3_bind_int64", i);
   }
   /**
    * @param i The leftmost SQL parameter has an index of 1
@@ -446,7 +448,7 @@ public class Stmt {
    */
   public void bindNull(int i) throws StmtException {
     // ok if pStmt is null => SQLITE_MISUSE
-    checkBind(SQLite.sqlite3_bind_null(pStmt, i), "sqlite3_bind_null", i);
+    checkBind(sqlite3_bind_null(pStmt, i), "sqlite3_bind_null", i);
   }
   /**
    * @param i     The leftmost SQL parameter has an index of 1
@@ -455,7 +457,7 @@ public class Stmt {
    */
   public void bindText(int i, String value) throws StmtException {
     // ok if pStmt is null => SQLITE_MISUSE
-    checkBind(SQLite.sqlite3_bind_text(pStmt, i, value, -1, SQLite.SQLITE_TRANSIENT), "sqlite3_bind_text", i);
+    checkBind(sqlite3_bind_text(pStmt, i, value, -1, SQLITE_TRANSIENT), "sqlite3_bind_text", i);
   }
   /**
    * @param i The leftmost SQL parameter has an index of 1
@@ -464,7 +466,7 @@ public class Stmt {
    */
   public void bindZeroblob(int i, int n) throws StmtException {
     // ok if pStmt is null => SQLITE_MISUSE
-    checkBind(SQLite.sqlite3_bind_zeroblob(pStmt, i, n), "sqlite3_bind_zeroblob", i);
+    checkBind(sqlite3_bind_zeroblob(pStmt, i, n), "sqlite3_bind_zeroblob", i);
   }
 
   private static final boolean[] UNKNOWN = new boolean[3];
@@ -479,12 +481,12 @@ public class Stmt {
   }
 
   void check(int res, String format) throws StmtException {
-    if (res != SQLite.SQLITE_OK) {
+    if (res != SQLITE_OK) {
       throw new StmtException(this, String.format(format, getSql()), res);
     }
   }
   private void checkBind(int res, String method, int i) throws StmtException {
-    if (res != SQLite.SQLITE_OK) {
+    if (res != SQLITE_OK) {
       throw new StmtException(this, String.format("error while calling %s for param %d of '%s'", method, i, getSql()), res);
     }
   }

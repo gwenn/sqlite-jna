@@ -235,7 +235,7 @@ public class SQLite implements Library {
   static {
     if (System.getProperty("sqlite.config.log", "").length() > 0) {
       // DriverManager.getLogWriter();
-      SQLite.sqlite3_config(SQLite.SQLITE_CONFIG_LOG, LOG_CALLBACK, null);
+      sqlite3_config(SQLITE_CONFIG_LOG, LOG_CALLBACK, null);
     }
   }
 
