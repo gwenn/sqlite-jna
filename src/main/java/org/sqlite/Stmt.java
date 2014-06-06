@@ -412,6 +412,10 @@ public class Stmt {
    * @throws StmtException
    */
   public void bindBlob(int i, byte[] value) throws StmtException {
+    if (value == null) {
+      bindNull(i);
+      return;
+    }
     // ok if pStmt is null => SQLITE_MISUSE
     checkBind(sqlite3_bind_blob(pStmt, i, value, value.length, SQLITE_TRANSIENT), "sqlite3_bind_blob", i);
   }
@@ -456,6 +460,10 @@ public class Stmt {
    * @throws StmtException
    */
   public void bindText(int i, String value) throws StmtException {
+    if (value == null) {
+      bindNull(i);
+      return;
+    }
     // ok if pStmt is null => SQLITE_MISUSE
     checkBind(sqlite3_bind_text(pStmt, i, value, -1, SQLITE_TRANSIENT), "sqlite3_bind_text", i);
   }
