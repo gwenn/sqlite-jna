@@ -6,7 +6,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 import static org.sqlite.SQLite.getCString;
-import static org.sqlite.SQLite.sqlite3_context;
 
 public class ConnTest {
   @Test
@@ -163,7 +162,7 @@ public class ConnTest {
     final Conn c = open();
     c.createScalarFunction("test", 0, new ScalarCallback() {
       @Override
-      public void apply(sqlite3_context pCtx, int nArg, Pointer args) {
+      public void apply(Pointer pCtx, int nArg, Pointer args) {
         assertNotNull(pCtx);
         assertEquals(0, nArg);
         //assertNull(args);

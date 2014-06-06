@@ -8,13 +8,15 @@
  */
 package org.sqlite;
 
+import org.bridj.Pointer;
+
 import static org.sqlite.SQLite.*;
 
 public class Backup {
-  private sqlite3_backup pBackup;
+  private Pointer pBackup;
   private final Conn dst, src;
 
-  Backup(sqlite3_backup pBackup, Conn dst, Conn src) {
+  Backup(Pointer pBackup, Conn dst, Conn src) {
     assert pBackup != null && dst != null && src != null;
     this.pBackup = pBackup;
     this.dst = dst;

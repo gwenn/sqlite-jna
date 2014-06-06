@@ -23,12 +23,12 @@ import static org.sqlite.SQLite.*;
  */
 public class Blob {
   private final Conn c;
-  private sqlite3_blob pBlob;
+  private Pointer pBlob;
   private int readOffset;
   private int writeOffset;
   private int size = -1;
 
-  Blob(Conn c, sqlite3_blob pBlob) {
+  Blob(Conn c, Pointer pBlob) {
     assert c != null;
     this.c = c;
     this.pBlob = pBlob;

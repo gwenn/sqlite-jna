@@ -19,7 +19,7 @@ public class Conn {
   public static final String MEMORY = ":memory:";
   public static final String TEMP_FILE = "";
 
-  private sqlite3 pDb;
+  private Pointer pDb;
   private final boolean sharedCacheMode;
   private TimeoutProgressCallback timeoutProgressCallback;
 
@@ -37,9 +37,9 @@ public class Conn {
     if (!sqlite3_threadsafe()) {
       throw new SQLiteException("sqlite library was not compiled for thread-safe operation", ErrCodes.WRAPPER_SPECIFIC);
     }
-    final Pointer<sqlite3> ppDb = Pointer.allocate(sqlite3.class);
+    final Pointer<Pointer> ppDb = Pointer.allocate(Pointer.class);
     final int res = sqlite3_open_v2(filename, ppDb, flags, vfs);
-    final sqlite3 pDb = ppDb.get();
+    final Pointer pDb = ppDb.get();
     ppDb.release();
     if (res != SQLITE_OK) {
       if (pDb != null) {
@@ -80,7 +80,7 @@ public class Conn {
     }
   }
 
-  private Conn(sqlite3 pDb, boolean sharedCacheMode) {
+  private Conn(Pointer pDb, boolean sharedCacheMode) {
     assert pDb != null;
     this.pDb = pDb;
     this.sharedCacheMode = sharedCacheMode;
@@ -133,10 +133,10 @@ public class Conn {
       }
     }
     final Pointer<Byte> pSql = pointerToString(sql);
-    final Pointer<sqlite3_stmt> ppStmt = Pointer.allocate(sqlite3_stmt.class);
+    final Pointer<Pointer> ppStmt = Pointer.allocate(Pointer.class);
     final Pointer<Pointer<Byte>> ppTail = Pointer.allocatePointer(Byte.class);
     final int res = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail); // FIXME nbytes + 1
-    sqlite3_stmt pStmt = ppStmt.get();
+    Pointer pStmt = ppStmt.get();
     ppStmt.release();
     final String tail = getCString(ppTail.get()); // pStmt may be null && tail not null...
     ppTail.release();
@@ -180,9 +180,9 @@ public class Conn {
 
   public Blob open(String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
     checkOpen();
-    final Pointer<sqlite3_blob> ppBlob = Pointer.allocate(sqlite3_blob.class);
+    final Pointer<Pointer> ppBlob = Pointer.allocate(Pointer.class);
     final int res = sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob); // ko if pDb is null
-    final sqlite3_blob pBlob = ppBlob.get();
+    final Pointer pBlob = ppBlob.get();
     ppBlob.release();
     if (res != SQLITE_OK) {
       sqlite3_blob_close(pBlob);
@@ -356,7 +356,7 @@ public class Conn {
   public static Backup open(Conn dst, String dstName, Conn src, String srcName) throws ConnException {
     dst.checkOpen();
     src.checkOpen();
-    final sqlite3_backup pBackup = sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
+    final Pointer pBackup = sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
     if (pBackup == null) {
       throw new ConnException(dst, "backup init failed", dst.getErrCode());
     }
