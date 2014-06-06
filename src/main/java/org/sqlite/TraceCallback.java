@@ -8,14 +8,10 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import org.bridj.Callback;
+import org.bridj.Pointer;
 
-public abstract class TraceCallback implements Callback {
+public abstract class TraceCallback<T> extends Callback<TraceCallback<T>> {
   @SuppressWarnings("unused")
-  public void invoke(Pointer arg, String sql) {
-    trace(sql);
-  }
-
-  protected abstract void trace(String sql);
+  public abstract void apply(Pointer<T> arg, Pointer<Byte> sql);
 }

@@ -1,72 +1,127 @@
-/*
- * The author disclaims copyright to this source code.  In place of
- * a legal notice, here is a blessing:
- *
- *    May you do good and not evil.
- *    May you find forgiveness for yourself and forgive others.
- *    May you share freely, never taking more than you give.
- */
 package org.sqlite;
 
+import org.bridj.Pointer;
+
+import java.sql.SQLException;
+
+import static org.sqlite.SQLite.*;
+
 public class Main {
-  public static void main(String[] args) throws SQLiteException {
-    final Conn c = Conn.open(Conn.MEMORY,
-        OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_CREATE | OpenFlags.SQLITE_OPEN_FULLMUTEX, null);
-    final Stmt s = c.prepare("SELECT 1 as num, 3.14, 'test où çà', null WHERE :i = 1 OR :d > 0.0 OR :s = 't'", false);
 
-    final Tuple params = new Tuple(1, 3, "t");
-    s.bind(params.i, params.d, params.s);
-    s.namedBind(":i", params.i, ":d", params.d, ":s", params.s);
-
-    int columnCount = s.getColumnCount();
-    System.out.println("columnCount = " + columnCount);
-/*
-    for (int iCol = 0; iCol < columnCount; iCol++) {
-      int colType = sqlite3_column_type(pStmt, iCol);
-      System.out.println("colType[" + iCol + "] = " + colType);
-    }
-*/
-    final boolean b = s.step(0);
-    System.out.println("b = " + b);
-    for (int iCol = 0; iCol < columnCount; iCol++) {
-      final int colType = s.getColumnType(iCol);
-      final String colName = s.getColumnName(iCol);
-      final Object colValue;
-      if (colType == ColTypes.SQLITE_INTEGER) {
-        //colValue = s.getColumnInt(iCol);
-        colValue = s.getColumnLong(iCol);
-      } else if (colType == ColTypes.SQLITE_TEXT) {
-        colValue = s.getColumnText(iCol);
-        //colValue = s.getColumnBlob(iCol);
-      } else if (colType == ColTypes.SQLITE_FLOAT) {
-        colValue = s.getColumnDouble(iCol);
-      } else {
-        //colValue = null;
-        //colValue = s.getColumnText(iCol);
-        colValue = s.getColumnBlob(iCol);
+  public static void main(String[] args) throws SQLException {
+    final LogCallback<Void> logCallback = new LogCallback<Void>() {
+      @Override
+      public void apply(Pointer<Void> udp, int err, Pointer<Byte> msg) {
+        System.err.printf("%d: %s\n", err, msg.getString(Pointer.StringType.C, UTF8));
       }
-      System.out.println("colType[" + iCol + "] = " + colType);
-      System.out.println("colName[" + iCol + "] = " + colName);
-      System.out.println("colValue[" + iCol + "] = " + colValue);
-    }
-    check(s.close(), "sqlite3_finalize");
-    check(c.close(), "sqlite3_close");
-  }
+    };
+    sqlite3_config(SQLITE_CONFIG_LOG, Pointer.pointerTo(logCallback), null);
 
-  private static void check(int res, String name) throws ConnException {
-    if (res != SQLite.SQLITE_OK) {
-      throw new ConnException(null, String.format("Method: %s, error code: %d", name, res), res);
-    }
-  }
-  private static class Tuple {
-    private final int i;
-    private final double d;
-    private final String s;
+    sqlite3_log(0, "Test");
+    System.out.println("sqlite3_threadsafe = " + sqlite3_threadsafe());
 
-    public Tuple(int i, double d, String s) {
-      this.i = i;
-      this.d = d;
-      this.s = s;
+    System.out.println("sqlite3_libversion = " + getCString(sqlite3_libversion()));
+
+    final Pointer<Byte> optName = pointerToString("SQLITE_OMIT_LOAD_EXTENSION");
+    System.out.println("sqlite3_compileoption_used(SQLITE_OMIT_LOAD_EXTENSION) = " + sqlite3_compileoption_used(optName));
+    optName.release();
+
+    System.out.println("sqlite3_config(SQLITE_CONFIG_SERIALIZED) = " + sqlite3_config(SQLITE_CONFIG_SERIALIZED));
+    System.out.println("sqlite3_config(SQLITE_CONFIG_URI) = " + sqlite3_config(SQLITE_CONFIG_URI, false));
+
+    int res = 0;
+    final Conn db = Conn.open(":memory:", OpenFlags.SQLITE_OPEN_READWRITE, null);
+
+    System.out.println("sqlite3_db_filename = " + db.getFilename());
+    System.out.println("sqlite3_db_readonly = " + db.isReadOnly(null));
+    System.out.println("sqlite3_get_autocommit = " + db.getAutoCommit());
+
+    String sql = "DROP TABLE IF EXISTS test; " +
+        "CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT," +
+        " d REAL, i INTEGER, s TEXT); -- bim";
+    while (sql.length() > 0) {
+      Stmt stmt = db.prepare(sql, false);
+      sql = stmt.getTail();
+      if (stmt.isDumb()) {
+        continue;
+      }
+
+      System.out.println("sqlite3_sql = " + stmt.getSql());
+      System.out.println("sqlite3_stmt_readonly = " + stmt.isReadOnly());
+
+      stmt.step(0);
+
+      System.out.println("sqlite3_stmt_busy = " + stmt.isBusy());
+      stmt.clearBindings();
+      stmt.reset();
+
+      res = stmt.close();
+      System.out.println("sqlite3_finalize = " + res);
     }
+
+    sql = "INSERT INTO test (d, i, s) VALUES (?, ?, ?)";
+    Stmt stmt = db.prepare(sql, true);
+    System.out.println("sqlite3_bind_parameter_count = " + stmt.getBindParameterCount());
+
+    stmt.step(0);
+    System.out.println("sqlite3_total_changes = " + db.getTotalChanges());
+    System.out.println("sqlite3_changes = " + db.getChanges());
+    System.out.println("sqlite3_last_insert_rowid = " + db.getLastInsertRowid());
+
+    for (int i = 0; i < 5; i++) {
+      stmt.bindDouble(1, i * Math.PI);
+      stmt.bindInt(2, i);
+      stmt.bindText(3, "h" + i);
+      stmt.step(0);
+      System.out.println("sqlite3_total_changes = " + db.getTotalChanges());
+      System.out.println("sqlite3_changes = " + db.getChanges());
+      System.out.println("sqlite3_last_insert_rowid = " + db.getLastInsertRowid());
+    }
+
+    res = stmt.close();
+    System.out.println("sqlite3_finalize = " + res);
+
+    sql = "SELECT * FROM test";
+    stmt = db.prepare(sql, true);
+    while (stmt.step(0)) {
+      int nCol = stmt.getColumnCount();
+      for (int i = 0; i < nCol; i++) {
+        System.out.println("sqlite3_column_name("+i+") = " + stmt.getColumnName(i));
+        final int columnType = stmt.getColumnType(i);
+        System.out.println("sqlite3_column_type("+i+") = " + columnType);
+        if (columnType != ColTypes.SQLITE_NULL) {
+          System.out.println("sqlite3_column_bytes("+i+") = " + stmt.getColumnBytes(i));
+          System.out.println("sqlite3_column_text("+i+") = " + stmt.getColumnText(i));
+        }
+      }
+    }
+    res = stmt.close();
+    System.out.println("sqlite3_finalize = " + res);
+
+    db.setExtendedResultCodes(true);
+    try {
+      db.fastExec("BLAM");
+    } catch (ConnException e) {
+      System.out.println("sqlite3_exec = " + e.getErrorCode());
+      System.out.println("sqlite3_errcode = " + db.getErrCode());
+      System.out.println("sqlite3_extended_errcode = " + db.getExtendedErrcode());
+      System.out.println("sqlite3_errmsg = " + db.getErrMsg());
+    }
+
+    //sqlite3_interrupt(db);
+
+    Conn dst = Conn.open(":memory:", OpenFlags.SQLITE_OPEN_READWRITE, null);
+    final Backup backup = Conn.open(dst, "main", db, "main");
+    System.out.println("sqlite3_backup_pagecount = " + backup.pageCount());
+    boolean ok = true;
+    while (ok) {
+      ok = backup.step(1);
+      System.out.println("sqlite3_backup_remaining = " + backup.remaining());
+    }
+    backup.finish();
+    dst.closeAndCheck();
+
+    res = db.close();
+    System.out.println("sqlite3_close = " + res);
   }
 }

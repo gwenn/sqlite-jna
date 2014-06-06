@@ -8,11 +8,13 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import org.bridj.Callback;
+import org.bridj.Pointer;
 
-public interface ScalarCallback extends Callback {
+import static org.sqlite.SQLite.sqlite3_context;
+
+public abstract class ScalarCallback<T> extends Callback<ScalarCallback<T>> {
   //void (*)(sqlite3_context*,int,sqlite3_value**),
   @SuppressWarnings("unused")
-  void invoke(Pointer pCtx, int nArg, Pointer args);
+  public abstract void apply(sqlite3_context pCtx, int nArg, Pointer<T> args);
 }

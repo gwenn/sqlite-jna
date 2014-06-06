@@ -8,13 +8,15 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
+import org.bridj.Pointer;
 
-public class TimeoutProgressCallback implements SQLite.ProgressCallback {
+import static org.sqlite.SQLite.ProgressCallback;
+
+public class TimeoutProgressCallback extends ProgressCallback<Void> {
   private long expiration;
 
   @Override
-  public boolean invoke(Pointer arg) {
+  public boolean apply(Pointer<Void> arg) {
     if (expiration == 0 || System.currentTimeMillis() <= expiration) {
       return false;
     }

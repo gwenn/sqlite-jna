@@ -8,13 +8,13 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
+import static org.sqlite.SQLite.*;
 
 public class Backup {
-  private Pointer pBackup;
+  private sqlite3_backup pBackup;
   private final Conn dst, src;
 
-  Backup(Pointer pBackup, Conn dst, Conn src) {
+  Backup(sqlite3_backup pBackup, Conn dst, Conn src) {
     assert pBackup != null && dst != null && src != null;
     this.pBackup = pBackup;
     this.dst = dst;
@@ -23,11 +23,11 @@ public class Backup {
 
   public boolean step(int nPage) throws ConnException {
     checkInit();
-    final int res = SQLite.sqlite3_backup_step(pBackup, nPage);
-    if (res == SQLite.SQLITE_OK || res == ErrCodes.SQLITE_BUSY || res == ErrCodes.SQLITE_LOCKED) {
-      SQLite.sqlite3_log(-1, "busy/locked error during backup.");
+    final int res = sqlite3_backup_step(pBackup, nPage);
+    if (res == SQLITE_OK || res == ErrCodes.SQLITE_BUSY || res == ErrCodes.SQLITE_LOCKED) {
+      sqlite3_log(-1, "busy/locked error during backup.");
       return true;
-    } else if (res == SQLite.SQLITE_DONE) {
+    } else if (res == SQLITE_DONE) {
       return false;
     }
     throw new ConnException(dst, "backup step failed", res);
@@ -61,18 +61,18 @@ public class Backup {
 
   public int remaining() throws ConnException {
     checkInit();
-    return SQLite.sqlite3_backup_remaining(pBackup);
+    return sqlite3_backup_remaining(pBackup);
   }
 
   public int pageCount() throws ConnException {
     checkInit();
-    return SQLite.sqlite3_backup_pagecount(pBackup);
+    return sqlite3_backup_pagecount(pBackup);
   }
 
   @Override
   protected void finalize() throws Throwable {
     if (pBackup != null) {
-      SQLite.sqlite3_log(-1, "dangling SQLite backup.");
+      sqlite3_log(-1, "dangling SQLite backup.");
       finish();
     }
     super.finalize();
@@ -80,16 +80,16 @@ public class Backup {
 
   public int finish() {
     if (pBackup == null) {
-      return SQLite.SQLITE_OK;
+      return SQLITE_OK;
     }
-    final int res = SQLite.sqlite3_backup_finish(pBackup); // must be called only once
+    final int res = sqlite3_backup_finish(pBackup); // must be called only once
     pBackup = null;
     return res;
   }
 
   public void finishAndCheck() throws ConnException {
     final int res = finish();
-    if (res != SQLite.SQLITE_OK) {
+    if (res != SQLITE_OK) {
       throw new ConnException(dst, "backup finish failed", res);
     }
   }

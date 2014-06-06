@@ -1,10 +1,12 @@
 package org.sqlite;
 
-import com.sun.jna.Pointer;
+import org.bridj.Pointer;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+import static org.sqlite.SQLite.getCString;
+import static org.sqlite.SQLite.sqlite3_context;
 
 public class ConnTest {
   @Test
@@ -143,12 +145,12 @@ public class ConnTest {
   public void trace() throws SQLiteException {
     final Conn c = open();
     final String[] traces = new String[1];
-    c.trace(new TraceCallback() {
+    c.trace(new TraceCallback<Void>() {
       private int i;
 
       @Override
-      public void trace(String sql) {
-        traces[i++] = sql;
+      public void apply(Pointer<Void> arg, Pointer<Byte> sql) {
+        traces[i++] = getCString(sql);
       }
     }, null);
     final String sql = "SELECT 1";
@@ -161,7 +163,7 @@ public class ConnTest {
     final Conn c = open();
     c.createScalarFunction("test", 0, new ScalarCallback() {
       @Override
-      public void invoke(Pointer pCtx, int nArg, Pointer args) {
+      public void apply(sqlite3_context pCtx, int nArg, Pointer args) {
         assertNotNull(pCtx);
         assertEquals(0, nArg);
         //assertNull(args);
