@@ -660,7 +660,7 @@ public class DbMeta implements DatabaseMetaData {
             + "null as PROCEDURE_TYPE, "
             + "null as SPECIFIC_NAME limit 0"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -690,7 +690,7 @@ public class DbMeta implements DatabaseMetaData {
             + "null as IS_NULLABLE, "
             + "null as SPECIFIC_NAME limit 0"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -746,7 +746,7 @@ public class DbMeta implements DatabaseMetaData {
     sql.append(" order by TABLE_TYPE, TABLE_SCHEM, TABLE_NAME");
 
     final PreparedStatement stmt = c.prepareStatement(sql.toString());
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -759,7 +759,7 @@ public class DbMeta implements DatabaseMetaData {
             + "null as TABLE_CATALOG "
             + "limit 0"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -777,7 +777,7 @@ public class DbMeta implements DatabaseMetaData {
     }
     sql.append(") order by TABLE_CAT");
     final PreparedStatement stmt = c.prepareStatement(sql.toString());
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
   private String[] getCatalogs(String catalog) throws SQLException {
@@ -822,7 +822,7 @@ public class DbMeta implements DatabaseMetaData {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement("select 'TABLE' as TABLE_TYPE " +
         "union select 'VIEW' union select 'SYSTEM TABLE'");
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -906,7 +906,7 @@ public class DbMeta implements DatabaseMetaData {
         "SELECT NULL AS cat, NULL AS tbl, NULL AS ordpos, NULL AS colnullable, NULL AS ct, "
             + "NULL AS cn, NULL AS tn, NULL AS cdflt) limit 0");
     final PreparedStatement columns = c.prepareStatement(sql.toString());
-    columns.closeOnCompletion();
+    ((PrepStmt) columns).closeOnCompletion();
     return columns.executeQuery();
   }
 
@@ -1026,7 +1026,7 @@ public class DbMeta implements DatabaseMetaData {
             + "null as PRIVILEGE, "
             + "null as IS_GRANTABLE limit 0"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -1043,7 +1043,7 @@ public class DbMeta implements DatabaseMetaData {
             + "null as PRIVILEGE, "
             + "null as IS_GRANTABLE limit 0"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -1108,7 +1108,7 @@ public class DbMeta implements DatabaseMetaData {
       }
     }
     final PreparedStatement columns = c.prepareStatement(sql.toString());
-    columns.closeOnCompletion();
+    ((PrepStmt) columns).closeOnCompletion();
     return columns.executeQuery();
   }
 
@@ -1126,7 +1126,7 @@ public class DbMeta implements DatabaseMetaData {
             + "null as DECIMAL_DIGITS, "
             + "null as PSEUDO_COLUMN limit 0"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -1192,7 +1192,7 @@ public class DbMeta implements DatabaseMetaData {
       sql.append(") order by COLUMN_NAME");
     }
     final PreparedStatement columns = c.prepareStatement(sql.toString());
-    columns.closeOnCompletion();
+    ((PrepStmt) columns).closeOnCompletion();
     return columns.executeQuery();
   }
 
@@ -1265,7 +1265,7 @@ public class DbMeta implements DatabaseMetaData {
       }
     }
     final PreparedStatement fks = c.prepareStatement(sql.toString());
-    fks.closeOnCompletion();
+    ((PrepStmt) fks).closeOnCompletion();
     return fks.executeQuery();
   }
 
@@ -1361,7 +1361,7 @@ public class DbMeta implements DatabaseMetaData {
       sql.append(") order by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, KEY_SEQ");
     }
     final PreparedStatement eks = c.prepareStatement(sql.toString());
-    eks.closeOnCompletion();
+    ((PrepStmt) eks).closeOnCompletion();
     return eks.executeQuery();
   }
 
@@ -1403,7 +1403,7 @@ public class DbMeta implements DatabaseMetaData {
             + "    select 'INTEGER' as tn, " + Types.INTEGER + " as dt"
             + ") order by DATA_TYPE, TYPE_NAME"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -1489,7 +1489,7 @@ public class DbMeta implements DatabaseMetaData {
     }
 
     final PreparedStatement idx = c.prepareStatement(sql.toString());
-    idx.closeOnCompletion();
+    ((PrepStmt) idx).closeOnCompletion();
     return idx.executeQuery();
   }
 
@@ -1567,7 +1567,7 @@ public class DbMeta implements DatabaseMetaData {
             + "null as BASE_TYPE "
             + "limit 0"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -1608,7 +1608,7 @@ public class DbMeta implements DatabaseMetaData {
             + "null as SUPERTYPE_SCHEM, "
             + "null as SUPERTYPE_NAME limit 0"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -1622,7 +1622,7 @@ public class DbMeta implements DatabaseMetaData {
             + "null as TABLE_NAME, "
             + "null as SUPERTABLE_NAME limit 0"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -1653,7 +1653,7 @@ public class DbMeta implements DatabaseMetaData {
             + "null as SCOPE_TABLE, "
             + "null as SOURCE_DATA_TYPE limit 0"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -1736,7 +1736,7 @@ public class DbMeta implements DatabaseMetaData {
             + "null as DESCRIPTION "
             + "limit 0"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 
@@ -1770,7 +1770,7 @@ public class DbMeta implements DatabaseMetaData {
             + "null as CHAR_OCTET_LENGTH, "
             + "null as IS_NULLABLE limit 0"
     );
-    stmt.closeOnCompletion();
+    ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
   }
 

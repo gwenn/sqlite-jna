@@ -25,7 +25,7 @@ public class Conn {
   private final boolean sharedCacheMode;
   private TimeoutProgressCallback timeoutProgressCallback;
 
-  private final LinkedList<Stmt> cache = new LinkedList<>();
+  private final LinkedList<Stmt> cache = new LinkedList<Stmt>();
   private int maxCacheSize = 100; // TODO parameterize
 
   /**
