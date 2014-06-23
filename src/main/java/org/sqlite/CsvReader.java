@@ -52,6 +52,29 @@ public class CsvReader implements Closeable {
     eor = true;
   }
 
+  /*
+   * Empty lines (or line comments) are skipped.
+   * Extra fields are skipped (when the number of fields is greater than `values` size).
+   * Returns the number of fields read.
+   */
+  public int scanRecord(String[] values) throws IOException {
+    int i;
+    for (i = 0; i < values.length && !isEndOfFile(); i++) {
+      String value = scanText();
+      if (i == 0) { // skip empty line (or line comment)
+        while (isEmptyLine()) {
+          value = scanText();
+        }
+      }
+      values[i] = value;
+      if (isEndOfRecord()) {
+        return i + 1;
+      }
+    }
+    skip(); // Extra values are skipped.
+    return i + 1;
+  }
+
   // read text until next separator or eol/eof
   public String scanText() throws IOException {
     n = 0;
@@ -213,8 +236,7 @@ public class CsvReader implements Closeable {
 
   // skip until eol (eol included)
   public void skip() throws IOException {
-    if (isEndOfRecord()) {
-      eor = false; // TODO validate
+    if (isEndOfRecord()) { // TODO
       return;
     }
     while (!eof) {
@@ -224,6 +246,7 @@ public class CsvReader implements Closeable {
         break;
       }
     }
+    eor = true;
   }
 
   // Returns current line number (not record number)

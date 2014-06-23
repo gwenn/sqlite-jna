@@ -1,8 +1,10 @@
 package org.sqlite;
 
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -64,6 +66,14 @@ public class CsvWriter implements Closeable, Flushable {
   public void writeRecord(Iterable<?> values) throws IOException {
     for (Object value : values) {
       writeValue(value);
+    }
+    endOfRecord();
+  }
+
+  // Ensures that values are quoted when needed.
+  public void writeRecord(String[] values) throws IOException {
+    for (String value : values) {
+      write(value);
     }
     endOfRecord();
   }
@@ -143,6 +153,17 @@ public class CsvWriter implements Closeable, Flushable {
   public void close() throws IOException {
     if (out instanceof Closeable) {
       ((Closeable) out).close();
+    }
+  }
+
+  public static void main(String[] args) throws IOException {
+    CsvReader r = new CsvReader(new BufferedReader(new InputStreamReader(System.in))/*, '\t', false*/);
+    CsvWriter w  = new CsvWriter(System.out/*, '\t', false*/);
+    while (!r.isEndOfFile()) {
+      w.write(r.scanText());
+      if (r.isEndOfRecord()) {
+        w.endOfRecord();
+      }
     }
   }
 }
