@@ -1,10 +1,10 @@
 package org.sqlite;
 
-import java.io.BufferedReader;
 import java.io.Closeable;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.Flushable;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -71,9 +71,12 @@ public class CsvWriter implements Closeable, Flushable {
   }
 
   // Ensures that values are quoted when needed.
-  public void writeRecord(String[] values) throws IOException {
-    for (String value : values) {
-      write(value);
+  public void writeRecord(String[] values, int n) throws IOException {
+    if (n < 0) {
+      return;
+    }
+    for (int i = 0; i < n; i++) {
+      write(values[i]);
     }
     endOfRecord();
   }
@@ -157,13 +160,16 @@ public class CsvWriter implements Closeable, Flushable {
   }
 
   public static void main(String[] args) throws IOException {
-    CsvReader r = new CsvReader(new BufferedReader(new InputStreamReader(System.in))/*, '\t', false*/);
-    CsvWriter w  = new CsvWriter(System.out/*, '\t', false*/);
+    CsvReader r = new CsvReader(new FileReader(args[0])/*, '\t', false*/);
+    r.setTrim(true);
+    CsvWriter w  = new CsvWriter(new FileWriter(args[1])/*, '\t', false*/);
+    String[] values = new String[25];
+    int n;
     while (!r.isEndOfFile()) {
-      w.write(r.scanText());
-      if (r.isEndOfRecord()) {
-        w.endOfRecord();
-      }
+      n = r.scanRecord(values);
+      w.writeRecord(values, n);
     }
+    w.close();
+    r.close();
   }
 }

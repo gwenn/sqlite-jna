@@ -63,6 +63,9 @@ public class CsvReader implements Closeable {
       String value = scanText();
       if (i == 0) { // skip empty line (or line comment)
         while (isEmptyLine()) {
+          if (isEndOfFile()) {
+            return -1;
+          }
           value = scanText();
         }
       }
@@ -72,7 +75,7 @@ public class CsvReader implements Closeable {
       }
     }
     skip(); // Extra values are skipped.
-    return i + 1;
+    return i;
   }
 
   // read text until next separator or eol/eof
@@ -99,11 +102,11 @@ public class CsvReader implements Closeable {
     }
     int offset = 0;
     if (trim) {
-      while (Character.isWhitespace(buf[offset]) && offset < n) {
-        offset++;
-      }
       while (n > offset && Character.isWhitespace(buf[n-1])) {
         n--;
+      }
+      while (offset < n && Character.isWhitespace(buf[offset])) {
+        offset++;
       }
     }
     return new String(buf, offset, n-offset);
@@ -235,8 +238,9 @@ public class CsvReader implements Closeable {
   }
 
   // skip until eol (eol included)
+  // Cannot be called consecutively without a scan. (FIXME)
   public void skip() throws IOException {
-    if (isEndOfRecord()) { // TODO
+    if (isEndOfRecord()) {
       return;
     }
     while (!eof) {
