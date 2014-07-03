@@ -89,15 +89,16 @@ public class CsvReader implements Closeable {
       empty = false;
       quotedField();
       // quoted-field are not trimmed
-      return new String(buf, 0, n); // FIXME
+      return new String(buf, 0, n);
     } else if (eor && comment != 0 && c == comment) { // line comment
       empty = true;
       lineComment();
       return "";
     }
     // non-quoted field
-    nonQuotedField(c);
+    boolean peor = nonQuotedField(c);
     if (n == 0) {
+      empty = peor;
       return "";
     }
     int offset = 0;
@@ -109,6 +110,7 @@ public class CsvReader implements Closeable {
         offset++;
       }
     }
+    empty = peor && (n-offset) == 0;
     return new String(buf, offset, n-offset);
   }
 
@@ -151,24 +153,25 @@ public class CsvReader implements Closeable {
   }
 
   // Scan until separator or newline, marking end of field.
-  private void nonQuotedField(int c) throws IOException {
+  private boolean nonQuotedField(int c) throws IOException {
     while (c != -1) {
       if (c == sep) {
         empty = false;
         eor = false;
-        break;
+        return false;
       } else if (c == '\n') {
         if (n > 0 && buf[n-1] == '\r') {
           n--;
         }
-        empty = eor && n == 0; // FIXME empty & trim
+        boolean peor = eor;
         eor = true;
         lineNumber++;
-        break;
+        return peor;
       }
       append(c);
       c = read();
     }
+    return eor;
   }
 
   // Scan until newline, marking end of comment.
