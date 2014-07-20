@@ -377,7 +377,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
       return new int[0];
     }
     final int size = batch.size();
-    Exception cause = null;
+    SQLException cause = null;
     Object[] params;
     final int[] changes = new int[size];
     for (int i = 0; i < size; ++i) {
@@ -390,9 +390,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
         }
         changes[i] = executeUpdate();
       } catch (SQLException e) {
-        if (cause == null) {
-          cause = e;
+        if (cause != null) {
+          e.setNextException(cause);
         }
+        cause = e;
         changes[i] = EXECUTE_FAILED;
       }
     }
