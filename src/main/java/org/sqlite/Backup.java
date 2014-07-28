@@ -17,7 +17,7 @@ public class Backup {
   private final Conn dst, src;
 
   Backup(Pointer pBackup, Conn dst, Conn src) {
-    assert pBackup != null && dst != null && src != null;
+    assert (pBackup != null) && (dst != null) && (src != null);
     this.pBackup = pBackup;
     this.dst = dst;
     this.src = src;
@@ -52,7 +52,7 @@ public class Backup {
         if (!step(nPage)) {
           break;
         }
-        if (millis > 0) {
+        if (millis > 0L) {
           Thread.sleep(millis);
         }
       }
@@ -100,7 +100,7 @@ public class Backup {
     return pBackup == null;
   }
 
-  public void checkInit() throws ConnException {
+  void checkInit() throws ConnException {
     if (isFinished()) {
       throw new ConnException(dst, "backup already finished", ErrCodes.WRAPPER_SPECIFIC);
     }

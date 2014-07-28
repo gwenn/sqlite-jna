@@ -160,10 +160,10 @@ public class CsvWriter implements Closeable, Flushable {
   }
 
   public static void main(String[] args) throws IOException {
-    CsvReader r = new CsvReader(new FileReader(args[0])/*, '\t', false*/);
+    final CsvReader r = new CsvReader(new FileReader(args[0])/*, '\t', false*/);
     r.setTrim(true);
-    CsvWriter w  = new CsvWriter(new FileWriter(args[1])/*, '\t', false*/);
-    String[] values = new String[25];
+    final CsvWriter w  = new CsvWriter(new FileWriter(args[1])/*, '\t', false*/);
+    final String[] values = new String[25];
     int n;
     while (!r.isEndOfFile()) {
       n = r.scanRecord(values);

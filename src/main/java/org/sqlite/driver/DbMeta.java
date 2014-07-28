@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +28,8 @@ import java.util.Map;
 import static org.sqlite.SQLite.doubleQuote;
 import static org.sqlite.SQLite.escapeIdentifier;
 
-public class DbMeta implements DatabaseMetaData {
-  private Conn c;
+class DbMeta implements DatabaseMetaData {
+  private final Conn c;
 
   public DbMeta(Conn c) {
     this.c = c;
@@ -697,7 +698,7 @@ public class DbMeta implements DatabaseMetaData {
   @Override
   public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
     checkOpen();
-    tableNamePattern = (tableNamePattern == null || "".equals(tableNamePattern)) ? "%" : tableNamePattern;
+    tableNamePattern = (tableNamePattern == null || tableNamePattern.isEmpty()) ? "%" : tableNamePattern;
 
     final StringBuilder sql = new StringBuilder().append("select").
         append(" cat as TABLE_CAT,").
@@ -738,7 +739,7 @@ public class DbMeta implements DatabaseMetaData {
         if (i > 0) sql.append(", ");
         sql.append(quote(types[i].toUpperCase()));
       }
-      sql.append(")");
+      sql.append(')');
     } else {
       sql.append(" and TABLE_TYPE in ('SYSTEM TABLE', 'TABLE', 'VIEW')");
     }
@@ -783,7 +784,7 @@ public class DbMeta implements DatabaseMetaData {
   private String[] getCatalogs(String catalog) throws SQLException {
     final String[] catalogs;
     if (catalog == null) {
-      List<String> cats = new ArrayList<String>(2);
+      final List<String> cats = new ArrayList<String>(2);
       PreparedStatement database_list = null;
       ResultSet rs = null;
       try {
@@ -808,7 +809,7 @@ public class DbMeta implements DatabaseMetaData {
         }
       }
       catalogs = cats.toArray(new String[cats.size()]);
-    } else if (catalog.length() == 0) {
+    } else if (catalog.isEmpty()) {
       catalogs = new String[] {"temp", "main"}; // "temp" first
     } else {
       catalogs = new String[] {catalog};
@@ -874,8 +875,8 @@ public class DbMeta implements DatabaseMetaData {
           if (colFound) sql.append(" UNION ALL ");
           colFound = true;
 
-          String colType = getSQLiteType(rs.getString(3));
-          int colJavaType = getJavaType(colType);
+          final String colType = getSQLiteType(rs.getString(3));
+          final int colJavaType = getJavaType(colType);
 
           sql.append("SELECT ").
               append(quote(tbl[0])).append(" AS cat, ").
@@ -911,7 +912,7 @@ public class DbMeta implements DatabaseMetaData {
   }
 
   private List<String[]> getExactTableNames(String[] catalogs, String tableNamePattern) throws SQLException {
-    tableNamePattern = (tableNamePattern == null || "".equals(tableNamePattern)) ? "%" : tableNamePattern;
+    tableNamePattern = (tableNamePattern == null || tableNamePattern.isEmpty()) ? "%" : tableNamePattern;
     final List<String[]> tbls = new ArrayList<String[]>();
     for (String catalog : catalogs) {
       PreparedStatement ps = null;
@@ -948,7 +949,7 @@ public class DbMeta implements DatabaseMetaData {
     if ("sqlite_temp_master".equals(table)) {
       return "temp";
     } else if ("sqlite_master".equals(table)) {
-      if (catalog == null || catalog.equals("")) {
+      if (catalog == null || catalog.isEmpty()) {
         return "main";
       } else {
         return catalog;
@@ -989,12 +990,12 @@ public class DbMeta implements DatabaseMetaData {
     return "temp"; // to avoid invalid qualified table name "".tbl
   }
 
-  private String getSQLiteType(String colType) {
+  private static String getSQLiteType(String colType) {
     return colType == null ? "" : colType.toUpperCase();
   }
 
   // TODO Validate affinity vs java type
-  public static int getJavaType(String colType) {
+  private static int getJavaType(String colType) {
     return getJavaType(SQLite.getAffinity(colType));
   }
   public static int getJavaType(int affinity) {
@@ -1292,7 +1293,7 @@ public class DbMeta implements DatabaseMetaData {
         append(importedKeyNotDeferrable).append(" as DEFERRABILITY "). // FIXME
         append("from (");
 
-    final List<String> fkTables = new ArrayList<String>();
+    final Collection<String> fkTables = new ArrayList<String>();
     PreparedStatement fks = null;
     ResultSet rs = null;
     try {
@@ -1428,7 +1429,7 @@ public class DbMeta implements DatabaseMetaData {
         append("null as FILTER_CONDITION ").
         append("from (");
 
-    Map<String, Boolean> indexes = new HashMap<String, Boolean>();
+    final Map<String, Boolean> indexes = new HashMap<String, Boolean>();
     PreparedStatement index_list = null;
     ResultSet rs = null;
     try {
@@ -1789,7 +1790,7 @@ public class DbMeta implements DatabaseMetaData {
     return false;
   }
 
-  private String quote(String data) {
+  private static String quote(String data) {
     if (data == null) {
       return "NULL";
     }

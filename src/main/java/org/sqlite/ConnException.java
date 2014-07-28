@@ -9,7 +9,7 @@
 package org.sqlite;
 
 public class ConnException extends SQLiteException {
-  private final Conn c;
+  private final transient Conn c;
 
   public ConnException(Conn c, String reason, int errCode) {
     super(c, reason, errCode);

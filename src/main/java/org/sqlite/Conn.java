@@ -48,7 +48,7 @@ public class Conn {
       throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
     }
     // TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
-    boolean sharedCacheMode = filename.contains("cache=shared") || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
+    final boolean sharedCacheMode = filename.contains("cache=shared") || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
     return new Conn(ppDb.getValue(), sharedCacheMode);
   }
 
@@ -149,13 +149,13 @@ public class Conn {
 
   public static String mprintf(String format, String arg) {
     final Pointer p = sqlite3_mprintf(format, arg);
-    final String s = p.getString(0);
+    final String s = p.getString(0L);
     sqlite3_free(p);
     return s;
   }
 
   public void exec(String sql) throws SQLiteException {
-    while (sql != null && sql.length() > 0) {
+    while (sql != null && !sql.isEmpty()) {
       Stmt s = null;
       try {
         s = prepare(sql, false);
@@ -312,9 +312,9 @@ public class Conn {
   public String loadExtension(String file, String proc) throws ConnException {
     checkOpen();
     final PointerByReference pErrMsg = new PointerByReference();
-    int res = sqlite3_load_extension(pDb, file, proc, pErrMsg);
+    final int res = sqlite3_load_extension(pDb, file, proc, pErrMsg);
     if (res != SQLITE_OK) {
-      return pErrMsg.getValue().getString(0);
+      return pErrMsg.getValue().getString(0L);
     }
     return null;
   }
@@ -418,7 +418,7 @@ public class Conn {
     }
   }
   private void pragma(String dbName, String name, boolean value) throws ConnException {
-    fastExec("PRAGMA " + qualify(dbName) + name + "=" + (value ? 1 : 0));
+    fastExec("PRAGMA " + qualify(dbName) + name + '=' + (value ? 1 : 0));
   }
 
   // To be called in Conn.prepare
@@ -426,10 +426,10 @@ public class Conn {
     if (maxCacheSize <= 0) {
       return null;
     }
-    synchronized (this) {
+    synchronized (cache) {
       final Iterator<Stmt> it = cache.iterator();
       while (it.hasNext()) {
-        Stmt stmt = it.next();
+        final Stmt stmt = it.next();
         if (stmt.getSql().equals(sql)) { // TODO s.SQL() may have been trimmed by SQLite
           it.remove();
           return stmt;
@@ -444,7 +444,7 @@ public class Conn {
     if (maxCacheSize <= 0) {
       return false;
     }
-    synchronized (this) {
+    synchronized (cache) {
       cache.push(stmt);
       while (cache.size() > maxCacheSize) {
         cache.removeLast().close(true);
@@ -483,10 +483,10 @@ public class Conn {
     if (maxCacheSize <= 0) {
       return;
     }
-    synchronized (this) {
+    synchronized (cache) {
       final Iterator<Stmt> it = cache.iterator();
       while (it.hasNext()) {
-        Stmt stmt = it.next();
+        final Stmt stmt = it.next();
         stmt.close(true);
         it.remove();
       }

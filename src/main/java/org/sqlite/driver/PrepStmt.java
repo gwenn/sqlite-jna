@@ -334,7 +334,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
 
   @Override
   public boolean execute() throws SQLException {
-    org.sqlite.Stmt stmt = getStmt();
+    final org.sqlite.Stmt stmt = getStmt();
     stmt.reset(); // may be reset twice but I don't see how it can be avoided
     if (!boundChecked) {
       checkParameters(stmt);
@@ -435,7 +435,7 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
 
   @Override
   public ResultSetMetaData getMetaData() throws SQLException {
-    org.sqlite.Stmt stmt = getStmt();
+    final org.sqlite.Stmt stmt = getStmt();
     if (stmt.getColumnCount() == 0) {
       return null;
     }

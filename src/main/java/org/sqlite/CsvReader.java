@@ -57,13 +57,13 @@ public class CsvReader implements Closeable {
    * Extra fields are skipped (when the number of fields is greater than `values` size).
    * Returns the number of fields read.
    */
-  public int scanRecord(String[] values) throws IOException {
+  public int scanRecord(String... values) throws IOException {
     int i;
-    for (i = 0; i < values.length && !isEndOfFile(); i++) {
+    for (i = 0; i < values.length && !eof; i++) {
       String value = scanText();
       if (i == 0) { // skip empty line (or line comment)
         while (isEmptyLine()) {
-          if (isEndOfFile()) {
+          if (eof) {
             return -1;
           }
           value = scanText();
@@ -81,7 +81,7 @@ public class CsvReader implements Closeable {
   // read text until next separator or eol/eof
   public String scanText() throws IOException {
     n = 0;
-    int c = read();
+    final int c = read();
     if (c == -1) {
       empty = eor;
       return "";
@@ -96,7 +96,7 @@ public class CsvReader implements Closeable {
       return "";
     }
     // non-quoted field
-    boolean peor = nonQuotedField(c);
+    final boolean peor = nonQuotedField(c);
     if (n == 0) {
       empty = peor;
       return "";
@@ -116,7 +116,7 @@ public class CsvReader implements Closeable {
 
   // Scan until the separator or newline following the closing quote (and ignore escaped quote)
   private void quotedField() throws IOException {
-    int startLineNumber = lineNumber;
+    final int startLineNumber = lineNumber;
     int c, pc = 0, ppc = 0;
     while (true) {
       c = read();
@@ -163,7 +163,7 @@ public class CsvReader implements Closeable {
         if (n > 0 && buf[n-1] == '\r') {
           n--;
         }
-        boolean peor = eor;
+        final boolean peor = eor;
         eor = true;
         lineNumber++;
         return peor;
@@ -198,7 +198,7 @@ public class CsvReader implements Closeable {
       } catch (ParseException e) {
         throw new IllegalArgumentException("unexpected date format:", e);
       }
-    } else if (nullable && text.length() == 0) {
+    } else if (nullable && text.isEmpty()) {
       return null;
     }
     throw new IllegalArgumentException(String.format("unexpected date format: '%s'", text));
@@ -247,7 +247,7 @@ public class CsvReader implements Closeable {
       return;
     }
     while (!eof) {
-      int c = read();
+      final int c = read();
       if (c == '\n') {
         lineNumber++;
         break;
@@ -292,7 +292,7 @@ public class CsvReader implements Closeable {
 
   private void append(int c) throws IOException {
     if (n >= buf.length) {
-      int newSize = buf.length * 2;
+      final int newSize = buf.length * 2;
       if (newSize > MAX_SIZE) {
         throw new IOException("token too long");
       }
@@ -302,7 +302,7 @@ public class CsvReader implements Closeable {
   }
 
   private int read() throws IOException {
-    int c = reader.read();
+    final int c = reader.read();
     if (c == -1) {
       eof = true;
     }

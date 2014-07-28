@@ -19,7 +19,7 @@ import static org.sqlite.SQLite.*;
 public class Stmt {
   final Conn c;
   private Pointer pStmt;
-  private String tail;
+  private final String tail;
   // cached parameter count
   private int paramCount = -1;
   // cached parameters index by name
@@ -34,7 +34,7 @@ public class Stmt {
     assert c != null;
     this.c = c;
     this.pStmt = pStmt;
-    this.tail = tail.getString(0);
+    this.tail = tail.getString(0L);
     this.cacheable = cacheable;
   }
 
@@ -69,7 +69,7 @@ public class Stmt {
   }
   public int close(boolean force) {
     if (pStmt == null) return SQLITE_OK;
-    if (!force && cacheable && (tail == null || tail.length() == 0) && !isBusy()) {
+    if (!force && cacheable && (tail == null || tail.isEmpty()) && !isBusy()) {
       if (sqlite3_reset(pStmt) == SQLITE_OK &&
           sqlite3_clear_bindings(pStmt) == SQLITE_OK &&
           c.release(this)) {
@@ -265,7 +265,7 @@ public class Stmt {
     if (p == null) {
       return null;
     } else {
-      return p.getByteArray(0, getColumnBytes(iCol)); // a copy is made...
+      return p.getByteArray(0L, getColumnBytes(iCol)); // a copy is made...
     }
   }
 
@@ -481,9 +481,8 @@ public class Stmt {
   public boolean[] getMetadata(int iCol) throws StmtException, ConnException {
     final String colName = getColumnOriginName(iCol);
     if (colName != null) {
-      final boolean[] colMetaData = c.getTableColumnMetadata(
+      return c.getTableColumnMetadata(
           getColumnDatabaseName(iCol), getColumnTableName(iCol), colName);
-      return colMetaData;
     }
     return UNKNOWN;
   }
@@ -521,6 +520,7 @@ public class Stmt {
           case ColTypes.SQLITE_BLOB:
             throw new StmtException(this, String.format("Type mismatch for %s, source %d vs target %d", getColumnName(iCol), sourceType, targetType), ErrCodes.WRAPPER_SPECIFIC);
         }
+        break;
       case ColTypes.SQLITE_FLOAT:
         switch (sourceType) {
           case ColTypes.SQLITE_TEXT:

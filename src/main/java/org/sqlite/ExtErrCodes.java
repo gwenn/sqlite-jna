@@ -9,7 +9,7 @@
 package org.sqlite;
 
 public interface ExtErrCodes {
-  int SQLITE_IOERR_READ = ErrCodes.SQLITE_IOERR | (1 << 8);
+  int SQLITE_IOERR_READ = ErrCodes.SQLITE_IOERR | 1 << 8;
   int SQLITE_IOERR_SHORT_READ = ErrCodes.SQLITE_IOERR | 2 << 8;
   int SQLITE_IOERR_WRITE = ErrCodes.SQLITE_IOERR | 3 << 8;
   int SQLITE_IOERR_FSYNC = ErrCodes.SQLITE_IOERR | 4 << 8;

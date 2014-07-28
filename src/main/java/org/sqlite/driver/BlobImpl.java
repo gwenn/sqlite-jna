@@ -16,7 +16,7 @@ import java.nio.ByteBuffer;
 import java.sql.Blob;
 import java.sql.SQLException;
 
-public class BlobImpl implements Blob {
+class BlobImpl implements Blob {
   private final org.sqlite.Blob blob;
 
   public BlobImpl(org.sqlite.Blob blob) {
@@ -117,17 +117,17 @@ public class BlobImpl implements Blob {
   }
 
   private static int checkPosition(long pos) throws SQLException {
-    if (pos < 1) {
+    if (pos < 1L) {
       throw new SQLException(String.format("invalid position: %d < 1", pos), null, ErrCodes.WRAPPER_SPECIFIC);
     }
     if (pos > Integer.MAX_VALUE) {
       throw new SQLException(String.format("invalid position: %d > %d", pos, Integer.MAX_VALUE), null, ErrCodes.WRAPPER_SPECIFIC);
     }
-    return (int) (pos - 1);
+    return (int) (pos - 1L);
   }
 
   public static int checkLength(long length) throws SQLException {
-    if (length < 0) {
+    if (length < 0L) {
       throw new SQLException(String.format("invalid length: %d < 0", length), null, ErrCodes.WRAPPER_SPECIFIC);
     }
     if (length > Integer.MAX_VALUE) {

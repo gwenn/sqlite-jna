@@ -16,34 +16,34 @@ import org.sqlite.StmtException;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
-public class RowsMeta implements ResultSetMetaData {
-  private org.sqlite.Stmt stmt;
+class RowsMeta implements ResultSetMetaData {
+  private final Stmt stmt;
 
   RowsMeta(Stmt stmt) {
     this.stmt = stmt;
   }
 
-  private org.sqlite.Stmt getStmt() throws SQLException {
+  private Stmt getStmt() {
     return stmt;
   }
 
-  private int fixCol(int columnIndex) {
+  private static int fixCol(int columnIndex) {
     return columnIndex - 1;
   }
 
   @Override
   public int getColumnCount() throws SQLException { // Used by Hibernate
-    return getStmt().getColumnCount();
+    return stmt.getColumnCount();
   }
 
   @Override
   public boolean isAutoIncrement(int column) throws SQLException {
-    return getStmt().getMetadata(fixCol(column))[2];
+    return stmt.getMetadata(fixCol(column))[2];
   }
 
   @Override
   public boolean isCaseSensitive(int column) throws SQLException {
-    switch (getStmt().getColumnAffinity(fixCol(column))) {
+    switch (stmt.getColumnAffinity(fixCol(column))) {
       case ColAffinities.INTEGER:
       case ColAffinities.NUMERIC:
       case ColAffinities.REAL:
@@ -66,7 +66,7 @@ public class RowsMeta implements ResultSetMetaData {
 
   @Override
   public int isNullable(int column) throws SQLException {
-    return getStmt().getMetadata(fixCol(column))[0] ? columnNoNulls : columnNullable;
+    return stmt.getMetadata(fixCol(column))[0] ? columnNoNulls : columnNullable;
   }
 
   @Override
@@ -77,7 +77,7 @@ public class RowsMeta implements ResultSetMetaData {
 
   @Override
   public int getColumnDisplaySize(int column) throws SQLException {
-    switch (getStmt().getColumnAffinity(fixCol(column))) {
+    switch (stmt.getColumnAffinity(fixCol(column))) {
       case ColAffinities.INTEGER:
         return 20;
       case ColAffinities.REAL:
@@ -88,12 +88,12 @@ public class RowsMeta implements ResultSetMetaData {
 
   @Override
   public String getColumnLabel(int column) throws SQLException {
-    return getStmt().getColumnName(fixCol(column));
+    return stmt.getColumnName(fixCol(column));
   }
 
   @Override
   public String getColumnName(int column) throws SQLException {
-    String name = getStmt().getColumnOriginName(fixCol(column));
+    final String name = stmt.getColumnOriginName(fixCol(column));
     if (name == null) {
       return getColumnLabel(column);
     }
@@ -107,7 +107,7 @@ public class RowsMeta implements ResultSetMetaData {
 
   @Override
   public int getPrecision(int column) throws SQLException {
-    switch (getStmt().getColumnAffinity(fixCol(column))) {
+    switch (stmt.getColumnAffinity(fixCol(column))) {
       case ColAffinities.INTEGER:
         return 19;
       case ColAffinities.NUMERIC:
@@ -119,7 +119,7 @@ public class RowsMeta implements ResultSetMetaData {
 
   @Override
   public int getScale(int column) throws SQLException {
-    switch (getStmt().getColumnAffinity(fixCol(column))) {
+    switch (stmt.getColumnAffinity(fixCol(column))) {
       case ColAffinities.INTEGER:
         return 0;
       case ColAffinities.NUMERIC:
@@ -131,23 +131,23 @@ public class RowsMeta implements ResultSetMetaData {
 
   @Override
   public String getTableName(int column) throws SQLException {
-    return getStmt().getColumnTableName(fixCol(column));
+    return stmt.getColumnTableName(fixCol(column));
   }
 
   @Override
   public String getCatalogName(int column) throws SQLException {
-    return getStmt().getColumnDatabaseName(fixCol(column));
+    return stmt.getColumnDatabaseName(fixCol(column));
   }
 
   @Override
   public int getColumnType(int column) throws SQLException {
-    final int affinity = getStmt().getColumnAffinity(fixCol(column));
+    final int affinity = stmt.getColumnAffinity(fixCol(column));
     return DbMeta.getJavaType(affinity);
   }
 
   @Override
   public String getColumnTypeName(int column) throws SQLException {
-    return getStmt().getColumnDeclType(fixCol(column));
+    return stmt.getColumnDeclType(fixCol(column));
   }
 
   @Override
@@ -169,7 +169,7 @@ public class RowsMeta implements ResultSetMetaData {
 
   @Override
   public String getColumnClassName(int column) throws SQLException {
-    final int affinity = getStmt().getColumnAffinity(fixCol(column));
+    final int affinity = stmt.getColumnAffinity(fixCol(column));
     switch (affinity) {
       case ColAffinities.TEXT:
         return "java.lang.String";

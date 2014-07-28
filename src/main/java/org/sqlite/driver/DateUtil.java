@@ -12,11 +12,12 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-public class DateUtil {
+public final class DateUtil {
   public static final String DATE_FORMAT = "date_format";
   public static final String TIME_FORMAT = "time_format";
   public static final String TIMESTAMP_FORMAT = "timestamp_format";
@@ -30,6 +31,9 @@ public class DateUtil {
       return new HashMap<String, DateFormat>();
     }
   };
+
+  private DateUtil() {
+  }
 
   static String[] config(Properties info) {
     if (info == null) {
@@ -51,11 +55,11 @@ public class DateUtil {
 
   // 1970-01-01 00:00:00 is JD 2440587.5
   static double toJulianDay(long ms) {
-    double adj = (ms < 0) ? 0 : 0.5;
+    double adj = (ms < 0L) ? 0.0 : 0.5;
     return (ms + adj) / 86400000.0 + 2440587.5;
   }
 
-  static java.util.Date parseDate(String txt) throws SQLException {
+  static Date parseDate(String txt) throws SQLException {
     final String layout;
     switch (txt.length()) {
       case 5: // HH:MM
@@ -98,8 +102,8 @@ public class DateUtil {
           layout = "yyyy-MM-dd HH:mm:ss.SSSXXX";
         }
     }
-    DateFormat df = getDateFormat(layout);
-    final java.util.Date date;
+    final DateFormat df = getDateFormat(layout);
+    final Date date;
     try {
       date = df.parse(txt);
     } catch (ParseException e) {
@@ -108,7 +112,7 @@ public class DateUtil {
     return date;
   }
 
-  static String formatDate(java.util.Date date, int length) {
+  static String formatDate(Date date, int length) {
     final String layout;
     switch (length) {
       case 5: // HH:MM
@@ -138,7 +142,7 @@ public class DateUtil {
     return formatDate(date, layout);
   }
 
-  static String formatDate(java.util.Date date, String layout) {
+  static String formatDate(Date date, String layout) {
     return getDateFormat(layout).format(date);
   }
 
