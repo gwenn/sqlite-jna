@@ -25,6 +25,7 @@ public class CsvWriter implements Closeable, Flushable {
   private boolean sor;
   // character marking the start of a line comment.
   private char comment;
+  private boolean safe;
 
   public CsvWriter(Appendable out) {
     this(out, ',', true);
@@ -158,6 +159,14 @@ public class CsvWriter implements Closeable, Flushable {
       if (last != 0) {
         out.append('"');
       }
+    } else if (safe) {
+      // check that value does not contain sep or \n
+      for (int i = 0; i < value.length(); i++) {
+        if (value.charAt(i) == '\n' || value.charAt(i) == sep) {
+          throw new IOException("Illegal character in " + value);
+        }
+      }
+      out.append(value);
     } else {
       out.append(value);
     }
@@ -186,17 +195,21 @@ public class CsvWriter implements Closeable, Flushable {
       ((Closeable) out).close();
     }
   }
+
   public void setComment(char comment) {
     this.comment = comment;
   }
+
+  public void setSafe(boolean safe) {
+    this.safe = safe;
+  }
+
   public static void main(String[] args) throws IOException {
     final CsvReader r = new CsvReader(new FileReader(args[0])/*, '\t', false*/);
     r.setTrim(true);
     final CsvWriter w  = new CsvWriter(new FileWriter(args[1])/*, '\t', false*/);
     final String[] values = new String[25];
-    int n;
-    while (!r.atEndOfFile()) {
-      n = r.scanRecord(values);
+    for (int n; (n = r.scanRecord(values)) != -1; ) {
       w.writeRecord(values, n);
     }
     w.close();
