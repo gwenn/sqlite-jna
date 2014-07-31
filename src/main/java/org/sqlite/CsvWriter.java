@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.Flushable;
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 // CsvWriter provides an interface for writing CSV data
@@ -22,6 +23,8 @@ public class CsvWriter implements Closeable, Flushable {
   private boolean useCRLF;
   // true at start of record
   private boolean sor;
+  // character marking the start of a line comment.
+  private char comment;
 
   public CsvWriter(Appendable out) {
     this(out, ',', true);
@@ -44,8 +47,20 @@ public class CsvWriter implements Closeable, Flushable {
     this.useCRLF = useCRLF;
   }
 
-  public void writeResultSet(ResultSet rs) throws IOException, SQLException {
-    final int nCol = rs.getMetaData().getColumnCount();
+  // Exports result to CSV.
+  public void writeResultSet(ResultSet rs/*TODO, String nullValue*/, boolean headers) throws IOException, SQLException {
+    final ResultSetMetaData metaData = rs.getMetaData();
+    final int nCol = metaData.getColumnCount();
+    if (headers) {
+      for (int i = 1; i <= nCol; i++) {
+        if (i == 1 && comment != 0) {
+          write(comment + metaData.getColumnLabel(i));
+          continue;
+        }
+        write(metaData.getColumnLabel(i));
+      }
+      endOfRecord();
+    }
     while (rs.next()) {
       for (int i = 1; i <= nCol; i++) {
         writeValue(rs.getObject(i));
@@ -77,6 +92,19 @@ public class CsvWriter implements Closeable, Flushable {
     }
     for (int i = 0; i < n; i++) {
       write(values[i]);
+    }
+    endOfRecord();
+  }
+
+  public void writeComment(String... values) throws IOException {
+    boolean first = true;
+    for (String value : values) {
+      if (first && comment != 0) {
+        first = false;
+        write(comment + value);
+        continue;
+      }
+      writeValue(value);
     }
     endOfRecord();
   }
@@ -158,14 +186,16 @@ public class CsvWriter implements Closeable, Flushable {
       ((Closeable) out).close();
     }
   }
-
+  public void setComment(char comment) {
+    this.comment = comment;
+  }
   public static void main(String[] args) throws IOException {
     final CsvReader r = new CsvReader(new FileReader(args[0])/*, '\t', false*/);
     r.setTrim(true);
     final CsvWriter w  = new CsvWriter(new FileWriter(args[1])/*, '\t', false*/);
     final String[] values = new String[25];
     int n;
-    while (!r.isEndOfFile()) {
+    while (!r.atEndOfFile()) {
       n = r.scanRecord(values);
       w.writeRecord(values, n);
     }

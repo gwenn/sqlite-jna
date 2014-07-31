@@ -53,6 +53,24 @@ public class CsvReader implements Closeable {
   }
 
   /*
+   * Comment mark is ignored (and removed if present).
+   * Returns the number of headers read.
+   */
+  public int scanHeader(String... values) throws IOException {
+    final char original = comment;
+    comment = 0;
+    try {
+      final int n = scanRecord(values);
+      if (n > 0 && original != 0 && !values[0].isEmpty() && values[0].charAt(0) == original) { // remove comment mark
+        values[0] = values[0].substring(1);
+      }
+      return n;
+    } finally {
+      comment = original;
+    }
+  }
+
+  /*
    * Empty lines (or line comments) are skipped.
    * Extra fields are skipped (when the number of fields is greater than `values` size).
    * Returns the number of fields read.
@@ -70,7 +88,7 @@ public class CsvReader implements Closeable {
         }
       }
       values[i] = value;
-      if (isEndOfRecord()) {
+      if (atEndOfRecord()) {
         return i + 1;
       }
     }
@@ -243,7 +261,7 @@ public class CsvReader implements Closeable {
   // skip until eol (eol included)
   // Cannot be called consecutively without a scan. (FIXME)
   public void skip() throws IOException {
-    if (isEndOfRecord()) {
+    if (atEndOfRecord()) {
       return;
     }
     while (!eof) {
@@ -261,11 +279,11 @@ public class CsvReader implements Closeable {
     return lineNumber;
   }
   // Returns true when the most recent field has been terminated by a newline (not a separator).
-  public boolean isEndOfRecord() {
+  public boolean atEndOfRecord() {
     return eor || eof;
   }
   // Returns true at end of file/stream
-  public boolean isEndOfFile() {
+  public boolean atEndOfFile() {
     return eof;
   }
   // Returns true when the current line is empty or a line comment.
