@@ -1,6 +1,6 @@
 package org.sqlite;
 
-import com.sun.jna.Pointer;
+import jnr.ffi.Pointer;
 import org.junit.Ignore;
 import org.junit.Test;
 

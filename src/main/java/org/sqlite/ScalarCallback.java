@@ -8,11 +8,12 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import jnr.ffi.Pointer;
+import jnr.ffi.annotations.Delegate;
 
-public interface ScalarCallback extends Callback {
+public interface ScalarCallback {
   //void (*)(sqlite3_context*,int,sqlite3_value**),
   @SuppressWarnings("unused")
+  @Delegate
   void invoke(Pointer pCtx, int nArg, Pointer args);
 }

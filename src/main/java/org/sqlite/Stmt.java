@@ -8,7 +8,7 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
+import jnr.ffi.Pointer;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -265,7 +265,9 @@ public class Stmt {
     if (p == null) {
       return null;
     } else {
-      return p.getByteArray(0L, getColumnBytes(iCol)); // a copy is made...
+      final byte[] bytes = new byte[getColumnBytes(iCol)];
+      p.get(0L, bytes, 0, bytes.length);
+      return bytes;
     }
   }
 

@@ -8,11 +8,12 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import jnr.ffi.Pointer;
+import jnr.ffi.annotations.Delegate;
 
-public abstract class TraceCallback implements Callback {
+public abstract class TraceCallback {
   @SuppressWarnings("unused")
+  @Delegate
   public void invoke(Pointer arg, String sql) {
     trace(sql);
   }

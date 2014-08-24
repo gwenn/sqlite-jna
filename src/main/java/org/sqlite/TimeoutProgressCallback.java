@@ -8,7 +8,7 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
+import jnr.ffi.Pointer;
 
 public class TimeoutProgressCallback implements SQLite.ProgressCallback {
   private long expiration;

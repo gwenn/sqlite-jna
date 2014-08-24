@@ -8,7 +8,7 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
+import jnr.ffi.Pointer;
 
 import java.io.IOException;
 import java.io.InputStream;

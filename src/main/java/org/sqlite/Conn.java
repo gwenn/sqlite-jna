@@ -8,9 +8,10 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
+
+import jnr.ffi.Pointer;
+import jnr.ffi.byref.IntByReference;
+import jnr.ffi.byref.PointerByReference;
 
 import java.util.Iterator;
 import java.util.LinkedList;
