@@ -23,7 +23,7 @@ public class Conn {
   private final boolean sharedCacheMode;
   private TimeoutProgressCallback timeoutProgressCallback;
 
-  private final LinkedList<Stmt> cache = new LinkedList<>();
+  private final LinkedList<Stmt> cache = new LinkedList<Stmt>();
   private int maxCacheSize = 100; // TODO parameterize
 
   /**
@@ -157,7 +157,7 @@ public class Conn {
   }
 
   public void exec(String sql) throws SQLiteException {
-    while (sql != null && sql.length() > 0) {
+    while (sql != null && !sql.isEmpty()) {
       Stmt s = null;
       try {
         s = prepare(sql, false);
@@ -423,7 +423,7 @@ public class Conn {
     }
   }
   private void pragma(String dbName, String name, boolean value) throws ConnException {
-    fastExec("PRAGMA " + qualify(dbName) + name + "=" + (value ? 1 : 0));
+    fastExec("PRAGMA " + qualify(dbName) + name + '=' + (value ? 1 : 0));
   }
 
   // To be called in Conn.prepare
@@ -431,10 +431,10 @@ public class Conn {
     if (maxCacheSize <= 0) {
       return null;
     }
-    synchronized (this) {
+    synchronized (cache) {
       final Iterator<Stmt> it = cache.iterator();
       while (it.hasNext()) {
-        Stmt stmt = it.next();
+        final Stmt stmt = it.next();
         if (stmt.getSql().equals(sql)) { // TODO s.SQL() may have been trimmed by SQLite
           it.remove();
           return stmt;
@@ -449,7 +449,7 @@ public class Conn {
     if (maxCacheSize <= 0) {
       return false;
     }
-    synchronized (this) {
+    synchronized (cache) {
       cache.push(stmt);
       while (cache.size() > maxCacheSize) {
         cache.removeLast().close(true);
@@ -488,10 +488,10 @@ public class Conn {
     if (maxCacheSize <= 0) {
       return;
     }
-    synchronized (this) {
+    synchronized (cache) {
       final Iterator<Stmt> it = cache.iterator();
       while (it.hasNext()) {
-        Stmt stmt = it.next();
+        final Stmt stmt = it.next();
         stmt.close(true);
         it.remove();
       }

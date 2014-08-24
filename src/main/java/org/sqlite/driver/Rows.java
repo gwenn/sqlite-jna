@@ -36,7 +36,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class Rows implements ResultSet {
+class Rows implements ResultSet {
   private Stmt s;
   private org.sqlite.Stmt stmt;
   private RowsMeta meta;
@@ -177,9 +177,9 @@ public class Rows implements ResultSet {
     stmt.checkTypeMismatch(fixCol(columnIndex), sourceType, ColTypes.SQLITE_INTEGER);
     wasNull = sourceType == ColTypes.SQLITE_NULL;
     if (wasNull) {
-      return 0;
+      return 0L;
     } else {
-      return getStmt().getColumnLong(fixCol(columnIndex));
+      return stmt.getColumnLong(fixCol(columnIndex));
     }
   }
 
@@ -196,7 +196,7 @@ public class Rows implements ResultSet {
     stmt.checkTypeMismatch(fixCol(columnIndex), sourceType, ColTypes.SQLITE_FLOAT);
     wasNull = sourceType == ColTypes.SQLITE_NULL;
     if (wasNull) {
-      return 0;
+      return 0.0;
     } else {
       return stmt.getColumnDouble(fixCol(columnIndex));
     }

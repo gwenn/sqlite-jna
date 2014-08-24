@@ -12,6 +12,7 @@ import java.util.Date;
 // (compatible with rfc4180 and extended with the option of having a separator other than ",").
 // Successive calls to the scan method will step through the 'fields', skipping the separator/newline between the fields.
 // The endOfRecord method tells when a field is terminated by a line break.
+// Lexing is adapted from csv_read_one_field function in SQLite3 shell sources.
 public class CsvReader implements Closeable {
   private static final int MAX_SIZE = 64 * 1024;
 
@@ -33,6 +34,8 @@ public class CsvReader implements Closeable {
 
   private int[] buf;
   private int n;
+  // true when the current line is empty (or a line comment)
+  private boolean empty;
 
   public CsvReader(Reader reader) {
     this(reader, ',', true);
@@ -49,66 +52,151 @@ public class CsvReader implements Closeable {
     eor = true;
   }
 
+  /*
+   * Comment mark is ignored (and removed if present).
+   * Returns the number of headers read.
+   */
+  public int scanHeader(String... values) throws IOException {
+    final char original = comment;
+    comment = 0;
+    try {
+      final int n = scanRecord(values);
+      if (n > 0 && original != 0 && !values[0].isEmpty() && values[0].charAt(0) == original) { // remove comment mark
+        values[0] = values[0].substring(1);
+      }
+      return n;
+    } finally {
+      comment = original;
+    }
+  }
+
+  /*
+   * Empty lines (or line comments) are skipped.
+   * Extra fields are skipped (when the number of fields is greater than `values` size).
+   * Returns the number of fields read.
+   */
+  public int scanRecord(String... values) throws IOException {
+    int i;
+    for (i = 0; i < values.length && !eof; i++) {
+      String value = scanText();
+      if (i == 0) { // skip empty line (or line comment)
+        while (isEmptyLine()) {
+          if (eof) {
+            return -1;
+          }
+          value = scanText();
+        }
+      }
+      values[i] = value;
+      if (atEndOfRecord()) {
+        return i + 1;
+      }
+    }
+    skip(); // Extra values are skipped.
+    return i;
+  }
+
   // read text until next separator or eol/eof
   public String scanText() throws IOException {
     n = 0;
-    if (eof) {
+    final int c = read();
+    if (c == -1) {
+      empty = eor;
       return "";
-    }
-    int c = peek();
-    if (quoted && c == '"') { // quoted field (may contains separator, newline and escaped quote)
-      // TODO
+    } else if (quoted && c == '"') { // quoted field (may contains separator, newline and escaped quote)
+      empty = false;
+      quotedField();
+      // quoted-field are not trimmed
+      return new String(buf, 0, n);
     } else if (eor && comment != 0 && c == comment) { // line comment
+      empty = true;
       lineComment();
       return "";
     }
     // non-quoted field
-    nonQuotedField();
+    final boolean peor = nonQuotedField(c);
     if (n == 0) {
+      empty = peor;
       return "";
     }
     int offset = 0;
     if (trim) {
-      while (Character.isWhitespace(buf[offset])) {
-        offset++;
-      }
-      while (Character.isWhitespace(buf[n-1])) {
+      while (n > offset && Character.isWhitespace(buf[n-1])) {
         n--;
       }
+      while (offset < n && Character.isWhitespace(buf[offset])) {
+        offset++;
+      }
     }
-    return new String(buf, offset, n);
+    empty = peor && (n-offset) == 0;
+    return new String(buf, offset, n-offset);
+  }
+
+  // Scan until the separator or newline following the closing quote (and ignore escaped quote)
+  private void quotedField() throws IOException {
+    final int startLineNumber = lineNumber;
+    int c, pc = 0, ppc = 0;
+    while (true) {
+      c = read();
+      if (c == '\n') {
+        lineNumber++;
+      } else if (c == '"') {
+        if (pc == c) { // escaped quote
+          pc = 0;
+          continue;
+        }
+      }
+      if (pc == '"' && c == sep) {
+        n--;
+        eor = false;
+        break;
+      } else if ((pc == '"' && c == '\n') || (pc == '"' && c == -1)) {
+        n--;
+        eor = true;
+        break;
+      } else if (ppc == '"' /*&& pc == '\r'*/ && c == '\n') {
+        n -= 2;
+        eor = true;
+        break;
+      }
+      if (pc == '"' && c != '\r') {
+        throw new IOException(String.format("unescaped \" character at line %d", lineNumber));
+      } else if (c == -1) {
+        throw new IOException(String.format("unterminated \"-quoted field at line %d", startLineNumber));
+      }
+      append(c);
+      ppc = pc;
+      pc = c;
+    }
   }
 
   // Scan until separator or newline, marking end of field.
-  private void nonQuotedField() throws IOException {
-    int c;
-    while (true) {
-      c = read();
-      if (c == -1) {
-        break;
-      } else if (c == sep) {
+  private boolean nonQuotedField(int c) throws IOException {
+    while (c != -1) {
+      if (c == sep) {
+        empty = false;
         eor = false;
-        break;
+        return false;
       } else if (c == '\n') {
         if (n > 0 && buf[n-1] == '\r') {
           n--;
         }
+        final boolean peor = eor;
         eor = true;
         lineNumber++;
-        break;
+        return peor;
       }
       append(c);
+      c = read();
     }
+    return eor;
   }
 
   // Scan until newline, marking end of comment.
   private void lineComment() throws IOException {
     int c;
-    while (true) {
-      c = read();
-      if (c == -1) {
-        break;
-      } else if (c == '\n') {
+    while ((c = read()) != -1) {
+      if (c == '\n') {
         lineNumber++;
         break;
       }
@@ -128,7 +216,7 @@ public class CsvReader implements Closeable {
       } catch (ParseException e) {
         throw new IllegalArgumentException("unexpected date format:", e);
       }
-    } else if (nullable && text.length() == 0) {
+    } else if (nullable && text.isEmpty()) {
       return null;
     }
     throw new IllegalArgumentException(String.format("unexpected date format: '%s'", text));
@@ -171,18 +259,19 @@ public class CsvReader implements Closeable {
   }
 
   // skip until eol (eol included)
+  // Cannot be called consecutively without a scan. (FIXME)
   public void skip() throws IOException {
-    if (isEndOfRecord()) {
-      eor = false; // TODO validate
+    if (atEndOfRecord()) {
       return;
     }
     while (!eof) {
-      int c = read();
+      final int c = read();
       if (c == '\n') {
         lineNumber++;
         break;
       }
     }
+    eor = true;
   }
 
   // Returns current line number (not record number)
@@ -190,16 +279,16 @@ public class CsvReader implements Closeable {
     return lineNumber;
   }
   // Returns true when the most recent field has been terminated by a newline (not a separator).
-  public boolean isEndOfRecord() {
+  public boolean atEndOfRecord() {
     return eor || eof;
   }
   // Returns true at end of file/stream
-  public boolean isEndOfFile() {
+  public boolean atEndOfFile() {
     return eof;
   }
   // Returns true when the current line is empty or a line comment.
   public boolean isEmptyLine() {
-    return n == 0 && (eor || eof);
+    return empty && (eor || eof);
   }
   // Returns the values separator used
   public char getSep() {
@@ -221,7 +310,7 @@ public class CsvReader implements Closeable {
 
   private void append(int c) throws IOException {
     if (n >= buf.length) {
-      int newSize = buf.length * 2;
+      final int newSize = buf.length * 2;
       if (newSize > MAX_SIZE) {
         throw new IOException("token too long");
       }
@@ -231,7 +320,7 @@ public class CsvReader implements Closeable {
   }
 
   private int read() throws IOException {
-    int c = reader.read();
+    final int c = reader.read();
     if (c == -1) {
       eof = true;
     }

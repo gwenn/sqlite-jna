@@ -34,11 +34,11 @@ import java.util.concurrent.Executor;
 
 import static org.sqlite.SQLite.escapeIdentifier;
 
-public class Conn implements Connection {
+class Conn implements Connection {
   private org.sqlite.Conn c;
   final String[] dateTimeConfig;
 
-  private DbMeta meta = null;
+  private DbMeta meta;
   PreparedStatement getGeneratedKeys;
 
   private Properties clientInfo;
@@ -101,8 +101,9 @@ public class Conn implements Connection {
   // FIXME By default, new connections should be in auto-commit mode.
   @Override
   public void setAutoCommit(boolean autoCommit) throws SQLException {
-    if (getAutoCommit() == autoCommit) return;
-    getConn().exec(autoCommit ? "COMMIT" : "BEGIN");
+    final org.sqlite.Conn c = getConn();
+    if (c.getAutoCommit() == autoCommit) return;
+    c.exec(autoCommit ? "COMMIT" : "BEGIN");
   }
 
   @Override
@@ -112,14 +113,16 @@ public class Conn implements Connection {
 
   @Override
   public void commit() throws SQLException {
-    if (getAutoCommit()) throw new ConnException(c, "database in auto-commit mode", ErrCodes.WRAPPER_SPECIFIC);
-    getConn().exec("COMMIT; BEGIN");
+    final org.sqlite.Conn c = getConn();
+    if (c.getAutoCommit()) throw new ConnException(c, "database in auto-commit mode", ErrCodes.WRAPPER_SPECIFIC);
+    c.exec("COMMIT; BEGIN");
   }
 
   @Override
   public void rollback() throws SQLException {
+    final org.sqlite.Conn c = getConn();
     if (getAutoCommit()) throw new ConnException(c, "database in auto-commit mode", ErrCodes.WRAPPER_SPECIFIC);
-    getConn().exec("ROLLBACK; BEGIN");
+    c.exec("ROLLBACK; BEGIN");
   }
 
   @Override
@@ -147,25 +150,25 @@ public class Conn implements Connection {
   @Override
   public void setReadOnly(boolean readOnly) throws SQLException {
     checkOpen();
-    final boolean ro = getConn().isReadOnly(null);
-    final boolean qo = getConn().isQueryOnly(null);
+    final boolean ro = c.isReadOnly(null);
+    final boolean qo = c.isQueryOnly(null);
     if (ro == readOnly && qo == readOnly) {
       return;
     }
     if (ro && !readOnly) {
       addWarning(new SQLWarning("readOnly mode cannot be reset"));
     } else {
-      if (!getAutoCommit()) {
+      if (!c.getAutoCommit()) {
         throw new ConnException(c, "setReadOnly is called during a transaction", ErrCodes.WRAPPER_SPECIFIC);
       }
-      getConn().setQueryOnly(null, readOnly);
+      c.setQueryOnly(null, readOnly);
     }
   }
 
   @Override
   public boolean isReadOnly() throws SQLException {
-    checkOpen();
-    return getConn().isReadOnly(null) || getConn().isQueryOnly(null);
+    final org.sqlite.Conn c = getConn();
+    return c.isReadOnly(null) || c.isQueryOnly(null);
   }
 
   @Override
@@ -276,7 +279,7 @@ public class Conn implements Connection {
     final int id = savepointId++;
     final Savepoint savepoint = new Savepoint() {
       @Override
-      public int getSavepointId() throws SQLException {
+      public int getSavepointId() {
         return id;
       }
 
@@ -290,7 +293,7 @@ public class Conn implements Connection {
         return String.valueOf(id);
       }
     };
-    getConn().exec("SAVEPOINT \"" + id + "\""); // SAVEPOINT 1; fails
+    getConn().exec("SAVEPOINT \"" + id + '"'); // SAVEPOINT 1; fails
     return savepoint;
   }
 
@@ -303,7 +306,7 @@ public class Conn implements Connection {
       }
 
       @Override
-      public String getSavepointName() throws SQLException {
+      public String getSavepointName() {
         return name;
       }
 
@@ -312,18 +315,18 @@ public class Conn implements Connection {
         return name;
       }
     };
-    getConn().exec("SAVEPOINT \"" + escapeIdentifier(name) + "\"");
+    getConn().exec("SAVEPOINT \"" + escapeIdentifier(name) + '"');
     return savepoint;
   }
 
   @Override
   public void rollback(Savepoint savepoint) throws SQLException {
-    getConn().exec("ROLLBACK TO SAVEPOINT \"" + escapeIdentifier(savepoint.toString()) + "\"");
+    getConn().exec("ROLLBACK TO SAVEPOINT \"" + escapeIdentifier(savepoint.toString()) + '"');
   }
 
   @Override
   public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-    getConn().exec("RELEASE SAVEPOINT \"" + escapeIdentifier(savepoint.toString()) + "\"");
+    getConn().exec("RELEASE SAVEPOINT \"" + escapeIdentifier(savepoint.toString()) + '"');
   }
 
   @Override
@@ -335,9 +338,9 @@ public class Conn implements Connection {
 
   @Override
   public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-    checkOpen();
+    final org.sqlite.Conn c = getConn();
     checkCursor(resultSetType, resultSetConcurrency, resultSetHoldability);
-    return new PrepStmt(this, getConn().prepare(sql, true));
+    return new PrepStmt(this, c.prepare(sql, true));
   }
 
   @Override

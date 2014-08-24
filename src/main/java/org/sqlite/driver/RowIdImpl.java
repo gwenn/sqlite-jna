@@ -10,7 +10,7 @@ package org.sqlite.driver;
 
 import java.sql.RowId;
 
-public class RowIdImpl implements RowId {
+class RowIdImpl implements RowId {
   final long value;
 
   public RowIdImpl(long value) {
@@ -32,7 +32,7 @@ public class RowIdImpl implements RowId {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    RowIdImpl rowId = (RowIdImpl) o;
+    final RowIdImpl rowId = (RowIdImpl) o;
 
     return value == rowId.value;
 

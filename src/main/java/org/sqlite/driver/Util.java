@@ -13,7 +13,7 @@ import org.sqlite.SQLite;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 
-class Util {
+final class Util {
   private Util() {
   }
 

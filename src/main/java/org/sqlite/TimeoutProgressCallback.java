@@ -28,7 +28,7 @@ public class TimeoutProgressCallback extends ProgressCallback<Void> {
    */
   public void setTimeout(long timeout) {
     if (timeout == 0) {
-      this.expiration = 0;
+      this.expiration = 0L;
       return;
     }
     this.expiration = System.currentTimeMillis() + timeout;

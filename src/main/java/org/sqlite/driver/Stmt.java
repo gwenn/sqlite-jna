@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 // There is no "not prepared" statement in SQLite!
-public class Stmt implements Statement {
+class Stmt implements Statement {
   private Conn c;
   private final boolean prepared;
   private org.sqlite.Stmt stmt;
@@ -81,7 +81,7 @@ public class Stmt implements Statement {
     if (this == c.getGeneratedKeys) { // We don't know the table's name nor the column's name but there is only one possible.
       return 1;
     }
-    Integer index = findColIndexInCache(col);
+    final Integer index = findColIndexInCache(col);
     if (null != index) {
       return index;
     }
@@ -103,7 +103,7 @@ public class Stmt implements Statement {
     }
   }
 
-  private void addColIndexInCache(String col, int index, int columnCount) throws StmtException {
+  private void addColIndexInCache(String col, int index, int columnCount) {
     if (null == colIndexByName) {
       colIndexByName = new HashMap<String, Integer>(columnCount);
     }
@@ -161,7 +161,6 @@ public class Stmt implements Statement {
 
   @Override
   public int getMaxFieldSize() throws SQLException {
-    checkOpen();
     return getConn().getLimit(SQLite.SQLITE_LIMIT_LENGTH);
   }
 
@@ -295,16 +294,16 @@ public class Stmt implements Statement {
   public boolean getMoreResults() throws SQLException {
     checkOpen();
     if (prepared) {
-      if (stmt.getTail() == null || stmt.getTail().length() == 0) {
+      if (stmt.getTail() == null || stmt.getTail().isEmpty()) {
         stmt.reset(); // implicitly closes any current ResultSet
         return false; // no more results
       } else {
         throw Util.unsupported("*Statement.getMoreResults"); // TODO
       }
     } else if (stmt != null) {
-      String tail = stmt.getTail();
+      final String tail = stmt.getTail();
       _close();
-      return !(tail == null || tail.length() == 0) && execute(tail);
+      return !(tail == null || tail.isEmpty()) && execute(tail);
     }
     return false;
   }
@@ -381,15 +380,16 @@ public class Stmt implements Statement {
       return new int[0];
     }
     final int size = batch.size();
-    Exception cause = null;
+    SQLException cause = null;
     final int[] changes = new int[size];
     for (int i = 0; i < size; ++i) {
       try {
         changes[i] = executeUpdate(batch.get(i));
       } catch (SQLException e) {
-        if (cause == null) {
-          cause = e;
+        if (cause != null) {
+          e.setNextException(cause);
         }
+        cause = e;
         changes[i] = EXECUTE_FAILED;
       }
     }

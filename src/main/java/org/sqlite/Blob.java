@@ -119,7 +119,7 @@ public class Blob {
     }
   }
 
-  public OutputStream getOutputStream() throws SQLiteException {
+  public OutputStream getOutputStream() {
     return new BlobOutputStream();
   }
 
@@ -132,7 +132,7 @@ public class Blob {
     this.writeOffset = writeOffset;
   }
 
-  public InputStream getInputStream() throws SQLiteException {
+  public InputStream getInputStream() {
     return new BlobInputStream();
   }
 
@@ -153,7 +153,7 @@ public class Blob {
       if (isEOF()) {
         return -1;
       }
-      byte[] b = new byte[1];
+      final byte[] b = new byte[1];
       final int i = read(b);
       if (i < 0) {
         return i;
@@ -171,7 +171,7 @@ public class Blob {
       if (isEOF()) {
         return -1;
       }
-      int avail = available();
+      final int avail = available();
       if (len > avail) {
         len = avail;
       }
@@ -190,7 +190,7 @@ public class Blob {
       try {
         long k = getBytes() - readOffset;
         if (n < k) {
-          k = n < 0 ? 0 : n;
+          k = n < 0L ? 0L : n;
         }
 
         readOffset += k;
@@ -269,7 +269,7 @@ public class Blob {
 
   private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
   public static int copy(InputStream input, OutputStream output, int length) throws IOException {
-    byte[] buffer = new byte[Math.min(length, DEFAULT_BUFFER_SIZE)];
+    final byte[] buffer = new byte[Math.min(length, DEFAULT_BUFFER_SIZE)];
     int count = 0;
     int n = buffer.length;
     while (length > 0 && (n = input.read(buffer, 0, n)) >= 0) {

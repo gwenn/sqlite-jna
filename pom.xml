@@ -3,11 +3,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.sqlite</groupId>
-  <artifactId>sqlite-jna</artifactId>
+  <artifactId>sqlite-bridj</artifactId>
   <packaging>jar</packaging>
   <version>0.1.0</version>
-  <name>SQLite JNA binding</name>
-  <description>JDBC Driver for SQLite using JNA</description>
+  <name>SQLite Bridj binding</name>
+  <description>JDBC Driver for SQLite using Bridj</description>
   <url>https://github.com/gwenn/sqlite-jna</url>
 
   <licenses>

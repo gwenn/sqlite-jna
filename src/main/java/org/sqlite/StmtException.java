@@ -9,7 +9,7 @@
 package org.sqlite;
 
 public class StmtException extends SQLiteException {
-  private final Stmt stmt;
+  private final transient Stmt stmt;
 
   public StmtException(Stmt stmt, String reason, int errCode) {
     super(stmt == null ? null : stmt.c, reason, errCode);

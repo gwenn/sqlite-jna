@@ -1,3 +1,11 @@
+/*
+ * The author disclaims copyright to this source code.  In place of
+ * a legal notice, here is a blessing:
+ *
+ *    May you do good and not evil.
+ *    May you find forgiveness for yourself and forgive others.
+ *    May you share freely, never taking more than you give.
+ */
 package org.sqlite;
 
 import org.bridj.BridJ;
@@ -212,7 +220,7 @@ public class SQLite {
 
   // http://sqlite.org/datatype3.html
   public static int getAffinity(String declType) {
-    if (declType == null || declType.length() == 0) {
+    if (declType == null || declType.isEmpty()) {
       return ColAffinities.NONE;
     }
     declType = declType.toUpperCase();
@@ -265,6 +273,20 @@ public class SQLite {
     @SuppressWarnings("unused")
     public abstract void apply(Pointer<T> udp, int err, Pointer<Byte> msg);
   }
+  /*
+  private static final LogCallback LOG_CALLBACK = new LogCallback() {
+    @Override
+    public void apply(Pointer udp, int err, String msg) {
+      System.out.printf("%d: %s\n", err, msg);
+    }
+  };
+  static {
+    if (System.getProperty("sqlite.config.log", "").length() > 0) {
+      // DriverManager.getLogWriter();
+      SQLite.sqlite3_config(SQLite.SQLITE_CONFIG_LOG, LOG_CALLBACK, null);
+    }
+  }
+  */
 
   public static abstract class ProgressCallback<T> extends Callback<ProgressCallback<T>> {
     // return true to interrupt
