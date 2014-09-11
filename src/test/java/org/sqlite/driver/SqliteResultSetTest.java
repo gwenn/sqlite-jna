@@ -34,9 +34,7 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLDataException;
 import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Types;
@@ -202,9 +200,9 @@ public class SqliteResultSetTest extends SqliteTestHelper {
         try (Statement stmt = this.conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery("SELECT * FROM type_table")) {
                 assertTrue(rs.next());
-                assertEquals("2011-10-12 13:00:00.000", df.format(rs.getTimestamp("birthdate")));
+                assertEquals("2011-10-12 15:00:00.000", df.format(rs.getTimestamp("birthdate")));
                 assertTrue(rs.next());
-                assertEquals("2011-10-12 13:00:00.123", df.format(rs.getTimestamp(2)));
+                assertEquals("2011-10-12 15:00:00.123", df.format(rs.getTimestamp(2)));
 
                 assertNull(rs.getTimestamp(3));
                 assertTrue(rs.wasNull());
