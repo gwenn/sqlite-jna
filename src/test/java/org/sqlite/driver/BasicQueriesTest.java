@@ -129,7 +129,7 @@ public class BasicQueriesTest {
             assertEquals(1, rc);
 
             assertEquals(true, conn.getAutoCommit());
-          if (org.sqlite.Conn.libversionNumber() < 3008000) {
+          if (org.sqlite.Conn.libversionNumber() >= 3008000) {
             assertEquals(false, conn.isReadOnly());
           }
 
