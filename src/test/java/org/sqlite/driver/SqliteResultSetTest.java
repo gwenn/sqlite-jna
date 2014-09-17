@@ -40,8 +40,6 @@ import java.sql.Time;
 import java.sql.Types;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.GregorianCalendar;
-import java.util.TimeZone;
 
 import static org.junit.Assert.*;
 
@@ -185,7 +183,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
     public void testGetTimestamp() throws Exception {
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-        df.setCalendar(new GregorianCalendar(TimeZone.getTimeZone("UTC")));
+        //df.setCalendar(new GregorianCalendar(TimeZone.getTimeZone("UTC")));
 
         try (PreparedStatement ps = this.conn.prepareStatement(
                 "INSERT INTO type_table (name, birthdate) VALUES (?, ?)")) {

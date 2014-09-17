@@ -185,6 +185,9 @@ public class SqliteConnectionTest extends SqliteTestHelper {
 
     @Test
     public void testReadOnly() throws Exception {
+      if (org.sqlite.Conn.libversionNumber() < 3008000) {
+        return;
+      }
         assertFalse(this.conn.isReadOnly());
 
         this.conn.setAutoCommit(false);

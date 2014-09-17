@@ -147,6 +147,13 @@ public class Conn {
     return sqlite3_libversion();
   }
 
+  /**
+   * @return Run-time library version number
+   */
+  public static int libversionNumber() {
+    return sqlite3_libversion_number();
+  }
+
   public static String mprintf(String format, String arg) {
     final Pointer p = sqlite3_mprintf(format, arg);
     final String s = p.getString(0L);

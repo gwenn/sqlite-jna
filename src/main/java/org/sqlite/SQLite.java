@@ -34,6 +34,7 @@ public class SQLite implements Library {
   static final int SQLITE_TRANSIENT = -1;
 
   static native String sqlite3_libversion(); // no copy needed
+  static native int sqlite3_libversion_number();
   static native boolean sqlite3_threadsafe();
   static native boolean sqlite3_compileoption_used(String optName);
 

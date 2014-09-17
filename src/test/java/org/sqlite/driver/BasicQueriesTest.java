@@ -35,14 +35,10 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLSyntaxErrorException;
-import java.sql.SQLTransientException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class BasicQueriesTest {
     private Connection conn;
@@ -133,7 +129,9 @@ public class BasicQueriesTest {
             assertEquals(1, rc);
 
             assertEquals(true, conn.getAutoCommit());
+          if (org.sqlite.Conn.libversionNumber() < 3008000) {
             assertEquals(false, conn.isReadOnly());
+          }
 
             PreparedStatement ps = conn.prepareStatement("SELECT * FROM test_table WHERE id=?");
 

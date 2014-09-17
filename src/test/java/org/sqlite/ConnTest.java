@@ -49,9 +49,11 @@ public class ConnTest {
     checkResult(c.close());
   }
 
-  @Ignore("fails on Travis")
   @Test
   public void queryOnly() throws SQLiteException {
+    if (Conn.libversionNumber() < 3008000) {
+      return;
+    }
     final Conn c = open();
     assertFalse("not query only", c.isQueryOnly(null));
     c.setQueryOnly(null, true);
