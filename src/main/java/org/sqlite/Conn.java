@@ -69,6 +69,17 @@ public class Conn {
     }
 
     flush();
+
+    // Dangling statements
+    Pointer stmt = sqlite3_next_stmt(pDb, null);
+    while (stmt != null) {
+      if (sqlite3_stmt_busy(stmt)) {
+        sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\"");
+      } else {
+        sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\"");
+      }
+      stmt = sqlite3_next_stmt(pDb, stmt);
+    }
     final int res = sqlite3_close_v2(pDb); // must be called only once...
     pDb = null;
     return res;

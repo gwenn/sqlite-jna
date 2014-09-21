@@ -81,7 +81,7 @@ public class SQLite implements Library {
   static native String sqlite3_db_filename(Pointer pDb, String dbName); // no copy needed
   static native int sqlite3_db_readonly(Pointer pDb, String dbName); // no copy needed
 
-  //static native Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt);
+  static native Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt);
 
   static native int sqlite3_table_column_metadata(Pointer pDb, String dbName, String tableName, String columnName,
                                                   PointerByReference pzDataType, PointerByReference pzCollSeq,
