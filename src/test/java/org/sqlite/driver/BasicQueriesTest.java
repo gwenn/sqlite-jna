@@ -50,8 +50,8 @@ public class BasicQueriesTest {
 
     @After
     public void closeConnection() throws SQLException {
-        this.conn.close();
-        this.conn = null;
+        conn.close();
+        conn = null;
     }
 
     @Test(expected = SQLException.class)
@@ -113,7 +113,7 @@ public class BasicQueriesTest {
 
             rs = stmt.executeQuery("SELECT * FROM test_table");
 
-            assertEquals(false, rs.next());
+            assertFalse(rs.next());
 
             try {
                 stmt.executeQuery("THIS IS BAD SQL");
@@ -122,15 +122,15 @@ public class BasicQueriesTest {
 
             }
 
-            assertEquals(true, conn.getAutoCommit());
+            assertTrue(conn.getAutoCommit());
 
             int rc = stmt.executeUpdate("INSERT INTO test_table VALUES (1, 'Kino', '2010-05-25T10:00:00')");
 
             assertEquals(1, rc);
 
-            assertEquals(true, conn.getAutoCommit());
+            assertTrue(conn.getAutoCommit());
           if (org.sqlite.Conn.libversionNumber() >= 3008000) {
-            assertEquals(false, conn.isReadOnly());
+            assertFalse(conn.isReadOnly());
           }
 
             PreparedStatement ps = conn.prepareStatement("SELECT * FROM test_table WHERE id=?");
@@ -138,21 +138,21 @@ public class BasicQueriesTest {
             ps.setInt(1, 2);
             rs = ps.executeQuery();
 
-            assertEquals(false, rs.next());
+            assertFalse(rs.next());
 
             rs.close();
 
             ps.setInt(1, 1);
             rs = ps.executeQuery();
 
-            assertEquals(true, rs.next());
+            assertTrue(rs.next());
 
             assertEquals(1, rs.getInt(1));
             assertEquals(1, rs.getInt("id"));
             assertEquals("Kino", rs.getString(2));
             assertEquals("Kino", rs.getString("name"));
 
-            assertEquals(false, rs.next());
+            assertFalse(rs.next());
 
             ps.close();
 
@@ -169,7 +169,7 @@ public class BasicQueriesTest {
 
             rs = stmt.executeQuery("SELECT * FROM test_table ORDER BY id DESC");
 
-            assertEquals(true, rs.next());
+            assertTrue(rs.next());
             // XXX assertEquals("2013-08-11 05:05:13.000", rs.getString(3));
 
             ps.close();

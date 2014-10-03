@@ -34,12 +34,11 @@ import java.sql.Statement;
 import java.sql.Types;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeTrue;
 
 public class SqliteResultSetMetadataTest extends SqliteTestHelper {
     @Test
     public void testColumnType() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery("SELECT * FROM type_table")) {
                 ResultSetMetaData rsm = rs.getMetaData();
 

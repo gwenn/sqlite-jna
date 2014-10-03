@@ -39,7 +39,7 @@ import static org.junit.Assert.*;
 public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
     @Test
     public void testGetSQLKeywords() throws Exception {
-        DatabaseMetaData dmd = this.conn.getMetaData();
+        DatabaseMetaData dmd = conn.getMetaData();
         String[] words = dmd.getSQLKeywords().split(",");
 
         assertEquals(words[0], "ABORT");
@@ -49,7 +49,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
         return new Object[][] {
                 { "allProceduresAreCallable", false },
                 { "allTablesAreSelectable", true },
-                { "getURL", "jdbc:sqlite:" + this.dbFile.getAbsolutePath() },
+                { "getURL", "jdbc:sqlite:" + dbFile.getAbsolutePath() },
                 { "getUserName", null },
                 { "nullsAreSortedHigh", false },
                 { "nullsAreSortedLow", true },
@@ -71,7 +71,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testFlags() throws Exception {
-        DatabaseMetaData dmd = this.conn.getMetaData();
+        DatabaseMetaData dmd = conn.getMetaData();
         Class<DatabaseMetaData> cl = DatabaseMetaData.class;
 
         for (Object[] pair : getMethodResults()) {
@@ -106,7 +106,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testLimits() throws Exception {
-        DatabaseMetaData dmd = this.conn.getMetaData();
+        DatabaseMetaData dmd = conn.getMetaData();
         Class<DatabaseMetaData> cl = DatabaseMetaData.class;
 
         for (String functionName : LIMITED_FUNCTIONS) {
@@ -132,7 +132,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testUnsupportedLimits() throws Exception {
-        DatabaseMetaData dmd = this.conn.getMetaData();
+        DatabaseMetaData dmd = conn.getMetaData();
         Class<DatabaseMetaData> cl = DatabaseMetaData.class;
 
         for (String functionName : UNSUPPORTED_LIMIT_FUNCTIONS) {
@@ -155,10 +155,10 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testNullSorting() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery(
                     "SELECT null AS col0 UNION ALL SELECT 1 AS col0 ORDER BY col0 ASC")) {
-                assertArrayEquals(NULL_SORT_ASC_RESULT_SET, this.formatResultSet(rs));
+                assertArrayEquals(NULL_SORT_ASC_RESULT_SET, formatResultSet(rs));
                 assertEquals(dbMetadata.nullsAreSortedLow(),
                         NULL_SORT_ASC_RESULT_SET[0].equals("|null|"));
                 assertEquals(dbMetadata.nullsAreSortedAtEnd(),
@@ -168,7 +168,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
             }
             try (ResultSet rs = stmt.executeQuery(
                     "SELECT null AS col0 UNION ALL SELECT 1 AS col0 ORDER BY col0 DESC")) {
-                assertArrayEquals(NULL_SORT_DESC_RESULT_SET, this.formatResultSet(rs));
+                assertArrayEquals(NULL_SORT_DESC_RESULT_SET, formatResultSet(rs));
                 assertEquals(dbMetadata.nullsAreSortedHigh(),
                         NULL_SORT_DESC_RESULT_SET[0].equals("|null|"));
                 assertEquals(dbMetadata.nullsAreSortedAtStart(),
@@ -181,7 +181,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testVersion() throws Exception {
-        DatabaseMetaData dmd = this.conn.getMetaData();
+        DatabaseMetaData dmd = conn.getMetaData();
 
         assertTrue(dmd.getDatabaseProductVersion().matches("\\d+\\.\\d+\\.\\d+(\\.\\d+)?"));
     }
@@ -190,22 +190,22 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testIdentifiers() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.execute("CREATE TABLE mixed_IDENT (aBcD int)");
             try (ResultSet rs = stmt.executeQuery("SELECT abcd from mixed_ident")) {
-                assertEquals(MIXED_IDENT_HEADER, this.formatResultSetHeader(rs.getMetaData()));
-                assertFalse(this.dbMetadata.supportsMixedCaseIdentifiers());
-                assertFalse(this.dbMetadata.storesUpperCaseIdentifiers());
-                assertFalse(this.dbMetadata.storesLowerCaseIdentifiers());
-                assertTrue(this.dbMetadata.storesMixedCaseIdentifiers());
+                assertEquals(MIXED_IDENT_HEADER, formatResultSetHeader(rs.getMetaData()));
+                assertFalse(dbMetadata.supportsMixedCaseIdentifiers());
+                assertFalse(dbMetadata.storesUpperCaseIdentifiers());
+                assertFalse(dbMetadata.storesLowerCaseIdentifiers());
+                assertTrue(dbMetadata.storesMixedCaseIdentifiers());
             }
             stmt.execute("CREATE TABLE \"quote_IDENT\" (\"aBcD\" int)");
             try (ResultSet rs = stmt.executeQuery("SELECT abcd from \"quote_ident\"")) {
-                assertEquals(MIXED_IDENT_HEADER, this.formatResultSetHeader(rs.getMetaData()));
-                assertFalse(this.dbMetadata.supportsMixedCaseQuotedIdentifiers());
-                assertFalse(this.dbMetadata.storesUpperCaseQuotedIdentifiers());
-                assertFalse(this.dbMetadata.storesLowerCaseQuotedIdentifiers());
-                assertTrue(this.dbMetadata.storesMixedCaseQuotedIdentifiers());
+                assertEquals(MIXED_IDENT_HEADER, formatResultSetHeader(rs.getMetaData()));
+                assertFalse(dbMetadata.supportsMixedCaseQuotedIdentifiers());
+                assertFalse(dbMetadata.storesUpperCaseQuotedIdentifiers());
+                assertFalse(dbMetadata.storesLowerCaseQuotedIdentifiers());
+                assertTrue(dbMetadata.storesMixedCaseQuotedIdentifiers());
             }
         }
     }
@@ -216,11 +216,11 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testGetProcedures() throws Exception {
-        DatabaseMetaData dmd = this.conn.getMetaData();
+        DatabaseMetaData dmd = conn.getMetaData();
 
         try (ResultSet rs = dmd.getProcedures(null, null, null)) {
-            assertEquals(GET_PROCEDURES_HEADER, this.formatResultSetHeader(rs.getMetaData()));
-            assertArrayEquals(EMPTY_RESULT_SET, this.formatResultSet(rs));
+            assertEquals(GET_PROCEDURES_HEADER, formatResultSetHeader(rs.getMetaData()));
+            assertArrayEquals(EMPTY_RESULT_SET, formatResultSet(rs));
         }
     }
 
@@ -229,11 +229,11 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testGetProcedureColumns() throws Exception {
-        DatabaseMetaData dmd = this.conn.getMetaData();
+        DatabaseMetaData dmd = conn.getMetaData();
 
         try (ResultSet rs = dmd.getProcedureColumns(null, null, null, null)) {
-            assertEquals(GET_PROCEDURE_COLUMNS_HEADER, this.formatResultSetHeader(rs.getMetaData()));
-            assertArrayEquals(EMPTY_RESULT_SET, this.formatResultSet(rs));
+            assertEquals(GET_PROCEDURE_COLUMNS_HEADER, formatResultSetHeader(rs.getMetaData()));
+            assertArrayEquals(EMPTY_RESULT_SET, formatResultSet(rs));
         }
     }
 
@@ -242,21 +242,21 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testGetSchemas() throws Exception {
-        DatabaseMetaData dmd = this.conn.getMetaData();
+        DatabaseMetaData dmd = conn.getMetaData();
 
         try (ResultSet rs = dmd.getSchemas()) {
-            assertEquals(GET_SCHEMAS_HEADER, this.formatResultSetHeader(rs.getMetaData()));
-            assertArrayEquals(EMPTY_RESULT_SET, this.formatResultSet(rs));
+            assertEquals(GET_SCHEMAS_HEADER, formatResultSetHeader(rs.getMetaData()));
+            assertArrayEquals(EMPTY_RESULT_SET, formatResultSet(rs));
         }
         try (ResultSet rs = dmd.getSchemas(null, null)) {
-            assertEquals(GET_SCHEMAS_HEADER, this.formatResultSetHeader(rs.getMetaData()));
-            assertArrayEquals(EMPTY_RESULT_SET, this.formatResultSet(rs));
+            assertEquals(GET_SCHEMAS_HEADER, formatResultSetHeader(rs.getMetaData()));
+            assertArrayEquals(EMPTY_RESULT_SET, formatResultSet(rs));
         }
     }
 
     @Test
     public void testGetCatalogs() throws Exception {
-        DatabaseMetaData dmd = this.conn.getMetaData();
+        DatabaseMetaData dmd = conn.getMetaData();
 
         try (ResultSet rs = dmd.getCatalogs()) {
             assertTrue(rs.next());
@@ -265,7 +265,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
             assertFalse(rs.next());
         }
 
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("ATTACH ':memory:' as extra_db");
 
             try (ResultSet rs = dmd.getCatalogs()) {
@@ -292,13 +292,13 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testGetTables() throws Exception {
-        DatabaseMetaData dmd = this.conn.getMetaData();
+        DatabaseMetaData dmd = conn.getMetaData();
 
         try (ResultSet rs = dmd.getTables(null, null, "%", null)) {
             ResultSetMetaData rsm = rs.getMetaData();
 
-            assertEquals(TABLE_DUMP_HEADER, this.formatResultSetHeader(rsm));
-            assertArrayEquals(TABLE_DUMPS, this.formatResultSet(rs));
+            assertEquals(TABLE_DUMP_HEADER, formatResultSetHeader(rsm));
+            assertArrayEquals(TABLE_DUMPS, formatResultSet(rs));
         }
 
         try (ResultSet rs = dmd.getTables(null, null, "foo", null)) {
@@ -307,7 +307,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
         try (ResultSet rs = dmd.getTables(null, null, "test_%", null)) {
             assertTrue(rs.next());
-            assertEquals(TABLE_DUMPS[2], this.formatResultSetRow(rs));
+            assertEquals(TABLE_DUMPS[2], formatResultSetRow(rs));
             assertFalse(rs.next());
         }
     }
@@ -339,11 +339,11 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
     };
     @Test
     public void testGetColumns() throws Exception {
-        try (ResultSet rs = this.dbMetadata.getColumns(null, null, null, null)) {
+        try (ResultSet rs = dbMetadata.getColumns(null, null, null, null)) {
             ResultSetMetaData rsm = rs.getMetaData();
 
-            assertEquals(COLUMN_DUMP_HEADER, this.formatResultSetHeader(rsm));
-            assertArrayEquals(COLUMN_DUMP, this.formatResultSet(rs));
+            assertEquals(COLUMN_DUMP_HEADER, formatResultSetHeader(rsm));
+            assertArrayEquals(COLUMN_DUMP, formatResultSet(rs));
         }
     }
 
@@ -356,22 +356,22 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testGetPrimaryKeys() throws Exception {
-        try (ResultSet rs = this.dbMetadata.getPrimaryKeys(null, null, "test_table")) {
+        try (ResultSet rs = dbMetadata.getPrimaryKeys(null, null, "test_table")) {
             ResultSetMetaData rsm = rs.getMetaData();
 
-            assertEquals(PK_DUMP_HEADER, this.formatResultSetHeader(rsm));
-            assertArrayEquals(PK_DUMP, this.formatResultSet(rs));
+            assertEquals(PK_DUMP_HEADER, formatResultSetHeader(rsm));
+            assertArrayEquals(PK_DUMP, formatResultSet(rs));
         }
 
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("CREATE TABLE nokey (foo TEXT, bar TEXT)");
         }
 
-        try (ResultSet rs = this.dbMetadata.getPrimaryKeys(null, null, "nokey")) {
+        try (ResultSet rs = dbMetadata.getPrimaryKeys(null, null, "nokey")) {
             ResultSetMetaData rsm = rs.getMetaData();
 
-            assertEquals(PK_DUMP_HEADER, this.formatResultSetHeader(rsm));
-            assertArrayEquals(new String[0], this.formatResultSet(rs));
+            assertEquals(PK_DUMP_HEADER, formatResultSetHeader(rsm));
+            assertArrayEquals(new String[0], formatResultSet(rs));
         }
     }
 
@@ -388,17 +388,17 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testGetIndexInfo() throws Exception {
-        try (ResultSet rs = this.dbMetadata.getIndexInfo(null, null, "test_table", false, true)) {
-            assertEquals(INDEX_INFO_HEADER, this.formatResultSetHeader(rs.getMetaData()));
-            assertArrayEquals(INDEX_INFO_TEST_DUMP, this.formatResultSet(rs));
+        try (ResultSet rs = dbMetadata.getIndexInfo(null, null, "test_table", false, true)) {
+            assertEquals(INDEX_INFO_HEADER, formatResultSetHeader(rs.getMetaData()));
+            assertArrayEquals(INDEX_INFO_TEST_DUMP, formatResultSet(rs));
         }
-        try (ResultSet rs = this.dbMetadata.getIndexInfo(null, null, "test_table", true, true)) {
-            assertEquals(INDEX_INFO_HEADER, this.formatResultSetHeader(rs.getMetaData()));
-            assertArrayEquals(EMPTY_RESULT_SET, this.formatResultSet(rs));
+        try (ResultSet rs = dbMetadata.getIndexInfo(null, null, "test_table", true, true)) {
+            assertEquals(INDEX_INFO_HEADER, formatResultSetHeader(rs.getMetaData()));
+            assertArrayEquals(EMPTY_RESULT_SET, formatResultSet(rs));
         }
-        try (ResultSet rs = this.dbMetadata.getIndexInfo(null, null, "type_table", false, true)) {
-            assertEquals(INDEX_INFO_HEADER, this.formatResultSetHeader(rs.getMetaData()));
-            assertArrayEquals(INDEX_INFO_TYPE_DUMP, this.formatResultSet(rs));
+        try (ResultSet rs = dbMetadata.getIndexInfo(null, null, "type_table", false, true)) {
+            assertEquals(INDEX_INFO_HEADER, formatResultSetHeader(rs.getMetaData()));
+            assertArrayEquals(INDEX_INFO_TYPE_DUMP, formatResultSet(rs));
         }
     }
 
@@ -407,12 +407,12 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testGetClientInfo() throws Exception {
-        DatabaseMetaData dmd = this.conn.getMetaData();
+        DatabaseMetaData dmd = conn.getMetaData();
 
         try (ResultSet rs = dmd.getClientInfoProperties()) {
             ResultSetMetaData rsm = rs.getMetaData();
 
-            assertEquals(CLIENT_INFO_HEADER, this.formatResultSetHeader(rsm));
+            assertEquals(CLIENT_INFO_HEADER, formatResultSetHeader(rsm));
 
             assertFalse(rs.next());
         }
@@ -428,15 +428,15 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testGetTableTypes() throws Exception {
-        DatabaseMetaData dmd = this.conn.getMetaData();
+        DatabaseMetaData dmd = conn.getMetaData();
 
         try (ResultSet rs = dmd.getTableTypes()) {
             ResultSetMetaData rsm = rs.getMetaData();
 
-            assertEquals(TABLE_TYPE_HEADER, this.formatResultSetHeader(rsm));
+            assertEquals(TABLE_TYPE_HEADER, formatResultSetHeader(rsm));
 
             while (rs.next()) {
-                assertEquals(TABLE_TYPE_DUMPS[rs.getRow() - 1], this.formatResultSetRow(rs));
+                assertEquals(TABLE_TYPE_DUMPS[rs.getRow() - 1], formatResultSetRow(rs));
             }
         }
     }
@@ -452,7 +452,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testGetImportedKeys() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(
                     "CREATE TABLE artist(" +
                             " artistid    INTEGER PRIMARY KEY, " +
@@ -469,25 +469,25 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
             );
         }
 
-        try (ResultSet rs = this.dbMetadata.getImportedKeys("main", null, "track")) {
+        try (ResultSet rs = dbMetadata.getImportedKeys("main", null, "track")) {
             ResultSetMetaData rsm = rs.getMetaData();
 
-            assertEquals(IMPORTED_KEY_HEADER, this.formatResultSetHeader(rsm));
-            assertArrayEquals(IMPORTED_KEY_DUMP, this.formatResultSet(rs));
+            assertEquals(IMPORTED_KEY_HEADER, formatResultSetHeader(rsm));
+            assertArrayEquals(IMPORTED_KEY_DUMP, formatResultSet(rs));
         }
 
-        try (ResultSet rs = this.dbMetadata.getImportedKeys("main", null, "artist")) {
+        try (ResultSet rs = dbMetadata.getImportedKeys("main", null, "artist")) {
             ResultSetMetaData rsm = rs.getMetaData();
 
-            assertEquals(IMPORTED_KEY_HEADER, this.formatResultSetHeader(rsm));
-            assertArrayEquals(new String[0], this.formatResultSet(rs));
+            assertEquals(IMPORTED_KEY_HEADER, formatResultSetHeader(rsm));
+            assertArrayEquals(new String[0], formatResultSet(rs));
         }
 
-        try (ResultSet rs = this.dbMetadata.getExportedKeys("main", null, "artist")) {
+        try (ResultSet rs = dbMetadata.getExportedKeys("main", null, "artist")) {
             ResultSetMetaData rsm = rs.getMetaData();
 
-            assertEquals(IMPORTED_KEY_HEADER, this.formatResultSetHeader(rsm));
-            assertArrayEquals(IMPORTED_KEY_DUMP, this.formatResultSet(rs));
+            assertEquals(IMPORTED_KEY_HEADER, formatResultSetHeader(rsm));
+            assertArrayEquals(IMPORTED_KEY_DUMP, formatResultSet(rs));
         }
     }
 
@@ -501,7 +501,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
     
     @Test
     public void testTypeInfo() throws Exception {
-        try (ResultSet rs = this.dbMetadata.getTypeInfo()) {
+        try (ResultSet rs = dbMetadata.getTypeInfo()) {
             assertArrayEquals(TYPE_INFO_DUMP, formatResultSet(rs));
         }
     }
@@ -516,12 +516,12 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
     @Test
     public void testGetFunctionColumns() throws Exception {
-        try (ResultSet rs = this.dbMetadata.getFunctionColumns(null, null, null, null)) {
-            assertEquals(GET_FUNCTION_COLUMNS_HEADER, this.formatResultSetHeader(rs.getMetaData()));
+        try (ResultSet rs = dbMetadata.getFunctionColumns(null, null, null, null)) {
+            assertEquals(GET_FUNCTION_COLUMNS_HEADER, formatResultSetHeader(rs.getMetaData()));
         }
-        try (ResultSet rs = this.dbMetadata.getFunctionColumns(null, null, "abs", null)) {
-            assertEquals(GET_FUNCTION_COLUMNS_HEADER, this.formatResultSetHeader(rs.getMetaData()));
-            assertArrayEquals(GET_FUNCTION_COLUMNS_ABS_DUMP, this.formatResultSet(rs));
+        try (ResultSet rs = dbMetadata.getFunctionColumns(null, null, "abs", null)) {
+            assertEquals(GET_FUNCTION_COLUMNS_HEADER, formatResultSetHeader(rs.getMetaData()));
+            assertArrayEquals(GET_FUNCTION_COLUMNS_ABS_DUMP, formatResultSet(rs));
         }
     }
 */

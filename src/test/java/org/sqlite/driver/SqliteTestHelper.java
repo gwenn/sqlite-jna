@@ -43,7 +43,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SqliteTestHelper {
-
     @Rule
     public TemporaryFolder testFolder = new TemporaryFolder();
 
@@ -53,10 +52,10 @@ public class SqliteTestHelper {
 
     @Before
     public void openConnection() throws Exception {
-        this.dbFile = this.testFolder.newFile("test.db");
-        conn = DriverManager.getConnection(JDBC.PREFIX + this.dbFile.getAbsolutePath(), null);
-        this.dbMetadata = this.conn.getMetaData();
-        try (Statement stmt = this.conn.createStatement()) {
+        dbFile = testFolder.newFile("test.db");
+        conn = DriverManager.getConnection(JDBC.PREFIX + dbFile.getAbsolutePath(), null);
+        dbMetadata = conn.getMetaData();
+        try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("CREATE TABLE test_table (id INTEGER PRIMARY KEY, name VARCHAR NOT NULL)");
             stmt.executeUpdate("CREATE INDEX test_index ON test_table (id, name)");
             stmt.executeUpdate("INSERT INTO test_table VALUES (1, 'test')");
@@ -69,11 +68,11 @@ public class SqliteTestHelper {
 
     @After
     public void closeConnection() throws SQLException {
-        if (this.conn != null)
-            this.conn.close();
-        this.conn = null;
-        this.dbFile.delete();
-        this.dbFile = null;
+        if (conn != null)
+            conn.close();
+        conn = null;
+        dbFile.delete();
+        dbFile = null;
     }
 
     protected String formatResultSetHeader(ResultSetMetaData rsm) throws SQLException {
@@ -100,7 +99,7 @@ public class SqliteTestHelper {
         List<String> rows = new ArrayList<>();
 
         while (rs.next()) {
-            rows.add(this.formatResultSetRow(rs));
+            rows.add(formatResultSetRow(rs));
         }
 
         return rows.toArray(new String[rows.size()]);

@@ -52,7 +52,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
     @Test
     public void testExecuteBatch() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.addBatch("INSERT INTO test_table VALUES (2, 'testing')");
             stmt.addBatch("ATTACH ':memory:' as db2");
             //stmt.addBatch("SELECT * FROM test_table");
@@ -61,8 +61,10 @@ public class SqliteStatementTest extends SqliteTestHelper {
             assertArrayEquals(new int[]{1, 0/*, Statement.SUCCESS_NO_INFO*/, 1},
                     stmt.executeBatch());
 
+            final ResultSet catalogs = conn.getMetaData().getCatalogs();
             assertArrayEquals(BATCH_ATTACH_RESULT,
-                    this.formatResultSet(this.conn.getMetaData().getCatalogs()));
+                    formatResultSet(catalogs));
+            catalogs.close();
 
             assertArrayEquals(new int[0], stmt.executeBatch());
 
@@ -85,7 +87,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
             };
 
             try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
-                assertArrayEquals(tableDump, this.formatResultSet(rs));
+                assertArrayEquals(tableDump, formatResultSet(rs));
             }
 
             stmt.addBatch("INSERT INTO test_table VALUES (2, 'testing')");
@@ -96,18 +98,18 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
     @Test
     public void testCloseOnCompletion() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             assertFalse(stmt.isCloseOnCompletion());
 
             stmt.closeOnCompletion();
             assertTrue(stmt.isCloseOnCompletion());
             try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
-                this.formatResultSet(rs);
+                formatResultSet(rs);
             }
             assertTrue(stmt.isClosed());
         }
 
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             assertFalse(stmt.isCloseOnCompletion());
 
             stmt.closeOnCompletion();
@@ -120,7 +122,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
     @Test(expected = SQLException.class)
     public void testBadExecuteUpdate() throws Exception {
 
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("SELECT * FROM test_table");
         }
     }
@@ -128,7 +130,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
     @Ignore
     @Test
     public void testQueryTimeout() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             try {
                 stmt.setQueryTimeout(-1);
                 fail("negative timeout value allowed?");
@@ -179,7 +181,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
     @Test
     public void testMaxRows() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("INSERT INTO test_table VALUES (2, 'testing')");
 
             assertEquals(0, stmt.getMaxRows());
@@ -212,7 +214,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
   @Ignore
     @Test
     public void testCancel() throws Exception {
-        try (final Statement stmt = this.conn.createStatement()) {
+        try (final Statement stmt = conn.createStatement()) {
             final Object barrier = new Object();
 
             stmt.cancel();
@@ -251,14 +253,14 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
     @Test(expected = SQLIntegrityConstraintViolationException.class)
     public void testIntegrityException() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.execute("INSERT INTO test_table VALUES (1, 'test')");
         }
     }
 
     @Test(expected = SQLFeatureNotSupportedException.class)
     public void testFetchDirection() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             assertEquals(ResultSet.FETCH_FORWARD, stmt.getFetchDirection());
             stmt.setFetchDirection(ResultSet.FETCH_FORWARD);
             assertEquals(ResultSet.FETCH_FORWARD, stmt.getFetchDirection());
@@ -268,7 +270,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
     @Test
     public void testFetchSize() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             assertEquals(1, stmt.getFetchSize());
             stmt.setFetchSize(10);
             assertEquals(1, stmt.getFetchSize());
@@ -277,14 +279,14 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
     @Test(expected = SQLException.class)
     public void testExecuteNonQuery() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.executeQuery("INSERT INTO test_table VALUES (2, 'testing')");
         }
     }
 
     @Test(expected = SQLException.class)
     public void testClosedStatement() throws Exception {
-        Statement stmt = this.conn.createStatement();
+        Statement stmt = conn.createStatement();
 
         assertFalse(stmt.isClosed());
         stmt.close();
@@ -294,7 +296,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
     @Test
     public void testUpdateCount() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             assertEquals(1, stmt.executeUpdate("REPLACE INTO test_table VALUES (1, 'test')"));
             assertEquals(-1, stmt.getUpdateCount());
             assertEquals(1, stmt.executeUpdate("INSERT INTO test_table VALUES (2, 'testing')"));
@@ -331,7 +333,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
     @Ignore
     @Test
     public void testEscapedQueries() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery(
                     "SELECT {fn user()} AS RESULT UNION ALL " +
                             "SELECT {fn abs(-1)} AS RESULT UNION ALL " +
@@ -341,19 +343,19 @@ public class SqliteStatementTest extends SqliteTestHelper {
                             "SELECT {ts '2011-10-06 15:00:00'} AS RESULT UNION ALL " +
                             "SELECT {fn concat('foo', (select 'BAR,BAZ'))} AS RESULT UNION ALL " +
                             "SELECT 'FOO' LIKE '\\%' {escape '\\'} AS RESULT")) {
-                assertArrayEquals(ESCAPE_RESULTS, this.formatResultSet(rs));
+                assertArrayEquals(ESCAPE_RESULTS, formatResultSet(rs));
             }
 
             try (ResultSet rs = stmt.executeQuery(
                     "SELECT 1 AS RESULT UNION ALL " +
                             "SELECT 2 AS RESULT UNION ALL " +
                             "SELECT 3 AS RESULT {limit 2}")) {
-                assertArrayEquals(ESCAPE_LIMIT_RESULTS, this.formatResultSet(rs));
+                assertArrayEquals(ESCAPE_LIMIT_RESULTS, formatResultSet(rs));
             }
 
             try (ResultSet rs = stmt.executeQuery(
                     "SELECT * FROM test_table {limit 1 offset 1}")) {
-                assertArrayEquals(new String[0], this.formatResultSet(rs));
+                assertArrayEquals(new String[0], formatResultSet(rs));
             }
 
             stmt.setEscapeProcessing(false);
@@ -369,7 +371,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
     @Test(expected = SQLFeatureNotSupportedException.class)
     public void testCursorName() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.setCursorName("foo");
         }
     }

@@ -46,7 +46,7 @@ import static org.junit.Assert.*;
 public class SqliteResultSetTest extends SqliteTestHelper {
     @Test
     public void testClose() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             ResultSet rs = stmt.executeQuery("SELECT * FROM test_table");
 
             assertEquals(stmt, rs.getStatement());
@@ -69,7 +69,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
 
     @Test
     public void testBadIndex() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
                 try {
                     rs.getString(1);
@@ -99,7 +99,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
 
     @Test
     public void testWasNull() throws Exception {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("INSERT INTO type_table (name, birthdate) VALUES ('test', null)");
 
             try (ResultSet rs = stmt.executeQuery("SELECT * FROM type_table")) {
@@ -114,14 +114,14 @@ public class SqliteResultSetTest extends SqliteTestHelper {
     public void testGetDate() throws Exception {
         long testDate = 1376611200L * 1000L;
 
-        try (PreparedStatement ps = this.conn.prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "INSERT INTO type_table (name, birthdate) VALUES (?, ?)")) {
             ps.setString(1, "d1");
             ps.setDate(2, new Date(testDate));
             ps.executeUpdate();
         }
 
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery("SELECT * FROM type_table")) {
                 assertTrue(rs.next());
                 assertEquals(testDate, rs.getDate("birthdate").getTime());
@@ -146,7 +146,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
                 Time.valueOf("05:25:22"),
         };
 
-        try (PreparedStatement ps = this.conn.prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "INSERT INTO type_table (name, birthdate) VALUES (?, ?)")) {
             ps.setString(1, "d1");
             ps.setTime(2, testTime[0]);
@@ -156,7 +156,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
             ps.executeUpdate();
         }
 
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery("SELECT * FROM type_table")) {
                 assertTrue(rs.next());
                 assertEquals("05:25:00", rs.getTime("birthdate").toString());
@@ -185,7 +185,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
 
         //df.setCalendar(new GregorianCalendar(TimeZone.getTimeZone("UTC")));
 
-        try (PreparedStatement ps = this.conn.prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "INSERT INTO type_table (name, birthdate) VALUES (?, ?)")) {
             ps.setString(1, "d1");
             ps.setString(2, "2011-10-12 15:00:00");
@@ -195,7 +195,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
             ps.executeUpdate();
         }
 
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery("SELECT * FROM type_table")) {
                 assertTrue(rs.next());
                 assertEquals("2011-10-12 15:00:00.000", df.format(rs.getTimestamp("birthdate")));
@@ -223,7 +223,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
         BigDecimal large = new BigDecimal("1" + new String(new char[200]).replace('\0', '0'));
         BigDecimal elarge = new BigDecimal("1.0e+200");
 
-        try (PreparedStatement ps = this.conn.prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "INSERT INTO type_table (name, width) VALUES (?, ?)")) {
             ps.setString(1, "test1");
             ps.setBigDecimal(2, large);
@@ -234,7 +234,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
             ps.executeUpdate();
         }
 
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery("SELECT name, width, height FROM type_table")) {
                 BigDecimal decimal;
 
@@ -264,7 +264,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
     public void testPrimitives() throws Exception {
         final double DELTA = 0.00001;
 
-        try (PreparedStatement ps = this.conn.prepareStatement("INSERT INTO prim_table VALUES (?, ?, ?, ?, ?)")) {
+        try (PreparedStatement ps = conn.prepareStatement("INSERT INTO prim_table VALUES (?, ?, ?, ?, ?)")) {
             ps.setInt(1, 1);
             ps.setBoolean(2, true);
             ps.setLong(3, Long.MAX_VALUE - 1);
@@ -280,7 +280,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
             ps.executeUpdate();
         }
 
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery("SELECT * FROM prim_table")) {
                 assertTrue(rs.next());
 
@@ -306,7 +306,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
 
     @Test
     public void testUpdate() throws Throwable {
-        try (Statement stmt = this.conn.createStatement()) {
+        try (Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
                 Class cl = ResultSet.class;
                 Method[] methods = cl.getMethods();

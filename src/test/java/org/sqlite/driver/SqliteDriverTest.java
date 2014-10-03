@@ -33,7 +33,7 @@ import org.junit.rules.TemporaryFolder;
 import org.sqlite.SQLiteException;
 
 import java.io.File;
-import java.io.PrintWriter;
+import java.io.FileWriter;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.SQLFeatureNotSupportedException;
@@ -44,21 +44,20 @@ import static org.junit.Assert.*;
 public class SqliteDriverTest {
     @Rule
     public TemporaryFolder testFolder = new TemporaryFolder();
-
     private Driver driver;
 
     @Before
     public void newDriver() {
-        this.driver = new JDBC();
+        driver = new JDBC();
     }
 
     @Test
     public void testAcceptsUrl() throws Exception {
-        assertEquals(false, driver.acceptsURL(""));
-        assertEquals(false, driver.acceptsURL("jdbc:sqlite"));
-        assertEquals(true, driver.acceptsURL("jdbc:sqlite:"));
-        assertEquals(true, driver.acceptsURL("jdbc:sqlite::memory:"));
-        assertEquals(true, driver.acceptsURL("jdbc:sqlite:/tmp/test.db"));
+        assertFalse(driver.acceptsURL(""));
+        assertFalse(driver.acceptsURL("jdbc:sqlite"));
+        assertTrue(driver.acceptsURL("jdbc:sqlite:"));
+        assertTrue(driver.acceptsURL("jdbc:sqlite::memory:"));
+        assertTrue(driver.acceptsURL("jdbc:sqlite:/tmp/test.db"));
     }
 
     @Test
@@ -68,8 +67,8 @@ public class SqliteDriverTest {
 
     @Test
     public void testVersion() {
-        assertEquals(1, this.driver.getMajorVersion());
-        assertEquals(0, this.driver.getMinorVersion());
+        assertEquals(1, driver.getMajorVersion());
+        assertEquals(0, driver.getMinorVersion());
     }
 
     @Test(expected = SQLiteException.class)
@@ -81,8 +80,9 @@ public class SqliteDriverTest {
     public void testNotADB() throws Exception {
         File tempFile = testFolder.newFile("file.txt");
 
-        try (PrintWriter pw = new PrintWriter(tempFile)) {
-            pw.println("Hello, World!");
+        try (FileWriter fw = new FileWriter(tempFile)) {
+          fw.write("Hello, World!");
+          fw.flush();
         }
         driver.connect("jdbc:sqlite:" + tempFile.getAbsolutePath(), null);
     }
@@ -101,7 +101,7 @@ public class SqliteDriverTest {
     public void testNoPermissions() throws Exception {
         File tempFile = testFolder.newFile("test.db");
 
-        tempFile.setReadable(false);
+        assertTrue(tempFile.setReadable(false));
         driver.connect("jdbc:sqlite:" + tempFile.getAbsolutePath(), null);
     }
 
@@ -114,12 +114,12 @@ public class SqliteDriverTest {
 
     @Test
     public void testCompliance() throws Exception {
-        assertEquals(false, this.driver.jdbcCompliant());
+        assertFalse(driver.jdbcCompliant());
     }
 
     @Test(expected = SQLFeatureNotSupportedException.class)
     public void testLogger() throws Exception {
-        assertNotNull(this.driver.getParentLogger());
+        assertNotNull(driver.getParentLogger());
     }
 
     @Test
