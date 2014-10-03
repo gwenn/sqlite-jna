@@ -3,11 +3,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.sqlite</groupId>
-  <artifactId>sqlite-jnr</artifactId>
+  <artifactId>sqlite-jni</artifactId>
   <packaging>jar</packaging>
   <version>0.1.0</version>
-  <name>SQLite JNR binding</name>
-  <description>JDBC Driver for SQLite using JNR</description>
+  <name>SQLite JNI binding</name>
+  <description>JDBC Driver for SQLite using JNI</description>
   <url>https://github.com/gwenn/sqlite-jna</url>
 
   <licenses>
@@ -37,11 +37,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.github.jnr</groupId>
-      <artifactId>jnr-ffi</artifactId>
-      <version>1.0.10</version>
-    </dependency>
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.11</version>
@@ -67,6 +62,7 @@
         <configuration>
           <printSummary>false</printSummary>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <argLine>-Djava.library.path=${project.build.directory}</argLine>
         </configuration>
       </plugin>
     </plugins>

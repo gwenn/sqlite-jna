@@ -8,13 +8,11 @@
  */
 package org.sqlite;
 
-import jnr.ffi.Pointer;
-
 public class TimeoutProgressCallback implements SQLite.ProgressCallback {
   private long expiration;
 
   @Override
-  public boolean invoke(Pointer arg) {
+  public boolean progress() {
     if (expiration == 0 || System.currentTimeMillis() <= expiration) {
       return false;
     }

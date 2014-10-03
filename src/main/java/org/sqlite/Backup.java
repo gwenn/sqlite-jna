@@ -8,16 +8,14 @@
  */
 package org.sqlite;
 
-import jnr.ffi.Pointer;
-
 import static org.sqlite.SQLite.*;
 
 public class Backup {
-  private Pointer pBackup;
+  private long pBackup;
   private final Conn dst, src;
 
-  Backup(Pointer pBackup, Conn dst, Conn src) {
-    assert (pBackup != null) && (dst != null) && (src != null);
+  Backup(long pBackup, Conn dst, Conn src) {
+    assert (pBackup != 0) && (dst != null) && (src != null);
     this.pBackup = pBackup;
     this.dst = dst;
     this.src = src;
@@ -73,7 +71,7 @@ public class Backup {
 
   @Override
   protected void finalize() throws Throwable {
-    if (pBackup != null) {
+    if (pBackup != 0) {
       sqlite3_log(-1, "dangling SQLite backup.");
       finish();
     }
@@ -81,11 +79,11 @@ public class Backup {
   }
 
   public int finish() {
-    if (pBackup == null) {
+    if (pBackup == 0) {
       return SQLITE_OK;
     }
     final int res = sqlite3_backup_finish(pBackup); // must be called only once
-    pBackup = null;
+    pBackup = 0;
     return res;
   }
 
@@ -97,7 +95,7 @@ public class Backup {
   }
 
   public boolean isFinished() {
-    return pBackup == null;
+    return pBackup == 0;
   }
 
   void checkInit() throws ConnException {

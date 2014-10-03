@@ -8,12 +8,9 @@
  */
 package org.sqlite;
 
-import jnr.ffi.Pointer;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 
 import static org.sqlite.SQLite.*;
 
@@ -23,12 +20,12 @@ import static org.sqlite.SQLite.*;
  */
 public class Blob {
   private final Conn c;
-  private Pointer pBlob;
+  private long pBlob;
   private int readOffset;
   private int writeOffset;
   private int size = -1;
 
-  Blob(Conn c, Pointer pBlob) {
+  Blob(Conn c, long pBlob) {
     assert c != null;
     this.c = c;
     this.pBlob = pBlob;
@@ -45,13 +42,13 @@ public class Blob {
     return size;
   }
 
-  public int read(ByteBuffer b) throws SQLiteException {
+  public int read(byte[] b, int off, int len) throws SQLiteException {
     if (b == null) {
       throw new NullPointerException();
     }
     checkOpen();
-    final int n = b.remaining();
-    final int res = sqlite3_blob_read(pBlob, b, n, readOffset);
+    final int n = len;
+    final int res = sqlite3_blob_read(pBlob, b, off, len, readOffset);
     if (res != SQLITE_OK) {
       throw new SQLiteException(c, "error while reading blob", res);
     }
@@ -59,13 +56,13 @@ public class Blob {
     return n;
   }
 
-  public int write(ByteBuffer b) throws SQLiteException {
+  public int write(byte[] b, int off, int len) throws SQLiteException {
     if (b == null) {
       throw new NullPointerException();
     }
     checkOpen();
-    final int n = b.remaining();
-    final int res = sqlite3_blob_write(pBlob, b, n, writeOffset);
+    final int n = len;
+    final int res = sqlite3_blob_write(pBlob, b, off, n, writeOffset);
     if (res != SQLITE_OK) {
       throw new SQLiteException(c, "error while writing blob", res);
     }
@@ -86,7 +83,7 @@ public class Blob {
 
   @Override
   protected void finalize() throws Throwable {
-    if (pBlob != null) {
+    if (pBlob != 0) {
       sqlite3_log(-1, "dangling SQLite blob.");
       close();
     }
@@ -94,11 +91,11 @@ public class Blob {
   }
 
   public int close() {
-    if (pBlob == null) {
+    if (pBlob == 0) {
       return SQLITE_OK;
     }
     final int res = sqlite3_blob_close(pBlob); // must be called only once
-    pBlob = null;
+    pBlob = 0;
     return res;
   }
 
@@ -110,7 +107,7 @@ public class Blob {
   }
 
   public boolean isClosed() {
-    return pBlob == null;
+    return pBlob == 0;
   }
 
   public void checkOpen() throws SQLiteException {
@@ -179,7 +176,7 @@ public class Blob {
         return 0;
       }
       try {
-        return Blob.this.read(ByteBuffer.wrap(b, off, len));
+        return Blob.this.read(b, off, len);
       } catch (SQLiteException e) {
         throw new IOException(e);
       }
@@ -251,7 +248,7 @@ public class Blob {
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
       try {
-        Blob.this.write(ByteBuffer.wrap(b, off, len));
+        Blob.this.write(b, off, len);
       } catch (SQLiteException e) {
         throw new IOException(e);
       }

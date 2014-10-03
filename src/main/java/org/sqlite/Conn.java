@@ -8,11 +8,6 @@
  */
 package org.sqlite;
 
-
-import jnr.ffi.Pointer;
-import jnr.ffi.byref.IntByReference;
-import jnr.ffi.byref.PointerByReference;
-
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -22,9 +17,11 @@ public class Conn {
   public static final String MEMORY = ":memory:";
   public static final String TEMP_FILE = "";
 
-  private Pointer pDb;
+  private long pDb;
   private final boolean sharedCacheMode;
   private TimeoutProgressCallback timeoutProgressCallback;
+  private long pTimeoutProgressCallbackContext;
+  private long pTraceCallbackContext;
 
   private final LinkedList<Stmt> cache = new LinkedList<Stmt>();
   private int maxCacheSize = 100; // TODO parameterize
@@ -40,22 +37,22 @@ public class Conn {
     if (!sqlite3_threadsafe()) {
       throw new SQLiteException("sqlite library was not compiled for thread-safe operation", ErrCodes.WRAPPER_SPECIFIC);
     }
-    final PointerByReference ppDb = new PointerByReference();
+    final long[] ppDb = new long[1];
     final int res = sqlite3_open_v2(filename, ppDb, flags, vfs);
     if (res != SQLITE_OK) {
-      if (ppDb.getValue() != null) {
-        sqlite3_close(ppDb.getValue());
+      if (ppDb[0] != 0) {
+        sqlite3_close(ppDb[0]);
       }
       throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
     }
     // TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
     final boolean sharedCacheMode = filename.contains("cache=shared") || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
-    return new Conn(ppDb.getValue(), sharedCacheMode);
+    return new Conn(ppDb[0], sharedCacheMode);
   }
 
   @Override
   protected void finalize() throws Throwable {
-    if (pDb != null) {
+    if (pDb != 0) {
       sqlite3_log(-1, "dangling SQLite connection.");
       close();
     }
@@ -65,13 +62,21 @@ public class Conn {
    * @return result code (No exception is thrown).
    */
   public int close() {
-    if (pDb == null) {
+    if (pDb == 0) {
       return SQLITE_OK;
     }
 
     flush();
     final int res = sqlite3_close_v2(pDb); // must be called only once...
-    pDb = null;
+    pDb = 0;
+    if (pTimeoutProgressCallbackContext != 0) {
+      free_callback_context(pTimeoutProgressCallbackContext);
+      pTimeoutProgressCallbackContext = 0;
+    }
+    if (pTraceCallbackContext != 0) {
+      free_callback_context(pTraceCallbackContext);
+      pTraceCallbackContext = 0;
+    }
     return res;
   }
   public void closeAndCheck() throws ConnException {
@@ -81,8 +86,8 @@ public class Conn {
     }
   }
 
-  private Conn(Pointer pDb, boolean sharedCacheMode) {
-    assert pDb != null;
+  private Conn(long pDb, boolean sharedCacheMode) {
+    assert pDb != 0;
     this.pDb = pDb;
     this.sharedCacheMode = sharedCacheMode;
   }
@@ -133,12 +138,11 @@ public class Conn {
         return stmt;
       }
     }
-    final Pointer pSql = nativeString(sql);
-    final PointerByReference ppStmt = new PointerByReference();
-    final PointerByReference ppTail = new PointerByReference();
-    final int res = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail); // FIXME nbytes + 1
+    final long[] ppStmt = new long[1];
+    final String[] ppTail = new String[1];
+    final int res = sqlite3_prepare_v2(pDb, sql, -1, ppStmt, ppTail); // FIXME nbytes + 1
     check(res, "error while preparing statement '%s'", sql);
-    return new Stmt(this, ppStmt.getValue(), ppTail.getValue(), cacheable);
+    return new Stmt(this, ppStmt[0], ppTail, cacheable);
   }
 
   /**
@@ -148,11 +152,11 @@ public class Conn {
     return sqlite3_libversion();
   }
 
-  public static String mprintf(String format, String arg) {
-    final Pointer p = sqlite3_mprintf(format, arg);
-    final String s = p.getString(0L);
-    sqlite3_free(p);
-    return s;
+  /**
+   * @return Run-time library version number
+   */
+  public static int libversionNumber() {
+    return sqlite3_libversion_number();
   }
 
   public void exec(String sql) throws SQLiteException {
@@ -179,14 +183,14 @@ public class Conn {
 
   public Blob open(String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
     checkOpen();
-    final PointerByReference ppBlob = new PointerByReference();
+    final long[] ppBlob = new long[1];
     final int res = sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob); // ko if pDb is null
     if (res != SQLITE_OK) {
-      sqlite3_blob_close(ppBlob.getValue());
+      sqlite3_blob_close(ppBlob[0]);
       throw new SQLiteException(String.format("error while opening a blob to (db: '%s', table: '%s', col: '%s', row: %d)",
           dbName, tblName, colName, iRow), res);
     }
-    return new Blob(this, ppBlob.getValue());
+    return new Blob(this, ppBlob[0]);
   }
 
   /**
@@ -229,7 +233,7 @@ public class Conn {
   }
 
   public String getFilename() {
-    if (pDb == null) {
+    if (pDb == 0) {
       return null;
     }
     return sqlite3_db_filename(pDb, "main"); // ko if pDb is null
@@ -266,7 +270,7 @@ public class Conn {
    */
   public boolean enableForeignKeys(boolean onoff) throws ConnException {
     checkOpen();
-    final IntByReference pOk = new IntByReference();
+    final int[] pOk = new int[1];
     check(sqlite3_db_config(pDb, 1002, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
     return toBool(pOk);
   }
@@ -275,7 +279,7 @@ public class Conn {
    */
   public boolean areForeignKeysEnabled() throws ConnException {
     checkOpen();
-    final IntByReference pOk = new IntByReference();
+    final int[] pOk = new int[1];
     check(sqlite3_db_config(pDb, 1002, -1, pOk), "error while querying db config on '%s'", getFilename());
     return toBool(pOk);
   }
@@ -284,7 +288,7 @@ public class Conn {
    */
   public boolean enableTriggers(boolean onoff) throws ConnException {
     checkOpen();
-    final IntByReference pOk = new IntByReference();
+    final int[] pOk = new int[1];
     check(sqlite3_db_config(pDb, 1003, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
     return toBool(pOk);
   }
@@ -293,7 +297,7 @@ public class Conn {
    */
   public boolean areTriggersEnabled() throws ConnException {
     checkOpen();
-    final IntByReference pOk = new IntByReference();
+    final int[] pOk = new int[1];
     check(sqlite3_db_config(pDb, 1003, -1, pOk), "error while querying db config on '%s'", getFilename());
     return toBool(pOk);
   }
@@ -312,10 +316,10 @@ public class Conn {
    */
   public String loadExtension(String file, String proc) throws ConnException {
     checkOpen();
-    final PointerByReference pErrMsg = new PointerByReference();
+    final String[] pErrMsg = new String[1];
     final int res = sqlite3_load_extension(pDb, file, proc, pErrMsg);
     if (res != SQLITE_OK) {
-      return pErrMsg.getValue().getString(0L);
+      return pErrMsg[0];
     }
     return null;
   }
@@ -331,29 +335,27 @@ public class Conn {
 
   boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) throws ConnException {
     checkOpen();
-    final IntByReference pNotNull = new IntByReference();
-    final IntByReference pPrimaryKey = new IntByReference();
-    final IntByReference pAutoinc = new IntByReference();
+    final int[] pFlags = new int[3];
 
     check(sqlite3_table_column_metadata(pDb,
         dbName,
         tblName,
         colName,
         null, null,
-        pNotNull, pPrimaryKey, pAutoinc), "error while accessing table column metatada of '%s'", tblName);
+        pFlags), "error while accessing table column metatada of '%s'", tblName);
 
-    return new boolean[]{toBool(pNotNull), toBool(pPrimaryKey), toBool(pAutoinc)};
+    return new boolean[]{pFlags[0] != 0, pFlags[1] != 0, pFlags[2] != 0};
   }
 
-  private static boolean toBool(IntByReference p) {
-    return p.getValue() != 0;
+  private static boolean toBool(int[] p) {
+    return p[0] != 0;
   }
 
   public static Backup open(Conn dst, String dstName, Conn src, String srcName) throws ConnException {
     dst.checkOpen();
     src.checkOpen();
-    final Pointer pBackup = sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
-    if (pBackup == null) {
+    final long pBackup = sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
+    if (pBackup == 0) {
       throw new ConnException(dst, "backup init failed", dst.getErrCode());
     }
     return new Backup(pBackup, dst, src);
@@ -371,14 +373,14 @@ public class Conn {
     if (timeoutProgressCallback == null) {
       checkOpen();
       timeoutProgressCallback = new TimeoutProgressCallback();
-      sqlite3_progress_handler(pDb, 100, timeoutProgressCallback, null);
+      pTimeoutProgressCallbackContext = sqlite3_progress_handler(pDb, 100, timeoutProgressCallback);
     }
     timeoutProgressCallback.setTimeout(timeout * 1000);
   }
 
-  public void trace(TraceCallback tc, Pointer arg) throws ConnException {
+  public void trace(TraceCallback tc) throws ConnException {
     checkOpen();
-    sqlite3_trace(pDb, tc, arg);
+    pTraceCallbackContext = sqlite3_trace(pDb, tc);
   }
 
   public void createScalarFunction(String name, int nArg, ScalarCallback xFunc) throws ConnException {
@@ -389,7 +391,7 @@ public class Conn {
   }
 
   public boolean isClosed() {
-    return pDb == null;
+    return pDb == 0;
   }
 
   public void checkOpen() throws ConnException {

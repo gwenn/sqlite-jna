@@ -1,6 +1,5 @@
 package org.sqlite;
 
-import jnr.ffi.Pointer;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -49,9 +48,11 @@ public class ConnTest {
     checkResult(c.close());
   }
 
-  @Ignore("fails on Travis")
   @Test
   public void queryOnly() throws SQLiteException {
+    if (Conn.libversionNumber() < 3008000) {
+      return;
+    }
     final Conn c = open();
     assertFalse("not query only", c.isQueryOnly(null));
     c.setQueryOnly(null, true);
@@ -150,7 +151,7 @@ public class ConnTest {
       public void trace(String sql) {
         traces[i++] = sql;
       }
-    }, null);
+    });
     final String sql = "SELECT 1";
     c.fastExec(sql);
     assertArrayEquals("traces", new String[]{sql}, traces);
@@ -161,7 +162,7 @@ public class ConnTest {
     final Conn c = open();
     c.createScalarFunction("test", 0, new ScalarCallback() {
       @Override
-      public void invoke(Pointer pCtx, int nArg, Pointer args) {
+      public void invoke(long pCtx, int nArg, Object args) {
         assertNotNull(pCtx);
         assertEquals(0, nArg);
         //assertNull(args);
@@ -173,20 +174,20 @@ public class ConnTest {
     c.close();
   }
 
-  @Test
-  public void checkMprintf() throws SQLiteException {
-    for (int i = 0; i < 100; i++) {
-      assertEquals("'1'", Conn.mprintf("%Q", String.valueOf(1)));
-    }
-    assertEquals("tes\"\"t", Conn.mprintf("%w", "tes\"t"));
-  }
-
   @Test(expected = ConnException.class)
   public void closedConn() throws SQLiteException {
     final Conn c = open();
     c.close();
     c.getAutoCommit();
   }
+
+  @Test
+  public void virtualTable() throws SQLiteException {
+    final Conn c = open();
+    c.fastExec("CREATE VIRTUAL TABLE names USING fts4(name, desc, tokenize=porter)");
+    c.closeAndCheck();
+  }
+
   static void checkResult(int res) {
     assertEquals(0, res);
   }

@@ -8,8 +8,6 @@
  */
 package org.sqlite;
 
-import jnr.ffi.Pointer;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +16,7 @@ import static org.sqlite.SQLite.*;
 
 public class Stmt {
   final Conn c;
-  private Pointer pStmt;
+  private long pStmt;
   private final String tail;
   // cached parameter count
   private int paramCount = -1;
@@ -30,16 +28,16 @@ public class Stmt {
   private int[] columnAffinities;
   private boolean cacheable;
 
-  Stmt(Conn c, Pointer pStmt, Pointer tail, boolean cacheable) {
+  Stmt(Conn c, long pStmt, String[] tail, boolean cacheable) {
     assert c != null;
     this.c = c;
     this.pStmt = pStmt;
-    this.tail = tail.getString(0L);
+    this.tail = tail[0];
     this.cacheable = cacheable;
   }
 
   boolean isDumb() {
-    return pStmt == null;
+    return pStmt == 0;
   }
 
   public String getSql() {
@@ -55,7 +53,7 @@ public class Stmt {
 
   @Override
   protected void finalize() throws Throwable {
-    if (pStmt != null) {
+    if (pStmt != 0) {
       sqlite3_log(-1, "dangling SQLite statement.");
       close(true);
     }
@@ -68,7 +66,7 @@ public class Stmt {
     return close(false);
   }
   public int close(boolean force) {
-    if (pStmt == null) return SQLITE_OK;
+    if (pStmt == 0) return SQLITE_OK;
     if (!force && cacheable && (tail == null || tail.isEmpty()) && !isBusy()) {
       if (sqlite3_reset(pStmt) == SQLITE_OK &&
           sqlite3_clear_bindings(pStmt) == SQLITE_OK &&
@@ -77,7 +75,7 @@ public class Stmt {
       }
     }
     final int res = sqlite3_finalize(pStmt); // must be called only once
-    pStmt = null;
+    pStmt = 0;
     return res;
   }
   public void closeAndCheck() throws StmtException {
@@ -261,12 +259,10 @@ public class Stmt {
 
   public byte[] getColumnBlob(int iCol) throws StmtException {
     checkColumnIndex(iCol);
-    final Pointer p = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
-    if (p == null) {
+    final byte[] bytes = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
+    if (bytes == null) {
       return null;
     } else {
-      final byte[] bytes = new byte[getColumnBytes(iCol)];
-      p.get(0L, bytes, 0, bytes.length);
       return bytes;
     }
   }
@@ -500,7 +496,7 @@ public class Stmt {
     }
   }
   public void checkOpen() throws StmtException {
-    if (pStmt == null) {
+    if (pStmt == 0) {
       throw new StmtException(this, "stmt finalized", ErrCodes.WRAPPER_SPECIFIC);
     }
     if (c.isClosed()) {
@@ -509,7 +505,7 @@ public class Stmt {
   }
 
   public boolean isClosed() {
-    return pStmt == null;
+    return pStmt == 0;
   }
 
   // Only lossy conversion is reported as error.

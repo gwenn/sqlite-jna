@@ -12,7 +12,6 @@ import org.sqlite.ErrCodes;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.sql.Blob;
 import java.sql.SQLException;
 
@@ -38,7 +37,7 @@ class BlobImpl implements Blob {
     final int readOffset = checkPosition(pos);
     blob.setReadOffset(readOffset);
     final byte[] bytes = new byte[Math.min(blob.getBytes() - readOffset, length)];
-    final int n = blob.read(ByteBuffer.wrap(bytes)); // read may be incomplete (n < length)...
+    final int n = blob.read(bytes, 0, bytes.length); // read may be incomplete (n < length)...
     if (n != bytes.length) {
       throw new SQLException(String.format("short read: %d < %d", n, bytes.length), null, ErrCodes.WRAPPER_SPECIFIC);
     }
@@ -72,7 +71,7 @@ class BlobImpl implements Blob {
   public int setBytes(long pos, byte[] bytes, int offset, int len) throws SQLException {
     checkOpen();
     blob.setWriteOffset(checkPosition(pos));
-    return blob.write(ByteBuffer.wrap(bytes, offset, len));
+    return blob.write(bytes, offset, len);
   }
 
   @Override
