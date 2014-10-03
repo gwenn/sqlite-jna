@@ -189,6 +189,14 @@ public class ConnTest {
     c.close();
     c.getAutoCommit();
   }
+
+  @Test
+  public void virtualTable() throws SQLiteException {
+    final Conn c = open();
+    c.fastExec("CREATE VIRTUAL TABLE names USING fts4(name, desc, tokenize=porter)");
+    c.closeAndCheck();
+  }
+
   static void checkResult(int res) {
     assertEquals(0, res);
   }

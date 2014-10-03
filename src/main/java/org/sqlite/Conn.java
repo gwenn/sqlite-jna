@@ -106,11 +106,11 @@ public class Conn {
     return res == 1;
   }
 
-  public boolean isQueryOnly(String dbName) throws SQLiteException {
+  public boolean isQueryOnly(String dbName) throws SQLiteException { // since 3.8.0
     return pragma(dbName, "query_only");
   }
 
-  public void setQueryOnly(String dbName, boolean queryOnly) throws ConnException {
+  public void setQueryOnly(String dbName, boolean queryOnly) throws ConnException { // since 3.8.0
     pragma(dbName, "query_only", queryOnly);
   }
 
