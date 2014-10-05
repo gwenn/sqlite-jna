@@ -96,11 +96,22 @@
       <id>linux</id>
       <activation>
         <os>
-          <family>unix</family>
+          <name>linux</name>
         </os>
       </activation>
       <properties>
         <os.family>linux</os.family>
+      </properties>
+    </profile>
+    <profile>
+      <id>mac</id>
+      <activation>
+        <os>
+          <family>mac</family>
+        </os>
+      </activation>
+      <properties>
+        <os.family>mac</os.family>
       </properties>
     </profile>
   </profiles>
