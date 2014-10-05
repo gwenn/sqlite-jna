@@ -56,6 +56,29 @@
         </configuration>
       </plugin>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.3.2</version>
+        <configuration>
+          <executable>mvn</executable>
+          <arguments>
+            <argument>-f</argument>
+            <argument>pom-${os.family}.xml</argument>
+            <argument>package</argument>
+            <argument>-Dmaven.test.skip=true</argument>
+          </arguments>
+        </configuration>
+        <executions>
+          <execution>
+            <id>native</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <phase>compile</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.16</version>
@@ -67,4 +90,18 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>linux</id>
+      <activation>
+        <os>
+          <family>unix</family>
+        </os>
+      </activation>
+      <properties>
+        <os.family>linux</os.family>
+      </properties>
+    </profile>
+  </profiles>
 </project>
