@@ -67,6 +67,17 @@ public class Conn {
     }
 
     flush();
+
+    // Dangling statements
+    long stmt = sqlite3_next_stmt(pDb, 0);
+    while (stmt != 0) {
+      if (sqlite3_stmt_busy(stmt)) {
+        sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\"");
+      } else {
+        sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\"");
+      }
+      stmt = sqlite3_next_stmt(pDb, stmt);
+    }
     final int res = sqlite3_close_v2(pDb); // must be called only once...
     pDb = 0;
     if (pTimeoutProgressCallbackContext != 0) {
@@ -101,11 +112,11 @@ public class Conn {
     return res == 1;
   }
 
-  public boolean isQueryOnly(String dbName) throws SQLiteException {
+  public boolean isQueryOnly(String dbName) throws SQLiteException { // since 3.8.0
     return pragma(dbName, "query_only");
   }
 
-  public void setQueryOnly(String dbName, boolean queryOnly) throws ConnException {
+  public void setQueryOnly(String dbName, boolean queryOnly) throws ConnException { // since 3.8.0
     pragma(dbName, "query_only", queryOnly);
   }
 

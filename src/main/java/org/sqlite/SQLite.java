@@ -20,7 +20,7 @@ public class SQLite {
 
   static final int SQLITE_TRANSIENT = -1;
 
-  static native String sqlite3_libversion();
+  static native String sqlite3_libversion(); // no copy needed
   static native int sqlite3_libversion_number();
   static native boolean sqlite3_threadsafe();
   static native boolean sqlite3_compileoption_used(String optName);
@@ -50,7 +50,7 @@ public class SQLite {
 
   static native int sqlite3_open_v2(String filename, long[] ppDb, int flags, String vfs); // no copy needed
   static native int sqlite3_close(long pDb);
-  static native int sqlite3_close_v2(long pDb);
+  static native int sqlite3_close_v2(long pDb); // since 3.7.14
   static native void sqlite3_interrupt(long pDb);
 
   static native int sqlite3_busy_timeout(long pDb, int ms);
@@ -71,7 +71,7 @@ public class SQLite {
   static native String sqlite3_db_filename(long pDb, String dbName); // no copy needed
   static native int sqlite3_db_readonly(long pDb, String dbName); // no copy needed
 
-  //static native long sqlite3_next_stmt(long pDb, long pStmt);
+  static native long sqlite3_next_stmt(long pDb, long pStmt);
 
   static native int sqlite3_table_column_metadata(long pDb, String dbName, String tableName, String columnName,
                                                   String[] pDataType, String[] pCollSeq,
@@ -136,6 +136,7 @@ public class SQLite {
   static native int sqlite3_backup_finish(long pBackup);
 
   static native void free_callback_context(long p);
+
   // As there is only one ProgressCallback by connection, and it is used to implement query timeout,
   // the method visibility is restricted.
   static native long sqlite3_progress_handler(long pDb, int nOps, SQLite.ProgressCallback xProgress);

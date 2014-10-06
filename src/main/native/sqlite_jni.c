@@ -286,6 +286,12 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1db_1readonly(JNIEnv *env,
 	return rc;
 }
 
+#define JLONG_TO_SQLITE3_STMT_PTR(jl) ((sqlite3_stmt *)(size_t)(jl))
+
+JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1next_1stmt(JNIEnv *env, jclass cls, jlong pDb, jlong pStmt) {
+	return PTR_TO_JLONG(sqlite3_next_stmt(JLONG_TO_SQLITE3_PTR(pDb), JLONG_TO_SQLITE3_STMT_PTR(pStmt)));
+}
+
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1table_1column_1metadata(JNIEnv *env, jclass cls, jlong pDb, jstring dbName, jstring tableName, jstring columnName,
 	jobjectArray pDataType, jobjectArray pCollSeq, jintArray pFlags) {
 	const char *zDbName = 0;
@@ -351,8 +357,6 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1exec(JNIEnv *env, jclass 
 	(*env)->ReleaseStringUTFChars(env, sql, zSql);
 	return rc;
 }
-
-#define JLONG_TO_SQLITE3_STMT_PTR(jl) ((sqlite3_stmt *)(size_t)(jl))
 
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1prepare_1v2(JNIEnv *env, jclass cls, jlong pDb, jstring sql, jint nByte,
 	jlongArray ppStmt, jobjectArray pTail) {
