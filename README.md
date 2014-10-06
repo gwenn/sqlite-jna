@@ -6,7 +6,7 @@ There are two layers:
 
 [![Build Status][1]][2]
 
-[1]: https://secure.travis-ci.org/gwenn/sqlite-jna.png
+[1]: https://travis-ci.org/gwenn/sqlite-jna.svg?branch=jnr
 [2]: http://www.travis-ci.org/gwenn/sqlite-jna
 
 INSTALL
