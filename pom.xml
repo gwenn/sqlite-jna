@@ -67,6 +67,7 @@
         <configuration>
           <disableXmlReport>true</disableXmlReport>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <!--argLine>-Djnr.ffi.library.path=/usr/local/opt/sqlite/lib</argLine-->
         </configuration>
       </plugin>
     </plugins>
