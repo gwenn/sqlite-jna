@@ -34,6 +34,9 @@ public class SQLite {
   static String sqlite3_libversion() { // no copy needed
     return library.sqlite3_libversion();
   }
+  static int sqlite3_libversion_number() {
+    return library.sqlite3_libversion_number();
+  }
   static boolean sqlite3_threadsafe() {
     return library.sqlite3_threadsafe();
   }
@@ -77,13 +80,20 @@ public class SQLite {
     return library.sqlite3_extended_errcode(pDb);
   }
 
+  static int sqlite3_initialize() {
+    return library.sqlite3_initialize();
+  }
+  static int sqlite3_shutdown() {
+    return library.sqlite3_shutdown();
+  }
+
   static int sqlite3_open_v2(String filename, PointerByReference ppDb, int flags, String vfs) { // no copy needed
     return library.sqlite3_open_v2(filename, ppDb, flags, vfs);
   }
   static int sqlite3_close(Pointer pDb) {
     return library.sqlite3_close(pDb);
   }
-  static int sqlite3_close_v2(Pointer pDb) {
+  static int sqlite3_close_v2(Pointer pDb) { // since 3.7.14
     return library.sqlite3_close_v2(pDb);
   }
   static void sqlite3_interrupt(Pointer pDb) {
@@ -130,7 +140,9 @@ public class SQLite {
     return library.sqlite3_db_readonly(pDb, dbName);
   }
 
-  //static Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt);
+  static Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt) {
+    return library.sqlite3_next_stmt(pDb, pStmt);
+  }
 
   static int sqlite3_table_column_metadata(Pointer pDb, String dbName, String tableName, String columnName,
                                                   PointerByReference pzDataType, PointerByReference pzCollSeq,
@@ -404,6 +416,7 @@ public class SQLite {
 
   public interface LibSQLite {
     String sqlite3_libversion(); // no copy needed
+    int sqlite3_libversion_number();
     boolean sqlite3_threadsafe();
     boolean sqlite3_compileoption_used(String optName);
 
@@ -417,6 +430,9 @@ public class SQLite {
 
     int sqlite3_extended_result_codes(Pointer pDb, boolean onoff);
     int sqlite3_extended_errcode(Pointer pDb);
+
+    int sqlite3_initialize();
+    int sqlite3_shutdown();
 
     int sqlite3_open_v2(String filename, PointerByReference ppDb, int flags, String vfs); // no copy needed
     int sqlite3_close(Pointer pDb);
@@ -437,7 +453,7 @@ public class SQLite {
     String sqlite3_db_filename(Pointer pDb, String dbName); // no copy needed
     int sqlite3_db_readonly(Pointer pDb, String dbName); // no copy needed
 
-    //Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt);
+    Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt);
 
     int sqlite3_table_column_metadata(Pointer pDb, String dbName, String tableName, String columnName,
                                                     PointerByReference pzDataType, PointerByReference pzCollSeq,
