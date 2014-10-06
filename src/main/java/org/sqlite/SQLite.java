@@ -38,6 +38,7 @@ public class SQLite {
   static final int SQLITE_TRANSIENT = -1;
 
   static native Pointer<Byte> sqlite3_libversion(); // no copy needed
+  static native int sqlite3_libversion_number();
   static native boolean sqlite3_threadsafe();
   static native boolean sqlite3_compileoption_used(Pointer<Byte> optName);
 
@@ -65,12 +66,15 @@ public class SQLite {
   static native int sqlite3_extended_result_codes(Pointer pDb, boolean onoff);
   static native int sqlite3_extended_errcode(Pointer pDb);
 
+  static native int sqlite3_initialize();
+  static native int sqlite3_shutdown();
+
   static native int sqlite3_open_v2(Pointer<Byte> filename, Pointer<Pointer> ppDb, int flags, Pointer<Byte> zVfs); // no copy needed
   static int sqlite3_open_v2(String filename, Pointer<Pointer> ppDb, int flags, String vfs) {
     return sqlite3_open_v2(pointerToString(filename), ppDb, flags, pointerToString(vfs));
   }
   static native int sqlite3_close(Pointer pDb);
-  static native int sqlite3_close_v2(Pointer pDb);
+  static native int sqlite3_close_v2(Pointer pDb); // since 3.7.14
   static native void sqlite3_interrupt(Pointer pDb);
 
   static native int sqlite3_busy_timeout(Pointer pDb, int ms);
@@ -102,7 +106,7 @@ public class SQLite {
     return sqlite3_db_readonly(pDb, pointerToString(dbName));
   }
 
-  //static native Pointer sqlite3_next_stmt(sqlite3 pDb, Pointer pStmt);
+  static native Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt);
 
   @Optional
   static native int sqlite3_table_column_metadata(Pointer pDb, Pointer<Byte> dbName, Pointer<Byte> tableName, Pointer<Byte> columnName,

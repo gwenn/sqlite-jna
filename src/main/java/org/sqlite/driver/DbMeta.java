@@ -131,7 +131,7 @@ class DbMeta implements DatabaseMetaData {
 
   @Override
   public boolean supportsMixedCaseIdentifiers() throws SQLException {
-    return true;
+    return false;
   }
 
   @Override
@@ -151,7 +151,7 @@ class DbMeta implements DatabaseMetaData {
 
   @Override
   public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException {
-    return true;
+    return false;
   }
 
   @Override
@@ -1418,12 +1418,12 @@ class DbMeta implements DatabaseMetaData {
         append("null as TABLE_SCHEM, ").
         append(quote(table)).append(" as TABLE_NAME, ").
         append("nu as NON_UNIQUE, ").
-        append("null as INDEX_QUALIFIER, ").
+        append(quote(catalog)).append(" as INDEX_QUALIFIER, ").
         append("idx as INDEX_NAME, ").
         append(tableIndexOther).append(" as TYPE, ").
         append("seqno as ORDINAL_POSITION, ").
         append("cn as COLUMN_NAME, ").
-        append("'A' as ASC_OR_DESC, ").
+        append("null as ASC_OR_DESC, ").
         append("0 as CARDINALITY, ").
         append("0 as PAGES, ").
         append("null as FILTER_CONDITION ").

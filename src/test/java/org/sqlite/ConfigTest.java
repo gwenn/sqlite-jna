@@ -1,12 +1,16 @@
 package org.sqlite;
 
-import org.junit.Ignore;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 public class ConfigTest {
-  @Ignore("fails on Travis")
+  @BeforeClass
+  public static void shutdown() {
+    assertEquals(SQLite.SQLITE_OK, SQLite.sqlite3_shutdown());
+  }
+
   @Test
   public void testThreadingMode() {
     assertEquals(SQLite.SQLITE_OK, SQLite.sqlite3_config(SQLite.SQLITE_CONFIG_SINGLETHREAD));
@@ -14,14 +18,12 @@ public class ConfigTest {
     assertEquals(SQLite.SQLITE_OK, SQLite.sqlite3_config(SQLite.SQLITE_CONFIG_SERIALIZED));
   }
 
-  @Ignore("fails on Travis")
   @Test
   public void testURIHandling() {
     assertEquals(SQLite.SQLITE_OK, SQLite.sqlite3_config(SQLite.SQLITE_CONFIG_URI, false));
     assertEquals(SQLite.SQLITE_OK, SQLite.sqlite3_config(SQLite.SQLITE_CONFIG_URI, true));
   }
 
-  @Ignore("fails on Travis")
   @Test
   public void testMemoryStatus() {
     assertEquals(SQLite.SQLITE_OK, SQLite.sqlite3_config(SQLite.SQLITE_CONFIG_MEMSTATUS, false));
