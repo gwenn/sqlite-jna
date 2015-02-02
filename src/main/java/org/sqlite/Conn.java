@@ -165,13 +165,6 @@ public class Conn {
     return sqlite3_libversion_number();
   }
 
-  public static String mprintf(String format, String arg) {
-    final Pointer p = sqlite3_mprintf(format, arg);
-    final String s = p.getString(0L);
-    sqlite3_free(p);
-    return s;
-  }
-
   public void exec(String sql) throws SQLiteException {
     while (sql != null && !sql.isEmpty()) {
       Stmt s = null;

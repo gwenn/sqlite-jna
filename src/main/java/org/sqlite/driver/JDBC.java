@@ -130,7 +130,7 @@ public class JDBC implements Driver {
     SQLWarning warnings = null;
     final String encoding = info.getProperty(ENCODING);
     if (encoding != null && !encoding.isEmpty()) {
-      conn.fastExec(org.sqlite.Conn.mprintf("PRAGMA encoding=\"%w\"", encoding));
+      conn.fastExec("PRAGMA encoding=" + SQLite.doubleQuote(encoding));
     }
     final String fks = info.getProperty(FOREIGN_KEYS);
     if ("on".equals(fks)) {

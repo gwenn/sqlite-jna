@@ -134,7 +134,6 @@ public class SQLite implements Library {
   //static native int sqlite3_bind_value(Pointer pStmt, int i, const sqlite3_value*);
   static native int sqlite3_bind_zeroblob(Pointer pStmt, int i, int n);
 
-  static native Pointer sqlite3_mprintf(String zFormat, String arg); // no copy needed for args
   static native void sqlite3_free(Pointer p);
 
   static native int sqlite3_blob_open(Pointer pDb, String dbName, String tableName, String columnName,
