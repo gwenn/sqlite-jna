@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TimeZone;
 
-public final class DateUtil {
+final class DateUtil {
   public static final String DATE_FORMAT = "date_format";
   public static final String TIME_FORMAT = "time_format";
   public static final String TIMESTAMP_FORMAT = "timestamp_format";

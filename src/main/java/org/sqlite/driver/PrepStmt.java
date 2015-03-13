@@ -82,7 +82,7 @@ UPDATE test SET data = :blob WHERE rowid = :rowid;
   smt.setBlob|setBinaryStream(1, ...);
 
  */
-public class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatement {
+class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatement {
   private RowId rowId;
   private Map<Integer, org.sqlite.Blob> blobByParamIndex = Collections.emptyMap();
 

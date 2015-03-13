@@ -45,7 +45,7 @@ class Rows implements ResultSet {
   private RowIdImpl rowId;
   private Map<Integer, org.sqlite.Blob> blobByColIndex = Collections.emptyMap();
 
-  public Rows(Stmt s, boolean hasRow) throws SQLException {
+  Rows(Stmt s, boolean hasRow) throws SQLException {
     this.s = s;
     this.stmt = s.getStmt();
     this.row = hasRow ? 0 : -1; // Initialized at -1 when there is no result otherwise 0

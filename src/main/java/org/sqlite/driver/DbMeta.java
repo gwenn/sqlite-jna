@@ -31,7 +31,7 @@ import static org.sqlite.SQLite.escapeIdentifier;
 class DbMeta implements DatabaseMetaData {
   private final Conn c;
 
-  public DbMeta(Conn c) {
+  DbMeta(Conn c) {
     this.c = c;
   }
 

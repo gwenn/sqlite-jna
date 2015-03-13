@@ -23,10 +23,6 @@ class RowsMeta implements ResultSetMetaData {
     this.stmt = stmt;
   }
 
-  private Stmt getStmt() {
-    return stmt;
-  }
-
   private static int fixCol(int columnIndex) {
     return columnIndex - 1;
   }
