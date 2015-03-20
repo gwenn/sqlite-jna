@@ -47,8 +47,8 @@ class Rows implements ResultSet {
 
   Rows(Stmt s, boolean hasRow) throws SQLException {
     this.s = s;
-    this.stmt = s.getStmt();
-    this.row = hasRow ? 0 : -1; // Initialized at -1 when there is no result otherwise 0
+    stmt = s.getStmt();
+    row = hasRow ? 0 : -1; // Initialized at -1 when there is no result otherwise 0
   }
 
   private org.sqlite.Stmt getStmt() throws SQLException {

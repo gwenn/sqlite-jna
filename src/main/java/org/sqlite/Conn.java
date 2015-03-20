@@ -17,7 +17,7 @@ import java.util.LinkedList;
 
 import static org.sqlite.SQLite.*;
 
-public class Conn {
+public final class Conn {
   public static final String MEMORY = ":memory:";
   public static final String TEMP_FILE = "";
 

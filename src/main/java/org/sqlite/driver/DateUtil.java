@@ -66,7 +66,7 @@ final class DateUtil {
   private static class ParsedDate {
     private final Date value;
     private final boolean tz;
-    public ParsedDate(Date value, boolean tz) {
+    private ParsedDate(Date value, boolean tz) {
       this.value = value;
       this.tz = tz;
     }
@@ -89,32 +89,16 @@ final class DateUtil {
         layout = "HH:mm:ss.SSS";
         break;
       case 16: // YYYY-MM-DDTHH:MM
-        if (txt.charAt(10) == 'T') {
-          layout = "yyyy-MM-dd'T'HH:mm";
-        } else {
-          layout = "yyyy-MM-dd HH:mm";
-        }
+        layout = txt.charAt(10) == 'T' ? "yyyy-MM-dd'T'HH:mm" : "yyyy-MM-dd HH:mm";
         break;
       case 19: // YYYY-MM-DDTHH:MM:SS
-        if (txt.charAt(10) == 'T') {
-          layout = "yyyy-MM-dd'T'HH:mm:ss";
-        } else {
-          layout = "yyyy-MM-dd HH:mm:ss";
-        }
+        layout = txt.charAt(10) == 'T' ? "yyyy-MM-dd'T'HH:mm:ss" : "yyyy-MM-dd HH:mm:ss";
         break;
       case 23: // YYYY-MM-DDTHH:MM:SS.SSS
-        if (txt.charAt(10) == 'T') {
-          layout = "yyyy-MM-dd'T'HH:mm:ss.SSS";
-        } else {
-          layout = "yyyy-MM-dd HH:mm:ss.SSS";
-        }
+        layout = txt.charAt(10) == 'T' ? "yyyy-MM-dd'T'HH:mm:ss.SSS" : "yyyy-MM-dd HH:mm:ss.SSS";
         break;
       default: // YYYY-MM-DDTHH:MM:SS.SSSZhh:mm or parse error
-        if (txt.length() > 10 && txt.charAt(10) == 'T') {
-          layout = DEFAULT_FORMAT;
-        } else {
-          layout = "yyyy-MM-dd HH:mm:ss.SSSXXX";
-        }
+        layout = txt.length() > 10 && txt.charAt(10) == 'T' ? DEFAULT_FORMAT : "yyyy-MM-dd HH:mm:ss.SSSXXX";
         tz = true;
     }
     final DateFormat df = getDateFormat(layout);
