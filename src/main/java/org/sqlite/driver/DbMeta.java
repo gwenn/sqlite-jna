@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import static org.sqlite.SQLite.doubleQuote;
 import static org.sqlite.SQLite.escapeIdentifier;
@@ -31,7 +32,7 @@ import static org.sqlite.SQLite.escapeIdentifier;
 class DbMeta implements DatabaseMetaData {
   private final Conn c;
 
-  public DbMeta(Conn c) {
+  DbMeta(Conn c) {
     this.c = c;
   }
 
@@ -1456,7 +1457,7 @@ class DbMeta implements DatabaseMetaData {
       sql.append("SELECT NULL AS nu, NULL AS idx, NULL AS seqno, NULL AS cn) limit 0");
     } else {
       boolean found = false;
-      for (final Map.Entry<String, Boolean> index : indexes.entrySet()) {
+      for (final Entry<String, Boolean> index : indexes.entrySet()) {
         PreparedStatement index_info = null;
         try {
           index_info = c.prepareStatement("PRAGMA index_info(\"" + escapeIdentifier(index.getKey()) + "\")");

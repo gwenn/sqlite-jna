@@ -41,13 +41,13 @@ class Stmt implements Statement {
 
   Stmt(Conn c) {
     this.c = c;
-    this.prepared = false;
+    prepared = false;
   }
 
   Stmt(Conn c, org.sqlite.Stmt stmt) {
     this.c = c;
     this.stmt = stmt;
-    this.prepared = true;
+    prepared = true;
   }
 
   org.sqlite.Stmt getStmt() throws SQLException {
@@ -181,7 +181,7 @@ class Stmt implements Statement {
   public void setMaxRows(int max) throws SQLException {
     checkOpen();
     if (max < 0) throw Util.error("max row count must be >= 0");
-    this.maxRows = max;
+    maxRows = max;
   }
 
   @Override
@@ -202,7 +202,7 @@ class Stmt implements Statement {
   public void setQueryTimeout(int seconds) throws SQLException {
     if (seconds < 0) throw Util.error("query timeout must be >= 0");
     checkOpen();
-    this.queryTimeout = seconds;
+    queryTimeout = seconds;
   }
 
   @Override

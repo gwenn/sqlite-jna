@@ -175,14 +175,6 @@ public class ConnTest {
     c.close();
   }
 
-  @Test
-  public void checkMprintf() throws SQLiteException {
-    for (int i = 0; i < 100; i++) {
-      assertEquals("'1'", Conn.mprintf("%Q", String.valueOf(1)));
-    }
-    assertEquals("tes\"\"t", Conn.mprintf("%w", "tes\"t"));
-  }
-
   @Test(expected = ConnException.class)
   public void closedConn() throws SQLiteException {
     final Conn c = open();

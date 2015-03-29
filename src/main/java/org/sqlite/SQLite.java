@@ -17,7 +17,7 @@ import jnr.ffi.byref.PointerByReference;
 
 import java.nio.ByteBuffer;
 
-public class SQLite {
+public final class SQLite {
   private static final String LIBRARY_NAME = "sqlite3";
   private static final LibSQLite library;
   static {
@@ -62,6 +62,7 @@ public class SQLite {
   public static int sqlite3_config(int op, SQLite.LogCallback xLog, Pointer udp) {
     return library.sqlite3_config(op,xLog, udp);
   }
+  // Applications can use the sqlite3_log(E,F,..) API to send new messages to the log, if desired, but this is discouraged.
   public static void sqlite3_log(int iErrCode, String msg) {
     library.sqlite3_log(iErrCode, msg);
   }
@@ -260,9 +261,6 @@ public class SQLite {
     return library.sqlite3_bind_zeroblob(pStmt, i, n);
   }
 
-  static Pointer sqlite3_mprintf(String zFormat, String arg) { // no copy needed for args
-    return library.sqlite3_mprintf(zFormat, arg);
-  }
   static void sqlite3_free(Pointer p) {
     library.sqlite3_free(p);
   }
@@ -305,7 +303,7 @@ public class SQLite {
 
   // As there is only one ProgressCallback by connection, and it is used to implement query timeout,
   // the method visibility is restricted.
-  static void sqlite3_progress_handler(Pointer pDb, int nOps, SQLite.ProgressCallback xProgress, Pointer pArg) {
+  static void sqlite3_progress_handler(Pointer pDb, int nOps, ProgressCallback xProgress, Pointer pArg) {
     library.sqlite3_progress_handler(pDb, nOps, xProgress, pArg);
   }
   public static void sqlite3_trace(Pointer pDb, TraceCallback xTrace, Pointer pArg) {
@@ -394,7 +392,7 @@ public class SQLite {
     @Delegate
     void invoke(Pointer udp, int err, String msg);
   }
-  private static final SQLite.LogCallback LOG_CALLBACK = new SQLite.LogCallback() {
+  private static final LogCallback LOG_CALLBACK = new LogCallback() {
     @Override
     public void invoke(Pointer udp, int err, String msg) {
       System.out.printf("%d: %s%n", err, msg);
@@ -502,7 +500,6 @@ public class SQLite {
     //int sqlite3_bind_value(Pointer pStmt, int i, const sqlite3_value*);
     int sqlite3_bind_zeroblob(Pointer pStmt, int i, int n);
 
-    Pointer sqlite3_mprintf(String zFormat, String arg); // no copy needed for args
     void sqlite3_free(Pointer p);
 
     int sqlite3_blob_open(Pointer pDb, String dbName, String tableName, String columnName,

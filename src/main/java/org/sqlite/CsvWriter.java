@@ -38,7 +38,7 @@ public class CsvWriter implements Closeable, Flushable {
     this.out = out;
     this.sep = sep;
     this.quoted = quoted;
-    this.sor = true;
+    sor = true;
   }
 
   public boolean isUseCRLF() {
