@@ -13,7 +13,7 @@ import java.sql.RowId;
 class RowIdImpl implements RowId {
   final long value;
 
-  public RowIdImpl(long value) {
+  RowIdImpl(long value) {
     this.value = value;
   }
 
@@ -43,7 +43,7 @@ class RowIdImpl implements RowId {
     return (int) (value ^ (value >>> 32));
   }
 
-  public static long getValue(RowId rowId) {
+  static long getValue(RowId rowId) {
     if (rowId instanceof RowIdImpl) {
       return ((RowIdImpl) rowId).value;
     } else {

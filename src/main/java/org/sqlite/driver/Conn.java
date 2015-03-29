@@ -42,7 +42,7 @@ class Conn implements Connection {
   PreparedStatement getGeneratedKeys;
 
   private Properties clientInfo;
-  private int savepointId = 0;
+  private int savepointId;
   private SQLWarning warnings;
   private int transactionIsolation = TRANSACTION_SERIALIZABLE;
 

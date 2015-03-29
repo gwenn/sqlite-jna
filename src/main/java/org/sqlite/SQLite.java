@@ -8,7 +8,7 @@
  */
 package org.sqlite;
 
-public class SQLite {
+public final class SQLite {
   static {
     System.loadLibrary("sqlite_jni");
   }
@@ -36,7 +36,8 @@ public class SQLite {
   //sqlite3_config(SQLITE_CONFIG_MEMSTATUS, int onoff)
   static native int sqlite3_config(int op, boolean onoff);
   //sqlite3_config(SQLITE_CONFIG_LOG, void(*)(void *udp, int err, const char *msg), void *udp)
-  public static native int sqlite3_config(int op, SQLite.LogCallback xLog);
+  public static native int sqlite3_config(int op, LogCallback xLog);
+  // Applications can use the sqlite3_log(E,F,..) API to send new messages to the log, if desired, but this is discouraged.
   public static native void sqlite3_log(int iErrCode, String msg);
 
   static native String sqlite3_errmsg(long pDb); // copy needed: the error string might be overwritten or deallocated by subsequent calls to other SQLite interface functions.
@@ -139,7 +140,7 @@ public class SQLite {
 
   // As there is only one ProgressCallback by connection, and it is used to implement query timeout,
   // the method visibility is restricted.
-  static native long sqlite3_progress_handler(long pDb, int nOps, SQLite.ProgressCallback xProgress);
+  static native long sqlite3_progress_handler(long pDb, int nOps, ProgressCallback xProgress);
   public static native long sqlite3_trace(long pDb, TraceCallback xTrace);
   /*
   void (*)(sqlite3_context*,int,sqlite3_value**),
@@ -208,7 +209,7 @@ public class SQLite {
     @SuppressWarnings("unused")
     void log(int err, String msg);
   }
-  private static final SQLite.LogCallback LOG_CALLBACK = new SQLite.LogCallback() {
+  private static final LogCallback LOG_CALLBACK = new LogCallback() {
     @Override
     public void log(int err, String msg) {
       System.out.printf("%d: %s%n", err, msg);

@@ -209,7 +209,7 @@ public class Blob {
     @Override
     public void close() throws IOException {
       try {
-        Blob.this.closeAndCheck();
+        closeAndCheck();
       } catch (SQLiteException e) {
         throw new IOException(e);
       }
@@ -257,7 +257,7 @@ public class Blob {
     @Override
     public void close() throws IOException {
       try {
-        Blob.this.closeAndCheck();
+        closeAndCheck();
       } catch (SQLiteException e) {
         throw new IOException(e);
       }

@@ -25,7 +25,6 @@ import java.sql.Clob;
 import java.sql.Date;
 import java.sql.NClob;
 import java.sql.ParameterMetaData;
-import java.sql.PreparedStatement;
 import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -83,7 +82,7 @@ UPDATE test SET data = :blob WHERE rowid = :rowid;
   smt.setBlob|setBinaryStream(1, ...);
 
  */
-public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaData {
+class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatement {
   private RowId rowId;
   private Map<Integer, org.sqlite.Blob> blobByParamIndex = Collections.emptyMap();
 
@@ -129,40 +128,72 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   public void setNull(int parameterIndex, int sqlType) throws SQLException {
     bindNull(parameterIndex);
   }
+  @Override
+  public void setNull(String parameterName, int sqlType) throws SQLException {
+    setNull(getBindParameterIndex(parameterName), sqlType);
+  }
 
   @Override
   public void setBoolean(int parameterIndex, boolean x) throws SQLException {
     bindInt(parameterIndex, x ? 1 : 0);
+  }
+  @Override
+  public void setBoolean(String parameterName, boolean x) throws SQLException {
+    setBoolean(getBindParameterIndex(parameterName), x);
   }
 
   @Override
   public void setByte(int parameterIndex, byte x) throws SQLException {
     bindInt(parameterIndex, x);
   }
+  @Override
+  public void setByte(String parameterName, byte x) throws SQLException {
+    setByte(getBindParameterIndex(parameterName), x);
+  }
 
   @Override
   public void setShort(int parameterIndex, short x) throws SQLException {
     bindInt(parameterIndex, x);
+  }
+  @Override
+  public void setShort(String parameterName, short x) throws SQLException {
+    setShort(getBindParameterIndex(parameterName), x);
   }
 
   @Override
   public void setInt(int parameterIndex, int x) throws SQLException {
     bindInt(parameterIndex, x);
   }
+  @Override
+  public void setInt(String parameterName, int x) throws SQLException {
+    setInt(getBindParameterIndex(parameterName), x);
+  }
 
   @Override
   public void setLong(int parameterIndex, long x) throws SQLException {
     bindLong(parameterIndex, x);
+  }
+  @Override
+  public void setLong(String parameterName, long x) throws SQLException {
+    setLong(getBindParameterIndex(parameterName), x);
   }
 
   @Override
   public void setFloat(int parameterIndex, float x) throws SQLException {
     bindDouble(parameterIndex, x);
   }
+  @Override
+  public void setFloat(String parameterName, float x) throws SQLException {
+    setFloat(getBindParameterIndex(parameterName), x);
+  }
 
   @Override
   public void setDouble(int parameterIndex, double x) throws SQLException {
     bindDouble(parameterIndex, x);
+  }
+  @Override
+  public void setDouble(String parameterName, double x) throws SQLException {
+    setDouble(getBindParameterIndex(parameterName), x);
   }
 
   @Override
@@ -173,10 +204,18 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
       bindText(parameterIndex, x.toString());
     }
   }
+  @Override
+  public void setBigDecimal(String parameterName, BigDecimal x) throws SQLException {
+    setBigDecimal(getBindParameterIndex(parameterName), x);
+  }
 
   @Override
   public void setString(int parameterIndex, String x) throws SQLException {
     bindText(parameterIndex, x);
+  }
+  @Override
+  public void setString(String parameterName, String x) throws SQLException {
+    setString(getBindParameterIndex(parameterName), x);
   }
 
   @Override
@@ -187,10 +226,18 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
       bindBlob(parameterIndex, x);
     }
   }
+  @Override
+  public void setBytes(String parameterName, byte[] x) throws SQLException {
+    setBytes(getBindParameterIndex(parameterName), x);
+  }
 
   @Override
   public void setDate(int parameterIndex, Date x) throws SQLException {
     bindDate(parameterIndex, x, 0);
+  }
+  @Override
+  public void setDate(String parameterName, Date x) throws SQLException {
+    setDate(getBindParameterIndex(parameterName), x);
   }
 
   private void bindDate(int parameterIndex, java.util.Date x, int cfgIdx) throws SQLException {
@@ -212,15 +259,27 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   public void setTime(int parameterIndex, Time x) throws SQLException {
     bindDate(parameterIndex, x, 1);
   }
+  @Override
+  public void setTime(String parameterName, Time x) throws SQLException {
+    setTime(getBindParameterIndex(parameterName), x);
+  }
 
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
     bindDate(parameterIndex, x, 2);
   }
+  @Override
+  public void setTimestamp(String parameterName, Timestamp x) throws SQLException {
+    setTimestamp(getBindParameterIndex(parameterName), x);
+  }
 
   @Override
   public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
     throw Util.unsupported("PreparedStatement.setAsciiStream");
+  }
+  @Override
+  public void setAsciiStream(String parameterName, InputStream x, int length) throws SQLException {
+    setAsciiStream(getBindParameterIndex(parameterName), x, length);
   }
 
   @Override
@@ -270,6 +329,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     }
     bound[parameterIndex - 1] = true;
   }
+  @Override
+  public void setBinaryStream(String parameterName, InputStream x, int length) throws SQLException {
+    setBinaryStream(getBindParameterIndex(parameterName), x, length);
+  }
 
   @Override
   public void clearParameters() throws SQLException {
@@ -285,6 +348,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   @Override
   public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
     setObject(parameterIndex, x, targetSqlType, 0);
+  }
+  @Override
+  public void setObject(String parameterName, Object x, int targetSqlType) throws SQLException {
+    setObject(getBindParameterIndex(parameterName), x, targetSqlType);
   }
 
   @Override
@@ -330,6 +397,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     } else {
       throw new StmtException(getStmt(), String.format("Unsupported type: %s", x.getClass().getName()), ErrCodes.WRAPPER_SPECIFIC);
     }
+  }
+  @Override
+  public void setObject(String parameterName, Object x) throws SQLException {
+    setObject(getBindParameterIndex(parameterName), x);
   }
 
   @Override
@@ -408,6 +479,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
   public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
     throw Util.unsupported("PreparedStatement.setCharacterStream");
   }
+  @Override
+  public void setCharacterStream(String parameterName, Reader reader, int length) throws SQLException {
+    setCharacterStream(getBindParameterIndex(parameterName), reader, length);
+  }
 
   @Override
   public void setRef(int parameterIndex, Ref x) throws SQLException {
@@ -422,10 +497,18 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
       setBinaryStream(parameterIndex, x.getBinaryStream(), x.length());
     }
   }
+  @Override
+  public void setBlob(String parameterName, Blob x) throws SQLException {
+    setBlob(getBindParameterIndex(parameterName), x);
+  }
 
   @Override
   public void setClob(int parameterIndex, Clob x) throws SQLException {
     throw Util.unsupported("PreparedStatement.setClob");
+  }
+  @Override
+  public void setClob(String parameterName, Clob x) throws SQLException {
+    setClob(getBindParameterIndex(parameterName), x);
   }
 
   @Override
@@ -450,6 +533,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     }
     throw Util.unsupported("*PreparedStatement.setDate"); // TODO
   }
+  @Override
+  public void setDate(String parameterName, Date x, Calendar cal) throws SQLException {
+    setDate(getBindParameterIndex(parameterName), x, cal);
+  }
 
   @Override
   public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
@@ -459,6 +546,10 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     }
     throw Util.unsupported("*PreparedStatement.setTime"); // TODO
   }
+  @Override
+  public void setTime(String parameterName, Time x, Calendar cal) throws SQLException {
+    setTime(getBindParameterIndex(parameterName), x, cal);
+  }
 
   @Override
   public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) throws SQLException {
@@ -467,15 +558,27 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     }
     throw Util.unsupported("*PreparedStatement.setTimestamp"); // TODO
   }
+  @Override
+  public void setTimestamp(String parameterName, Timestamp x, Calendar cal) throws SQLException {
+    setTimestamp(getBindParameterIndex(parameterName), x, cal);
+  }
 
   @Override
   public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
     setNull(parameterIndex, sqlType);
   }
+  @Override
+  public void setNull(String parameterName, int sqlType, String typeName) throws SQLException {
+    setNull(getBindParameterIndex(parameterName), sqlType, typeName);
+  }
 
   @Override
   public void setURL(int parameterIndex, URL x) throws SQLException {
     throw Util.unsupported("PreparedStatement.setURL");
+  }
+  @Override
+  public void setURL(String parameterName, URL val) throws SQLException {
+    setURL(getBindParameterIndex(parameterName), val);
   }
 
   @Override
@@ -492,40 +595,72 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
       bindLong(parameterIndex, RowIdImpl.getValue(x));
     }
   }
+  @Override
+  public void setRowId(String parameterName, RowId x) throws SQLException {
+    setRowId(getBindParameterIndex(parameterName), x);
+  }
 
   @Override
   public void setNString(int parameterIndex, String value) throws SQLException {
     setString(parameterIndex, value);
+  }
+  @Override
+  public void setNString(String parameterName, String value) throws SQLException {
+    setNString(getBindParameterIndex(parameterName), value);
   }
 
   @Override
   public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
     throw Util.unsupported("PreparedStatement.setNCharacterStream");
   }
+  @Override
+  public void setNCharacterStream(String parameterName, Reader value, long length) throws SQLException {
+    setNCharacterStream(getBindParameterIndex(parameterName), value, length);
+  }
 
   @Override
   public void setNClob(int parameterIndex, NClob value) throws SQLException {
     throw Util.unsupported("PreparedStatement.setNClob");
+  }
+  @Override
+  public void setNClob(String parameterName, NClob value) throws SQLException {
+    setNClob(getBindParameterIndex(parameterName), value);
   }
 
   @Override
   public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
     throw Util.unsupported("PreparedStatement.setClob");
   }
+  @Override
+  public void setClob(String parameterName, Reader reader, long length) throws SQLException {
+    setClob(getBindParameterIndex(parameterName), reader, length);
+  }
 
   @Override
   public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
     setBinaryStream(parameterIndex, inputStream, length);
+  }
+  @Override
+  public void setBlob(String parameterName, InputStream inputStream, long length) throws SQLException {
+    setBlob(getBindParameterIndex(parameterName), inputStream, length);
   }
 
   @Override
   public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
     throw Util.unsupported("PreparedStatement.setNClob");
   }
+  @Override
+  public void setNClob(String parameterName, Reader reader, long length) throws SQLException {
+    setNClob(getBindParameterIndex(parameterName), reader, length);
+  }
 
   @Override
   public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
     throw Util.unsupported("PreparedStatement.setSQLXML");
+  }
+  @Override
+  public void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException {
+    setSQLXML(getBindParameterIndex(parameterName), xmlObject);
   }
 
   @Override
@@ -559,10 +694,18 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
     // no conversion (targetSqlTpe and scaleOrLength are ignored)
     setObject(parameterIndex, x);
   }
+  @Override
+  public void setObject(String parameterName, Object x, int targetSqlType, int scale) throws SQLException {
+    setObject(getBindParameterIndex(parameterName), x, targetSqlType, scale);
+  }
 
   @Override
   public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
     throw Util.unsupported("PreparedStatement.setAsciiStream");
+  }
+  @Override
+  public void setAsciiStream(String parameterName, InputStream x, long length) throws SQLException {
+    setAsciiStream(getBindParameterIndex(parameterName), x, length);
   }
 
   @Override
@@ -573,45 +716,81 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
       setBinaryStream(parameterIndex, x, BlobImpl.checkLength(length));
     }
   }
+  @Override
+  public void setBinaryStream(String parameterName, InputStream x, long length) throws SQLException {
+    setBinaryStream(getBindParameterIndex(parameterName), x, length);
+  }
 
   @Override
   public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
     throw Util.unsupported("PreparedStatement.setCharacterStream");
+  }
+  @Override
+  public void setCharacterStream(String parameterName, Reader reader, long length) throws SQLException {
+    setCharacterStream(getBindParameterIndex(parameterName), reader, length);
   }
 
   @Override
   public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
     throw Util.unsupported("PreparedStatement.setAsciiStream");
   }
+  @Override
+  public void setAsciiStream(String parameterName, InputStream x) throws SQLException {
+    setAsciiStream(getBindParameterIndex(parameterName), x);
+  }
 
   @Override
   public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
     setBinaryStream(parameterIndex, x, Integer.MAX_VALUE);
+  }
+  @Override
+  public void setBinaryStream(String parameterName, InputStream x) throws SQLException {
+    setBinaryStream(getBindParameterIndex(parameterName), x);
   }
 
   @Override
   public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
     throw Util.unsupported("PreparedStatement.setCharacterStream");
   }
+  @Override
+  public void setCharacterStream(String parameterName, Reader reader) throws SQLException {
+    setCharacterStream(getBindParameterIndex(parameterName), reader);
+  }
 
   @Override
   public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
     throw Util.unsupported("PreparedStatement.setNCharacterStream");
+  }
+  @Override
+  public void setNCharacterStream(String parameterName, Reader value) throws SQLException {
+    setNCharacterStream(getBindParameterIndex(parameterName), value);
   }
 
   @Override
   public void setClob(int parameterIndex, Reader reader) throws SQLException {
     throw Util.unsupported("PreparedStatement.setClob");
   }
+  @Override
+  public void setClob(String parameterName, Reader reader) throws SQLException {
+    setClob(getBindParameterIndex(parameterName), reader);
+  }
 
   @Override
   public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
     setBinaryStream(parameterIndex, inputStream);
   }
+  @Override
+  public void setBlob(String parameterName, InputStream inputStream) throws SQLException {
+    setBlob(getBindParameterIndex(parameterName), inputStream);
+  }
 
   @Override
   public void setNClob(int parameterIndex, Reader reader) throws SQLException {
     throw Util.unsupported("PreparedStatement.setNClob");
+  }
+  @Override
+  public void setNClob(String parameterName, Reader reader) throws SQLException {
+    setNClob(getBindParameterIndex(parameterName), reader);
   }
 
   @Override
@@ -738,5 +917,9 @@ public class PrepStmt extends Stmt implements PreparedStatement, ParameterMetaDa
       }
       boundChecked = true;
     }
+  }
+
+  private int getBindParameterIndex(String parameterName) throws SQLException {
+    return getStmt().getBindParameterIndex(parameterName);
   }
 }

@@ -8,7 +8,9 @@
  */
 package org.sqlite;
 
-public class TimeoutProgressCallback implements SQLite.ProgressCallback {
+import org.sqlite.SQLite.ProgressCallback;
+
+public class TimeoutProgressCallback implements ProgressCallback {
   private long expiration;
 
   @Override
@@ -24,9 +26,9 @@ public class TimeoutProgressCallback implements SQLite.ProgressCallback {
    */
   public void setTimeout(long timeout) {
     if (timeout == 0) {
-      this.expiration = 0L;
+      expiration = 0L;
       return;
     }
-    this.expiration = System.currentTimeMillis() + timeout;
+    expiration = System.currentTimeMillis() + timeout;
   }
 }

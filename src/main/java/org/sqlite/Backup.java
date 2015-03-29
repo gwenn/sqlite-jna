@@ -15,7 +15,7 @@ public class Backup {
   private final Conn dst, src;
 
   Backup(long pBackup, Conn dst, Conn src) {
-    assert (pBackup != 0) && (dst != null) && (src != null);
+    assert pBackup != 0 && dst != null && src != null;
     this.pBackup = pBackup;
     this.dst = dst;
     this.src = src;

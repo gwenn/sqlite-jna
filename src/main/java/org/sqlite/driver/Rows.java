@@ -45,10 +45,10 @@ class Rows implements ResultSet {
   private RowIdImpl rowId;
   private Map<Integer, org.sqlite.Blob> blobByColIndex = Collections.emptyMap();
 
-  public Rows(Stmt s, boolean hasRow) throws SQLException {
+  Rows(Stmt s, boolean hasRow) throws SQLException {
     this.s = s;
-    this.stmt = s.getStmt();
-    this.row = hasRow ? 0 : -1; // Initialized at -1 when there is no result otherwise 0
+    stmt = s.getStmt();
+    row = hasRow ? 0 : -1; // Initialized at -1 when there is no result otherwise 0
   }
 
   private org.sqlite.Stmt getStmt() throws SQLException {
@@ -217,74 +217,17 @@ class Rows implements ResultSet {
 
   @Override
   public Date getDate(int columnIndex) throws SQLException {
-    final org.sqlite.Stmt stmt = getStmt();
-    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
-    final int sourceType = stmt.getColumnType(fixCol(columnIndex));
-    wasNull = sourceType == ColTypes.SQLITE_NULL;
-    switch (sourceType) {
-      case ColTypes.SQLITE_NULL:
-        return null;
-      case ColTypes.SQLITE_TEXT: // does not work as expected if column type affinity is TEXT but inserted value was a numeric
-        final String txt = stmt.getColumnText(fixCol(columnIndex));
-        final java.util.Date date = DateUtil.parseDate(txt);
-        return new Date(date.getTime());
-      case ColTypes.SQLITE_INTEGER:
-        final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
-        return new Date(unixepoch);
-      case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
-        final double jd = stmt.getColumnDouble(fixCol(columnIndex));
-        return new Date(DateUtil.fromJulianDay(jd));
-      default:
-        throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
-    }
+    return getDate(columnIndex, null);
   }
 
   @Override
   public Time getTime(int columnIndex) throws SQLException {
-    final org.sqlite.Stmt stmt = getStmt();
-    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
-    final int sourceType = stmt.getColumnType(fixCol(columnIndex));
-    wasNull = sourceType == ColTypes.SQLITE_NULL;
-    switch (sourceType) {
-      case ColTypes.SQLITE_NULL:
-        return null;
-      case ColTypes.SQLITE_TEXT: // does not work as expected if column type affinity is TEXT but inserted value was a numeric
-        final String txt = stmt.getColumnText(fixCol(columnIndex));
-        final java.util.Date date = DateUtil.parseDate(txt);
-        return new Time(date.getTime());
-      case ColTypes.SQLITE_INTEGER:
-        final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
-        return new Time(unixepoch);
-      case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
-        final double jd = stmt.getColumnDouble(fixCol(columnIndex));
-        return new Time(DateUtil.fromJulianDay(jd));
-      default:
-        throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
-    }
+    return getTime(columnIndex, null);
   }
 
   @Override
   public Timestamp getTimestamp(int columnIndex) throws SQLException {
-    final org.sqlite.Stmt stmt = getStmt();
-    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
-    final int sourceType = stmt.getColumnType(fixCol(columnIndex));
-    wasNull = sourceType == ColTypes.SQLITE_NULL;
-    switch (sourceType) {
-      case ColTypes.SQLITE_NULL:
-        return null;
-      case ColTypes.SQLITE_TEXT: // does not work as expected if column type affinity is TEXT but inserted value was a numeric
-        final String txt = stmt.getColumnText(fixCol(columnIndex));
-        final java.util.Date date = DateUtil.parseDate(txt);
-        return new Timestamp(date.getTime());
-      case ColTypes.SQLITE_INTEGER:
-        final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
-        return new Timestamp(unixepoch);
-      case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
-        final double jd = stmt.getColumnDouble(fixCol(columnIndex));
-        return new Timestamp(DateUtil.fromJulianDay(jd));
-      default:
-        throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
-    }
+    return getTimestamp(columnIndex, null);
   }
 
   @Override
@@ -911,7 +854,25 @@ class Rows implements ResultSet {
 
   @Override
   public Date getDate(int columnIndex, Calendar cal) throws SQLException {
-    throw Util.unsupported("ResultSet.getDate"); // TODO
+    final org.sqlite.Stmt stmt = getStmt();
+    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
+    final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+    wasNull = sourceType == ColTypes.SQLITE_NULL;
+    switch (sourceType) {
+      case ColTypes.SQLITE_NULL:
+        return null;
+      case ColTypes.SQLITE_TEXT: // does not work as expected if column type affinity is TEXT but inserted value was a numeric
+        final String txt = stmt.getColumnText(fixCol(columnIndex));
+        return DateUtil.toDate(txt, cal);
+      case ColTypes.SQLITE_INTEGER:
+        final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
+        return DateUtil.toDate(unixepoch, cal);
+      case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
+        final double jd = stmt.getColumnDouble(fixCol(columnIndex));
+        return DateUtil.toDate(jd, cal);
+      default:
+        throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
+    }
   }
 
   @Override
@@ -921,7 +882,25 @@ class Rows implements ResultSet {
 
   @Override
   public Time getTime(int columnIndex, Calendar cal) throws SQLException {
-    throw Util.unsupported("ResultSet.getTime"); // TODO
+    final org.sqlite.Stmt stmt = getStmt();
+    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
+    final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+    wasNull = sourceType == ColTypes.SQLITE_NULL;
+    switch (sourceType) {
+      case ColTypes.SQLITE_NULL:
+        return null;
+      case ColTypes.SQLITE_TEXT: // does not work as expected if column type affinity is TEXT but inserted value was a numeric
+        final String txt = stmt.getColumnText(fixCol(columnIndex));
+        return DateUtil.toTime(txt, cal);
+      case ColTypes.SQLITE_INTEGER:
+        final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
+        return DateUtil.toTime(unixepoch, cal);
+      case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
+        final double jd = stmt.getColumnDouble(fixCol(columnIndex));
+        return DateUtil.toTime(jd, cal);
+      default:
+        throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
+    }
   }
 
   @Override
@@ -931,7 +910,25 @@ class Rows implements ResultSet {
 
   @Override
   public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
-    throw Util.unsupported("ResultSet.getTimestamp"); // TODO
+    final org.sqlite.Stmt stmt = getStmt();
+    // After a type conversion, the value returned by sqlite3_column_type() is undefined.
+    final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+    wasNull = sourceType == ColTypes.SQLITE_NULL;
+    switch (sourceType) {
+      case ColTypes.SQLITE_NULL:
+        return null;
+      case ColTypes.SQLITE_TEXT: // does not work as expected if column type affinity is TEXT but inserted value was a numeric
+        final String txt = stmt.getColumnText(fixCol(columnIndex));
+        return DateUtil.toTimestamp(txt, cal);
+      case ColTypes.SQLITE_INTEGER:
+        final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
+        return DateUtil.toTimestamp(unixepoch, cal);
+      case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
+        final double jd = stmt.getColumnDouble(fixCol(columnIndex));
+        return DateUtil.toTimestamp(jd, cal);
+      default:
+        throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
+    }
   }
 
   @Override
