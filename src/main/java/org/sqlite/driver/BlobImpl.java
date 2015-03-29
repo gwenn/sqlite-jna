@@ -19,7 +19,7 @@ import java.sql.SQLException;
 class BlobImpl implements Blob {
   private final org.sqlite.Blob blob;
 
-  public BlobImpl(org.sqlite.Blob blob) {
+  BlobImpl(org.sqlite.Blob blob) {
     this.blob = blob;
   }
 
@@ -126,7 +126,7 @@ class BlobImpl implements Blob {
     return (int) (pos - 1L);
   }
 
-  public static int checkLength(long length) throws SQLException {
+  static int checkLength(long length) throws SQLException {
     if (length < 0L) {
       throw new SQLException(String.format("invalid length: %d < 0", length), null, ErrCodes.WRAPPER_SPECIFIC);
     }

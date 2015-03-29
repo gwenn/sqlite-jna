@@ -15,7 +15,7 @@ import java.util.LinkedList;
 
 import static org.sqlite.SQLite.*;
 
-public class Conn {
+public final class Conn {
   public static final String MEMORY = ":memory:";
   public static final String TEMP_FILE = "";
 
@@ -168,10 +168,6 @@ public class Conn {
    */
   public static int libversionNumber() {
     return sqlite3_libversion_number();
-  }
-
-  public static String mprintf(String format, String arg) {
-    return sqlite3_mprintf(format, arg);
   }
 
   public void exec(String sql) throws SQLiteException {

@@ -24,7 +24,7 @@ import static org.bridj.Pointer.StringType;
 // -Dbridj.sqlite3.library=/usr/local/opt/sqlite/lib/libsqlite3.dylib
 @Library("sqlite3")
 @Runtime(CRuntime.class)
-public class SQLite {
+public final class SQLite {
   static final Charset UTF8 = Charset.forName("UTF-8");
   static {
     BridJ.register();
@@ -54,6 +54,7 @@ public class SQLite {
   static native int sqlite3_config(int op, boolean onoff);
   //sqlite3_config(SQLITE_CONFIG_LOG, void(*)(void *udp, int err, const char *msg), void *udp)
   public static native <T> int sqlite3_config(int op, Pointer<? extends LogCallback<T>> xLog, Pointer<T> udp);
+  // Applications can use the sqlite3_log(E,F,..) API to send new messages to the log, if desired, but this is discouraged.
   public static native void sqlite3_log(int iErrCode, Pointer<Byte> msg);
 
   public static void sqlite3_log(int errCode, String msg) {
@@ -172,13 +173,6 @@ public class SQLite {
   //static native int sqlite3_bind_value(Pointer pStmt, int i, const sqlite3_value*);
   static native int sqlite3_bind_zeroblob(Pointer pStmt, int i, int n);
 
-  static native Pointer<Byte> sqlite3_mprintf(Pointer<Byte> zFormat, Pointer<Byte> arg); // no copy needed for args
-  static String sqlite3_mprintf(String format, String arg) {
-    final Pointer<Byte> p = sqlite3_mprintf(pointerToString(format), pointerToString(arg));
-    final String s = getCString(p);
-    sqlite3_free(p);
-    return s;
-  }
   static native void sqlite3_free(Pointer p);
 
   static native int sqlite3_blob_open(Pointer pDb, Pointer<Byte> dbName, Pointer<Byte> tableName, Pointer<Byte> columnName,
