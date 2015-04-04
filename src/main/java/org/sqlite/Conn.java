@@ -391,6 +391,11 @@ public final class Conn {
     sqlite3_trace(pDb, tc, arg);
   }
 
+  public Pointer updateHook(UpdateHook uh, Pointer arg) throws ConnException {
+    checkOpen();
+    return sqlite3_update_hook(pDb, uh, arg);
+  }
+
   public void createScalarFunction(String name, int nArg, ScalarCallback xFunc) throws ConnException {
     checkOpen();
     // TODO SQLITE_DETERMINISTIC

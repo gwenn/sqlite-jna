@@ -155,7 +155,10 @@ public final class SQLite implements Library {
   // As there is only one ProgressCallback by connection, and it is used to implement query timeout,
   // the method visibility is restricted.
   static native void sqlite3_progress_handler(Pointer pDb, int nOps, ProgressCallback xProgress, Pointer pArg);
-  public static native void sqlite3_trace(Pointer pDb, TraceCallback xTrace, Pointer pArg);
+  static native void sqlite3_trace(Pointer pDb, TraceCallback xTrace, Pointer pArg);
+
+  static native Pointer sqlite3_update_hook(Pointer pDb, UpdateHook xUpdate, Pointer pArg);
+
   /*
   void (*)(sqlite3_context*,int,sqlite3_value**),
   void (*)(sqlite3_context*,int,sqlite3_value**),
@@ -163,7 +166,7 @@ public final class SQLite implements Library {
   void(*)(void*)
   */
   // eTextRep: SQLITE_UTF8 => 1, ...
-  public static native int sqlite3_create_function_v2(Pointer pDb, String functionName, int nArg, int eTextRep,
+  static native int sqlite3_create_function_v2(Pointer pDb, String functionName, int nArg, int eTextRep,
       Pointer pApp, ScalarCallback xFunc, Callback xStep, Callback xFinal, Callback xDestroy);
   public static native void sqlite3_result_null(Pointer pCtx);
   public static native void sqlite3_result_int(Pointer pCtx, int i);
