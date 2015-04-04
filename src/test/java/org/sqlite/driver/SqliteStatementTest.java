@@ -29,6 +29,7 @@ package org.sqlite.driver;
 import com.sun.jna.Pointer;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.sqlite.FunctionFlags;
 import org.sqlite.SQLite;
 import org.sqlite.SQLiteException;
 import org.sqlite.ScalarCallback;
@@ -139,7 +140,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
             }
 
-          ((Conn) conn).getConn().createScalarFunction("delay", 0, new ScalarCallback() {
+          ((Conn) conn).getConn().createScalarFunction("delay", 0, FunctionFlags.SQLITE_UTF8, new ScalarCallback() {
             @Override
             public void invoke(Pointer pCtx, int nArg, Pointer args) {
               try {

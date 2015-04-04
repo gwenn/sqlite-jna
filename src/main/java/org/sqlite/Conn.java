@@ -396,11 +396,13 @@ public final class Conn {
     return sqlite3_update_hook(pDb, uh, arg);
   }
 
-  public void createScalarFunction(String name, int nArg, ScalarCallback xFunc) throws ConnException {
+  /**
+   * @param flags org.sqlite.FunctionFlags.*
+   */
+  public void createScalarFunction(String name, int nArg, int flags, ScalarCallback xFunc) throws ConnException {
     checkOpen();
-    // TODO SQLITE_DETERMINISTIC
-    // TODO SQLITE_UTF8 versus SQLITE_UTF16LE
-    sqlite3_create_function_v2(pDb, name, nArg, 1, null, xFunc, null, null, null);
+    check(sqlite3_create_function_v2(pDb, name, nArg, flags, null, xFunc, null, null, null),
+        "error while registering function %s", name);
   }
 
   public boolean isClosed() {

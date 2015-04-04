@@ -161,7 +161,7 @@ public class ConnTest {
   @Test
   public void createScalarFunction() throws SQLiteException {
     final Conn c = open();
-    c.createScalarFunction("test", 0, new ScalarCallback() {
+    c.createScalarFunction("test", 0, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
       @Override
       public void invoke(Pointer pCtx, int nArg, Pointer args) {
         assertNotNull(pCtx);
@@ -171,7 +171,7 @@ public class ConnTest {
       }
     });
     c.fastExec("SELECT test()");
-    c.createScalarFunction("test", 0, null);
+    c.createScalarFunction("test", 0, 0, null);
     c.close();
   }
 
