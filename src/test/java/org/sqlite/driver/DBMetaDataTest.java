@@ -564,6 +564,9 @@ public class DBMetaDataTest {
 
   @Test
   public void columnOrderOfgetPrimaryKeys() throws SQLException {
+    if (org.sqlite.Conn.libversionNumber() < 3007016) {
+      return;
+    }
     ResultSet rs;
     ResultSetMetaData rsmeta;
 

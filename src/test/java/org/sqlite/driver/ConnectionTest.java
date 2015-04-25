@@ -183,7 +183,9 @@ public class ConnectionTest {
   @Test
   public void isClosed() throws SQLException {
     Connection conn = DriverManager.getConnection(JDBC.MEMORY);
-    assertFalse(conn.isReadOnly());
+    if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+      assertFalse(conn.isReadOnly());
+    }
     conn.close();
     assertTrue(conn.isClosed());
   }
@@ -269,12 +271,16 @@ public class ConnectionTest {
 
     assertFalse(testdb.exists());
     Connection conn = DriverManager.getConnection("jdbc:sqlite:" + testdb);
-    assertFalse(conn.isReadOnly());
+    if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+      assertFalse(conn.isReadOnly());
+    }
     conn.close();
 
     assertTrue(testdb.exists());
     conn = DriverManager.getConnection("jdbc:sqlite:" + testdb);
-    assertFalse(conn.isReadOnly());
+    if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+      assertFalse(conn.isReadOnly());
+    }
     conn.close();
 
     assertTrue(testdb.exists());
