@@ -539,8 +539,8 @@ public class Stmt {
   }
 
   private void checkColumnIndex(int iCol) throws StmtException {
-    if (iCol >= getColumnCount()) {
-      throw new StmtException(this, String.format("column index (%d) >= column count (%d)", iCol, getColumnCount()), ErrCodes.WRAPPER_SPECIFIC);
+    if (iCol < 0 || iCol >= getColumnCount()) {
+      throw new StmtException(this, String.format("column index %d out of range [0,%d[.", iCol, getColumnCount()), ErrCodes.SQLITE_RANGE);
     }
   }
 }
