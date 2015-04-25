@@ -27,6 +27,7 @@
 package org.sqlite.driver;
 
 import org.junit.Test;
+import org.sqlite.ErrCodes;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -76,22 +77,23 @@ public class SqliteResultSetTest extends SqliteTestHelper {
                     fail("able to read from a result before advancing to the first row?");
                 }
                 catch (SQLException e) {
-
+                    assertEquals(ErrCodes.WRAPPER_SPECIFIC, e.getErrorCode());
                 }
+                rs.next();
 
                 try {
                     rs.getString(0);
                     fail("zero should be an invalid index");
                 }
                 catch (SQLException e) {
-
+                    assertEquals(ErrCodes.SQLITE_RANGE, e.getErrorCode());
                 }
                 try {
                     rs.getString(3);
                     fail("three should be out-of-range of the result set");
                 }
                 catch (SQLException e) {
-
+                    assertEquals(ErrCodes.SQLITE_RANGE, e.getErrorCode());
                 }
             }
         }
