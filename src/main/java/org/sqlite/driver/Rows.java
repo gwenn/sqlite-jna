@@ -243,7 +243,8 @@ class Rows implements ResultSet {
 
   @Override
   public InputStream getBinaryStream(int columnIndex) throws SQLException {
-    return getBlob(columnIndex).getBinaryStream();
+    final Blob blob = getBlob(columnIndex);
+    return blob == null ? null : blob.getBinaryStream();
   }
 
   @Override
@@ -800,6 +801,11 @@ class Rows implements ResultSet {
     if (rowId == null) { // FIXME check PrepStmt.rowId aswell...
       throw new SQLException("You must read the associated RowId before opening a Blob");
     }
+    final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+    wasNull = sourceType == ColTypes.SQLITE_NULL;
+    if (wasNull) {
+      return null;
+    }
     org.sqlite.Blob blob = blobByColIndex.get(columnIndex);
     if (blob == null || blob.isClosed()) {
       blob = getStmt().open(fixCol(columnIndex), rowId.value, false);
@@ -808,13 +814,11 @@ class Rows implements ResultSet {
           blobByColIndex = new TreeMap<Integer, org.sqlite.Blob>();
         }
         blobByColIndex.put(columnIndex, blob);
-      } else {
-        throw new SQLException("No Blob!"); // TODO improve message
       }
     } else {
       blob.reopen(rowId.value);
     }
-    return new BlobImpl(blob);
+    return blob == null ? null : new BlobImpl(blob);
   }
 
   @Override

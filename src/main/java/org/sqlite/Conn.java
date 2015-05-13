@@ -193,7 +193,7 @@ public final class Conn {
     final int res = sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob); // ko if pDb is null
     if (res != SQLITE_OK) {
       sqlite3_blob_close(ppBlob.getValue());
-      throw new SQLiteException(String.format("error while opening a blob to (db: '%s', table: '%s', col: '%s', row: %d)",
+      throw new SQLiteException(this, String.format("error while opening a blob to (db: '%s', table: '%s', col: '%s', row: %d)",
           dbName, tblName, colName, iRow), res);
     }
     return new Blob(this, ppBlob.getValue());

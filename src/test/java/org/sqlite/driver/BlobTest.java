@@ -3,6 +3,7 @@ package org.sqlite.driver;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -42,6 +43,37 @@ public class BlobTest {
       assertFalse(rs.next());
 
       blob.free();
+      rs.close();
+      stmt.close();
+    } finally {
+      if (null != c) c.close();
+    }
+  }
+
+  @Test
+  public void getNullBlob() throws SQLException {
+    Connection c = null;
+    try {
+      c = DriverManager.getConnection(JDBC.MEMORY);
+      final Statement stmt = c.createStatement();
+      stmt.execute("CREATE TABLE test (data BLOB)");
+      assertEquals(1, stmt.executeUpdate("INSERT INTO test (data) VALUES (NULL)"));
+      ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid()");
+      assertTrue(rs.next());
+      final long rowid = rs.getLong(1);
+      assertTrue(rowid > 0);
+      assertFalse(rs.next());
+
+      rs = stmt.executeQuery("SELECT rowid, data FROM test");
+      assertTrue(rs.next());
+      assertEquals(rowid, rs.getLong(1));
+      assertEquals(String.valueOf(rowid), rs.getRowId(1).toString());
+      final Blob blob = rs.getBlob(2);
+      assertNull(blob);
+      final InputStream stream = rs.getBinaryStream(2);
+      assertNull(stream);
+      assertFalse(rs.next());
+
       rs.close();
       stmt.close();
     } finally {
