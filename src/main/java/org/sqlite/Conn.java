@@ -391,6 +391,11 @@ public final class Conn {
     sqlite3_trace(pDb, tc, arg);
   }
 
+  public void profile(ProfileCallback pc, Pointer arg) throws ConnException {
+    checkOpen();
+    sqlite3_profile(pDb, pc, arg);
+  }
+
   public Pointer updateHook(UpdateHook uh, Pointer arg) throws ConnException {
     checkOpen();
     return sqlite3_update_hook(pDb, uh, arg);

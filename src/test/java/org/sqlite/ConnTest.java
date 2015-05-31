@@ -159,6 +159,23 @@ public class ConnTest {
   }
 
   @Test
+  public void profile() throws SQLiteException {
+    final Conn c = open();
+    final String[] profiles = new String[1];
+    c.profile(new ProfileCallback() {
+      private int i;
+
+      @Override
+      public void profile(String sql, long ns) {
+        profiles[i++] = sql;
+      }
+    }, null);
+    final String sql = "SELECT 1";
+    c.fastExec(sql);
+    assertArrayEquals("profiles", new String[]{sql}, profiles);
+  }
+
+  @Test
   public void createScalarFunction() throws SQLiteException {
     final Conn c = open();
     c.createScalarFunction("test", 0, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {

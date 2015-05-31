@@ -156,6 +156,7 @@ public final class SQLite implements Library {
   // the method visibility is restricted.
   static native void sqlite3_progress_handler(Pointer pDb, int nOps, ProgressCallback xProgress, Pointer pArg);
   static native void sqlite3_trace(Pointer pDb, TraceCallback xTrace, Pointer pArg);
+  static native void sqlite3_profile(Pointer pDb, ProfileCallback xProfile, Pointer pArg);
 
   static native Pointer sqlite3_update_hook(Pointer pDb, UpdateHook xUpdate, Pointer pArg);
 
