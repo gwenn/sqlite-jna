@@ -1368,14 +1368,6 @@ class DbMeta implements DatabaseMetaData {
   }
 
   @Override
-  public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog, String foreignSchema, String foreignTable) throws SQLException {
-    if (foreignCatalog == null ? parentCatalog != null : !foreignCatalog.equals(parentCatalog)) {
-      // TODO SQLite does not support this case...
-    }
-    return getForeignKeys(foreignCatalog, parentTable, foreignTable, true);
-  }
-
-  @Override
   public ResultSet getTypeInfo() throws SQLException {
     checkOpen();
     final PreparedStatement stmt = c.prepareStatement(
@@ -1407,6 +1399,14 @@ class DbMeta implements DatabaseMetaData {
     );
     ((PrepStmt) stmt).closeOnCompletion();
     return stmt.executeQuery();
+  }
+
+  @Override
+  public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog, String foreignSchema, String foreignTable) throws SQLException {
+    if (foreignCatalog == null ? parentCatalog != null : !foreignCatalog.equals(parentCatalog)) {
+      // TODO SQLite does not support this case...
+    }
+    return getForeignKeys(foreignCatalog, parentTable, foreignTable, true);
   }
 
   @Override

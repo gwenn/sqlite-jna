@@ -417,6 +417,7 @@ class Stmt implements Statement {
 
   // Limitations:
   //  - only primary keys defined as rowid's alias work.
+  //  - doesn't work in batch mode.
   // With the rowid (ok) and the associated table (ko) we can fix these limitations...
   @Override
   public ResultSet getGeneratedKeys() throws SQLException { // Used by hibernate
