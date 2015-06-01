@@ -12,10 +12,10 @@ import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 
 public abstract class TraceCallback implements Callback {
-  @SuppressWarnings("unused")
-  public void invoke(Pointer arg, String sql) {
-    trace(sql);
-  }
+	@SuppressWarnings("unused")
+	public void invoke(Pointer arg, String sql) {
+		trace(sql);
+	}
 
-  protected abstract void trace(String sql);
+	protected abstract void trace(String sql);
 }

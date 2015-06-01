@@ -12,10 +12,10 @@ import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 
 public abstract class ProfileCallback implements Callback {
-  @SuppressWarnings("unused")
-  public void invoke(Pointer arg, String sql, long ns) {
-    profile(sql, ns);
-  }
+	@SuppressWarnings("unused")
+	public void invoke(Pointer arg, String sql, long ns) {
+		profile(sql, ns);
+	}
 
-  protected abstract void profile(String sql, long ns);
+	protected abstract void profile(String sql, long ns);
 }

@@ -43,33 +43,33 @@ import java.sql.Statement;
 import static org.junit.Assert.*;
 
 public class ConnectionTest {
-  @Rule
-  public TemporaryFolder folder = new TemporaryFolder();
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 
-  @Test
-  public void isValid() throws SQLException {
-    Connection conn = DriverManager.getConnection(JDBC.MEMORY);
-    assertTrue(conn.isValid(0));
-    conn.close();
-    assertFalse(conn.isValid(0));
-  }
+	@Test
+	public void isValid() throws SQLException {
+		Connection conn = DriverManager.getConnection(JDBC.MEMORY);
+		assertTrue(conn.isValid(0));
+		conn.close();
+		assertFalse(conn.isValid(0));
+	}
 
-  @Test
-  public void executeUpdateOnClosedDB() throws SQLException {
-    Connection conn = DriverManager.getConnection(JDBC.MEMORY);
-    Statement stat = conn.createStatement();
-    conn.close();
+	@Test
+	public void executeUpdateOnClosedDB() throws SQLException {
+		Connection conn = DriverManager.getConnection(JDBC.MEMORY);
+		Statement stat = conn.createStatement();
+		conn.close();
 
-    try {
-      stat.executeUpdate("create table A(id, name)");
-      fail("should not reach here");
-    } catch (SQLException e) {
-      assertEquals("Connection closed", e.getMessage()); // successfully detect the operation on the closed DB
-    }
-  }
+		try {
+			stat.executeUpdate("create table A(id, name)");
+			fail("should not reach here");
+		} catch (SQLException e) {
+			assertEquals("Connection closed", e.getMessage()); // successfully detect the operation on the closed DB
+		}
+	}
 
     /*@Test
-    public void readOnly() throws SQLException {
+		public void readOnly() throws SQLException {
 
         // set read only mode
         SQLiteConfig config = new SQLiteConfig();
@@ -174,36 +174,36 @@ public class ConnectionTest {
         }
     }*/
 
-  @Test
-  public void openMemory() throws SQLException {
-    Connection conn = DriverManager.getConnection(JDBC.MEMORY);
-    conn.close();
-  }
+	@Test
+	public void openMemory() throws SQLException {
+		Connection conn = DriverManager.getConnection(JDBC.MEMORY);
+		conn.close();
+	}
 
-  @Test
-  public void isClosed() throws SQLException {
-    Connection conn = DriverManager.getConnection(JDBC.MEMORY);
-    if (org.sqlite.Conn.libversionNumber() >= 3008000) {
-      assertFalse(conn.isReadOnly());
-    }
-    conn.close();
-    assertTrue(conn.isClosed());
-  }
+	@Test
+	public void isClosed() throws SQLException {
+		Connection conn = DriverManager.getConnection(JDBC.MEMORY);
+		if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+			assertFalse(conn.isReadOnly());
+		}
+		conn.close();
+		assertTrue(conn.isClosed());
+	}
 
-  @Test(expected = SQLException.class)
-  public void closeTest() throws SQLException {
-    Connection conn = DriverManager.getConnection(JDBC.MEMORY);
-    PreparedStatement prep = conn.prepareStatement("select null;");
-    ResultSet rs = prep.executeQuery();
-    conn.close();
-    prep.clearParameters();
-  }
+	@Test(expected = SQLException.class)
+	public void closeTest() throws SQLException {
+		Connection conn = DriverManager.getConnection(JDBC.MEMORY);
+		PreparedStatement prep = conn.prepareStatement("select null;");
+		ResultSet rs = prep.executeQuery();
+		conn.close();
+		prep.clearParameters();
+	}
 
-  @Test(expected = SQLException.class)
-  public void openInvalidLocation() throws SQLException {
-    Connection conn = DriverManager.getConnection("jdbc:sqlite:/");
-    conn.close();
-  }
+	@Test(expected = SQLException.class)
+	public void openInvalidLocation() throws SQLException {
+		Connection conn = DriverManager.getConnection("jdbc:sqlite:/");
+		conn.close();
+	}
 
     /*@Test
     public void openResource() throws Exception {
@@ -265,66 +265,66 @@ public class ConnectionTest {
         return tmp;
     }*/
 
-  @Test
-  public void openNewFile() throws SQLException, IOException {
-    File testdb = new File(folder.getRoot(), "test.db");
+	@Test
+	public void openNewFile() throws SQLException, IOException {
+		File testdb = new File(folder.getRoot(), "test.db");
 
-    assertFalse(testdb.exists());
-    Connection conn = DriverManager.getConnection("jdbc:sqlite:" + testdb);
-    if (org.sqlite.Conn.libversionNumber() >= 3008000) {
-      assertFalse(conn.isReadOnly());
-    }
-    conn.close();
+		assertFalse(testdb.exists());
+		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + testdb);
+		if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+			assertFalse(conn.isReadOnly());
+		}
+		conn.close();
 
-    assertTrue(testdb.exists());
-    conn = DriverManager.getConnection("jdbc:sqlite:" + testdb);
-    if (org.sqlite.Conn.libversionNumber() >= 3008000) {
-      assertFalse(conn.isReadOnly());
-    }
-    conn.close();
+		assertTrue(testdb.exists());
+		conn = DriverManager.getConnection("jdbc:sqlite:" + testdb);
+		if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+			assertFalse(conn.isReadOnly());
+		}
+		conn.close();
 
-    assertTrue(testdb.exists());
-  }
+		assertTrue(testdb.exists());
+	}
 
-  @Test
-  public void URIFilenames() throws SQLException {
-    Connection conn1 = DriverManager.getConnection("jdbc:sqlite:file:memdb1?mode=memory&cache=shared");
-    Statement stmt1 = conn1.createStatement();
-    stmt1.executeUpdate("create table tbl (col int)");
-    stmt1.executeUpdate("insert into tbl values(100)");
-    stmt1.close();
+	@Test
+	public void URIFilenames() throws SQLException {
+		Connection conn1 = DriverManager.getConnection("jdbc:sqlite:file:memdb1?mode=memory&cache=shared");
+		Statement stmt1 = conn1.createStatement();
+		stmt1.executeUpdate("create table tbl (col int)");
+		stmt1.executeUpdate("insert into tbl values(100)");
+		stmt1.close();
 
-    Connection conn2 = DriverManager.getConnection("jdbc:sqlite:file:memdb1?mode=memory&cache=shared");
-    Statement stmt2 = conn2.createStatement();
-    ResultSet rs = stmt2.executeQuery("select * from tbl");
-    assertTrue(rs.next());
-    assertEquals(100, rs.getInt(1));
-    stmt2.close();
+		Connection conn2 = DriverManager.getConnection("jdbc:sqlite:file:memdb1?mode=memory&cache=shared");
+		Statement stmt2 = conn2.createStatement();
+		ResultSet rs = stmt2.executeQuery("select * from tbl");
+		assertTrue(rs.next());
+		assertEquals(100, rs.getInt(1));
+		stmt2.close();
 
-    Connection conn3 = DriverManager.getConnection("jdbc:sqlite:file::memory:?cache=shared");
-    Statement stmt3 = conn3.createStatement();
-    stmt3.executeUpdate("attach 'file:memdb1?mode=memory&cache=shared' as memdb1");
-    rs = stmt3.executeQuery("select * from memdb1.tbl");
-    assertTrue(rs.next());
-    assertEquals(100, rs.getInt(1));
-    stmt3.executeUpdate("create table tbl2(col int)");
-    stmt3.executeUpdate("insert into tbl2 values(200)");
-    stmt3.close();
+		Connection conn3 = DriverManager.getConnection("jdbc:sqlite:file::memory:?cache=shared");
+		Statement stmt3 = conn3.createStatement();
+		stmt3.executeUpdate("attach 'file:memdb1?mode=memory&cache=shared' as memdb1");
+		rs = stmt3.executeQuery("select * from memdb1.tbl");
+		assertTrue(rs.next());
+		assertEquals(100, rs.getInt(1));
+		stmt3.executeUpdate("create table tbl2(col int)");
+		stmt3.executeUpdate("insert into tbl2 values(200)");
+		stmt3.close();
 
-    Connection conn4 = DriverManager.getConnection("jdbc:sqlite:file::memory:?cache=shared");
-    Statement stmt4 = conn4.createStatement();
-    rs = stmt4.executeQuery("select * from tbl2");
-    assertTrue(rs.next());
-    assertEquals(200, rs.getInt(1));
-    rs.close();
-    stmt4.close();
-    conn4.close();
-  }
+		Connection conn4 = DriverManager.getConnection("jdbc:sqlite:file::memory:?cache=shared");
+		Statement stmt4 = conn4.createStatement();
+		rs = stmt4.executeQuery("select * from tbl2");
+		assertTrue(rs.next());
+		assertEquals(200, rs.getInt(1));
+		rs.close();
+		stmt4.close();
+		conn4.close();
+	}
 
-  @Test
-  public void addWarning() throws Exception {
-    Connection conn = DriverManager.getConnection(JDBC.MEMORY);
-    ((Conn) conn).addWarning(new SQLWarning("test"));
-    ((Conn) conn).addWarning(null);
-  }
+	@Test
+	public void addWarning() throws Exception {
+		Connection conn = DriverManager.getConnection(JDBC.MEMORY);
+		((Conn) conn).addWarning(new SQLWarning("test"));
+		((Conn) conn).addWarning(null);
+	}
 }

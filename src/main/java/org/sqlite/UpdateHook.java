@@ -8,8 +8,8 @@ import com.sun.jna.Pointer;
 // In the current implementation, the update hook is not invoked when duplication rows are deleted because of an ON CONFLICT REPLACE clause.
 // Nor is the update hook invoked when rows are deleted using the truncate optimization.
 public interface UpdateHook extends Callback {
-  /**
-   * @param actionCode org.sqlite.ActionCodes.SQLITE_INSERT | SQLITE_UPDATE | SQLITE_DELETE
-   */
-  void invoke(Pointer pArg, int actionCode, String dbName, String tblName, long rowId);
+	/**
+	 * @param actionCode org.sqlite.ActionCodes.SQLITE_INSERT | SQLITE_UPDATE | SQLITE_DELETE
+	 */
+	void invoke(Pointer pArg, int actionCode, String dbName, String tblName, long rowId);
 }

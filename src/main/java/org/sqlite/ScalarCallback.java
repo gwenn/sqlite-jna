@@ -12,7 +12,7 @@ import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 
 public interface ScalarCallback extends Callback {
-  //void (*)(sqlite3_context*,int,sqlite3_value**),
-  @SuppressWarnings("unused")
-  void invoke(Pointer pCtx, int nArg, Pointer args);
+	//void (*)(sqlite3_context*,int,sqlite3_value**),
+	@SuppressWarnings("unused")
+	void invoke(Pointer pCtx, int nArg, Pointer args);
 }

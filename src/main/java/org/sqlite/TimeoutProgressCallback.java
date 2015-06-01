@@ -12,24 +12,24 @@ import com.sun.jna.Pointer;
 import org.sqlite.SQLite.ProgressCallback;
 
 public class TimeoutProgressCallback implements ProgressCallback {
-  private long expiration;
+	private long expiration;
 
-  @Override
-  public boolean invoke(Pointer arg) {
-    if (expiration == 0 || System.currentTimeMillis() <= expiration) {
-      return false;
-    }
-    return true;
-  }
+	@Override
+	public boolean invoke(Pointer arg) {
+		if (expiration == 0 || System.currentTimeMillis() <= expiration) {
+			return false;
+		}
+		return true;
+	}
 
-  /**
-   * @param timeout in millis
-   */
-  public void setTimeout(long timeout) {
-    if (timeout == 0) {
-      expiration = 0L;
-      return;
-    }
-    expiration = System.currentTimeMillis() + timeout;
-  }
+	/**
+	 * @param timeout in millis
+	 */
+	public void setTimeout(long timeout) {
+		if (timeout == 0) {
+			expiration = 0L;
+			return;
+		}
+		expiration = System.currentTimeMillis() + timeout;
+	}
 }
