@@ -28,7 +28,7 @@ TODO
 
 LINKS
 -----
-* https://bitbucket.org/xerial/sqlite-jdbc (JNI)
+* https://github.com/xerial/sqlite-jdbc (~~https://bitbucket.org/xerial/sqlite-jdbc~~) (JNI)
 * http://www.ch-werner.de/javasqlite/ (JNI)
 * https://code.google.com/p/sqlite4java/ (JNI, no JDBC)
 * https://github.com/lyubo/jdbc-lite (JNA)
