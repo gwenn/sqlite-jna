@@ -898,10 +898,10 @@ class Rows implements ResultSet {
 				return DateUtil.toTime(txt, cal);
 			case ColTypes.SQLITE_INTEGER:
 				final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
-				return DateUtil.toTime(unixepoch, cal);
+				return DateUtil.toTime(unixepoch);
 			case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
 				final double jd = stmt.getColumnDouble(fixCol(columnIndex));
-				return DateUtil.toTime(jd, cal);
+				return DateUtil.toTime(jd);
 			default:
 				throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
 		}
@@ -926,10 +926,10 @@ class Rows implements ResultSet {
 				return DateUtil.toTimestamp(txt, cal);
 			case ColTypes.SQLITE_INTEGER:
 				final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
-				return DateUtil.toTimestamp(unixepoch, cal);
+				return DateUtil.toTimestamp(unixepoch);
 			case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
 				final double jd = stmt.getColumnDouble(fixCol(columnIndex));
-				return DateUtil.toTimestamp(jd, cal);
+				return DateUtil.toTimestamp(jd);
 			default:
 				throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
 		}

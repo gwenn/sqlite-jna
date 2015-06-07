@@ -246,11 +246,12 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 		} else {
 			final String fmt = conn().dateTimeConfig[cfgIdx];
 			if (fmt == null || DateUtil.UNIXEPOCH.equals(fmt)) {
-				bindLong(parameterIndex, x.getTime());
+				bindLong(parameterIndex, cfgIdx == 0 ? DateUtil.normalizeDate(x.getTime(), null) : x.getTime());
 			} else if (DateUtil.JULIANDAY.equals(fmt)) {
-				bindDouble(parameterIndex, DateUtil.toJulianDay(x.getTime()));
+				final long unixepoch = cfgIdx == 0 ? DateUtil.normalizeDate(x.getTime(), null) : x.getTime();
+				bindDouble(parameterIndex, DateUtil.toJulianDay(unixepoch));
 			} else {
-				bindText(parameterIndex, DateUtil.formatDate(x, fmt));
+				bindText(parameterIndex, DateUtil.formatDate(x, fmt, null));
 			}
 		}
 	}
@@ -671,7 +672,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 		}
 		if (Types.VARCHAR == targetSqlType) {
 			if (x instanceof java.util.Date) {
-				setString(parameterIndex, DateUtil.formatDate((java.util.Date) x, scaleOrLength));
+				setString(parameterIndex, DateUtil.formatDate((java.util.Date) x, scaleOrLength, null));
 				return;
 			}
 		} else if (Types.INTEGER == targetSqlType) {
@@ -679,7 +680,8 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 				setLong(parameterIndex, ((Number) x).longValue());
 				return;
 			} else if (x instanceof java.util.Date) {
-				setLong(parameterIndex, ((java.util.Date) x).getTime());
+				final long unixepoch = ((java.util.Date) x).getTime();
+				setLong(parameterIndex, x instanceof Date ? DateUtil.normalizeDate(unixepoch, null) : unixepoch);
 				return;
 			}
 		} else if (Types.REAL == targetSqlType) {
@@ -687,7 +689,8 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 				setDouble(parameterIndex, ((Number) x).doubleValue());
 				return;
 			} else if (x instanceof java.util.Date) {
-				setDouble(parameterIndex, DateUtil.toJulianDay(((java.util.Date) x).getTime()));
+				final long unixepoch = ((java.util.Date) x).getTime();
+				setDouble(parameterIndex, DateUtil.toJulianDay(x instanceof Date ? DateUtil.normalizeDate(unixepoch, null) : unixepoch));
 				return;
 			}
 		}

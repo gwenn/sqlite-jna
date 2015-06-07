@@ -111,18 +111,19 @@ public class SqliteResultSetTest extends SqliteTestHelper {
 	@Test
 	public void testGetDate() throws Exception {
 		long testDate = 1376611200L * 1000L;
+		final Date d = new Date(testDate);
 
 		try (PreparedStatement ps = conn.prepareStatement(
 				"INSERT INTO type_table (name, birthdate) VALUES (?, ?)")) {
 			ps.setString(1, "d1");
-			ps.setDate(2, new Date(testDate));
+			ps.setDate(2, d);
 			ps.executeUpdate();
 		}
 
 		try (Statement stmt = conn.createStatement()) {
 			try (ResultSet rs = stmt.executeQuery("SELECT * FROM type_table")) {
 				assertTrue(rs.next());
-				assertEquals(testDate, rs.getDate("birthdate").getTime());
+				assertEquals(d.toString(), rs.getDate("birthdate").toString());
 				assertNull(rs.getDate(3));
 				assertTrue(rs.wasNull());
 

@@ -550,8 +550,9 @@ public class PrepStmtTest {
 
 		ResultSet rs = stat.executeQuery("select c1 from t;");
 		assertTrue(rs.next());
-		assertEquals(d1.getTime(), rs.getLong(1));
-		assertTrue(rs.getDate(1).equals(d1));
+		final long expected = DateUtil.normalizeDate(d1.getTime(), null);
+		assertEquals(expected, rs.getLong(1));
+		assertEquals(expected, rs.getDate(1).getTime());
 		assertTrue(rs.next());
 		assertEquals(null, rs.getDate(1));
 		rs.close();
@@ -568,8 +569,9 @@ public class PrepStmtTest {
 
 		ResultSet rs = stat.executeQuery("select strftime('%s', c1) * 1000 from t;");
 		assertTrue(rs.next());
-		assertEquals(d1.getTime(), rs.getLong(1));
-		assertTrue(rs.getDate(1).equals(d1));
+		final long expected = DateUtil.normalizeDate(d1.getTime(), null);
+		assertEquals(expected, rs.getLong(1));
+		assertEquals(expected, rs.getDate(1).getTime());
 	}
 
 	@SuppressWarnings("deprecation")
@@ -586,9 +588,10 @@ public class PrepStmtTest {
 
 		ResultSet rs = stat.executeQuery("select c1 from t;");
 		assertTrue(rs.next());
-		assertEquals(d1.getYear(), rs.getDate(1).getYear());
-		assertEquals(d1.getMonth(), rs.getDate(1).getMonth());
-		assertEquals(d1.getDay(), rs.getDate(1).getDay());
+		final Date d2 = rs.getDate(1);
+		assertEquals(d1.getYear(), d2.getYear());
+		assertEquals(d1.getMonth(), d2.getMonth());
+		assertEquals(d1.getDay(), d2.getDay());
 		rs.close();
 	}
 

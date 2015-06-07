@@ -442,7 +442,7 @@ public class StatementTest {
 	public void dateTimeTest() throws SQLException {
 		Date day = new Date(new java.util.Date().getTime());
 
-		stat.executeUpdate("create table day (time datatime)");
+		stat.executeUpdate("create table day (time datetime)");
 		PreparedStatement prep = conn.prepareStatement("insert into day values(?)");
 		prep.setDate(1, day);
 		prep.executeUpdate();
@@ -450,7 +450,7 @@ public class StatementTest {
 		ResultSet rs = stat.executeQuery("select * from day");
 		assertTrue(rs.next());
 		Date d = rs.getDate(1);
-		assertEquals(day.getTime(), d.getTime());
+		assertEquals(day.toString(), d.toString());
 	}
 
 	@Test

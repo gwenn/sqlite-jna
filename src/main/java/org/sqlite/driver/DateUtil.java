@@ -16,6 +16,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -27,6 +28,8 @@ final class DateUtil {
 	public static final String TIMESTAMP_FORMAT = "timestamp_format";
 	public static final String JULIANDAY = "julianday";
 	public static final String UNIXEPOCH = "unixepoch";
+	public static final String YYYY_MM_DD = "yyyy-MM-dd"; // See java.sql.Date.toString()
+	public static final String HH_MM_SS = "HH:mm:ss"; // See java.sql.Time.toString()
 	public static final String DEFAULT_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"; // ISO-8601
 
 	private static final ThreadLocal<Map<String, DateFormat>> DATE_FORMATS = new ThreadLocal<Map<String, DateFormat>>() {
@@ -35,17 +38,18 @@ final class DateUtil {
 			return new HashMap<String, DateFormat>();
 		}
 	};
+	private static final Calendar UTC = GregorianCalendar.getInstance(TimeZone.getTimeZone("GMT"));
 
 	private DateUtil() {
 	}
 
 	static String[] config(Properties info) {
 		if (info == null) {
-			return new String[]{DEFAULT_FORMAT, DEFAULT_FORMAT, DEFAULT_FORMAT};
+			return new String[]{YYYY_MM_DD, HH_MM_SS, DEFAULT_FORMAT};
 		}
 		final String[] config = new String[3];
-		config[0] = info.getProperty(DATE_FORMAT, DEFAULT_FORMAT);
-		config[1] = info.getProperty(TIME_FORMAT, DEFAULT_FORMAT);
+		config[0] = info.getProperty(DATE_FORMAT, YYYY_MM_DD);
+		config[1] = info.getProperty(TIME_FORMAT, HH_MM_SS);
 		config[2] = info.getProperty(TIMESTAMP_FORMAT, DEFAULT_FORMAT);
 		return config;
 	}
@@ -72,7 +76,7 @@ final class DateUtil {
 		}
 	}
 
-	private static ParsedDate parseDate(String txt) throws SQLException {
+	private static ParsedDate parseDate(String txt, Calendar cal) throws SQLException {
 		boolean tz = false;
 		final String layout;
 		switch (txt.length()) {
@@ -101,7 +105,7 @@ final class DateUtil {
 				layout = txt.length() > 10 && txt.charAt(10) == 'T' ? DEFAULT_FORMAT : "yyyy-MM-dd HH:mm:ss.SSSXXX";
 				tz = true;
 		}
-		final DateFormat df = getDateFormat(layout);
+		final DateFormat df = getDateFormat(layout, cal);
 		final Date date;
 		try {
 			date = df.parse(txt);
@@ -111,17 +115,17 @@ final class DateUtil {
 		return new ParsedDate(date, tz);
 	}
 
-	static String formatDate(Date date, int length) {
+	static String formatDate(Date date, int length, Calendar cal) {
 		final String layout;
 		switch (length) {
 			case 5: // HH:MM
 				layout = "HH:mm";
 				break;
 			case 8: // HH:MM:SS
-				layout = "HH:mm:ss";
+				layout = HH_MM_SS;
 				break;
 			case 10: // YYYY-MM-DD
-				layout = "yyyy-MM-dd";
+				layout = YYYY_MM_DD;
 				break;
 			case 12: // HH:MM:SS.SSS
 				layout = "HH:mm:ss.SSS";
@@ -138,89 +142,74 @@ final class DateUtil {
 			default: // YYYY-MM-DDTHH:MM:SS.SSSZhh:mm or parse error
 				layout = DEFAULT_FORMAT;
 		}
-		return formatDate(date, layout);
+		return formatDate(date, layout, cal);
 	}
 
-	static String formatDate(Date date, String layout) {
-		return getDateFormat(layout).format(date);
+	static String formatDate(Date date, String layout, Calendar cal) {
+		return getDateFormat(layout, cal).format(date);
 	}
 
-	private static DateFormat getDateFormat(String layout) {
+	private static DateFormat getDateFormat(String layout, Calendar cal) {
 		DateFormat df = DATE_FORMATS.get().get(layout);
 		if (df == null) {
 			df = new SimpleDateFormat(layout);
+			df.setLenient(false);
 			DATE_FORMATS.get().put(layout, df);
 		}
+		df.setTimeZone(cal == null ? TimeZone.getDefault() : cal.getTimeZone());
 		return df;
 	}
 
 	static java.sql.Date toDate(String txt, Calendar cal) throws SQLException {
-		final ParsedDate date = parseDate(txt);
-		if (date.tz || cal == null) {
-			return new java.sql.Date(date.value.getTime());
-		}
-		cal.setTime(date.value);
-		return new java.sql.Date(cal.getTime().getTime());
+		final ParsedDate date = parseDate(txt, cal);
+		return new java.sql.Date(/*normalizeDate(*/date.value.getTime()/*)*/);
 	}
 	static java.sql.Date toDate(long unixepoch, Calendar cal) {
-		if (cal == null) {
-			return new java.sql.Date(unixepoch);
-		}
-		cal.setTimeInMillis(unixepoch);
-		return new java.sql.Date(cal.getTime().getTime());
+		return new java.sql.Date(normalizeDate(unixepoch, cal));
 	}
 	static java.sql.Date toDate(double jd, Calendar cal) {
-		if (cal == null) {
-			return new java.sql.Date(fromJulianDay(jd));
-		}
-		cal.setTimeInMillis(fromJulianDay(jd));
-		return new java.sql.Date(cal.getTime().getTime());
+		return new java.sql.Date(normalizeDate(fromJulianDay(jd), null));
 	}
 
 	static Time toTime(String txt, Calendar cal) throws SQLException {
-		final ParsedDate date = parseDate(txt);
-		if (date.tz || cal == null) {
-			return new Time(date.value.getTime());
-		}
-		cal.setTime(date.value);
-		return new Time(cal.getTime().getTime());
+		final ParsedDate date = parseDate(txt, cal);
+		return new Time(date.value.getTime());
 	}
-	static Time toTime(long unixepoch, Calendar cal) {
-		if (cal == null) {
-			return new Time(unixepoch);
-		}
-		cal.setTimeInMillis(unixepoch);
-		return new Time(cal.getTime().getTime());
+	static Time toTime(long unixepoch) {
+		return new Time(unixepoch);
 	}
-	static Time toTime(double jd, Calendar cal) {
-		if (cal == null) {
-			return new Time(fromJulianDay(jd));
-		}
-		cal.setTimeInMillis(fromJulianDay(jd));
-		return new Time(cal.getTime().getTime());
+	static Time toTime(double jd) {
+		return new Time(fromJulianDay(jd));
 	}
 
 	static Timestamp toTimestamp(String txt, Calendar cal) throws SQLException {
-		final ParsedDate date = parseDate(txt);
-		if (date.tz || cal == null) {
-			return new Timestamp(date.value.getTime());
-		}
-		cal.setTime(date.value);
-		return new Timestamp(cal.getTime().getTime());
+		final ParsedDate date = parseDate(txt, cal);
+		return new Timestamp(date.value.getTime());
 	}
-	static Timestamp toTimestamp(long unixepoch, Calendar cal) {
+	static Timestamp toTimestamp(long unixepoch) {
+		return new Timestamp(unixepoch);
+	}
+	static Timestamp toTimestamp(double jd) {
+		return new Timestamp(fromJulianDay(jd));
+	}
+
+	// must be 'normalized' by setting the hours, minutes, seconds, and milliseconds to zero in the particular time zone with which the instance is associated.
+	static long normalizeDate(long unixepoch, Calendar cal) {
 		if (cal == null) {
-			return new Timestamp(unixepoch);
+			synchronized (UTC) {
+				return normalize(unixepoch, UTC);
+			}
+		} else {
+			return normalize(unixepoch, UTC);
 		}
+	}
+	private static long normalize(long unixepoch, Calendar cal) {
 		cal.setTimeInMillis(unixepoch);
-		return new Timestamp(cal.getTime().getTime());
-	}
-	static Timestamp toTimestamp(double jd, Calendar cal) {
-		if (cal == null) {
-			return new Timestamp(fromJulianDay(jd));
-		}
-		cal.setTimeInMillis(fromJulianDay(jd));
-		return new Timestamp(cal.getTime().getTime());
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		return cal.getTimeInMillis();
 	}
 
 	public static void main(String[] args) throws ParseException {

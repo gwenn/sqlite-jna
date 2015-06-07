@@ -103,9 +103,9 @@ public class QueryTest {
 
 		ResultSet rs = s.executeQuery("select * from sample");
 		assertTrue(rs.next());
-		assertEquals(now, rs.getDate(1));
+		assertEquals(now, rs.getTimestamp(1));
 		assertTrue(rs.next());
-		assertEquals(now, rs.getDate(1));
+		assertEquals(now, rs.getTimestamp(1));
 		rs.close();
 		s.close();
 
