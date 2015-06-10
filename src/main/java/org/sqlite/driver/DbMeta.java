@@ -1700,7 +1700,7 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public boolean supportsStatementPooling() throws SQLException {
-		return false;
+		return true; // Statement cache
 	}
 
 	@Override
