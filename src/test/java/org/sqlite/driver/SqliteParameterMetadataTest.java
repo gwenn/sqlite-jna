@@ -32,7 +32,7 @@ import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class SqliteParameterMetadataTest extends SqliteTestHelper {
 	@Test
@@ -63,7 +63,7 @@ public class SqliteParameterMetadataTest extends SqliteTestHelper {
 			//assertEquals("VARCHAR", pmd.getParameterTypeName(1));
 			//assertEquals(String.class.getCanonicalName(), pmd.getParameterClassName(1));
 			assertEquals(ParameterMetaData.parameterModeIn, pmd.getParameterMode(1));
-			assertFalse(pmd.isWrapperFor(PrepStmt.class));
+			assertTrue(pmd.isWrapperFor(PrepStmt.class));
 		}
 	}
 }

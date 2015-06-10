@@ -358,12 +358,18 @@ class Conn implements Connection {
 	@Override
 	public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
 		checkOpen();
+		if (columnIndexes == null || columnIndexes.length == 0) {
+			return prepareStatement(sql);
+		}
 		throw Util.unsupported("Connection.prepareStatement(String,int[])");
 	}
 
 	@Override
 	public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
 		checkOpen();
+		if (columnNames == null || columnNames.length == 0) {
+			return prepareStatement(sql);
+		}
 		throw Util.unsupported("Connection.prepareStatement(String,String[])");
 	}
 
@@ -472,12 +478,15 @@ class Conn implements Connection {
 
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
-		throw Util.error("not a wrapper");
+		if (iface.isAssignableFrom(getClass())) {
+			return iface.cast(this);
+		}
+		throw new SQLException("Cannot unwrap to " + iface.getName());
 	}
 
 	@Override
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		return false;
+		return iface.isAssignableFrom(getClass());
 	}
 
 	private static void checkCursor(int resultSetType, int resultSetConcurrency, int resultSetHoldability)

@@ -29,9 +29,9 @@ public class JDBC implements Driver {
 	static {
 		PREFIX = "jdbc:sqlite:";
 		try {
-			DriverManager.registerDriver(new JDBC());
+			register();
 		} catch (SQLException e) {
-			e.printStackTrace(); // TODO trace
+			throw new ExceptionInInitializerError(e);
 		}
 	}
 
@@ -188,5 +188,24 @@ public class JDBC implements Driver {
 	@Override
 	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
 		throw Util.unsupported("Driver.getParentLogger");
+	}
+
+	private static Driver registeredDriver;
+	public static void register() throws SQLException {
+		if (isRegistered()) {
+			throw new IllegalStateException("Driver is already registered. It can only be registered once.");
+		}
+		registeredDriver = new JDBC();
+		DriverManager.registerDriver(registeredDriver);
+	}
+	public static void deregister() throws SQLException {
+		if (!isRegistered()) {
+			throw new IllegalStateException("Driver is not registered (or it has not been registered using Driver.register() method)");
+		}
+		DriverManager.deregisterDriver(registeredDriver);
+		registeredDriver = null;
+	}
+	public static boolean isRegistered() {
+		return registeredDriver != null;
 	}
 }

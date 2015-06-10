@@ -1782,12 +1782,15 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
-		throw Util.error("not a wrapper");
+		if (iface.isAssignableFrom(getClass())) {
+			return iface.cast(this);
+		}
+		throw new SQLException("Cannot unwrap to " + iface.getName());
 	}
 
 	@Override
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		return false;
+		return iface.isAssignableFrom(getClass());
 	}
 
 	private static String quote(String data) {
