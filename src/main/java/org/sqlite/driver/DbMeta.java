@@ -110,11 +110,13 @@ class DbMeta implements DatabaseMetaData {
 		return "1.0"; // FIXME
 	}
 
+	/** @see JDBC#getMajorVersion() */
 	@Override
 	public int getDriverMajorVersion() {
 		return 1; // FIXME Keep in sync with Driver
 	}
 
+	/** @see JDBC#getMinorVersion() */
 	@Override
 	public int getDriverMinorVersion() {
 		return 0; // FIXME Keep in sync with Driver
@@ -283,9 +285,10 @@ class DbMeta implements DatabaseMetaData {
 		return true;
 	}
 
+	/** @see Stmt#getMoreResults() */
 	@Override
 	public boolean supportsMultipleResultSets() throws SQLException {
-		return false;
+		return true;
 	}
 
 	@Override
@@ -612,6 +615,7 @@ class DbMeta implements DatabaseMetaData {
 		return 0;
 	}
 
+	/** @see Conn#transactionIsolation */
 	@Override
 	public int getDefaultTransactionIsolation() throws SQLException {
 		return Connection.TRANSACTION_SERIALIZABLE;
@@ -622,9 +626,10 @@ class DbMeta implements DatabaseMetaData {
 		return true;
 	}
 
+	/** @see Conn#setTransactionIsolation(int) */
 	@Override
 	public boolean supportsTransactionIsolationLevel(int level) throws SQLException {
-		return level == Connection.TRANSACTION_SERIALIZABLE; // TODO TRANSACTION_READ_UNCOMMITTED
+		return level == Connection.TRANSACTION_SERIALIZABLE || level == Connection.TRANSACTION_READ_UNCOMMITTED;
 	}
 
 	@Override
@@ -1494,11 +1499,15 @@ class DbMeta implements DatabaseMetaData {
 		return idx.executeQuery();
 	}
 
+	/** @see Stmt#getResultSetType()
+	 * @see Rows#getType() */
 	@Override
 	public boolean supportsResultSetType(int type) throws SQLException {
 		return type == ResultSet.TYPE_FORWARD_ONLY;
 	}
 
+	/** @see Stmt#getResultSetConcurrency()
+	 * @see Rows#getConcurrency() */
 	@Override
 	public boolean supportsResultSetConcurrency(int type, int concurrency) throws SQLException {
 		return type == ResultSet.TYPE_FORWARD_ONLY && concurrency == ResultSet.CONCUR_READ_ONLY;
@@ -1549,6 +1558,7 @@ class DbMeta implements DatabaseMetaData {
 		return false;
 	}
 
+	/** @see Stmt#executeBatch() */
 	@Override
 	public boolean supportsBatchUpdates() throws SQLException {
 		return true;
@@ -1577,13 +1587,14 @@ class DbMeta implements DatabaseMetaData {
 		return c;
 	}
 
+	/** @see Conn#setSavepoint() */
 	@Override
 	public boolean supportsSavepoints() throws SQLException {
 		return true;
 	}
 
 	@Override
-	public boolean supportsNamedParameters() throws SQLException {
+	public boolean supportsNamedParameters() throws SQLException { // but no callable statement...
 		return true;
 	}
 
@@ -1592,9 +1603,10 @@ class DbMeta implements DatabaseMetaData {
 		return false;
 	}
 
+	/** @see Stmt#getGeneratedKeys() */
 	@Override
 	public boolean supportsGetGeneratedKeys() throws SQLException { // Used by Hibernate
-		return true;
+		return true; // partial support only
 	}
 
 	@Override
@@ -1658,14 +1670,18 @@ class DbMeta implements DatabaseMetaData {
 		return stmt.executeQuery();
 	}
 
+	/** @see Rows#getHoldability()
+	 * @see Stmt#getResultSetHoldability()
+	 * @see #getResultSetHoldability()
+	 * @see Conn#getHoldability() */
 	@Override
 	public boolean supportsResultSetHoldability(int holdability) throws SQLException {
-		return holdability == ResultSet.CLOSE_CURSORS_AT_COMMIT;
+		return holdability == ResultSet.CLOSE_CURSORS_AT_COMMIT; // TODO Validate sqlite3_reset & lock
 	}
 
 	@Override
 	public int getResultSetHoldability() throws SQLException {
-		return ResultSet.CLOSE_CURSORS_AT_COMMIT;
+		return ResultSet.CLOSE_CURSORS_AT_COMMIT; // TODO Validate sqlite3_reset & lock
 	}
 
 	@Override
@@ -1698,6 +1714,7 @@ class DbMeta implements DatabaseMetaData {
 		return false;
 	}
 
+	/** @see Stmt#setPoolable(boolean) */
 	@Override
 	public boolean supportsStatementPooling() throws SQLException {
 		return true; // Statement cache
@@ -1724,6 +1741,7 @@ class DbMeta implements DatabaseMetaData {
 		return false;
 	}
 
+	/** @see Conn#getClientInfo() */
 	@Override
 	public ResultSet getClientInfoProperties() throws SQLException {
 		// TODO http://sqlite.org/pragma.html#pragma_application_id
