@@ -1,9 +1,15 @@
+branches:
+ only:
+  - master
+skip_tags: true
 install:
  - cinst sqlite
  - cinst maven
- - cmd: ECHO %PATH%
+ - cmd: SET
  - cmd: SET PATH=C:\bin\apache-maven-3.3.1\bin;%PATH%
  - cmd: SET MAVEN_OPTS=-Djna.library.path=C:\tools\SQLite
+environment:
+  JAVA_HOME: C:\Program Files\Java\jdk1.7.0
 build_script:
  - mvn clean package --batch-mode -DskipTest
 test_script:
