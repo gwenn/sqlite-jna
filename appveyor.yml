@@ -1,20 +1,26 @@
 branches:
- only:
-  - master
+  only:
+    - master
 skip_tags: true
 environment:
   JAVA_HOME: C:\Program Files\Java\jdk1.7.0
+  M2_HOME: C:\bin\apache-maven-3.2.5
 install:
- - cinst sqlite # win32_x86 dll
- - cinst maven
- - cmd: SET
- - cmd: SET PATH=C:\bin\apache-maven-3.3.1\bin;%PATH%
- - cmd: SET MAVEN_OPTS=-Djna.library.path=C:\tools\SQLite
+  - cinst sqlite # win32_x86 dll versus JDK amd64
+  - ps: |
+      $MVNDIR = $env:M2_HOME
+      if (!(Test-Path -Path $MVNDIR )) {
+        Write-Host (Test-Path -Path $MVNDIR)
+        Write-Host 'Installing Maven'
+        choco install maven -Version 3.2.5
+      } else {
+        Write-Host 'Found Maven cached installation'
+      }
+  - cmd: SET PATH=%M2_HOME%\bin;%PATH%
+  - cmd: SET MAVEN_OPTS=-Djna.library.path=C:\tools\SQLite -Djna.nosys=true
 build_script:
- - mvn -V clean package --batch-mode -DskipTests
+  - mvn -V -B clean package -DskipTests
 test_script:
- - mvn clean install --batch-mode
+  - mvn -B test
 cache:
- - C:\ProgramData\chocolatey\bin -> appveyor.yml
- - C:\ProgramData\chocolatey\lib -> appveyor.yml
- - C:\Users\appveyor\.m2
+  - C:\Users\appveyor\.m2
