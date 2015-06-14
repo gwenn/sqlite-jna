@@ -6,6 +6,9 @@ environment:
   JAVA_HOME: C:\Program Files\Java\jdk1.7.0
   M2_HOME: C:\bin\apache-maven-3.2.5
 install:
+# https://www.sqlite.org/howtocompile.html#dll
+# https://www.autoitscript.com/autoit3/files/beta/autoit/archive/sqlite/
+# https://system.data.sqlite.org/index.html/doc/trunk/www/downloads.wiki
   - cinst sqlite # win32_x86 dll versus JDK amd64
   - ps: |
       $MVNDIR = $env:M2_HOME
@@ -17,10 +20,10 @@ install:
         Write-Host 'Found Maven cached installation'
       }
   - cmd: SET PATH=%M2_HOME%\bin;%PATH%
-  - cmd: SET MAVEN_OPTS=-Djna.library.path=C:\tools\SQLite -Djna.nosys=true
 build_script:
   - mvn -V -B clean package -DskipTests
 test_script:
-  - mvn -B test
+  - mvn -B test -DargLine="-Djna.library.path=C:\tools\SQLite -Djna.nosys=true"
 cache:
+  - C:\bin\apache-maven-3.2.5\
   - C:\Users\appveyor\.m2
