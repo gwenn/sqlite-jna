@@ -4,10 +4,10 @@ There are two layers:
  - a small one matching the SQLite API (package org.sqlite)
  - a bloated one matching the JDBC API (package org.sqlite.driver)
 
-[![Build Status][1]][2]
+[![Build Status](https://secure.travis-ci.org/gwenn/sqlite-jna.png)](http://www.travis-ci.org/gwenn/sqlite-jna)
 
-[1]: https://secure.travis-ci.org/gwenn/sqlite-jna.png
-[2]: http://www.travis-ci.org/gwenn/sqlite-jna
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/gwenn/sqlite-jna?branch=master&svg=true)](https://ci.appveyor.com/project/gwenn/sqlite-jna)
+
 
 INSTALL
 -------
