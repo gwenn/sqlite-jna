@@ -325,7 +325,7 @@ public final class Conn {
 		final PointerByReference pErrMsg = new PointerByReference();
 		final int res = sqlite3_load_extension(pDb, file, proc, pErrMsg);
 		if (res != SQLITE_OK) {
-			return pErrMsg.getValue().getString(0L);
+			return pErrMsg.getValue().getString(0L, UTF_8_ECONDING); // TODO sqlite_free(pErrMsg)
 		}
 		return null;
 	}

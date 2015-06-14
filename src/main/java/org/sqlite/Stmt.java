@@ -34,7 +34,7 @@ public class Stmt {
 		assert c != null;
 		this.c = c;
 		this.pStmt = pStmt;
-		this.tail = tail.getString(0L);
+		this.tail = tail.getString(0L, UTF_8_ECONDING);
 		this.cacheable = cacheable;
 	}
 

@@ -8,6 +8,8 @@
  */
 package org.sqlite.driver;
 
+import org.sqlite.SQLite;
+
 import java.sql.RowId;
 
 class RowIdImpl implements RowId {
@@ -19,7 +21,7 @@ class RowIdImpl implements RowId {
 
 	@Override
 	public byte[] getBytes() {
-		return toString().getBytes();
+		return toString().getBytes(SQLite.UTF_8);
 	}
 
 	@Override
