@@ -26,6 +26,7 @@
 
 package org.sqlite.driver;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -99,6 +100,7 @@ public class SqliteDriverTest {
 
 	@Test(expected = SQLiteException.class)
 	public void testNoPermissions() throws Exception {
+		Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
 		File tempFile = testFolder.newFile("test.db");
 
 		assertTrue(tempFile.setReadable(false));

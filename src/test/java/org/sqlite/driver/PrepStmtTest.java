@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.DriverManager;
@@ -232,15 +233,15 @@ public class PrepStmtTest {
 		prep.setBinaryStream(1, inByte, b1.length);
 		ByteArrayInputStream inAscii = new ByteArrayInputStream(b2);
 		prep.setBinaryStream(2, inAscii, b2.length);
-		byte[] b3 = utf08.getBytes("UTF-8");
+		byte[] b3 = utf08.getBytes(StandardCharsets.UTF_8);
 		ByteArrayInputStream inUnicode = new ByteArrayInputStream(b3);
 		prep.setBinaryStream(3, inUnicode, b3.length);
 
 		rs = prep.executeQuery();
 		assertTrue(rs.next());
 		assertArrayEquals(b1, rs.getBytes(1));
-		assertEquals(new String(b2), rs.getString(2));
-		assertEquals(new String(b3), rs.getString(3));
+		assertEquals(new String(b2, StandardCharsets.US_ASCII), rs.getString(2));
+		assertEquals(utf08, rs.getString(3));
 		assertFalse(rs.next());
 		rs.close();
 		prep.close();
