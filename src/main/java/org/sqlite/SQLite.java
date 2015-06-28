@@ -137,6 +137,7 @@ public final class SQLite implements Library {
 	//static native int sqlite3_bind_text16(Pointer pStmt, int i, const void*, int, void(*)(void*));
 	//static native int sqlite3_bind_value(Pointer pStmt, int i, const sqlite3_value*);
 	static native int sqlite3_bind_zeroblob(Pointer pStmt, int i, int n);
+	static native int sqlite3_stmt_status(Pointer pStmt, int op, boolean reset);
 
 	static native void sqlite3_free(Pointer p);
 

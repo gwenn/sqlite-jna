@@ -542,6 +542,11 @@ public class Stmt {
 		return null;
 	}
 
+	public int status(StmtStatus op, boolean reset) throws StmtException {
+		checkOpen();
+		return sqlite3_stmt_status(pStmt, op.value, reset);
+	}
+
 	private void checkColumnIndex(int iCol) throws StmtException {
 		if (iCol < 0 || iCol >= getColumnCount()) {
 			throw new StmtException(this, String.format("column index %d out of range [0,%d[.", iCol, getColumnCount()), ErrCodes.SQLITE_RANGE);

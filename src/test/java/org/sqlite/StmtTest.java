@@ -69,6 +69,19 @@ public class StmtTest {
 		stmt.getColumnCount();
 		stmt.closeAndCheck();
 		assertEquals(ColTypes.SQLITE_NULL, stmt.getColumnType(0));
+		checkResult(c.close());
+	}
+
+	@Test
+	public void status() throws SQLiteException {
+		final Conn c = ConnTest.open();
+		final Stmt s = c.prepare("SELECT 1", false);
+		assertEquals(0, s.status(StmtStatus.SQLITE_STMTSTATUS_FULLSCAN_STEP, false));
+		assertEquals(0, s.status(StmtStatus.SQLITE_STMTSTATUS_SORT, false));
+		assertEquals(0, s.status(StmtStatus.SQLITE_STMTSTATUS_AUTOINDEX, false));
+		assertEquals(0, s.status(StmtStatus.SQLITE_STMTSTATUS_VM_STEP, false));
+		checkResult(s.close());
+		checkResult(c.close());
 	}
 
 	static void checkResult(int res) {
