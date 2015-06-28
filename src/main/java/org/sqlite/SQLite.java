@@ -250,7 +250,10 @@ public final class SQLite implements Library {
 	static {
 		if (!System.getProperty("sqlite.config.log", "").isEmpty()) {
 			// DriverManager.getLogWriter();
-			sqlite3_config(SQLITE_CONFIG_LOG, LOG_CALLBACK, null); // FIXME check returned code
+			final int res = sqlite3_config(SQLITE_CONFIG_LOG, LOG_CALLBACK, null);
+			if (res != SQLITE_OK) {
+				throw new ExceptionInInitializerError("sqlite3_config(SQLITE_CONFIG_LOG, ...) = " + res);
+			}
 		}
 	}
 

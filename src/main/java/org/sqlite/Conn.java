@@ -146,7 +146,7 @@ public final class Conn {
 		final Pointer pSql = nativeString(sql);
 		final PointerByReference ppStmt = new PointerByReference();
 		final PointerByReference ppTail = new PointerByReference();
-		final int res = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail); // FIXME nbytes + 1
+		final int res = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail);
 		check(res, "error while preparing statement '%s'", sql);
 		return new Stmt(this, ppStmt.getValue(), ppTail.getValue(), cacheable);
 	}
@@ -325,7 +325,9 @@ public final class Conn {
 		final PointerByReference pErrMsg = new PointerByReference();
 		final int res = sqlite3_load_extension(pDb, file, proc, pErrMsg);
 		if (res != SQLITE_OK) {
-			return pErrMsg.getValue().getString(0L, UTF_8_ECONDING); // TODO sqlite_free(pErrMsg)
+			final String errMsg = pErrMsg.getValue().getString(0L, UTF_8_ECONDING);
+			sqlite3_free(pErrMsg.getValue());
+			return errMsg;
 		}
 		return null;
 	}
