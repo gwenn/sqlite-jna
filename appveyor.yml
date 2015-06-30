@@ -18,6 +18,7 @@ install:
         Write-Host 'Found Maven cached installation'
       }
   - cmd: SET PATH=%M2_HOME%\bin;%PATH%
+  - cmd: DIR *.dll \S
 build_script:
   - mvn -V -B clean package -DskipTests
 test_script:
