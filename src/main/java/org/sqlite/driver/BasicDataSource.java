@@ -46,11 +46,11 @@ public class BasicDataSource extends JDBC implements DataSource, Referenceable {
 	}
 	@Override
 	public void setLogWriter(PrintWriter out) throws SQLException {
-		this.logWriter = out;
+		logWriter = out;
 	}
 	@Override
 	public void setLoginTimeout(int seconds) throws SQLException {
-		this.loginTimeout = seconds;
+		loginTimeout = seconds;
 	}
 	@Override
 	public int getLoginTimeout() throws SQLException {

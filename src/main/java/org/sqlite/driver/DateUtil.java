@@ -63,7 +63,7 @@ final class DateUtil {
 
 	// 1970-01-01 00:00:00 is JD 2440587.5
 	static double toJulianDay(long ms) {
-		double adj = (ms < 0L) ? 0.0 : 0.5;
+		double adj = ms < 0L ? 0.0 : 0.5;
 		return (ms + adj) / 86400000.0 + 2440587.5;
 	}
 

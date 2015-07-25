@@ -48,10 +48,7 @@ public class Backup {
 	 */
 	public void run(int nPage, long millis) throws ConnException, InterruptedException {
 		try {
-			while (true) {
-				if (!step(nPage)) {
-					break;
-				}
+			while (step(nPage)) {
 				if (millis > 0L) {
 					Thread.sleep(millis);
 				}

@@ -704,7 +704,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
 		checkOpen();
-		tableNamePattern = (tableNamePattern == null || tableNamePattern.isEmpty()) ? "%" : tableNamePattern;
+		tableNamePattern = tableNamePattern == null || tableNamePattern.isEmpty() ? "%" : tableNamePattern;
 
 		final StringBuilder sql = new StringBuilder().append("select").
 				append(" cat as TABLE_CAT,").
@@ -917,7 +917,7 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	private List<String[]> getExactTableNames(String[] catalogs, String tableNamePattern) throws SQLException {
-		tableNamePattern = (tableNamePattern == null || tableNamePattern.isEmpty()) ? "%" : tableNamePattern;
+		tableNamePattern = tableNamePattern == null || tableNamePattern.isEmpty() ? "%" : tableNamePattern;
 		final List<String[]> tbls = new ArrayList<String[]>();
 		for (String catalog : catalogs) {
 			PreparedStatement ps = null;

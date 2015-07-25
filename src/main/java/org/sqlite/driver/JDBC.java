@@ -127,12 +127,12 @@ public class JDBC implements Driver {
 		if (info == null) {
 			return null;
 		}
-		SQLWarning warnings = null;
 		final String encoding = info.getProperty(ENCODING);
 		if (encoding != null && !encoding.isEmpty()) {
 			conn.fastExec("PRAGMA encoding=" + SQLite.doubleQuote(encoding));
 		}
 		final String fks = info.getProperty(FOREIGN_KEYS);
+		SQLWarning warnings = null;
 		if ("on".equals(fks)) {
 			if (!conn.enableForeignKeys(true)) {
 				warnings = addWarning(warnings, new SQLWarning("cannot enable the enforcement of foreign key constraints.", null, ErrCodes.WRAPPER_SPECIFIC));
