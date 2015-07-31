@@ -1,5 +1,6 @@
 language: java
 sudo: false
+addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
