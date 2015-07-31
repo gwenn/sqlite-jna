@@ -134,11 +134,11 @@ public class ConnTest {
 	@Test
 	public void limit() throws SQLiteException {
 		final Conn c = open();
-		assertEquals(999, c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER));
-		assertEquals(999, c.setLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER, 9999));
-		assertEquals(999, c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER)); // SQLITE_MAX_VARIABLE_NUMBER
-		assertEquals(999, c.setLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER, 99));
-		assertEquals(99, c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER));
+		final int max = c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER);
+		assertEquals(max, c.setLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER, max+1));
+		assertEquals(max, c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER)); // SQLITE_MAX_VARIABLE_NUMBER
+		assertEquals(max, c.setLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER, max-1));
+		assertEquals(max-1, c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER));
 	}
 
 	@Test
