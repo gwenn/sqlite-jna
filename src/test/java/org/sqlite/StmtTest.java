@@ -84,6 +84,23 @@ public class StmtTest {
 		checkResult(c.close());
 	}
 
+	//@Rule
+	//public TemporaryFolder testFolder = new TemporaryFolder();
+
+	@Test
+	public void reset_asap() throws Exception {
+		//File dbFile = testFolder.newFile("test.db");
+		final Conn c = ConnTest.open();
+		c.fastExec("CREATE TABLE foo (x INT)");
+		c.fastExec("BEGIN EXCLUSIVE");
+		final Stmt ins = c.prepare("ROLLBACK", false);
+		ins.exec();
+
+		assertFalse(ins.isBusy());
+		ins.closeAndCheck();
+		c.closeAndCheck();
+	}
+
 	static void checkResult(int res) {
 		assertEquals(0, res);
 	}
