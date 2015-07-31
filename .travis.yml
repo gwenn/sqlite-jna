@@ -3,6 +3,6 @@ sudo: false
 addons:
   apt:
     sources:
-    - ubuntu-toolchain-r-test
+    - debian-sid
     packages:
     - libsqlite3-dev
