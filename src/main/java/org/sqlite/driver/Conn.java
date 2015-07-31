@@ -103,7 +103,7 @@ class Conn implements Connection {
 	public void setAutoCommit(boolean autoCommit) throws SQLException {
 		final org.sqlite.Conn c = getConn();
 		if (c.getAutoCommit() == autoCommit) return;
-		c.exec(autoCommit ? "COMMIT" : "BEGIN");
+		c.fastExec(autoCommit ? "COMMIT" : "BEGIN");
 	}
 
 	@Override
@@ -115,14 +115,14 @@ class Conn implements Connection {
 	public void commit() throws SQLException {
 		final org.sqlite.Conn c = getConn();
 		if (c.getAutoCommit()) throw new ConnException(c, "database in auto-commit mode", ErrCodes.WRAPPER_SPECIFIC);
-		c.exec("COMMIT; BEGIN");
+		c.fastExec("COMMIT; BEGIN");
 	}
 
 	@Override
 	public void rollback() throws SQLException {
 		final org.sqlite.Conn c = getConn();
 		if (getAutoCommit()) throw new ConnException(c, "database in auto-commit mode", ErrCodes.WRAPPER_SPECIFIC);
-		c.exec("ROLLBACK; BEGIN");
+		c.fastExec("ROLLBACK; BEGIN");
 	}
 
 	@Override
@@ -293,7 +293,7 @@ class Conn implements Connection {
 				return String.valueOf(id);
 			}
 		};
-		getConn().exec("SAVEPOINT \"" + id + '"'); // SAVEPOINT 1; fails
+		getConn().fastExec("SAVEPOINT \"" + id + '"'); // SAVEPOINT 1; fails
 		return savepoint;
 	}
 
@@ -315,18 +315,18 @@ class Conn implements Connection {
 				return name;
 			}
 		};
-		getConn().exec("SAVEPOINT \"" + escapeIdentifier(name) + '"');
+		getConn().fastExec("SAVEPOINT \"" + escapeIdentifier(name) + '"');
 		return savepoint;
 	}
 
 	@Override
 	public void rollback(Savepoint savepoint) throws SQLException {
-		getConn().exec("ROLLBACK TO SAVEPOINT \"" + escapeIdentifier(savepoint.toString()) + '"');
+		getConn().fastExec("ROLLBACK TO SAVEPOINT \"" + escapeIdentifier(savepoint.toString()) + '"');
 	}
 
 	@Override
 	public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-		getConn().exec("RELEASE SAVEPOINT \"" + escapeIdentifier(savepoint.toString()) + '"');
+		getConn().fastExec("RELEASE SAVEPOINT \"" + escapeIdentifier(savepoint.toString()) + '"');
 	}
 
 	@Override

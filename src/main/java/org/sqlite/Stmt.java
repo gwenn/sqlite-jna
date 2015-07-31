@@ -34,7 +34,7 @@ public class Stmt {
 		assert c != null;
 		this.c = c;
 		this.pStmt = pStmt;
-		this.tail = tail.getString(0L, UTF_8_ECONDING);
+		this.tail = blankToNull(tail.getString(0L, UTF_8_ECONDING));
 		this.cacheable = cacheable;
 	}
 
@@ -551,5 +551,14 @@ public class Stmt {
 		if (iCol < 0 || iCol >= getColumnCount()) {
 			throw new StmtException(this, String.format("column index %d out of range [0,%d[.", iCol, getColumnCount()), ErrCodes.SQLITE_RANGE);
 		}
+	}
+
+	private static String blankToNull(String s) {
+		for (int i = 0; i < s.length(); i++) {
+			if (!Character.isSpaceChar(s.charAt(i))) {
+				return s;
+			}
+		}
+		return null;
 	}
 }
