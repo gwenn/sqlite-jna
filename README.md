@@ -4,10 +4,10 @@ There are two layers:
  - a small one matching the SQLite API (package org.sqlite)
  - a bloated one matching the JDBC API (package org.sqlite.driver)
 
-[![Build Status][1]][2]
+[![Build Status](https://secure.travis-ci.org/gwenn/sqlite-jna.png?branch=jnr)](http://www.travis-ci.org/gwenn/sqlite-jna)
 
-[1]: https://travis-ci.org/gwenn/sqlite-jna.svg?branch=jnr
-[2]: http://www.travis-ci.org/gwenn/sqlite-jna
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/gwenn/sqlite-jna?branch=jnr&svg=true)](https://ci.appveyor.com/project/gwenn/sqlite-jna)
+
 
 INSTALL
 -------
@@ -28,7 +28,7 @@ TODO
 
 LINKS
 -----
-* https://bitbucket.org/xerial/sqlite-jdbc (JNI)
+* https://github.com/xerial/sqlite-jdbc (~~https://bitbucket.org/xerial/sqlite-jdbc~~) (JNI)
 * http://www.ch-werner.de/javasqlite/ (JNI)
 * https://code.google.com/p/sqlite4java/ (JNI, no JDBC)
 * https://github.com/lyubo/jdbc-lite (JNA)

@@ -14,25 +14,25 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 
 final class Util {
-  private Util() {
-  }
+	private Util() {
+	}
 
-  static SQLException error(String msg) {
-    trace(msg);
-    return new SQLException(msg);
-  }
+	static SQLException error(String msg) {
+		trace(msg);
+		return new SQLException(msg);
+	}
 
-  static SQLFeatureNotSupportedException caseUnsupported(String msg) {
-    trace(msg);
-    return new SQLFeatureNotSupportedException(msg);
-  }
+	static SQLFeatureNotSupportedException caseUnsupported(String msg) {
+		trace(msg);
+		return new SQLFeatureNotSupportedException(msg);
+	}
 
-  static SQLFeatureNotSupportedException unsupported(String method) {
-    trace(method);
-    return new SQLFeatureNotSupportedException(String.format("%s not implemented by SQLite JDBC driver", method));
-  }
+	static SQLFeatureNotSupportedException unsupported(String method) {
+		trace(method);
+		return new SQLFeatureNotSupportedException(String.format("%s not implemented by SQLite JDBC driver", method));
+	}
 
-  static void trace(String method) {
-    SQLite.sqlite3_log(0, method);
-  }
+	static void trace(String method) {
+		SQLite.sqlite3_log(0, method);
+	}
 }

@@ -12,11 +12,11 @@ import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
 
 public abstract class TraceCallback {
-  @SuppressWarnings("unused")
-  @Delegate
-  public void invoke(Pointer arg, String sql) {
-    trace(sql);
-  }
+	@SuppressWarnings("unused")
+	@Delegate
+	public void invoke(Pointer arg, String sql) {
+		trace(sql);
+	}
 
-  protected abstract void trace(String sql);
+	protected abstract void trace(String sql);
 }

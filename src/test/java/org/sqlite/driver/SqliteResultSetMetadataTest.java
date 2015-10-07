@@ -36,44 +36,44 @@ import java.sql.Types;
 import static org.junit.Assert.*;
 
 public class SqliteResultSetMetadataTest extends SqliteTestHelper {
-    @Test
-    public void testColumnType() throws Exception {
-        try (Statement stmt = conn.createStatement()) {
-            try (ResultSet rs = stmt.executeQuery("SELECT * FROM type_table")) {
-                ResultSetMetaData rsm = rs.getMetaData();
+	@Test
+	public void testColumnType() throws Exception {
+		try (Statement stmt = conn.createStatement()) {
+			try (ResultSet rs = stmt.executeQuery("SELECT * FROM type_table")) {
+				ResultSetMetaData rsm = rs.getMetaData();
 
-                assertEquals(5, rsm.getColumnCount());
+				assertEquals(5, rsm.getColumnCount());
 
-                assertEquals("main", rsm.getCatalogName(1));
-                assertEquals("type_table", rsm.getTableName(1));
-                assertFalse(rsm.isAutoIncrement(1));
-                assertEquals(ResultSetMetaData.columnNullable, rsm.isNullable(1));
-                assertEquals("name", rsm.getColumnLabel(1));
-                assertEquals("name", rsm.getColumnName(1));
-                assertEquals(Types.VARCHAR, rsm.getColumnType(1));
+				assertEquals("main", rsm.getCatalogName(1));
+				assertEquals("type_table", rsm.getTableName(1));
+				assertFalse(rsm.isAutoIncrement(1));
+				assertEquals(ResultSetMetaData.columnNullable, rsm.isNullable(1));
+				assertEquals("name", rsm.getColumnLabel(1));
+				assertEquals("name", rsm.getColumnName(1));
+				assertEquals(Types.VARCHAR, rsm.getColumnType(1));
 
-                assertFalse(rs.next());
-                assertEquals(Types.VARCHAR, rsm.getColumnType(1));
+				assertFalse(rs.next());
+				assertEquals(Types.VARCHAR, rsm.getColumnType(1));
 
-                rs.close();
-                assertEquals(Types.VARCHAR, rsm.getColumnType(1));
-            }
+				rs.close();
+				assertEquals(Types.VARCHAR, rsm.getColumnType(1));
+			}
 
-            try (ResultSet rs = stmt.executeQuery("SELECT name as namelabel, width FROM type_table")) {
-                ResultSetMetaData rsm = rs.getMetaData();
+			try (ResultSet rs = stmt.executeQuery("SELECT name as namelabel, width FROM type_table")) {
+				ResultSetMetaData rsm = rs.getMetaData();
 
-                assertEquals(2, rsm.getColumnCount());
+				assertEquals(2, rsm.getColumnCount());
 
-                assertEquals("main", rsm.getCatalogName(1));
-                assertEquals("type_table", rsm.getTableName(1));
-                assertFalse(rsm.isAutoIncrement(1));
-                assertEquals(ResultSetMetaData.columnNullable, rsm.isNullable(1));
-                assertEquals("namelabel", rsm.getColumnLabel(1));
-                assertEquals("name", rsm.getColumnName(1));
-                assertEquals(Types.VARCHAR, rsm.getColumnType(1));
+				assertEquals("main", rsm.getCatalogName(1));
+				assertEquals("type_table", rsm.getTableName(1));
+				assertFalse(rsm.isAutoIncrement(1));
+				assertEquals(ResultSetMetaData.columnNullable, rsm.isNullable(1));
+				assertEquals("namelabel", rsm.getColumnLabel(1));
+				assertEquals("name", rsm.getColumnName(1));
+				assertEquals(Types.VARCHAR, rsm.getColumnType(1));
 
-                assertTrue(rsm.isSigned(2));
-            }
-        }
-    }
+				assertTrue(rsm.isSigned(2));
+			}
+		}
+	}
 }

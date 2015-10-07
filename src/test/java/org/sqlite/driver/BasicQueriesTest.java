@@ -41,138 +41,135 @@ import java.sql.Timestamp;
 import static org.junit.Assert.*;
 
 public class BasicQueriesTest {
-    private Connection conn;
+	private Connection conn;
 
-    @Before
-    public void getConnection() throws SQLException {
-      conn = DriverManager.getConnection(JDBC.MEMORY);
-    }
+	@Before
+	public void getConnection() throws SQLException {
+		conn = DriverManager.getConnection(JDBC.MEMORY);
+	}
 
-    @After
-    public void closeConnection() throws SQLException {
-        conn.close();
-        conn = null;
-    }
+	@After
+	public void closeConnection() throws SQLException {
+		conn.close();
+		conn = null;
+	}
 
-    @Test(expected = SQLException.class)
-    public void testImmediateExecute() throws Exception {
-        try (Statement stmt = conn.createStatement()) {
-            try {
-                stmt.execute("select load_extension('non-existent-extension')");
-            }
-            finally {
-                assertNull(stmt.getResultSet());
-                assertEquals(-1, stmt.getUpdateCount());
-            }
-        }
-    }
+	@Test(expected = SQLException.class)
+	public void testImmediateExecute() throws Exception {
+		try (Statement stmt = conn.createStatement()) {
+			try {
+				stmt.execute("select load_extension('non-existent-extension')");
+			} finally {
+				assertNull(stmt.getResultSet());
+				assertEquals(-1, stmt.getUpdateCount());
+			}
+		}
+	}
 
-    @Test(expected = SQLException.class)
-    public void testImmediateExecuteQuery() throws Exception {
-        try (Statement stmt = conn.createStatement()) {
-            try {
-                stmt.executeQuery("select load_extension('non-existent-extension')");
-            }
-            finally {
-                assertNull(stmt.getResultSet());
-                assertEquals(-1, stmt.getUpdateCount());
-            }
-        }
-    }
+	@Test(expected = SQLException.class)
+	public void testImmediateExecuteQuery() throws Exception {
+		try (Statement stmt = conn.createStatement()) {
+			try {
+				stmt.executeQuery("select load_extension('non-existent-extension')");
+			} finally {
+				assertNull(stmt.getResultSet());
+				assertEquals(-1, stmt.getUpdateCount());
+			}
+		}
+	}
 
-    @Test(expected = SQLException.class)
-    public void testBadFunction() throws Exception {
-        try (Statement stmt = conn.createStatement()) {
-            try {
-                stmt.execute("select bad_function_name('foo')");
-            }
-            finally {
-                assertNull(stmt.getResultSet());
-                assertEquals(-1, stmt.getUpdateCount());
-            }
-        }
-    }
+	@Test(expected = SQLException.class)
+	public void testBadFunction() throws Exception {
+		try (Statement stmt = conn.createStatement()) {
+			try {
+				stmt.execute("select bad_function_name('foo')");
+			} finally {
+				assertNull(stmt.getResultSet());
+				assertEquals(-1, stmt.getUpdateCount());
+			}
+		}
+	}
 
-    @Test
-    public void testImmediateExecuteQuery2() throws Exception {
-        try (Statement stmt = conn.createStatement()) {
-            stmt.executeQuery("select 1");
-        }
-    }
+	@Test
+	public void testImmediateExecuteQuery2() throws Exception {
+		try (Statement stmt = conn.createStatement()) {
+			stmt.executeQuery("select 1");
+		}
+	}
 
-    @Test
-    public void testSimpleQueries() throws Exception {
-        ResultSet rs;
-        try (Statement stmt = conn.createStatement()) {
-            assertEquals(conn, stmt.getConnection());
+	@Test
+	public void testSimpleQueries() throws Exception {
+		ResultSet rs;
+		try (Statement stmt = conn.createStatement()) {
+			assertEquals(conn, stmt.getConnection());
 
-            assertEquals("jdbc:sqlite:", conn.getMetaData().getURL());
+			assertEquals("jdbc:sqlite:", conn.getMetaData().getURL());
 
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS test_table " +
-                    "(id INTEGER PRIMARY KEY, name TEXT, start DATETIME)");
+			stmt.executeUpdate("CREATE TABLE IF NOT EXISTS test_table " +
+					"(id INTEGER PRIMARY KEY, name TEXT, start DATETIME)");
 
-            rs = stmt.executeQuery("SELECT * FROM test_table");
+			rs = stmt.executeQuery("SELECT * FROM test_table");
 
-            assertFalse(rs.next());
+			assertFalse(rs.next());
 
-            try {
-                stmt.executeQuery("THIS IS BAD SQL");
-                fail("SQL Syntax error was not thrown");
-            } catch (SQLException e) {
+			try {
+				stmt.executeQuery("THIS IS BAD SQL");
+				fail("SQL Syntax error was not thrown");
+			} catch (SQLException e) {
 
-            }
+			}
 
-            assertTrue(conn.getAutoCommit());
+			assertTrue(conn.getAutoCommit());
 
-            int rc = stmt.executeUpdate("INSERT INTO test_table VALUES (1, 'Kino', '2010-05-25T10:00:00')");
+			int rc = stmt.executeUpdate("INSERT INTO test_table VALUES (1, 'Kino', '2010-05-25T10:00:00')");
 
-            assertEquals(1, rc);
+			assertEquals(1, rc);
 
-            assertTrue(conn.getAutoCommit());
-          if (org.sqlite.Conn.libversionNumber() >= 3008000) {
-            assertFalse(conn.isReadOnly());
-          }
+			assertTrue(conn.getAutoCommit());
+			if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+				assertFalse(conn.isReadOnly());
+			}
 
-            PreparedStatement ps = conn.prepareStatement("SELECT * FROM test_table WHERE id=?");
+			PreparedStatement ps = conn.prepareStatement("SELECT * FROM test_table WHERE id=?");
 
-            ps.setInt(1, 2);
-            rs = ps.executeQuery();
+			ps.setInt(1, 2);
+			rs = ps.executeQuery();
 
-            assertFalse(rs.next());
+			assertFalse(rs.next());
 
-            rs.close();
+			rs.close();
 
-            ps.setInt(1, 1);
-            rs = ps.executeQuery();
+			ps.setInt(1, 1);
+			rs = ps.executeQuery();
 
-            assertTrue(rs.next());
+			assertTrue(rs.next());
 
-            assertEquals(1, rs.getInt(1));
-            assertEquals(1, rs.getInt("id"));
-            assertEquals("Kino", rs.getString(2));
-            assertEquals("Kino", rs.getString("name"));
+			assertEquals(1, rs.getInt(1));
+			assertEquals(1, rs.getInt("id"));
+			assertEquals("Kino", rs.getString(2));
+			assertEquals("Kino", rs.getString("name"));
 
-            assertFalse(rs.next());
+			assertFalse(rs.next());
 
-            ps.close();
+			ps.close();
 
-            ps = conn.prepareStatement("INSERT INTO test_table VALUES (?, ?, ?)");
-            ps.setInt(1, 2);
-            ps.setString(2, "Eve");
-            Timestamp ts = new Timestamp(1376222713L * 1000L);
+			ps = conn.prepareStatement("INSERT INTO test_table VALUES (?, ?, ?)");
+			ps.setInt(1, 2);
+			ps.setString(2, "Eve");
+			Timestamp ts = new Timestamp(1376222713L * 1000L);
 
-            ps.setTimestamp(3, ts);
+			ps.setTimestamp(3, ts);
 
-            rc = ps.executeUpdate();
-            assertEquals(1, rc);
-            assertEquals(-1, ps.getUpdateCount());
+			rc = ps.executeUpdate();
+			assertEquals(1, rc);
+			assertEquals(-1, ps.getUpdateCount());
 
-            rs = stmt.executeQuery("SELECT * FROM test_table ORDER BY id DESC");
+			rs = stmt.executeQuery("SELECT * FROM test_table ORDER BY id DESC");
 
-            assertTrue(rs.next());
-            // XXX assertEquals("2013-08-11 05:05:13.000", rs.getString(3));
+			assertTrue(rs.next());
+			// XXX assertEquals("2013-08-11 05:05:13.000", rs.getString(3));
 
-            ps.close();
-        }
-    }
+			ps.close();
+		}
+	}
 }

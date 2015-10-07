@@ -26,6 +26,7 @@
 
 package org.sqlite.driver;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,89 +43,90 @@ import java.util.Properties;
 import static org.junit.Assert.*;
 
 public class SqliteDriverTest {
-    @Rule
-    public TemporaryFolder testFolder = new TemporaryFolder();
-    private Driver driver;
+	@Rule
+	public TemporaryFolder testFolder = new TemporaryFolder();
+	private Driver driver;
 
-    @Before
-    public void newDriver() {
-        driver = new JDBC();
-    }
+	@Before
+	public void newDriver() {
+		driver = new JDBC();
+	}
 
-    @Test
-    public void testAcceptsUrl() throws Exception {
-        assertFalse(driver.acceptsURL(""));
-        assertFalse(driver.acceptsURL("jdbc:sqlite"));
-        assertTrue(driver.acceptsURL("jdbc:sqlite:"));
-        assertTrue(driver.acceptsURL("jdbc:sqlite::memory:"));
-        assertTrue(driver.acceptsURL("jdbc:sqlite:/tmp/test.db"));
-    }
+	@Test
+	public void testAcceptsUrl() throws Exception {
+		assertFalse(driver.acceptsURL(""));
+		assertFalse(driver.acceptsURL("jdbc:sqlite"));
+		assertTrue(driver.acceptsURL("jdbc:sqlite:"));
+		assertTrue(driver.acceptsURL("jdbc:sqlite::memory:"));
+		assertTrue(driver.acceptsURL("jdbc:sqlite:/tmp/test.db"));
+	}
 
-    @Test
-    public void testInvalidUrl() throws Exception {
-        assertNull(driver.connect("jdbc:mysql:", null));
-    }
+	@Test
+	public void testInvalidUrl() throws Exception {
+		assertNull(driver.connect("jdbc:mysql:", null));
+	}
 
-    @Test
-    public void testVersion() {
-        assertEquals(1, driver.getMajorVersion());
-        assertEquals(0, driver.getMinorVersion());
-    }
+	@Test
+	public void testVersion() {
+		assertEquals(1, driver.getMajorVersion());
+		assertEquals(0, driver.getMinorVersion());
+	}
 
-    @Test(expected = SQLiteException.class)
-    public void testUrlDoesNotExist() throws Exception {
-        driver.connect("jdbc:sqlite:/non-existent/path/to/db", null);
-    }
+	@Test(expected = SQLiteException.class)
+	public void testUrlDoesNotExist() throws Exception {
+		driver.connect("jdbc:sqlite:/non-existent/path/to/db", null);
+	}
 
-    @Test(expected = SQLiteException.class)
-    public void testNotADB() throws Exception {
-        File tempFile = testFolder.newFile("file.txt");
+	@Test(expected = SQLiteException.class)
+	public void testNotADB() throws Exception {
+		File tempFile = testFolder.newFile("file.txt");
 
-        try (FileWriter fw = new FileWriter(tempFile)) {
-          fw.write("Hello, World!");
-          fw.flush();
-        }
-        driver.connect("jdbc:sqlite:" + tempFile.getAbsolutePath(), null);
-    }
+		try (FileWriter fw = new FileWriter(tempFile)) {
+			fw.write("Hello, World!");
+			fw.flush();
+		}
+		driver.connect("jdbc:sqlite:" + tempFile.getAbsolutePath(), null);
+	}
 
-    @Test(expected = SQLiteException.class)
-    public void testDirectory() throws Exception {
-        driver.connect("jdbc:sqlite:" + testFolder.getRoot().getAbsolutePath(), null);
-    }
+	@Test(expected = SQLiteException.class)
+	public void testDirectory() throws Exception {
+		driver.connect("jdbc:sqlite:" + testFolder.getRoot().getAbsolutePath(), null);
+	}
 
-    @Test
-    public void testEmptyUrl() throws Exception {
-        assertEquals(null, driver.connect("", null));
-    }
+	@Test
+	public void testEmptyUrl() throws Exception {
+		assertEquals(null, driver.connect("", null));
+	}
 
-    @Test(expected = SQLiteException.class)
-    public void testNoPermissions() throws Exception {
-        File tempFile = testFolder.newFile("test.db");
+	@Test(expected = SQLiteException.class)
+	public void testNoPermissions() throws Exception {
+		Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
+		File tempFile = testFolder.newFile("test.db");
 
-        assertTrue(tempFile.setReadable(false));
-        driver.connect("jdbc:sqlite:" + tempFile.getAbsolutePath(), null);
-    }
+		assertTrue(tempFile.setReadable(false));
+		driver.connect("jdbc:sqlite:" + tempFile.getAbsolutePath(), null);
+	}
 
-    @Test
-    public void testWorking() throws Exception {
-        try (Connection conn = driver.connect("jdbc:sqlite:", null)) {
-            assertEquals(null, conn.getWarnings());
-        }
-    }
+	@Test
+	public void testWorking() throws Exception {
+		try (Connection conn = driver.connect("jdbc:sqlite:", null)) {
+			assertEquals(null, conn.getWarnings());
+		}
+	}
 
-    @Test
-    public void testCompliance() throws Exception {
-        assertFalse(driver.jdbcCompliant());
-    }
+	@Test
+	public void testCompliance() throws Exception {
+		assertFalse(driver.jdbcCompliant());
+	}
 
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void testLogger() throws Exception {
-        assertNotNull(driver.getParentLogger());
-    }
+	@Test(expected = SQLFeatureNotSupportedException.class)
+	public void testLogger() throws Exception {
+		assertNotNull(driver.getParentLogger());
+	}
 
-    @Test
-    public void testProperties() throws Exception {
-        assertEquals(10, driver.getPropertyInfo("jdbc:sqlite::memory:", new Properties()).length);
-        //assertArrayEquals(new DriverPropertyInfo[10], driver.getPropertyInfo("jdbc:sqlite::memory:", new Properties()));
-    }
+	@Test
+	public void testProperties() throws Exception {
+		assertEquals(10, driver.getPropertyInfo("jdbc:sqlite::memory:", new Properties()).length);
+		//assertArrayEquals(new DriverPropertyInfo[10], driver.getPropertyInfo("jdbc:sqlite::memory:", new Properties()));
+	}
 }

@@ -11,9 +11,12 @@ package org.sqlite;
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
 
-public interface ScalarCallback {
-	//void (*)(sqlite3_context*,int,sqlite3_value**),
+public abstract class ProfileCallback {
 	@SuppressWarnings("unused")
 	@Delegate
-	void invoke(Pointer pCtx, int nArg, Pointer args);
+	public void invoke(Pointer arg, String sql, long ns) {
+		profile(sql, ns);
+	}
+
+	protected abstract void profile(String sql, long ns);
 }
