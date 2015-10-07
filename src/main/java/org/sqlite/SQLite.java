@@ -9,9 +9,13 @@
 package org.sqlite;
 
 import jnr.ffi.LibraryLoader;
+import jnr.ffi.LibraryOption;
 import jnr.ffi.Memory;
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
+import jnr.ffi.annotations.IgnoreError;
+import jnr.ffi.annotations.In;
+import jnr.ffi.annotations.Out;
 import jnr.ffi.byref.IntByReference;
 import jnr.ffi.byref.PointerByReference;
 
@@ -24,7 +28,7 @@ public final class SQLite {
 	private static final LibSQLite library;
 
 	static {
-		library = LibraryLoader.create(LibSQLite.class).load(LIBRARY_NAME);
+		library = LibraryLoader.create(LibSQLite.class).option(LibraryOption.IgnoreError, true).load(LIBRARY_NAME);
 	}
 
 	public static final int SQLITE_OK = 0;
@@ -433,119 +437,203 @@ public final class SQLite {
 	}
 
 	public interface LibSQLite {
+		@IgnoreError
 		String sqlite3_libversion(); // no copy needed
+		@IgnoreError
 		int sqlite3_libversion_number();
+		@IgnoreError
 		boolean sqlite3_threadsafe();
-		boolean sqlite3_compileoption_used(String optName);
+		@IgnoreError
+		boolean sqlite3_compileoption_used(@In String optName);
 
+		@IgnoreError
 		int sqlite3_config(int op);
+		@IgnoreError
 		int sqlite3_config(int op, boolean onoff);
-		public int sqlite3_config(int op, SQLite.LogCallback xLog, Pointer udp);
-		public void sqlite3_log(int iErrCode, String msg);
+		@IgnoreError
+		int sqlite3_config(int op, @In SQLite.LogCallback xLog, @In Pointer udp);
+		@IgnoreError
+		void sqlite3_log(int iErrCode, @In String msg);
 
-		String sqlite3_errmsg(Pointer pDb); // copy needed: the error string might be overwritten or deallocated by subsequent calls to other SQLite interface functions.
-		int sqlite3_errcode(Pointer pDb);
+		@IgnoreError
+		String sqlite3_errmsg(@In Pointer pDb); // copy needed: the error string might be overwritten or deallocated by subsequent calls to other SQLite interface functions.
+		@IgnoreError
+		int sqlite3_errcode(@In Pointer pDb);
 
-		int sqlite3_extended_result_codes(Pointer pDb, boolean onoff);
-		int sqlite3_extended_errcode(Pointer pDb);
+		@IgnoreError
+		int sqlite3_extended_result_codes(@In Pointer pDb, boolean onoff);
+		@IgnoreError
+		int sqlite3_extended_errcode(@In Pointer pDb);
 
+		@IgnoreError
 		int sqlite3_initialize();
+		@IgnoreError
 		int sqlite3_shutdown();
 
-		int sqlite3_open_v2(String filename, PointerByReference ppDb, int flags, String vfs); // no copy needed
-		int sqlite3_close(Pointer pDb);
-		int sqlite3_close_v2(Pointer pDb);
-		void sqlite3_interrupt(Pointer pDb);
+		@IgnoreError
+		int sqlite3_open_v2(@In String filename, @Out PointerByReference ppDb, int flags, @In String vfs); // no copy needed
+		@IgnoreError
+		int sqlite3_close(@In Pointer pDb);
+		@IgnoreError
+		int sqlite3_close_v2(@In Pointer pDb);
+		@IgnoreError
+		void sqlite3_interrupt(@In Pointer pDb);
 
-		int sqlite3_busy_timeout(Pointer pDb, int ms);
-		int sqlite3_db_config(Pointer pDb, int op, int v, IntByReference pOk);
-		int sqlite3_enable_load_extension(Pointer pDb, boolean onoff);
-		int sqlite3_load_extension(Pointer pDb, String file, String proc, PointerByReference errMsg);
-		int sqlite3_limit(Pointer pDb, int id, int newVal);
-		boolean sqlite3_get_autocommit(Pointer pDb);
+		@IgnoreError
+		int sqlite3_busy_timeout(@In Pointer pDb, int ms);
+		@IgnoreError
+		int sqlite3_db_config(@In Pointer pDb, int op, int v, @Out IntByReference pOk);
+		@IgnoreError
+		int sqlite3_enable_load_extension(@In Pointer pDb, boolean onoff);
+		@IgnoreError
+		int sqlite3_load_extension(@In Pointer pDb, @In String file, @In String proc, @Out PointerByReference errMsg);
+		@IgnoreError
+		int sqlite3_limit(@In Pointer pDb, int id, int newVal);
+		@IgnoreError
+		boolean sqlite3_get_autocommit(@In Pointer pDb);
 
-		int sqlite3_changes(Pointer pDb);
-		int sqlite3_total_changes(Pointer pDb);
-		long sqlite3_last_insert_rowid(Pointer pDb);
+		@IgnoreError
+		int sqlite3_changes(@In Pointer pDb);
+		@IgnoreError
+		int sqlite3_total_changes(@In Pointer pDb);
+		@IgnoreError
+		long sqlite3_last_insert_rowid(@In Pointer pDb);
 
-		String sqlite3_db_filename(Pointer pDb, String dbName); // no copy needed
-		int sqlite3_db_readonly(Pointer pDb, String dbName); // no copy needed
+		@IgnoreError
+		String sqlite3_db_filename(@In Pointer pDb, @In String dbName); // no copy needed
+		@IgnoreError
+		int sqlite3_db_readonly(@In Pointer pDb, @In String dbName); // no copy needed
 
-		Pointer sqlite3_next_stmt(Pointer pDb, Pointer pStmt);
+		@IgnoreError
+		Pointer sqlite3_next_stmt(@In Pointer pDb, @In Pointer pStmt);
 
-		int sqlite3_table_column_metadata(Pointer pDb, String dbName, String tableName, String columnName,
-																			PointerByReference pzDataType, PointerByReference pzCollSeq,
-																			IntByReference pNotNull, IntByReference pPrimaryKey, IntByReference pAutoinc); // no copy needed
-		int sqlite3_exec(Pointer pDb, String cmd, Pointer c, Pointer udp, PointerByReference errMsg);
+		@IgnoreError
+		int sqlite3_table_column_metadata(@In Pointer pDb, @In String dbName, @In String tableName, @In String columnName,
+																			@Out PointerByReference pzDataType, @Out PointerByReference pzCollSeq,
+																			@Out IntByReference pNotNull, @Out IntByReference pPrimaryKey, @Out IntByReference pAutoinc); // no copy needed
+		@IgnoreError
+		int sqlite3_exec(@In Pointer pDb, @In String cmd, @In Pointer c, @In Pointer udp, @Out PointerByReference errMsg);
 
-		int sqlite3_prepare_v2(Pointer pDb, Pointer sql, int nByte, PointerByReference ppStmt,
-													 PointerByReference pTail);
-		String sqlite3_sql(Pointer pStmt); // no copy needed
-		int sqlite3_finalize(Pointer pStmt);
-		int sqlite3_step(Pointer pStmt);
-		int sqlite3_reset(Pointer pStmt);
-		int sqlite3_clear_bindings(Pointer pStmt);
-		boolean sqlite3_stmt_busy(Pointer pStmt);
-		boolean sqlite3_stmt_readonly(Pointer pStmt);
+		@IgnoreError
+		int sqlite3_prepare_v2(@In Pointer pDb, Pointer sql, int nByte, @Out PointerByReference ppStmt,
+													 @Out PointerByReference pTail);
+		@IgnoreError
+		String sqlite3_sql(@In Pointer pStmt); // no copy needed
+		@IgnoreError
+		int sqlite3_finalize(@In Pointer pStmt);
+		@IgnoreError
+		int sqlite3_step(@In Pointer pStmt);
+		@IgnoreError
+		int sqlite3_reset(@In Pointer pStmt);
+		@IgnoreError
+		int sqlite3_clear_bindings(@In Pointer pStmt);
+		@IgnoreError
+		boolean sqlite3_stmt_busy(@In Pointer pStmt);
+		@IgnoreError
+		boolean sqlite3_stmt_readonly(@In Pointer pStmt);
 
-		int sqlite3_column_count(Pointer pStmt);
-		int sqlite3_data_count(Pointer pStmt);
-		int sqlite3_column_type(Pointer pStmt, int iCol);
-		String sqlite3_column_name(Pointer pStmt, int iCol); // copy needed: The returned string pointer is valid until either the prepared statement is destroyed by sqlite3_finalize() or until the statement is automatically reprepared by the first call to sqlite3_step() for a particular run or until the next call to sqlite3_column_name() or sqlite3_column_name16() on the same column.
-		String sqlite3_column_origin_name(Pointer pStmt, int iCol); // copy needed
-		String sqlite3_column_table_name(Pointer pStmt, int iCol); // copy needed
-		String sqlite3_column_database_name(Pointer pStmt, int iCol); // copy needed
-		String sqlite3_column_decltype(Pointer pStmt, int iCol); // copy needed
+		@IgnoreError
+		int sqlite3_column_count(@In Pointer pStmt);
+		@IgnoreError
+		int sqlite3_data_count(@In Pointer pStmt);
+		@IgnoreError
+		int sqlite3_column_type(@In Pointer pStmt, int iCol);
+		@IgnoreError
+		String sqlite3_column_name(@In Pointer pStmt, int iCol); // copy needed: The returned string pointer is valid until either the prepared statement is destroyed by sqlite3_finalize() or until the statement is automatically reprepared by the first call to sqlite3_step() for a particular run or until the next call to sqlite3_column_name() or sqlite3_column_name16() on the same column.
+		@IgnoreError
+		String sqlite3_column_origin_name(@In Pointer pStmt, int iCol); // copy needed
+		@IgnoreError
+		String sqlite3_column_table_name(@In Pointer pStmt, int iCol); // copy needed
+		@IgnoreError
+		String sqlite3_column_database_name(@In Pointer pStmt, int iCol); // copy needed
+		@IgnoreError
+		String sqlite3_column_decltype(@In Pointer pStmt, int iCol); // copy needed
 
-		Pointer sqlite3_column_blob(Pointer pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
-		int sqlite3_column_bytes(Pointer pStmt, int iCol);
-		double sqlite3_column_double(Pointer pStmt, int iCol);
-		int sqlite3_column_int(Pointer pStmt, int iCol);
-		long sqlite3_column_int64(Pointer pStmt, int iCol);
-		String sqlite3_column_text(Pointer pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
+		@IgnoreError
+		Pointer sqlite3_column_blob(@In Pointer pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
+		@IgnoreError
+		int sqlite3_column_bytes(@In Pointer pStmt, int iCol);
+		@IgnoreError
+		double sqlite3_column_double(@In Pointer pStmt, int iCol);
+		@IgnoreError
+		int sqlite3_column_int(@In Pointer pStmt, int iCol);
+		@IgnoreError
+		long sqlite3_column_int64(@In Pointer pStmt, int iCol);
+		@IgnoreError
+		String sqlite3_column_text(@In Pointer pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
 		//const void *sqlite3_column_text16(Pointer pStmt, int iCol);
 		//sqlite3_value *sqlite3_column_value(Pointer pStmt, int iCol);
 
-		int sqlite3_bind_parameter_count(Pointer pStmt);
-		int sqlite3_bind_parameter_index(Pointer pStmt, String name); // no copy needed
-		String sqlite3_bind_parameter_name(Pointer pStmt, int i); // copy needed
+		@IgnoreError
+		int sqlite3_bind_parameter_count(@In Pointer pStmt);
+		@IgnoreError
+		int sqlite3_bind_parameter_index(@In Pointer pStmt, String name); // no copy needed
+		@IgnoreError
+		String sqlite3_bind_parameter_name(@In Pointer pStmt, int i); // copy needed
 
-		int sqlite3_bind_blob(Pointer pStmt, int i, byte[] value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
-		int sqlite3_bind_double(Pointer pStmt, int i, double value);
-		int sqlite3_bind_int(Pointer pStmt, int i, int value);
-		int sqlite3_bind_int64(Pointer pStmt, int i, long value);
-		int sqlite3_bind_null(Pointer pStmt, int i);
-		int sqlite3_bind_text(Pointer pStmt, int i, String value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+		@IgnoreError
+		int sqlite3_bind_blob(@In Pointer pStmt, int i, @In byte[] value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+		@IgnoreError
+		int sqlite3_bind_double(@In Pointer pStmt, int i, double value);
+		@IgnoreError
+		int sqlite3_bind_int(@In Pointer pStmt, int i, int value);
+		@IgnoreError
+		int sqlite3_bind_int64(@In Pointer pStmt, int i, long value);
+		@IgnoreError
+		int sqlite3_bind_null(@In Pointer pStmt, int i);
+		@IgnoreError
+		int sqlite3_bind_text(@In Pointer pStmt, int i, @In String value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
 		//int sqlite3_bind_text16(Pointer pStmt, int i, const void*, int, void(*)(void*));
 		//int sqlite3_bind_value(Pointer pStmt, int i, const sqlite3_value*);
-		int sqlite3_bind_zeroblob(Pointer pStmt, int i, int n);
-		int sqlite3_stmt_status(Pointer pStmt, int op, boolean reset);
+		@IgnoreError
+		int sqlite3_bind_zeroblob(@In Pointer pStmt, int i, int n);
+		@IgnoreError
+		int sqlite3_stmt_status(@In Pointer pStmt, int op, boolean reset);
 
-		void sqlite3_free(Pointer p);
+		@IgnoreError
+		void sqlite3_free(@In Pointer p);
 
-		int sqlite3_blob_open(Pointer pDb, String dbName, String tableName, String columnName,
-													long iRow, boolean flags, PointerByReference ppBlob); // no copy needed
-		int sqlite3_blob_reopen(Pointer pBlob, long iRow);
-		int sqlite3_blob_bytes(Pointer pBlob);
-		int sqlite3_blob_read(Pointer pBlob, ByteBuffer z, int n, int iOffset);
-		int sqlite3_blob_write(Pointer pBlob, ByteBuffer z, int n, int iOffset);
-		int sqlite3_blob_close(Pointer pBlob);
+		@IgnoreError
+		int sqlite3_blob_open(@In Pointer pDb, @In String dbName, @In String tableName, @In String columnName,
+													long iRow, boolean flags, @Out PointerByReference ppBlob); // no copy needed
+		@IgnoreError
+		int sqlite3_blob_reopen(@In Pointer pBlob, long iRow);
+		@IgnoreError
+		int sqlite3_blob_bytes(@In Pointer pBlob);
+		@IgnoreError
+		int sqlite3_blob_read(@In Pointer pBlob, @Out ByteBuffer z, int n, int iOffset);
+		@IgnoreError
+		int sqlite3_blob_write(@In Pointer pBlob, @In ByteBuffer z, int n, int iOffset);
+		@IgnoreError
+		int sqlite3_blob_close(@In Pointer pBlob);
 
-		Pointer sqlite3_backup_init(Pointer pDst, String dstName, Pointer pSrc, String srcName);
-		int sqlite3_backup_step(Pointer pBackup, int nPage);
-		int sqlite3_backup_remaining(Pointer pBackup);
-		int sqlite3_backup_pagecount(Pointer pBackup);
-		int sqlite3_backup_finish(Pointer pBackup);
+		@IgnoreError
+		Pointer sqlite3_backup_init(@In Pointer pDst, @In String dstName, @In Pointer pSrc, @In String srcName);
+		@IgnoreError
+		int sqlite3_backup_step(@In Pointer pBackup, int nPage);
+		@IgnoreError
+		int sqlite3_backup_remaining(@In Pointer pBackup);
+		@IgnoreError
+		int sqlite3_backup_pagecount(@In Pointer pBackup);
+		@IgnoreError
+		int sqlite3_backup_finish(@In Pointer pBackup);
 
-		void sqlite3_progress_handler(Pointer pDb, int nOps, SQLite.ProgressCallback xProgress, Pointer pArg);
-		void sqlite3_trace(Pointer pDb, TraceCallback xTrace, Pointer pArg);
-		void sqlite3_profile(Pointer pDb, ProfileCallback xProfile, Pointer pArg);
+		@IgnoreError
+		void sqlite3_progress_handler(@In Pointer pDb, int nOps, @In SQLite.ProgressCallback xProgress, @In Pointer pArg);
+		@IgnoreError
+		void sqlite3_trace(@In Pointer pDb, @In TraceCallback xTrace, @In Pointer pArg);
+		@IgnoreError
+		void sqlite3_profile(@In Pointer pDb, @In ProfileCallback xProfile, @In Pointer pArg);
 
-		Pointer sqlite3_update_hook(Pointer pDb, UpdateHook xUpdate, Pointer pArg);
+		@IgnoreError
+		Pointer sqlite3_update_hook(@In Pointer pDb, @In UpdateHook xUpdate, @In Pointer pArg);
 
-		public int sqlite3_create_function_v2(Pointer pDb, String functionName, int nArg, int eTextRep,
-																					Pointer pApp, ScalarCallback xFunc, Pointer xStep, Pointer xFinal, Pointer xDestroy);
-		public void sqlite3_result_null(Pointer pCtx);
-		public void sqlite3_result_int(Pointer pCtx, int i);
+		@IgnoreError
+		int sqlite3_create_function_v2(@In Pointer pDb, @In String functionName, int nArg, int eTextRep,
+																	 @In Pointer pApp, @In ScalarCallback xFunc, @In Pointer xStep, @In Pointer xFinal, @In Pointer xDestroy);
+		@IgnoreError
+		void sqlite3_result_null(@In Pointer pCtx);
+		@IgnoreError
+		void sqlite3_result_int(@In Pointer pCtx, int i);
 	}
 }
