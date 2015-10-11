@@ -8,46 +8,47 @@
  */
 package org.sqlite.driver;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.RowId;
 
 class RowIdImpl implements RowId {
-  final long value;
+	final long value;
 
-  RowIdImpl(long value) {
-    this.value = value;
-  }
+	RowIdImpl(long value) {
+		this.value = value;
+	}
 
-  @Override
-  public byte[] getBytes() {
-    return toString().getBytes();
-  }
+	@Override
+	public byte[] getBytes() {
+		return toString().getBytes(StandardCharsets.UTF_8);
+	}
 
-  @Override
-  public String toString() {
-    return String.valueOf(value);
-  }
+	@Override
+	public String toString() {
+		return String.valueOf(value);
+	}
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
 
-    final RowIdImpl rowId = (RowIdImpl) o;
+		final RowIdImpl rowId = (RowIdImpl) o;
 
-    return value == rowId.value;
+		return value == rowId.value;
 
-  }
+	}
 
-  @Override
-  public int hashCode() {
-    return (int) (value ^ (value >>> 32));
-  }
+	@Override
+	public int hashCode() {
+		return (int) (value ^ (value >>> 32));
+	}
 
-  static long getValue(RowId rowId) {
-    if (rowId instanceof RowIdImpl) {
-      return ((RowIdImpl) rowId).value;
-    } else {
-      return Long.parseLong(rowId.toString());
-    }
-  }
+	static long getValue(RowId rowId) {
+		if (rowId instanceof RowIdImpl) {
+			return ((RowIdImpl) rowId).value;
+		} else {
+			return Long.parseLong(rowId.toString());
+		}
+	}
 }

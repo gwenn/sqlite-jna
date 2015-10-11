@@ -548,7 +548,9 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1bind_1text(JNIEnv *env, j
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1bind_1zeroblob(JNIEnv *env, jclass cls, jlong pStmt, jint i, jint n) {
 	return sqlite3_bind_zeroblob(JLONG_TO_SQLITE3_STMT_PTR(pStmt), i, n);
 }
-
+JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1stmt_1status(JNIEnv *env, jclass cls, jlong pStmt, jint op, jboolean reset) {
+	return sqlite3_stmt_status(JLONG_TO_SQLITE3_STMT_PTR(pStmt), op, reset);
+}
 #define JLONG_TO_SQLITE3_BLOB_PTR(jl) ((sqlite3_blob *)(size_t)(jl))
 
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1blob_1open(JNIEnv *env, jclass cls, jlong pDb, jstring db, jstring table, jstring column, jlong iRow, jboolean flags,
@@ -691,6 +693,59 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1trace(JNIEnv *env, jclas
 		return 0;
 	}
 	free_callback_context(sqlite3_trace(JLONG_TO_SQLITE3_PTR(pDb), trace, cc));
+	return PTR_TO_JLONG(cc);
+}
+
+static void profile(void *arg, const char *zMsg, sqlite3_uint64 ns) {
+	callback_context *cc = (callback_context *) arg;
+	JNIEnv *env = cc->env;
+	jstring msg = (*env)->NewStringUTF(env, zMsg);
+	(*env)->CallVoidMethod(env, cc->obj, cc->mid, msg, ns);
+}
+
+JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1profile(JNIEnv *env, jclass cls, jlong pDb, jobject xProfile) {
+	if (!xProfile) {
+		free_callback_context(sqlite3_profile(JLONG_TO_SQLITE3_PTR(pDb), 0, 0));
+		return 0;
+	}
+	jclass clz = (*env)->GetObjectClass(env, xProfile);
+	jmethodID mid = (*env)->GetMethodID(env, clz, "profile", "(Ljava/lang/String;J)V");
+	if (!mid) {
+		throwException(env, "expected 'void profile(String, long)' method");
+		return 0;
+	}
+	callback_context *cc = create_callback_context(env, mid, xProfile);
+	if (!cc) {
+		return 0;
+	}
+	free_callback_context(sqlite3_profile(JLONG_TO_SQLITE3_PTR(pDb), profile, cc));
+	return PTR_TO_JLONG(cc);
+}
+
+static void update_hook(void *arg, int actionCode, const char *zDbName, const char *zTblName, sqlite3_int64 rowId) {
+	callback_context *cc = (callback_context *) arg;
+	JNIEnv *env = cc->env;
+	jstring dbName = (*env)->NewStringUTF(env, zDbName);
+	jstring tblName = (*env)->NewStringUTF(env, zTblName);
+	(*env)->CallVoidMethod(env, cc->obj, cc->mid, actionCode, dbName, tblName, rowId);
+}
+
+JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1update_1hook(JNIEnv *env, jclass cls, jlong pDb, jobject xUpdateHook) {
+	if (!xUpdateHook) {
+		free_callback_context(sqlite3_update_hook(JLONG_TO_SQLITE3_PTR(pDb), 0, 0));
+		return 0;
+	}
+	jclass clz = (*env)->GetObjectClass(env, xUpdateHook);
+	jmethodID mid = (*env)->GetMethodID(env, clz, "invoke", "(ILjava/lang/String;Ljava/lang/String;J)V");
+	if (!mid) {
+		throwException(env, "expected 'void invoke(int, String, String, long)' method");
+		return 0;
+	}
+	callback_context *cc = create_callback_context(env, mid, xUpdateHook);
+	if (!cc) {
+		return 0;
+	}
+	free_callback_context(sqlite3_update_hook(JLONG_TO_SQLITE3_PTR(pDb), update_hook, cc));
 	return PTR_TO_JLONG(cc);
 }
 

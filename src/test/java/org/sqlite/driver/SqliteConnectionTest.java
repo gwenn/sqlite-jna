@@ -54,257 +54,252 @@ import java.util.Set;
 import static org.junit.Assert.*;
 
 public class SqliteConnectionTest extends SqliteTestHelper {
-  @Ignore
-    @Test
-    public void testFileType() throws Exception {
-        Path path = Paths.get(dbFile.getAbsolutePath());
+	@Ignore
+	@Test
+	public void testFileType() throws Exception {
+		Path path = Paths.get(dbFile.getAbsolutePath());
 
-        assertEquals("application/x-sqlite3", Files.probeContentType(path));
-    }
+		assertEquals("application/x-sqlite3", Files.probeContentType(path));
+	}
 
-    @Test
-    public void testIsValid() throws Exception {
-        assertTrue(conn.isValid(0));
-        conn.close();
-        assertFalse(conn.isValid(0));
-        assertTrue(conn.isClosed());
-    }
+	@Test
+	public void testIsValid() throws Exception {
+		assertTrue(conn.isValid(0));
+		conn.close();
+		assertFalse(conn.isValid(0));
+		assertTrue(conn.isClosed());
+	}
 
-    @Test
-    public void testTransactionIsolation() throws Exception {
-        assertEquals(Connection.TRANSACTION_SERIALIZABLE, conn.getTransactionIsolation());
-        conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
-        assertEquals(Connection.TRANSACTION_READ_UNCOMMITTED, conn.getTransactionIsolation());
-        conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-        assertEquals(Connection.TRANSACTION_SERIALIZABLE, conn.getTransactionIsolation());
-    }
+	@Test
+	public void testTransactionIsolation() throws Exception {
+		assertEquals(Connection.TRANSACTION_SERIALIZABLE, conn.getTransactionIsolation());
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+		assertEquals(Connection.TRANSACTION_READ_UNCOMMITTED, conn.getTransactionIsolation());
+		conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+		assertEquals(Connection.TRANSACTION_SERIALIZABLE, conn.getTransactionIsolation());
+	}
 
-    @Test(expected = SQLException.class)
-    public void testTransactionIsolationOnClosedDB() throws Exception {
-        conn.close();
-        conn.getTransactionIsolation();
-    }
+	@Test(expected = SQLException.class)
+	public void testTransactionIsolationOnClosedDB() throws Exception {
+		conn.close();
+		conn.getTransactionIsolation();
+	}
 
-    @Test(expected = SQLException.class)
-    public void testBadTransactionIsolation1() throws Exception {
-        conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-    }
+	@Test(expected = SQLException.class)
+	public void testBadTransactionIsolation1() throws Exception {
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+	}
 
-    @Test(expected = SQLException.class)
-    public void testBadTransactionIsolation2() throws Exception {
-        conn.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
-    }
+	@Test(expected = SQLException.class)
+	public void testBadTransactionIsolation2() throws Exception {
+		conn.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+	}
 
-    @Test(expected = SQLException.class)
-    public void testBadTransactionIsolation3() throws Exception {
-        conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-    }
+	@Test(expected = SQLException.class)
+	public void testBadTransactionIsolation3() throws Exception {
+		conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+	}
 
-    @Test
-    public void testAutoCommit() throws Exception {
-        assertTrue(conn.getAutoCommit());
+	@Test
+	public void testAutoCommit() throws Exception {
+		assertTrue(conn.getAutoCommit());
 
-        try {
-            conn.commit();
-            fail("commit should throw an exception since we're in auto-commit mode");
-        }
-        catch (SQLException e) {
-        }
+		try {
+			conn.commit();
+			fail("commit should throw an exception since we're in auto-commit mode");
+		} catch (SQLException e) {
+		}
 
-        try {
-            conn.rollback();
-            fail("rollback should throw an exception since we're in auto-commit mode");
-        }
-        catch (SQLException e) {
-        }
+		try {
+			conn.rollback();
+			fail("rollback should throw an exception since we're in auto-commit mode");
+		} catch (SQLException e) {
+		}
 
-        conn.setAutoCommit(false);
-        assertFalse(conn.getAutoCommit());
+		conn.setAutoCommit(false);
+		assertFalse(conn.getAutoCommit());
 
-        conn.setAutoCommit(false);
-        assertFalse(conn.getAutoCommit());
+		conn.setAutoCommit(false);
+		assertFalse(conn.getAutoCommit());
 
-        conn.commit();
-        assertFalse(conn.getAutoCommit());
+		conn.commit();
+		assertFalse(conn.getAutoCommit());
 
-        conn.rollback();
-        assertFalse(conn.getAutoCommit());
+		conn.rollback();
+		assertFalse(conn.getAutoCommit());
 
-        try (Connection conn2 = DriverManager.getConnection(JDBC.PREFIX + dbFile.getAbsolutePath(), null)) {
-            conn2.setAutoCommit(false);
+		try (Connection conn2 = DriverManager.getConnection(JDBC.PREFIX + dbFile.getAbsolutePath(), null)) {
+			conn2.setAutoCommit(false);
 
-            boolean reachedCommit = false;
+			boolean reachedCommit = false;
 
-            try (Statement stmt = conn.createStatement()) {
-                try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
-                    while (rs.next()) {
-                        rs.getString(2);
-                    }
-                }
+			try (Statement stmt = conn.createStatement()) {
+				try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
+					while (rs.next()) {
+						rs.getString(2);
+					}
+				}
 
-                try (Statement stmt2 = conn2.createStatement()) {
-                    stmt2.executeUpdate("INSERT INTO test_table VALUES (2, 'test2')");
-                    reachedCommit = true;
-                    conn2.commit();
-                }
-                fail("Insert should fail with a collision error");
-            }
-            catch (SQLException e) {
-                assertTrue(reachedCommit);
-                assertTrue(e.getMessage(), e.getMessage().contains("locked"));
-                assertFalse(conn.getAutoCommit());
-            }
-        }
+				try (Statement stmt2 = conn2.createStatement()) {
+					stmt2.executeUpdate("INSERT INTO test_table VALUES (2, 'test2')");
+					reachedCommit = true;
+					conn2.commit();
+				}
+				fail("Insert should fail with a collision error");
+			} catch (SQLException e) {
+				assertTrue(reachedCommit);
+				assertTrue(e.getMessage(), e.getMessage().contains("locked"));
+				assertFalse(conn.getAutoCommit());
+			}
+		}
 
-        conn.setAutoCommit(true);
-        assertTrue(conn.getAutoCommit());
-    }
+		conn.setAutoCommit(true);
+		assertTrue(conn.getAutoCommit());
+	}
 
-    @Test(expected = SQLIntegrityConstraintViolationException.class)
-    public void testRollbackException() throws Exception {
-        try (Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate("INSERT INTO test_table VALUES (1, 'test')");
-        }
-    }
+	@Test(expected = SQLIntegrityConstraintViolationException.class)
+	public void testRollbackException() throws Exception {
+		try (Statement stmt = conn.createStatement()) {
+			stmt.executeUpdate("INSERT INTO test_table VALUES (1, 'test')");
+		}
+	}
 
-    @Test
-    public void testCreateStatement() throws Exception {
-        Statement stmt = conn.createStatement();
+	@Test
+	public void testCreateStatement() throws Exception {
+		Statement stmt = conn.createStatement();
 
-        assertFalse(stmt.isClosed());
+		assertFalse(stmt.isClosed());
 
-        ResultSet rs = stmt.executeQuery("SELECT * FROM test_table");
-        assertFalse(rs.isClosed());
+		ResultSet rs = stmt.executeQuery("SELECT * FROM test_table");
+		assertFalse(rs.isClosed());
 
-        conn.close();
-        assertFalse(rs.isClosed());
-        assertFalse(stmt.isClosed());
-        conn.close();
-        assertTrue(conn.isClosed());
-    }
+		conn.close();
+		assertFalse(rs.isClosed());
+		assertFalse(stmt.isClosed());
+		conn.close();
+		assertTrue(conn.isClosed());
+	}
 
-    @Test
-    public void testReadOnly() throws Exception {
-      if (org.sqlite.Conn.libversionNumber() < 3008000) {
-        return;
-      }
-        assertFalse(conn.isReadOnly());
+	@Test
+	public void testReadOnly() throws Exception {
+		if (org.sqlite.Conn.libversionNumber() < 3008000) {
+			return;
+		}
+		assertFalse(conn.isReadOnly());
 
-        conn.setAutoCommit(false);
+		conn.setAutoCommit(false);
 
-        try {
-            conn.setReadOnly(true);
-            fail("Able to set read-only mode when in a transaction?");
-        }
-        catch (SQLException e) {
-        }
+		try {
+			conn.setReadOnly(true);
+			fail("Able to set read-only mode when in a transaction?");
+		} catch (SQLException e) {
+		}
 
-        conn.setAutoCommit(true);
-        conn.setReadOnly(true);
+		conn.setAutoCommit(true);
+		conn.setReadOnly(true);
 
-        try (Statement stmt = conn.createStatement()) {
-            final String[] sqlStatements = new String[] {
-                    "INSERT INTO test_table VALUES (3, 'test')",
-                    "CREATE TABLE foo (id INTEGER)",
-                    "DROP TABLE test_table",
-                    //"PRAGMA synchronous = 1",
-            };
+		try (Statement stmt = conn.createStatement()) {
+			final String[] sqlStatements = new String[]{
+					"INSERT INTO test_table VALUES (3, 'test')",
+					"CREATE TABLE foo (id INTEGER)",
+					"DROP TABLE test_table",
+					//"PRAGMA synchronous = 1",
+			};
 
-            for (String sql : sqlStatements) {
-                try {
-                    stmt.executeUpdate(sql);
-                    fail("Database modification should fail when in read-only mode");
-                }
-                catch (SQLException e) {
-                    assertTrue(e.getMessage().contains("attempt to write a readonly database"));
-                }
-            }
+			for (String sql : sqlStatements) {
+				try {
+					stmt.executeUpdate(sql);
+					fail("Database modification should fail when in read-only mode");
+				} catch (SQLException e) {
+					assertTrue(e.getMessage().contains("attempt to write a readonly database"));
+				}
+			}
 
-            ResultSet rs = stmt.executeQuery("SELECT * FROM test_table");
+			ResultSet rs = stmt.executeQuery("SELECT * FROM test_table");
 
-            while (rs.next()) {
-                rs.getString(2);
-            }
+			while (rs.next()) {
+				rs.getString(2);
+			}
 
-            stmt.execute("PRAGMA collation_list");
-        }
+			stmt.execute("PRAGMA collation_list");
+		}
 
-        conn.setReadOnly(true);
-        assertTrue(conn.isReadOnly());
+		conn.setReadOnly(true);
+		assertTrue(conn.isReadOnly());
 
-        conn.setReadOnly(false);
-        assertFalse(conn.isReadOnly());
+		conn.setReadOnly(false);
+		assertFalse(conn.isReadOnly());
 
-        try (Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate("INSERT INTO test_table VALUES (3, 'test')");
-        }
-    }
+		try (Statement stmt = conn.createStatement()) {
+			stmt.executeUpdate("INSERT INTO test_table VALUES (3, 'test')");
+		}
+	}
 
-    @Test
-    public void testSetCatalog() throws Exception {
-        assertNull(conn.getWarnings());
-        conn.setCatalog("foo");
-        assertNotNull(conn.getWarnings());
-    }
+	@Test
+	public void testSetCatalog() throws Exception {
+		assertNull(conn.getWarnings());
+		conn.setCatalog("foo");
+		assertNotNull(conn.getWarnings());
+	}
 
-    private static final String[] EXPECTED_WARNING_MSGS = {
-            "SQLite only supports TYPE_FORWARD_ONLY result sets",
-            "SQLite only supports CONCUR_READ_ONLY result sets",
-            "SQLite only supports CLOSE_CURSORS_AT_COMMIT result sets",
-    };
+	private static final String[] EXPECTED_WARNING_MSGS = {
+			"SQLite only supports TYPE_FORWARD_ONLY result sets",
+			"SQLite only supports CONCUR_READ_ONLY result sets",
+			"SQLite only supports CLOSE_CURSORS_AT_COMMIT result sets",
+	};
 
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void testWarnings() throws Exception {
-        assertNull(conn.getWarnings());
-        try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM test_table",
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_UPDATABLE,
-                ResultSet.HOLD_CURSORS_OVER_COMMIT)) {
-            SQLWarning warnings = conn.getWarnings();
-            Set<String> msgs = new HashSet<>();
+	@Test(expected = SQLFeatureNotSupportedException.class)
+	public void testWarnings() throws Exception {
+		assertNull(conn.getWarnings());
+		try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM test_table",
+				ResultSet.TYPE_SCROLL_INSENSITIVE,
+				ResultSet.CONCUR_UPDATABLE,
+				ResultSet.HOLD_CURSORS_OVER_COMMIT)) {
+			SQLWarning warnings = conn.getWarnings();
+			Set<String> msgs = new HashSet<>();
 
-            assertEquals(ResultSet.TYPE_FORWARD_ONLY, stmt.getResultSetType());
-            assertEquals(ResultSet.CONCUR_READ_ONLY, stmt.getResultSetConcurrency());
-            assertEquals(ResultSet.CLOSE_CURSORS_AT_COMMIT, stmt.getResultSetHoldability());
+			assertEquals(ResultSet.TYPE_FORWARD_ONLY, stmt.getResultSetType());
+			assertEquals(ResultSet.CONCUR_READ_ONLY, stmt.getResultSetConcurrency());
+			assertEquals(ResultSet.CLOSE_CURSORS_AT_COMMIT, stmt.getResultSetHoldability());
 
-            assertNotNull(warnings);
-            while (warnings != null) {
-                msgs.add(warnings.getMessage());
-                warnings = warnings.getNextWarning();
-            }
+			assertNotNull(warnings);
+			while (warnings != null) {
+				msgs.add(warnings.getMessage());
+				warnings = warnings.getNextWarning();
+			}
 
-            assertEquals(new HashSet<>(Arrays.asList(EXPECTED_WARNING_MSGS)), msgs);
-        }
-    }
+			assertEquals(new HashSet<>(Arrays.asList(EXPECTED_WARNING_MSGS)), msgs);
+		}
+	}
 
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void testPrepareCall() throws Exception {
-        conn.prepareCall("foo");
-    }
+	@Test(expected = SQLFeatureNotSupportedException.class)
+	public void testPrepareCall() throws Exception {
+		conn.prepareCall("foo");
+	}
 
-    @Test
-    public void testRollback() throws Exception {
-        conn.setAutoCommit(false);
+	@Test
+	public void testRollback() throws Exception {
+		conn.setAutoCommit(false);
 
-        try (Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate("INSERT INTO test_table VALUES (2, 'test')");
-            conn.rollback();
+		try (Statement stmt = conn.createStatement()) {
+			stmt.executeUpdate("INSERT INTO test_table VALUES (2, 'test')");
+			conn.rollback();
 
-            assertFalse(conn.getAutoCommit());
-            conn.setAutoCommit(true);
-            try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
-                int count = 0;
+			assertFalse(conn.getAutoCommit());
+			conn.setAutoCommit(true);
+			try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
+				int count = 0;
 
-                while (rs.next()) {
-                    count += 1;
-                }
-                assertEquals(1, count);
-            }
-        }
-    }
+				while (rs.next()) {
+					count += 1;
+				}
+				assertEquals(1, count);
+			}
+		}
+	}
 
     /*@Test
-    public void testAbort() throws Exception {
+		public void testAbort() throws Exception {
         Sqlite3.ProgressCallbackBase delayCallback = new Sqlite3.ProgressCallbackBase() {
             @Override
             public int apply(Pointer<Void> context) {
@@ -370,8 +365,8 @@ public class SqliteConnectionTest extends SqliteTestHelper {
         assertFalse(waiter.isAlive());
     }*/
 
-    @Test
-    public void testSavepoint() throws Exception {
+	@Test
+	public void testSavepoint() throws Exception {
 /*
         try {
             conn.setSavepoint();
@@ -382,161 +377,154 @@ public class SqliteConnectionTest extends SqliteTestHelper {
         }
 */
 
-        conn.setAutoCommit(false);
+		conn.setAutoCommit(false);
 
-        try (Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate("INSERT INTO test_table VALUES (2, 'test')");
-            Savepoint sp = conn.setSavepoint();
-            stmt.executeUpdate("INSERT INTO test_table VALUES (3, 'test')");
-            try {
-                sp.getSavepointName();
-                fail("Able to get savepoint name?");
-            }
-            catch (SQLException e) {
-            }
-            sp.getSavepointId();
-            conn.rollback(sp);
-            conn.commit();
+		try (Statement stmt = conn.createStatement()) {
+			stmt.executeUpdate("INSERT INTO test_table VALUES (2, 'test')");
+			Savepoint sp = conn.setSavepoint();
+			stmt.executeUpdate("INSERT INTO test_table VALUES (3, 'test')");
+			try {
+				sp.getSavepointName();
+				fail("Able to get savepoint name?");
+			} catch (SQLException e) {
+			}
+			sp.getSavepointId();
+			conn.rollback(sp);
+			conn.commit();
 
-            try {
-                conn.rollback(sp);
-                fail("Rollback should fail on an invalid savepoint");
-            }
-            catch (SQLException e) {
-            }
+			try {
+				conn.rollback(sp);
+				fail("Rollback should fail on an invalid savepoint");
+			} catch (SQLException e) {
+			}
 
-            try {
-                conn.releaseSavepoint(sp);
-                fail("Release should fail on an invalid savepoint");
-            }
-            catch (SQLException e) {
-            }
+			try {
+				conn.releaseSavepoint(sp);
+				fail("Release should fail on an invalid savepoint");
+			} catch (SQLException e) {
+			}
 
-            try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
-                assertTrue(rs.next());
-                assertEquals(1, rs.getInt(1));
-                assertTrue(rs.next());
-                assertEquals(2, rs.getInt(1));
-                assertFalse(rs.next());
-            }
+			try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
+				assertTrue(rs.next());
+				assertEquals(1, rs.getInt(1));
+				assertTrue(rs.next());
+				assertEquals(2, rs.getInt(1));
+				assertFalse(rs.next());
+			}
 
-            stmt.executeUpdate("INSERT INTO test_table VALUES (3, 'test')");
-            sp = conn.setSavepoint("test");
-            stmt.executeUpdate("INSERT INTO test_table VALUES (4, 'test')");
-            try {
-                sp.getSavepointId();
-                fail("Able to get savepoint id?");
-            }
-            catch (SQLException e) {
-            }
-            assertEquals("test", sp.getSavepointName());
-            conn.rollback(sp);
-            conn.commit();
+			stmt.executeUpdate("INSERT INTO test_table VALUES (3, 'test')");
+			sp = conn.setSavepoint("test");
+			stmt.executeUpdate("INSERT INTO test_table VALUES (4, 'test')");
+			try {
+				sp.getSavepointId();
+				fail("Able to get savepoint id?");
+			} catch (SQLException e) {
+			}
+			assertEquals("test", sp.getSavepointName());
+			conn.rollback(sp);
+			conn.commit();
 
-            try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
-                assertTrue(rs.next());
-                assertEquals(1, rs.getInt(1));
-                assertTrue(rs.next());
-                assertEquals(2, rs.getInt(1));
-                assertTrue(rs.next());
-                assertEquals(3, rs.getInt(1));
-                assertFalse(rs.next());
-            }
+			try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
+				assertTrue(rs.next());
+				assertEquals(1, rs.getInt(1));
+				assertTrue(rs.next());
+				assertEquals(2, rs.getInt(1));
+				assertTrue(rs.next());
+				assertEquals(3, rs.getInt(1));
+				assertFalse(rs.next());
+			}
 
-            stmt.executeUpdate("INSERT INTO test_table VALUES (4, 'test')");
-            sp = conn.setSavepoint("test");
-            stmt.executeUpdate("INSERT INTO test_table VALUES (5, 'test')");
-            conn.releaseSavepoint(sp);
-            conn.commit();
+			stmt.executeUpdate("INSERT INTO test_table VALUES (4, 'test')");
+			sp = conn.setSavepoint("test");
+			stmt.executeUpdate("INSERT INTO test_table VALUES (5, 'test')");
+			conn.releaseSavepoint(sp);
+			conn.commit();
 
-            try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
-                assertTrue(rs.next());
-                assertEquals(1, rs.getInt(1));
-                assertTrue(rs.next());
-                assertEquals(2, rs.getInt(1));
-                assertTrue(rs.next());
-                assertEquals(3, rs.getInt(1));
-                assertTrue(rs.next());
-                assertEquals(4, rs.getInt(1));
-                assertTrue(rs.next());
-                assertEquals(5, rs.getInt(1));
-                assertFalse(rs.next());
-            }
-        }
-    }
+			try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
+				assertTrue(rs.next());
+				assertEquals(1, rs.getInt(1));
+				assertTrue(rs.next());
+				assertEquals(2, rs.getInt(1));
+				assertTrue(rs.next());
+				assertEquals(3, rs.getInt(1));
+				assertTrue(rs.next());
+				assertEquals(4, rs.getInt(1));
+				assertTrue(rs.next());
+				assertEquals(5, rs.getInt(1));
+				assertFalse(rs.next());
+			}
+		}
+	}
 
-    @Test
-    public void testGetClientInfo() throws Exception {
-        assertNull(conn.getClientInfo("AppName"));
-        assertNotNull(conn.getClientInfo());
-    }
+	@Test
+	public void testGetClientInfo() throws Exception {
+		assertNull(conn.getClientInfo("AppName"));
+		assertNotNull(conn.getClientInfo());
+	}
 
-  @Ignore
-    @Test
-    public void testSetClientInfo() throws Exception {
-        Properties props = new Properties();
+	@Ignore
+	@Test
+	public void testSetClientInfo() throws Exception {
+		Properties props = new Properties();
 
-        props.put("AppName", "Test");
-        props.put("Key", "Value");
-        try {
-            conn.setClientInfo(props);
-            fail("setClientInfo should not be supported");
-        }
-        catch (SQLClientInfoException e) {
-            assertEquals(ClientInfoStatus.REASON_UNKNOWN_PROPERTY, e.getFailedProperties().get("AppName"));
-            assertEquals(ClientInfoStatus.REASON_UNKNOWN_PROPERTY, e.getFailedProperties().get("Key"));
-            assertEquals(2, e.getFailedProperties().size());
-        }
+		props.put("AppName", "Test");
+		props.put("Key", "Value");
+		try {
+			conn.setClientInfo(props);
+			fail("setClientInfo should not be supported");
+		} catch (SQLClientInfoException e) {
+			assertEquals(ClientInfoStatus.REASON_UNKNOWN_PROPERTY, e.getFailedProperties().get("AppName"));
+			assertEquals(ClientInfoStatus.REASON_UNKNOWN_PROPERTY, e.getFailedProperties().get("Key"));
+			assertEquals(2, e.getFailedProperties().size());
+		}
 
-        try {
-            conn.setClientInfo("AppName", "Test");
-            fail("setClientInfo should not be supported");
-        }
-        catch (SQLClientInfoException e) {
-            assertEquals(ClientInfoStatus.REASON_UNKNOWN_PROPERTY, e.getFailedProperties().get("AppName"));
-            assertEquals(1, e.getFailedProperties().size());
-        }
-    }
+		try {
+			conn.setClientInfo("AppName", "Test");
+			fail("setClientInfo should not be supported");
+		} catch (SQLClientInfoException e) {
+			assertEquals(ClientInfoStatus.REASON_UNKNOWN_PROPERTY, e.getFailedProperties().get("AppName"));
+			assertEquals(1, e.getFailedProperties().size());
+		}
+	}
 
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void testGetTypeMap() throws Exception {
-        conn.getTypeMap();
-    }
+	@Test(expected = SQLFeatureNotSupportedException.class)
+	public void testGetTypeMap() throws Exception {
+		conn.getTypeMap();
+	}
 
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void testSetTypeMap() throws Exception {
-        conn.setTypeMap(new HashMap<String, Class<?>>());
-    }
+	@Test(expected = SQLFeatureNotSupportedException.class)
+	public void testSetTypeMap() throws Exception {
+		conn.setTypeMap(new HashMap<String, Class<?>>());
+	}
 
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void testCreateSQLXML() throws Exception {
-        conn.createSQLXML();
-    }
+	@Test(expected = SQLFeatureNotSupportedException.class)
+	public void testCreateSQLXML() throws Exception {
+		conn.createSQLXML();
+	}
 
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void testSetNetworkTimeout() throws Exception {
-        conn.setNetworkTimeout(null, 0);
-    }
+	@Test(expected = SQLFeatureNotSupportedException.class)
+	public void testSetNetworkTimeout() throws Exception {
+		conn.setNetworkTimeout(null, 0);
+	}
 
-    @Test(expected = SQLFeatureNotSupportedException.class)
-    public void testGetNetworkTimeout() throws Exception {
-        conn.getNetworkTimeout();
-    }
+	@Test(expected = SQLFeatureNotSupportedException.class)
+	public void testGetNetworkTimeout() throws Exception {
+		conn.getNetworkTimeout();
+	}
 
-    @Test
-    public void testGetMetaData() throws Exception {
-        DatabaseMetaData dmd = conn.getMetaData();
+	@Test
+	public void testGetMetaData() throws Exception {
+		DatabaseMetaData dmd = conn.getMetaData();
 
-        assertNotNull(dmd);
-        assertEquals(dmd, conn.getMetaData());
+		assertNotNull(dmd);
+		assertEquals(dmd, conn.getMetaData());
 
-        conn.close();
-        try {
-            conn.getMetaData();
-            fail("getMetaData should fail after the DB is closed");
-        }
-        catch (SQLException e) {
+		conn.close();
+		try {
+			conn.getMetaData();
+			fail("getMetaData should fail after the DB is closed");
+		} catch (SQLException e) {
 
-        }
-    }
+		}
+	}
 }

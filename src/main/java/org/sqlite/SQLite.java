@@ -121,6 +121,7 @@ public final class SQLite {
   //static native int sqlite3_bind_text16(long pStmt, int i, const void*, int, void(*)(void*));
   //static native int sqlite3_bind_value(long pStmt, int i, const sqlite3_value*);
   static native int sqlite3_bind_zeroblob(long pStmt, int i, int n);
+	static native int sqlite3_stmt_status(long pStmt, int op, boolean reset);
 
   static native int sqlite3_blob_open(long pDb, String dbName, String tableName, String columnName,
                                       long iRow, boolean flags, long[] ppBlob); // no copy needed
@@ -141,15 +142,19 @@ public final class SQLite {
   // As there is only one ProgressCallback by connection, and it is used to implement query timeout,
   // the method visibility is restricted.
   static native long sqlite3_progress_handler(long pDb, int nOps, ProgressCallback xProgress);
-  public static native long sqlite3_trace(long pDb, TraceCallback xTrace);
-  /*
+	static native long sqlite3_trace(long pDb, TraceCallback xTrace);
+	static native long sqlite3_profile(long pDb, ProfileCallback xProfile);
+
+	static native long sqlite3_update_hook(long pDb, UpdateHook xUpdate);
+
+	/*
   void (*)(sqlite3_context*,int,sqlite3_value**),
   void (*)(sqlite3_context*,int,sqlite3_value**),
   void (*)(sqlite3_context*),
   void(*)(void*)
   */
   // eTextRep: SQLITE_UTF8 => 1, ...
-  public static native int sqlite3_create_function_v2(long pDb, String functionName, int nArg, int eTextRep,
+	static native int sqlite3_create_function_v2(long pDb, String functionName, int nArg, int eTextRep,
       Object pApp, ScalarCallback xFunc, Object xStep, Object xFinal, Object xDestroy);
   public static native void sqlite3_result_null(long pCtx);
   public static native void sqlite3_result_int(long pCtx, int i);

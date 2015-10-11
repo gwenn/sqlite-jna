@@ -32,38 +32,38 @@ import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class SqliteParameterMetadataTest extends SqliteTestHelper {
-    @Test
-    public void testCount() throws Exception {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM test_table")) {
-            ParameterMetaData pmd = ps.getParameterMetaData();
+	@Test
+	public void testCount() throws Exception {
+		try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM test_table")) {
+			ParameterMetaData pmd = ps.getParameterMetaData();
 
-            assertEquals(0, pmd.getParameterCount());
-        }
+			assertEquals(0, pmd.getParameterCount());
+		}
 
-        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM test_table WHERE name = ?")) {
-            ParameterMetaData pmd = ps.getParameterMetaData();
+		try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM test_table WHERE name = ?")) {
+			ParameterMetaData pmd = ps.getParameterMetaData();
 
-            assertEquals(1, pmd.getParameterCount());
-        }
-    }
+			assertEquals(1, pmd.getParameterCount());
+		}
+	}
 
-    @Test
-    public void testGetters() throws Exception {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM test_table WHERE name = ?")) {
-            ParameterMetaData pmd = ps.getParameterMetaData();
+	@Test
+	public void testGetters() throws Exception {
+		try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM test_table WHERE name = ?")) {
+			ParameterMetaData pmd = ps.getParameterMetaData();
 
-            assertEquals(ParameterMetaData.parameterNullableUnknown, pmd.isNullable(1));
-            //assertTrue(pmd.isSigned(1));
-            //assertTrue(pmd.getPrecision(1) > 0);
-            //assertEquals(0, pmd.getScale(1));
-            //assertEquals(Types.VARCHAR, pmd.getParameterType(1));
-            //assertEquals("VARCHAR", pmd.getParameterTypeName(1));
-            //assertEquals(String.class.getCanonicalName(), pmd.getParameterClassName(1));
-            assertEquals(ParameterMetaData.parameterModeIn, pmd.getParameterMode(1));
-            assertFalse(pmd.isWrapperFor(PrepStmt.class));
-        }
-    }
+			assertEquals(ParameterMetaData.parameterNullableUnknown, pmd.isNullable(1));
+			//assertTrue(pmd.isSigned(1));
+			//assertTrue(pmd.getPrecision(1) > 0);
+			//assertEquals(0, pmd.getScale(1));
+			//assertEquals(Types.VARCHAR, pmd.getParameterType(1));
+			//assertEquals("VARCHAR", pmd.getParameterTypeName(1));
+			//assertEquals(String.class.getCanonicalName(), pmd.getParameterClassName(1));
+			assertEquals(ParameterMetaData.parameterModeIn, pmd.getParameterMode(1));
+			assertTrue(pmd.isWrapperFor(PrepStmt.class));
+		}
+	}
 }

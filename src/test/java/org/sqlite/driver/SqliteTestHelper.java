@@ -43,65 +43,65 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SqliteTestHelper {
-    @Rule
-    public TemporaryFolder testFolder = new TemporaryFolder();
+	@Rule
+	public TemporaryFolder testFolder = new TemporaryFolder();
 
-    protected File dbFile;
-    protected Connection conn;
-    protected DatabaseMetaData dbMetadata;
+	protected File dbFile;
+	protected Connection conn;
+	protected DatabaseMetaData dbMetadata;
 
-    @Before
-    public void openConnection() throws Exception {
-        dbFile = testFolder.newFile("test.db");
-        conn = DriverManager.getConnection(JDBC.PREFIX + dbFile.getAbsolutePath(), null);
-        dbMetadata = conn.getMetaData();
-        try (Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate("CREATE TABLE test_table (id INTEGER PRIMARY KEY, name VARCHAR NOT NULL)");
-            stmt.executeUpdate("CREATE INDEX test_index ON test_table (id, name)");
-            stmt.executeUpdate("INSERT INTO test_table VALUES (1, 'test')");
+	@Before
+	public void openConnection() throws Exception {
+		dbFile = testFolder.newFile("test.db");
+		conn = DriverManager.getConnection(JDBC.PREFIX + dbFile.getAbsolutePath(), null);
+		dbMetadata = conn.getMetaData();
+		try (Statement stmt = conn.createStatement()) {
+			stmt.executeUpdate("CREATE TABLE test_table (id INTEGER PRIMARY KEY, name VARCHAR NOT NULL)");
+			stmt.executeUpdate("CREATE INDEX test_index ON test_table (id, name)");
+			stmt.executeUpdate("INSERT INTO test_table VALUES (1, 'test')");
 
-            stmt.executeUpdate("CREATE TABLE type_table (name VARCHAR PRIMARY KEY, " +
-                    "birthdate DATETIME UNIQUE, height REAL, eyes INTEGER, width DECIMAL(10,2))");
-            stmt.executeUpdate("CREATE TABLE prim_table (id INTEGER PRIMARY KEY, b BOOLEAN, bi BIGINT, f FLOAT, d DOUBLE)");
-        }
-    }
+			stmt.executeUpdate("CREATE TABLE type_table (name VARCHAR PRIMARY KEY, " +
+					"birthdate DATETIME UNIQUE, height REAL, eyes INTEGER, width DECIMAL(10,2))");
+			stmt.executeUpdate("CREATE TABLE prim_table (id INTEGER PRIMARY KEY, b BOOLEAN, bi BIGINT, f FLOAT, d DOUBLE)");
+		}
+	}
 
-    @After
-    public void closeConnection() throws SQLException {
-        if (conn != null)
-            conn.close();
-        conn = null;
-        dbFile.delete();
-        dbFile = null;
-    }
+	@After
+	public void closeConnection() throws SQLException {
+		if (conn != null)
+			conn.close();
+		conn = null;
+		dbFile.delete();
+		dbFile = null;
+	}
 
-    protected String formatResultSetHeader(ResultSetMetaData rsm) throws SQLException {
-        String retval = "|";
+	protected String formatResultSetHeader(ResultSetMetaData rsm) throws SQLException {
+		String retval = "|";
 
-        for (int lpc = 1; lpc <= rsm.getColumnCount(); lpc++) {
-            retval += rsm.getColumnLabel(lpc) + "|";
-        }
-        return retval;
-    }
+		for (int lpc = 1; lpc <= rsm.getColumnCount(); lpc++) {
+			retval += rsm.getColumnLabel(lpc) + "|";
+		}
+		return retval;
+	}
 
-    protected String formatResultSetRow(ResultSet rs) throws SQLException {
-        ResultSetMetaData rsm = rs.getMetaData();
-        String retval = "|";
+	protected String formatResultSetRow(ResultSet rs) throws SQLException {
+		ResultSetMetaData rsm = rs.getMetaData();
+		String retval = "|";
 
-        for (int lpc = 1; lpc <= rsm.getColumnCount(); lpc++) {
-            retval += rs.getString(lpc) + "|";
-        }
+		for (int lpc = 1; lpc <= rsm.getColumnCount(); lpc++) {
+			retval += rs.getString(lpc) + "|";
+		}
 
-        return retval;
-    }
+		return retval;
+	}
 
-    protected String[] formatResultSet(ResultSet rs) throws SQLException {
-        List<String> rows = new ArrayList<>();
+	protected String[] formatResultSet(ResultSet rs) throws SQLException {
+		List<String> rows = new ArrayList<>();
 
-        while (rs.next()) {
-            rows.add(formatResultSetRow(rs));
-        }
+		while (rs.next()) {
+			rows.add(formatResultSetRow(rs));
+		}
 
-        return rows.toArray(new String[rows.size()]);
-    }
+		return rows.toArray(new String[rows.size()]);
+	}
 }

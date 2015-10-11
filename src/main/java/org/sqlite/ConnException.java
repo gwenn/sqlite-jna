@@ -9,17 +9,17 @@
 package org.sqlite;
 
 public class ConnException extends SQLiteException {
-  private final transient Conn c;
+	private final transient Conn c;
 
-  public ConnException(Conn c, String reason, int errCode) {
-    super(c, reason, errCode);
-    this.c = c;
-  }
+	public ConnException(Conn c, String reason, int errCode) {
+		super(c, reason, errCode);
+		this.c = c;
+	}
 
-  public String getFilename() {
-    if (c == null) {
-      return null;
-    }
-    return c.getFilename();
-  }
+	public String getFilename() {
+		if (c == null) {
+			return null;
+		}
+		return c.getFilename();
+	}
 }

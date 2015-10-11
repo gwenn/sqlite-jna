@@ -9,7 +9,7 @@
 package org.sqlite;
 
 public interface ScalarCallback {
-  //void (*)(sqlite3_context*,int,sqlite3_value**),
-  @SuppressWarnings("unused")
-  void invoke(long pCtx, int nArg, Object args);
+	//void (*)(sqlite3_context*,int,sqlite3_value**),
+	@SuppressWarnings("unused")
+	void invoke(long pCtx, int nArg, Object args);
 }

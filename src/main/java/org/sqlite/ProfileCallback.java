@@ -8,7 +8,8 @@
  */
 package org.sqlite;
 
-public interface TraceCallback {
+
+public interface ProfileCallback {
 	@SuppressWarnings("unused")
-	void trace(String sql);
+	void profile(String sql, long ns);
 }
