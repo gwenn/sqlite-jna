@@ -241,7 +241,8 @@ public class PrepStmtTest {
 		assertTrue(rs.next());
 		assertArrayEquals(b1, rs.getBytes(1));
 		assertEquals(new String(b2, StandardCharsets.US_ASCII), rs.getString(2));
-		assertEquals(utf08, rs.getString(3));
+		assertArrayEquals(b3, rs.getBytes(3));
+		assertEquals(utf08, new String(rs.getBytes(3), StandardCharsets.UTF_8));
 		assertFalse(rs.next());
 		rs.close();
 		prep.close();

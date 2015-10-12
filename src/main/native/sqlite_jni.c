@@ -467,13 +467,13 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1column_1int64(JNIEnv *en
 	return sqlite3_column_int64(JLONG_TO_SQLITE3_STMT_PTR(pStmt), iCol);
 }
 JNIEXPORT jstring JNICALL Java_org_sqlite_SQLite_sqlite3_1column_1text(JNIEnv *env, jclass cls, jlong pStmt, jint iCol) {
-	//return (*env)->NewStringUTF(env, (const char*)sqlite3_column_text(JLONG_TO_SQLITE3_STMT_PTR(pStmt), iCol));
-	const void *text = sqlite3_column_text16(JLONG_TO_SQLITE3_STMT_PTR(pStmt), iCol);
+	return (*env)->NewStringUTF(env, (const char*)sqlite3_column_text(JLONG_TO_SQLITE3_STMT_PTR(pStmt), iCol));
+	/*const void *text = sqlite3_column_text16(JLONG_TO_SQLITE3_STMT_PTR(pStmt), iCol);
 	if (!text) {
 		return 0;
 	}
 	int len = sqlite3_column_bytes16(JLONG_TO_SQLITE3_STMT_PTR(pStmt), iCol);
-	return (*env)->NewString(env, text, len / sizeof(jchar));
+	return (*env)->NewString(env, text, len / sizeof(jchar));*/
 }
 
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1bind_1parameter_1count(JNIEnv *env, jclass cls, jlong pStmt) {
@@ -527,18 +527,18 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1bind_1text(JNIEnv *env, j
 	}
 	jsize len = (*env)->GetStringLength(env, v) * sizeof(jchar);
 	if (len > 0) {
-		const jchar *data = (*env)->GetStringCritical(env, v, 0);
+		/*const jchar *data = (*env)->GetStringCritical(env, v, 0);
 		if (!data) {
 			return -1; // Wrapper specific error code
 		}
 		int rc = sqlite3_bind_text16(JLONG_TO_SQLITE3_STMT_PTR(pStmt), i, data, len, SQLITE_TRANSIENT);
-		(*env)->ReleaseStringCritical(env, v, data);
-		/*const char *data = (*env)->GetStringUTFChars(env, v, 0);
+		(*env)->ReleaseStringCritical(env, v, data);*/
+		const char *data = (*env)->GetStringUTFChars(env, v, 0);
 		if (!data) {
 			return -1; // Wrapper specific error code
 		}
 		int rc = sqlite3_bind_text(JLONG_TO_SQLITE3_STMT_PTR(pStmt), i, data, -1, SQLITE_TRANSIENT);
-		(*env)->ReleaseStringUTFChars(env, v, data);*/
+		(*env)->ReleaseStringUTFChars(env, v, data);
 		return rc;
 	} else {
 		//return sqlite3_bind_text16(JLONG_TO_SQLITE3_STMT_PTR(pStmt), i, "", 0, SQLITE_STATIC);
