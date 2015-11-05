@@ -2,6 +2,8 @@ package org.sqlite;
 
 import org.junit.Test;
 
+import java.nio.charset.StandardCharsets;
+
 import static org.junit.Assert.*;
 
 public class StmtTest {
@@ -98,6 +100,26 @@ public class StmtTest {
 
 		assertFalse(ins.isBusy());
 		ins.closeAndCheck();
+		c.closeAndCheck();
+	}
+
+	@Test
+	public void utf8() throws Exception {
+		final Conn c = ConnTest.open();
+		c.fastExec("PRAGMA encoding=\"UTF-8\"");
+		c.fastExec("CREATE TABLE foo (data TEXT)");
+		final Stmt ins = c.prepare("INSERT INTO foo VALUES (?)", false);
+
+		final String text = new String(Character.toChars(0x1F604));
+		ins.bindText(1, text);
+		ins.exec();
+		ins.closeAndCheck();
+
+		final Stmt sel = c.prepare("SELECT data FROM foo", false);
+		assertTrue(sel.step(0));
+		final byte[] bytes = sel.getColumnBlob(0);
+		assertArrayEquals(text.getBytes(StandardCharsets.UTF_8), bytes);
+		sel.closeAndCheck();
 		c.closeAndCheck();
 	}
 
