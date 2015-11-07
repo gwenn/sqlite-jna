@@ -12,8 +12,12 @@ import org.sqlite.ColTypes;
 import org.sqlite.ErrCodes;
 import org.sqlite.StmtException;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Array;
@@ -243,8 +247,16 @@ class Rows implements ResultSet {
 
 	@Override
 	public InputStream getBinaryStream(int columnIndex) throws SQLException {
-		final Blob blob = getBlob(columnIndex);
-		return blob == null ? null : blob.getBinaryStream();
+		if (rowId != null) {
+			final Blob blob = getBlob(columnIndex);
+			return blob == null ? null : blob.getBinaryStream();
+		} else { // no streaming...
+			final byte[] bytes = getBytes(columnIndex);
+			if (bytes == null) {
+				return null;
+			}
+			return new ByteArrayInputStream(bytes);
+		}
 	}
 
 	@Override
@@ -395,7 +407,23 @@ class Rows implements ResultSet {
 
 	@Override
 	public Reader getCharacterStream(int columnIndex) throws SQLException {
-		throw Util.unsupported("ResultSet.getCharacterStream");
+		if (rowId != null) {
+			try {
+				final InputStream in = getBinaryStream(columnIndex);
+				if (in == null) {
+					return null;
+				}
+				return new InputStreamReader(in, getStmt().encoding(columnIndex));
+			} catch (UnsupportedEncodingException e) {
+				throw new StmtException(getStmt(), e.getMessage(), ErrCodes.WRAPPER_SPECIFIC);
+			}
+		} else { // no streaming...
+			final String s = getString(columnIndex);
+			if (s == null) {
+				return null;
+			}
+			return new StringReader(s);
+		}
 	}
 
 	@Override
@@ -798,7 +826,7 @@ class Rows implements ResultSet {
 	@Override
 	public Blob getBlob(int columnIndex) throws SQLException {
 		checkOpen();
-		if (rowId == null) { // FIXME check PrepStmt.rowId aswell...
+		if (rowId == null) { // FIXME check PrepStmt.rowId as well...
 			throw new SQLException("You must read the associated RowId before opening a Blob");
 		}
 		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
@@ -1053,7 +1081,12 @@ class Rows implements ResultSet {
 
 	@Override
 	public SQLXML getSQLXML(int columnIndex) throws SQLException {
-		throw Util.unsupported("ResultSet.getSQLXML");
+		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+		wasNull = sourceType == ColTypes.SQLITE_NULL;
+		if (wasNull) {
+			return null;
+		}
+		return new SQLXMLFromRows(this, columnIndex);
 	}
 
 	@Override

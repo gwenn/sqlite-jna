@@ -11,6 +11,7 @@ package org.sqlite.driver;
 import org.sqlite.ConnException;
 import org.sqlite.ErrCodes;
 
+import java.nio.charset.Charset;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -393,8 +394,7 @@ class Conn implements Connection {
 
 	@Override
 	public SQLXML createSQLXML() throws SQLException {
-		checkOpen();
-		throw Util.unsupported("Connection.createSQLXML");
+		return new SQLXMLImpl(Charset.forName(getConn().encoding(null)));
 	}
 
 	@Override

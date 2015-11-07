@@ -541,6 +541,9 @@ public class Stmt {
 		}
 		return null;
 	}
+	public String encoding(int iCol) throws SQLiteException {
+		return c.encoding(getColumnDatabaseName(iCol));
+	}
 
 	public int status(StmtStatus op, boolean reset) throws StmtException {
 		checkOpen();

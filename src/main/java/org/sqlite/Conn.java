@@ -412,6 +412,21 @@ public final class Conn {
 				"error while registering function %s", name);
 	}
 
+	public String encoding(String dbName) throws SQLiteException {
+		Stmt s = null;
+		try {
+			s = prepare("PRAGMA " + qualify(dbName) + "encoding", false);
+			if (!s.step(0)) {
+				throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
+			}
+			return s.getColumnText(0);
+		} finally {
+			if (s != null) {
+				s.close();
+			}
+		}
+	}
+
 	public boolean isClosed() {
 		return pDb == null;
 	}

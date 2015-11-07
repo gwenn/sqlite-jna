@@ -497,9 +497,9 @@ public class SqliteConnectionTest extends SqliteTestHelper {
 		conn.setTypeMap(new HashMap<String, Class<?>>());
 	}
 
-	@Test(expected = SQLFeatureNotSupportedException.class)
+	@Test
 	public void testCreateSQLXML() throws Exception {
-		conn.createSQLXML();
+		assertNotNull(conn.createSQLXML());
 	}
 
 	@Test(expected = SQLFeatureNotSupportedException.class)

@@ -657,7 +657,11 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 
 	@Override
 	public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
-		throw Util.unsupported("PreparedStatement.setSQLXML");
+		if (xmlObject == null) {
+			bindNull(parameterIndex);
+		} else {
+			bindText(parameterIndex, xmlObject.getString());
+		}
 	}
 	@Override
 	public void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException {
