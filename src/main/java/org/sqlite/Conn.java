@@ -29,6 +29,7 @@ public final class Conn {
 	private int maxCacheSize = 100; // TODO parameterize
 
 	/**
+	 * When the `filename` is an URI, extra query parameters can be used ({@link OpenQueryParameter})
 	 * @param filename ":memory:" for memory db, "" for temp file db
 	 * @param flags    org.sqlite.OpenFlags.* (TODO EnumSet or BitSet, default flags)
 	 * @param vfs      may be null
@@ -48,8 +49,14 @@ public final class Conn {
 			throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
 		}
 		// TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
-		final boolean sharedCacheMode = filename.contains("cache=shared") || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
-		return new Conn(ppDb.getValue(), sharedCacheMode);
+		final boolean sharedCacheMode = "shared".equals(sqlite3_uri_parameter(filename, "cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
+		final Conn conn = new Conn(ppDb.getValue(), sharedCacheMode);
+		if ((flags & OpenFlags.SQLITE_OPEN_URI) != 0) {
+			for (OpenQueryParameter parameter : OpenQueryParameter.values()) {
+				parameter.config(filename, conn);
+			}
+		}
+		return conn;
 	}
 
 	@Override
@@ -443,7 +450,7 @@ public final class Conn {
 		}
 	}
 
-	private boolean pragma(String dbName, String name) throws SQLiteException {
+	boolean pragma(String dbName, String name) throws SQLiteException {
 		Stmt s = null;
 		try {
 			s = prepare("PRAGMA " + qualify(dbName) + name, false);
@@ -457,7 +464,7 @@ public final class Conn {
 			}
 		}
 	}
-	private void pragma(String dbName, String name, boolean value) throws ConnException {
+	void pragma(String dbName, String name, boolean value) throws ConnException {
 		fastExec("PRAGMA " + qualify(dbName) + name + '=' + (value ? 1 : 0));
 	}
 

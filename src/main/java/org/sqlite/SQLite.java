@@ -70,6 +70,10 @@ public final class SQLite implements Library {
 	static native int sqlite3_close_v2(Pointer pDb); // since 3.7.14
 	static native void sqlite3_interrupt(Pointer pDb);
 
+	static native String sqlite3_uri_parameter(String zFilename, String zParam);
+	static native boolean sqlite3_uri_boolean(String zFilename, String zParam, boolean defaultB);
+	static native long sqlite3_uri_int64(String zFilename, String zParam, long defaultL);
+
 	static native int sqlite3_busy_timeout(Pointer pDb, int ms);
 	static native int sqlite3_db_config(Pointer pDb, int op, int v, IntByReference pOk);
 	static native int sqlite3_enable_load_extension(Pointer pDb, boolean onoff);
