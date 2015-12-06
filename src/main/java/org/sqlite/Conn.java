@@ -12,8 +12,10 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 
 import static org.sqlite.SQLite.*;
 
@@ -48,12 +50,14 @@ public final class Conn {
 			}
 			throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
 		}
+		final boolean uri = (flags & OpenFlags.SQLITE_OPEN_URI) != 0;
+		final Map<String, String> queryParams = uri ? OpenQueryParameter.getQueryParams(filename) : Collections.<String, String>emptyMap();
 		// TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
-		final boolean sharedCacheMode = "shared".equals(sqlite3_uri_parameter(filename, "cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
+		final boolean sharedCacheMode = "shared".equals(queryParams.get("cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
 		final Conn conn = new Conn(ppDb.getValue(), sharedCacheMode);
-		if ((flags & OpenFlags.SQLITE_OPEN_URI) != 0) {
+		if (uri && !queryParams.isEmpty()) {
 			for (OpenQueryParameter parameter : OpenQueryParameter.values()) {
-				parameter.config(filename, conn);
+				parameter.config(queryParams, conn);
 			}
 		}
 		return conn;

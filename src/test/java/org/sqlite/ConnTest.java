@@ -5,6 +5,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+import static org.sqlite.SQLite.UTF_8_ECONDING;
 
 public class ConnTest {
 	@Test
@@ -206,11 +207,117 @@ public class ConnTest {
 		c.closeAndCheck();
 	}
 
+	private static class ConnState {
+		private boolean triggersEnabled = true;
+		private String encoding = UTF_8_ECONDING;
+		private boolean foreignKeys = false;
+		private String journalMode = "memory";
+		private String lockingMode = "normal";
+		private boolean queryOnly = false;
+		private boolean recursiveTriggers = false;
+		private String synchronous = "2";
+	}
+	private static abstract class ConnStateTest {
+		private final String uri;
+		private final ConnState state;
+
+		private ConnStateTest(String uri) {
+			this.uri = uri;
+			state = new ConnState();
+			expected(state);
+		}
+		protected abstract void expected(ConnState s);
+	}
+
+	private static final ConnStateTest[] CONN_STATE_TESTS = new ConnStateTest[]{
+			new ConnStateTest("file:memdb?mode=memory") {
+				@Override
+				protected void expected(ConnState s) {
+				}
+			},
+			new ConnStateTest("file:memdb?mode=memory&enable_triggers=off") {
+				@Override
+				protected void expected(ConnState s) {
+					s.triggersEnabled = false;
+				}
+			},
+			/*new ConnStateTest("file:memdb?mode=memory&encoding=UTF-16") {
+				@Override
+				protected void expected(ConnState s) {
+					//s.encoding = "UTF-16";
+				}
+			},*/
+			new ConnStateTest("file:memdb?mode=memory&foreign_keys=on") {
+				@Override
+				protected void expected(ConnState s) {
+					s.foreignKeys = true;
+				}
+			},
+			new ConnStateTest("file:?journal_mode=off") {
+				@Override
+				protected void expected(ConnState s) {
+					s.journalMode = "off";
+				}
+			},
+			/*new ConnStateTest("file:memdb?mode=memory&lockingMode=EXCLUSIVE") {
+				@Override
+				protected void expected(ConnState s) {
+					s.lockingMode = "off";
+				}
+			},*/
+			new ConnStateTest("file:memdb?mode=memory&query_only=on") {
+				@Override
+				protected void expected(ConnState s) {
+					s.queryOnly = true;
+				}
+			},
+			new ConnStateTest("file:memdb?mode=memory&recursive_triggers=on") {
+				@Override
+				protected void expected(ConnState s) {
+					s.recursiveTriggers = true;
+				}
+			},
+	};
+	@Test
+	public void openUriQueryParameters() throws SQLiteException {
+		for (ConnStateTest t: CONN_STATE_TESTS) {
+			final Conn c = Conn.open(t.uri, OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_URI, null);
+			check(t.state, c);
+			c.closeAndCheck();
+		}
+	}
+
+	private static void check(ConnState state, Conn c) throws SQLiteException {
+		assertEquals("triggersEnabled", state.triggersEnabled, c.areTriggersEnabled());
+		assertEquals("encoding", state.encoding, c.encoding(null));
+		assertEquals("foreignKeys", state.foreignKeys, c.areForeignKeysEnabled());
+		assertEquals("journalMode", state.journalMode, pragma(c, OpenQueryParameter.JOURNAL_MODE.name));
+		assertEquals("lockingMode", state.lockingMode, pragma(c, OpenQueryParameter.LOCKING_MODE.name));
+		assertEquals("queryOnly", state.queryOnly, c.isQueryOnly(null));
+		assertEquals("recursiveTriggers", state.recursiveTriggers, c.pragma(null, OpenQueryParameter.RECURSIVE_TRIGGERS.name));
+		assertEquals("synchronous", state.synchronous, pragma(c, OpenQueryParameter.SYNCHRONOUS.name));
+	}
+
 	static void checkResult(int res) {
 		assertEquals(0, res);
 	}
 
 	static Conn open() throws SQLiteException {
 		return Conn.open(Conn.MEMORY, OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_FULLMUTEX, null);
+	}
+
+	static String pragma(Conn c, String name) throws SQLiteException {
+		Stmt s = null;
+		try {
+			s = c.prepare("PRAGMA " + name, false);
+			if (!s.step(0)) {
+				throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
+			}
+			return s.getColumnText(0);
+		} finally {
+			if (s != null) {
+				s.close();
+			}
+		}
 	}
 }
