@@ -1771,6 +1771,7 @@ class DbMeta implements DatabaseMetaData {
 		return null;
 	}
 
+	//#if mvn.project.property.jdbc.specification.version >= "4.1"
 	@Override
 	public ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
 		checkOpen();
@@ -1797,6 +1798,7 @@ class DbMeta implements DatabaseMetaData {
 	public boolean generatedKeyAlwaysReturned() throws SQLException {
 		return false;
 	}
+	//#endif
 
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
@@ -1810,6 +1812,13 @@ class DbMeta implements DatabaseMetaData {
 	public boolean isWrapperFor(Class<?> iface) throws SQLException {
 		return iface.isAssignableFrom(getClass());
 	}
+
+	//#if mvn.project.property.jdbc.specification.version >= "4.2"
+	@Override
+	public long getMaxLogicalLobSize() throws SQLException {
+		return Integer.MAX_VALUE;
+	}
+	//#endif
 
 	private static String quote(String data) {
 		if (data == null) {

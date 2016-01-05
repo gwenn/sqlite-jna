@@ -481,13 +481,17 @@ class Stmt implements Statement {
 		return stmt != null && stmt.isCacheable();
 	}
 
+	//#if mvn.project.property.jdbc.specification.version >= "4.1"
 	@Override
+	//#endif
 	public void closeOnCompletion() throws SQLException {
 		checkOpen();
 		isCloseOnCompletion = true;
 	}
 
+	//#if mvn.project.property.jdbc.specification.version >= "4.1"
 	@Override
+	//#endif
 	public boolean isCloseOnCompletion() throws SQLException {
 		checkOpen();
 		return isCloseOnCompletion;
