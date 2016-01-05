@@ -18,7 +18,7 @@ install:
         Write-Host 'Found Maven cached installation'
       }
   - cmd: SET PATH=%M2_HOME%\bin;%PATH%
-  - cmd: copy System.Data.SQLite.Core.1.0.98.1\build\net451\x64\SQLite.Interop.dll sqlite3.dll
+  - cmd: copy System.Data.SQLite.Core.1.0.99\build\net451\x64\SQLite.Interop.dll sqlite3.dll
 build_script:
   - mvn -V -B clean package -DskipTests
 test_script:
