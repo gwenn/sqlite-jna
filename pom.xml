@@ -33,7 +33,7 @@
   <properties>
     <java.version>1.8</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <!-- 4.1 (Java 7), 4.2 (Java 8) -->
+    <!-- 4.0 (Java 6), 4.1 (Java 7), 4.2 (Java 8) -->
     <jdbc.specification.version>4.2</jdbc.specification.version>
   </properties>
 
@@ -56,6 +56,9 @@
         <groupId>com.igormaznitsa</groupId>
         <artifactId>jcp</artifactId>
         <version>6.0.1</version>
+        <configuration>
+          <verbose>false</verbose>
+        </configuration>
         <executions>
           <execution>
             <id>preprocessSources</id>

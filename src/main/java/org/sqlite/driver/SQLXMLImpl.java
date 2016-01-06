@@ -360,7 +360,11 @@ public class SQLXMLImpl implements SQLXML {
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			// TODO builder.setErrorHandler();
 			return new DOMSource(builder.parse(source));
-		} catch (ParserConfigurationException | SAXException | IOException e) {
+		} catch (ParserConfigurationException e) {
+			throw new SQLiteException(null, "Unable to decode xml data.", ErrCodes.WRAPPER_SPECIFIC, e);
+		} catch (SAXException e) {
+			throw new SQLiteException(null, "Unable to decode xml data.", ErrCodes.WRAPPER_SPECIFIC, e);
+		} catch (IOException e) {
 			throw new SQLiteException(null, "Unable to decode xml data.", ErrCodes.WRAPPER_SPECIFIC, e);
 		}
 	}
