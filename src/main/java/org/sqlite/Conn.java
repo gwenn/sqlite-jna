@@ -519,7 +519,7 @@ public final class Conn {
 
 	/**
 	 * sets the size of prepared statements cache.
-	 * Cache is turned off (and flushed) when size <= 0
+	 * Cache is turned off (and flushed) when size &lt;= 0
 	 */
 	public void setMaxCacheSize(int maxCacheSize) {
 		if (maxCacheSize <= 0) {
