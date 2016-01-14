@@ -8,6 +8,12 @@
  */
 package org.sqlite;
 
+/**
+ * Connection open flags.
+ * @see Conn#open(String, int, String)
+ * @see <a href="http://sqlite.org/c3ref/open.html">sqlite3_open_v2</a>
+ * @see <a href="http://sqlite.org/c3ref/c_open_autoproxy.html">Flags For File Open Operations</a>
+ */
 public interface OpenFlags {
 	int SQLITE_OPEN_READONLY = 0x00000001;  /* Ok for sqlite3_open_v2() */
 	int SQLITE_OPEN_READWRITE = 0x00000002;  /* Ok for sqlite3_open_v2() */

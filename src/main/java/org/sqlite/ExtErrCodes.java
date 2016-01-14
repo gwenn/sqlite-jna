@@ -8,6 +8,11 @@
  */
 package org.sqlite;
 
+/**
+ * Extended Result Codes.
+ * @see <a href="http://sqlite.org/c3ref/c_abort_rollback.html">Extended Result Codes</a>
+ * @see <a href="http://sqlite.org/rescode.html#extrc">Extended Result Code List</a>
+ */
 public interface ExtErrCodes {
 	int SQLITE_IOERR_READ = ErrCodes.SQLITE_IOERR | 1 << 8;
 	int SQLITE_IOERR_SHORT_READ = ErrCodes.SQLITE_IOERR | 2 << 8;

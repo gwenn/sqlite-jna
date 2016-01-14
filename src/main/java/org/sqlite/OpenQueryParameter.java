@@ -16,8 +16,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * http://sqlite.org/c3ref/open.html#urifilenamesinsqlite3open
- * http://sqlite.org/uri.html#coreqp
+ * Open URI parameters.
+ * @see Conn#open(String, int, String)
+ * @see <a href="http://sqlite.org/c3ref/open.html#urifilenamesinsqlite3open">URI Filenames</a>
+ * @see <a href="http://sqlite.org/uri.html#coreqp">Query Parameters</a>
  */
 public enum OpenQueryParameter {
 	/*VFS("vfs") {
@@ -50,7 +52,7 @@ public enum OpenQueryParameter {
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
 		}
 	}*/
-	// https://www.sqlite.org/c3ref/enable_load_extension.html
+	/** @see <a href="https://www.sqlite.org/c3ref/enable_load_extension.html">enable load extension</a> */
 	ENABLE_LOAD_EXTENSION("enable_load_extension") {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
@@ -73,7 +75,7 @@ public enum OpenQueryParameter {
 			}
 		}
 	},
-	// http://sqlite.org/pragma.html#pragma_encoding
+	/** @see <a href="http://sqlite.org/pragma.html#pragma_encoding">pragma encoding</a> */
 	ENCODING("encoding") {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
@@ -87,7 +89,7 @@ public enum OpenQueryParameter {
 			}
 		}
 	},
-	// https://www.sqlite.org/c3ref/extended_result_codes.html
+	/** @see <a href="https://www.sqlite.org/c3ref/extended_result_codes.html">extended result codes</a> */
 	EXTENDED_RESULT_CODES("extended_result_codes") {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
@@ -110,7 +112,7 @@ public enum OpenQueryParameter {
 			}
 		}
 	},
-	// https://www.sqlite.org/pragma.html#pragma_journal_mode
+	/** @see <a href="https://www.sqlite.org/pragma.html#pragma_journal_mode">pragma journal mode</a> */
 	JOURNAL_MODE("journal_mode") {
 		private final String[] MODES = new String[]{"DELETE", "MEMORY", "OFF", "PERSIST", "TRUNCATE", "WAL"};
 		@Override
@@ -126,7 +128,7 @@ public enum OpenQueryParameter {
 			// TODO check that change is effective
 		}
 	},
-	// https://www.sqlite.org/pragma.html#pragma_locking_mode
+	/** @see <a href="https://www.sqlite.org/pragma.html#pragma_locking_mode">pragma locking mode</a> */
 	LOCKING_MODE("locking_mode") {
 		private final String[] MODES = new String[]{"EXCLUSIVE", "NORMAL"};
 		@Override
@@ -170,7 +172,7 @@ public enum OpenQueryParameter {
 			}
 		}
 	},
-	// https://www.sqlite.org/pragma.html#pragma_recursive_triggers
+	/** @see <a href="https://www.sqlite.org/pragma.html#pragma_recursive_triggers">pragma recursive triggers</a> */
 	RECURSIVE_TRIGGERS("recursive_triggers") {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
@@ -184,7 +186,7 @@ public enum OpenQueryParameter {
 			}
 		}
 	},
-	// https://www.sqlite.org/pragma.html#pragma_synchronous
+	/** @see <a href="https://www.sqlite.org/pragma.html#pragma_synchronous">pragma synchronous</a> */
 	SYNCHRONOUS("synchronous") {
 		private final String[] FLAGS = new String[]{"0", "1", "2", "FULL", "NORMAL", "OFF"};
 		@Override

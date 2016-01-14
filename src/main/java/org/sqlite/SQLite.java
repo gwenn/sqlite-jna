@@ -257,8 +257,15 @@ public final class SQLite implements Library {
 		}
 	}
 
+	/**
+	 * Query Progress Callback.
+	 * @see <a href="http://sqlite.org/c3ref/progress_handler.html">sqlite3_progress_handler</a>
+	 */
 	public interface ProgressCallback extends Callback {
-		// return true to interrupt
+		/**
+		 * @param arg
+		 * @return <code>true</code> to interrupt
+		 */
 		@SuppressWarnings("unused")
 		boolean invoke(Pointer arg);
 	}
