@@ -176,7 +176,7 @@ public class Stmt {
 
 	/**
 	 * @param iCol The leftmost column is number 0.
-	 * @return org.sqlite.ColTypes.*
+	 * @return {@link org.sqlite.ColTypes}.*
 	 * @throws StmtException
 	 */
 	public int getColumnType(int iCol) throws StmtException {
@@ -197,7 +197,7 @@ public class Stmt {
 
 	/**
 	 * @param iCol The leftmost column is number 0.
-	 * @return org.sqlite.ColAffinities.*
+	 * @return {@link org.sqlite.ColAffinities}.*
 	 * @throws StmtException
 	 */
 	public int getColumnAffinity(int iCol) throws StmtException {

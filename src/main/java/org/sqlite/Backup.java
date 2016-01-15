@@ -12,6 +12,10 @@ import com.sun.jna.Pointer;
 
 import static org.sqlite.SQLite.*;
 
+/**
+ * Online Backup Object
+ * <a href="https://www.sqlite.org/c3ref/backup.html">sqlite3_backup</a>
+ */
 public class Backup {
 	private Pointer pBackup;
 	private final Conn dst, src;
@@ -23,6 +27,12 @@ public class Backup {
 		this.src = src;
 	}
 
+	/**
+	 * Copy up to N pages between the source and destination databases
+	 * @param nPage number of pages to copy
+	 * @return <code>true</code> when successfully finishes copying all pages from source to destination.
+	 * @see <a href="https://www.sqlite.org/c3ref/backup_finish.html#sqlite3backupstep">sqlite3_backup_step</a>
+	 */
 	public boolean step(int nPage) throws ConnException {
 		checkInit();
 		final int res = sqlite3_backup_step(pBackup, nPage);
@@ -58,11 +68,19 @@ public class Backup {
 		}
 	}
 
+	/**
+	 * @return the number of pages still to be backed up
+	 * @see <a href="https://www.sqlite.org/c3ref/backup_finish.html#sqlite3backupremaining">sqlite3_backup_remaining</a>
+	 */
 	public int remaining() throws ConnException {
 		checkInit();
 		return sqlite3_backup_remaining(pBackup);
 	}
 
+	/**
+	 * @return the total number of pages in the source database
+	 * @see <a href="https://www.sqlite.org/c3ref/backup_finish.html#sqlite3backuppagecount">sqlite3_backup_pagecount</a>
+	 */
 	public int pageCount() throws ConnException {
 		checkInit();
 		return sqlite3_backup_pagecount(pBackup);
@@ -77,6 +95,11 @@ public class Backup {
 		super.finalize();
 	}
 
+	/**
+	 * Destroy this backup.
+	 * @return result code (No exception is thrown).
+	 * @see <a href="https://www.sqlite.org/c3ref/backup_finish.html#sqlite3backupfinish">sqlite3_backup_finish</a>
+	 */
 	public int finish() {
 		if (pBackup == null) {
 			return SQLITE_OK;
@@ -85,14 +108,18 @@ public class Backup {
 		pBackup = null;
 		return res;
 	}
-
+	/**
+	 * Destroy this backup and throw an exception if an error occured.
+	 */
 	public void finishAndCheck() throws ConnException {
 		final int res = finish();
 		if (res != SQLITE_OK) {
 			throw new ConnException(dst, "backup finish failed", res);
 		}
 	}
-
+	/**
+	 * @return whether or not this backup is finished
+	 */
 	public boolean isFinished() {
 		return pBackup == null;
 	}

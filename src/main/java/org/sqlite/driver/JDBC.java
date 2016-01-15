@@ -25,6 +25,10 @@ import java.util.logging.Logger;
 
 import static org.sqlite.OpenQueryParameter.*;
 
+/**
+ * JDBC 4.x driver implementation for SQLite 3.
+ * @see java.sql.Driver
+ */
 public class JDBC implements Driver {
 	public static final String PREFIX;
 

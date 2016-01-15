@@ -41,8 +41,8 @@ public final class Conn {
 	 * <p>
 	 * When the `filename` is an URI, extra query parameters can be used ({@link OpenQueryParameter})
 	 * @param filename ":memory:" for memory db, "" for temp file db
-	 * @param flags    org.sqlite.OpenFlags.* (TODO EnumSet or BitSet, default flags)
-	 * @param vfs      may be null
+	 * @param flags {@link org.sqlite.OpenFlags}.* (TODO EnumSet or BitSet, default flags)
+	 * @param vfs may be null
 	 * @return Opened Connection
 	 * @throws SQLiteException
 	 */
@@ -566,7 +566,7 @@ public final class Conn {
 	 * Create a user defined SQL scalar function.
 	 * @param name function name
 	 * @param nArg number of arguments expected
-	 * @param flags org.sqlite.FunctionFlags.*
+	 * @param flags {@link org.sqlite.FunctionFlags}.*
 	 * @param xFunc function implementation
 	 * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
 	 */

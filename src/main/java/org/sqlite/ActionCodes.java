@@ -1,5 +1,9 @@
 package org.sqlite;
 
+/**
+ * Authorizer Action Codes
+ * <a href="https://www.sqlite.org/c3ref/c_alter_table.html">Authorizer Action Codes</a>
+ */
 public interface ActionCodes {
 	int SQLITE_CREATE_INDEX = 1;   /* Index Name      Table Name      */
 	int SQLITE_CREATE_TABLE = 2;   /* Table Name      NULL            */
