@@ -61,9 +61,9 @@ public class TransactionTest {
 	@Before
 	public void connect() throws Exception {
 		final File file = folder.newFile("test-trans.db");
-		conn1 = DriverManager.getConnection("jdbc:sqlite:" + file);
-		conn2 = DriverManager.getConnection("jdbc:sqlite:" + file);
-		conn3 = DriverManager.getConnection("jdbc:sqlite:" + file);
+		conn1 = DriverManager.getConnection(JDBC.PREFIX + file);
+		conn2 = DriverManager.getConnection(JDBC.PREFIX + file);
+		conn3 = DriverManager.getConnection(JDBC.PREFIX + file);
 		stat1 = conn1.createStatement();
 		stat2 = conn2.createStatement();
 		stat3 = conn3.createStatement();
@@ -370,7 +370,7 @@ public class TransactionTest {
     beginCommandMap.setAccessible(true);
 
     SQLiteDataSource ds = new SQLiteDataSource();
-    ds.setUrl("jdbc:sqlite:" + tmpFile.getAbsolutePath());
+    ds.setUrl(JDBC.PREFIX + tmpFile.getAbsolutePath());
 
     // deffered
     SQLiteConnection con = (SQLiteConnection) ds.getConnection();

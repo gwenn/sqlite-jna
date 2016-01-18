@@ -103,7 +103,7 @@ public class BasicQueriesTest {
 		try (Statement stmt = conn.createStatement()) {
 			assertEquals(conn, stmt.getConnection());
 
-			assertEquals("jdbc:sqlite:", conn.getMetaData().getURL());
+			assertEquals(JDBC.PREFIX, conn.getMetaData().getURL());
 
 			stmt.executeUpdate("CREATE TABLE IF NOT EXISTS test_table " +
 					"(id INTEGER PRIMARY KEY, name TEXT, start DATETIME)");

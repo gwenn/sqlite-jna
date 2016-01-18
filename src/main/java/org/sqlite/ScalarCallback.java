@@ -15,7 +15,7 @@ import com.sun.jna.Pointer;
  * User defined SQL scalar function.
  * <pre>{@code
  * new ScalarCallback() {
- *   @Override
+ *   \@Override
  *   public void invoke(Pointer pCtx, int nArg, Pointer args) {
  * 			SQLite.sqlite3_result_int(pCtx, 0);
  *   }

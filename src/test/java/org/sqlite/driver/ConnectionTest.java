@@ -75,7 +75,7 @@ public class ConnectionTest {
         SQLiteConfig config = new SQLiteConfig();
         config.setReadOnly(true);
 
-        Connection conn = DriverManager.getConnection("jdbc:sqlite:", config.toProperties());
+        Connection conn = DriverManager.getConnection(JDBC.PREFIX, config.toProperties());
         Statement stat = conn.createStatement();
         try {
             assertTrue(conn.isReadOnly());
@@ -111,7 +111,7 @@ public class ConnectionTest {
     public void foreignKeys() throws SQLException {
         SQLiteConfig config = new SQLiteConfig();
         config.enforceForeignKeys(true);
-        Connection conn = DriverManager.getConnection("jdbc:sqlite:", config.toProperties());
+        Connection conn = DriverManager.getConnection(JDBC.PREFIX, config.toProperties());
         Statement stat = conn.createStatement();
 
         try {
@@ -139,7 +139,7 @@ public class ConnectionTest {
     public void canWrite() throws SQLException {
         SQLiteConfig config = new SQLiteConfig();
         config.enforceForeignKeys(true);
-        Connection conn = DriverManager.getConnection("jdbc:sqlite:", config.toProperties());
+        Connection conn = DriverManager.getConnection(JDBC.PREFIX, config.toProperties());
         Statement stat = conn.createStatement();
 
         try {
@@ -155,7 +155,7 @@ public class ConnectionTest {
     public void synchronous() throws SQLException {
         SQLiteConfig config = new SQLiteConfig();
         config.setSynchronous(SynchronousMode.OFF);
-        Connection conn = DriverManager.getConnection("jdbc:sqlite:", config.toProperties());
+        Connection conn = DriverManager.getConnection(JDBC.PREFIX, config.toProperties());
         Statement stat = conn.createStatement();
 
         try {
@@ -270,14 +270,14 @@ public class ConnectionTest {
 		File testdb = new File(folder.getRoot(), "test.db");
 
 		assertFalse(testdb.exists());
-		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + testdb);
+		Connection conn = DriverManager.getConnection(JDBC.PREFIX + testdb);
 		if (org.sqlite.Conn.libversionNumber() >= 3008000) {
 			assertFalse(conn.isReadOnly());
 		}
 		conn.close();
 
 		assertTrue(testdb.exists());
-		conn = DriverManager.getConnection("jdbc:sqlite:" + testdb);
+		conn = DriverManager.getConnection(JDBC.PREFIX + testdb);
 		if (org.sqlite.Conn.libversionNumber() >= 3008000) {
 			assertFalse(conn.isReadOnly());
 		}
