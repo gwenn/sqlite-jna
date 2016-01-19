@@ -39,6 +39,7 @@ public final class SQLite implements Library {
 	static native int sqlite3_libversion_number();
 	static native boolean sqlite3_threadsafe();
 	static native boolean sqlite3_compileoption_used(String optName);
+	static native String sqlite3_compileoption_get(int n);
 
 	public static final int SQLITE_CONFIG_SINGLETHREAD = 1,
 			SQLITE_CONFIG_MULTITHREAD = 2, SQLITE_CONFIG_SERIALIZED = 3,
@@ -69,6 +70,7 @@ public final class SQLite implements Library {
 	static native int sqlite3_close_v2(Pointer pDb); // since 3.7.14
 	static native void sqlite3_interrupt(Pointer pDb);
 
+	static native int sqlite3_busy_handler(Pointer pDb, BusyHandler bh, Pointer pArg);
 	static native int sqlite3_busy_timeout(Pointer pDb, int ms);
 	static native int sqlite3_db_config(Pointer pDb, int op, int v, IntByReference pOk);
 	static native int sqlite3_enable_load_extension(Pointer pDb, boolean onoff);
@@ -161,6 +163,7 @@ public final class SQLite implements Library {
 	static native void sqlite3_profile(Pointer pDb, ProfileCallback xProfile, Pointer pArg);
 
 	static native Pointer sqlite3_update_hook(Pointer pDb, UpdateHook xUpdate, Pointer pArg);
+	static native int sqlite3_set_authorizer(Pointer pDb, Authorizer authorizer, Pointer pUserData);
 
 	/*
 	void (*)(sqlite3_context*,int,sqlite3_value**),

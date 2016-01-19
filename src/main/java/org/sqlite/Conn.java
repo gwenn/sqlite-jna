@@ -302,7 +302,7 @@ public final class Conn {
 	}
 	/**
 	 * @return Total number of rows modified
-	 * @throws ConnException  if current connection is closed
+	 * @throws ConnException if current connection is closed
 	 * @see <a href="https://www.sqlite.org/c3ref/total_changes.html">sqlite3_total_changes</a>
 	 */
 	public int getTotalChanges() throws ConnException {
@@ -339,6 +339,17 @@ public final class Conn {
 	public void setBusyTimeout(int ms) throws ConnException {
 		checkOpen();
 		check(sqlite3_busy_timeout(pDb, ms), "error while setting busy timeout on '%s'", getFilename());
+	}
+	/**
+	 * Register a callback to handle SQLITE_BUSY errors
+	 * @param bh Busy handler
+	 * @param pArg User data
+	 * @return result code
+	 * @see <a href="http://sqlite.org/c3ref/busy_handler.html">sqlite3_busy_handler</a>
+	 */
+	public int setBusyHandler(BusyHandler bh, Pointer pArg) throws ConnException {
+		checkOpen();
+		return sqlite3_busy_handler(pDb, bh, pArg);
 	}
 
 	/**
@@ -560,6 +571,17 @@ public final class Conn {
 	public Pointer updateHook(UpdateHook uh, Pointer arg) throws ConnException {
 		checkOpen();
 		return sqlite3_update_hook(pDb, uh, arg);
+	}
+	/**
+	 * Register an authorizer callback.
+	 * @param auth Compile-time authorization callback (may be null)
+	 * @param arg User data
+	 * @return result code
+	 * @see <a href="http://sqlite.org/c3ref/set_authorizer.html">sqlite3_set_authorizer</a>
+	 */
+	public int setAuhtorizer(Authorizer auth, Pointer arg) throws ConnException {
+		checkOpen();
+		return sqlite3_set_authorizer(pDb, auth, arg);
 	}
 
 	/**
