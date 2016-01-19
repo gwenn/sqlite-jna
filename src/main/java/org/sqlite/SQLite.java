@@ -73,8 +73,17 @@ public final class SQLite implements Library {
 	static native int sqlite3_busy_handler(Pointer pDb, BusyHandler bh, Pointer pArg);
 	static native int sqlite3_busy_timeout(Pointer pDb, int ms);
 	static native int sqlite3_db_config(Pointer pDb, int op, int v, IntByReference pOk);
+	//#if mvn.project.property.sqlite.omit.load.extension == "true"
+	static int sqlite3_enable_load_extension(Object pDb, boolean onoff) {
+		throw new UnsupportedOperationException("SQLITE_OMIT_LOAD_EXTENSION activated");
+	}
+	static int sqlite3_load_extension(Object pDb, String file, String proc, PointerByReference errMsg) {
+		throw new UnsupportedOperationException("SQLITE_OMIT_LOAD_EXTENSION activated");
+	}
+	//#else
 	static native int sqlite3_enable_load_extension(Pointer pDb, boolean onoff);
 	static native int sqlite3_load_extension(Pointer pDb, String file, String proc, PointerByReference errMsg);
+	//#endif
 	public static final int SQLITE_LIMIT_LENGTH = 0, SQLITE_LIMIT_SQL_LENGTH = 1, SQLITE_LIMIT_COLUMN = 2,
 			SQLITE_LIMIT_EXPR_DEPTH = 3, SQLITE_LIMIT_COMPOUND_SELECT = 4, SQLITE_LIMIT_VDBE_OP = 5,
 			SQLITE_LIMIT_FUNCTION_ARG = 6, SQLITE_LIMIT_ATTACHED = 7, SQLITE_LIMIT_LIKE_PATTERN_LENGTH = 8,
@@ -111,10 +120,25 @@ public final class SQLite implements Library {
 	static native int sqlite3_data_count(Pointer pStmt);
 	static native int sqlite3_column_type(Pointer pStmt, int iCol);
 	static native String sqlite3_column_name(Pointer pStmt, int iCol); // copy needed: The returned string pointer is valid until either the prepared statement is destroyed by sqlite3_finalize() or until the statement is automatically reprepared by the first call to sqlite3_step() for a particular run or until the next call to sqlite3_column_name() or sqlite3_column_name16() on the same column.
+	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	static native String sqlite3_column_origin_name(Pointer pStmt, int iCol); // copy needed
 	static native String sqlite3_column_table_name(Pointer pStmt, int iCol); // copy needed
 	static native String sqlite3_column_database_name(Pointer pStmt, int iCol); // copy needed
 	static native String sqlite3_column_decltype(Pointer pStmt, int iCol); // copy needed
+	//#else
+	static String sqlite3_column_origin_name(Object pStmt, int iCol) {
+		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
+	}
+	static String sqlite3_column_table_name(Object pStmt, int iCol) {
+		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
+	}
+	static String sqlite3_column_database_name(Object pStmt, int iCol) {
+		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
+	}
+	static String sqlite3_column_decltype(Object pStmt, int iCol) {
+		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
+	}
+	//#endif
 
 	static native Pointer sqlite3_column_blob(Pointer pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
 	static native int sqlite3_column_bytes(Pointer pStmt, int iCol);

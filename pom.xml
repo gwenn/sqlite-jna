@@ -35,6 +35,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- 4.0 (Java 6), 4.1 (Java 7), 4.2 (Java 8) -->
     <jdbc.specification.version>4.2</jdbc.specification.version>
+    <sqlite.enable.column.metadata>true</sqlite.enable.column.metadata>
+    <sqlite.omit.load.extension>false</sqlite.omit.load.extension>
   </properties>
 
   <dependencies>
