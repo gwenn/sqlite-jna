@@ -8,8 +8,6 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,12 +21,12 @@ import static org.sqlite.SQLite.*;
  */
 public class Blob {
 	private final Conn c;
-	private Pointer pBlob;
+	private SQLite3Blob pBlob;
 	private int readOffset;
 	private int writeOffset;
 	private int size = -1;
 
-	Blob(Conn c, Pointer pBlob) {
+	Blob(Conn c, SQLite3Blob pBlob) {
 		assert c != null;
 		this.c = c;
 		this.pBlob = pBlob;

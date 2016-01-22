@@ -8,8 +8,6 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
-
 import static org.sqlite.SQLite.*;
 
 /**
@@ -17,10 +15,10 @@ import static org.sqlite.SQLite.*;
  * <a href="https://www.sqlite.org/c3ref/backup.html">sqlite3_backup</a>
  */
 public class Backup {
-	private Pointer pBackup;
+	private SQLite3Backup pBackup;
 	private final Conn dst, src;
 
-	Backup(Pointer pBackup, Conn dst, Conn src) {
+	Backup(SQLite3Backup pBackup, Conn dst, Conn src) {
 		assert pBackup != null && dst != null && src != null;
 		this.pBackup = pBackup;
 		this.dst = dst;

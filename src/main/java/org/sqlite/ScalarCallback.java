@@ -10,6 +10,7 @@ package org.sqlite;
 
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
+import org.sqlite.SQLite.SQLite3Context;
 
 /**
  * User defined SQL scalar function.
@@ -32,5 +33,5 @@ public interface ScalarCallback extends Callback {
 	 * @param args function arguments
 	 */
 	@SuppressWarnings("unused")
-	void invoke(Pointer pCtx, int nArg, Pointer args);
+	void invoke(SQLite3Context pCtx, int nArg, Pointer args); // FIXME Pointer args versus Pointer[] args
 }

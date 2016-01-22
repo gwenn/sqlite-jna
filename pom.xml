@@ -37,6 +37,7 @@
     <jdbc.specification.version>4.2</jdbc.specification.version>
     <sqlite.enable.column.metadata>true</sqlite.enable.column.metadata>
     <sqlite.omit.load.extension>false</sqlite.omit.load.extension>
+    <sqlite.enable.stmt.scanstatus>false</sqlite.enable.stmt.scanstatus>
   </properties>
 
   <dependencies>

@@ -29,7 +29,7 @@ public final class Conn {
 	/** If the filename is an empty string, then a private, temporary on-disk database will be created. */
 	public static final String TEMP_FILE = "";
 
-	private Pointer pDb;
+	private SQLite3 pDb;
 	private final boolean sharedCacheMode;
 	private TimeoutProgressCallback timeoutProgressCallback;
 
@@ -52,9 +52,10 @@ public final class Conn {
 		}
 		final PointerByReference ppDb = new PointerByReference();
 		final int res = sqlite3_open_v2(filename, ppDb, flags, vfs);
+		final Pointer pDb = ppDb.getValue();
 		if (res != SQLITE_OK) {
-			if (ppDb.getValue() != null) {
-				sqlite3_close(ppDb.getValue());
+			if (pDb != null) {
+				sqlite3_close(new SQLite3(pDb));
 			}
 			throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
 		}
@@ -62,7 +63,8 @@ public final class Conn {
 		final Map<String, String> queryParams = uri ? OpenQueryParameter.getQueryParams(filename) : Collections.<String, String>emptyMap();
 		// TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
 		final boolean sharedCacheMode = "shared".equals(queryParams.get("cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
-		final Conn conn = new Conn(ppDb.getValue(), sharedCacheMode);
+		final SQLite3 sqlite3 = pDb == null ? null: new SQLite3(pDb);
+		final Conn conn = new Conn(sqlite3, sharedCacheMode);
 		if (uri && !queryParams.isEmpty()) {
 			for (OpenQueryParameter parameter : OpenQueryParameter.values()) {
 				parameter.config(queryParams, conn);
@@ -91,7 +93,7 @@ public final class Conn {
 		flush();
 
 		// Dangling statements
-		Pointer stmt = sqlite3_next_stmt(pDb, null);
+		SQLite3Stmt stmt = sqlite3_next_stmt(pDb, null);
 		while (stmt != null) {
 			if (sqlite3_stmt_busy(stmt)) {
 				sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\"");
@@ -114,7 +116,7 @@ public final class Conn {
 		}
 	}
 
-	private Conn(Pointer pDb, boolean sharedCacheMode) {
+	private Conn(SQLite3 pDb, boolean sharedCacheMode) {
 		assert pDb != null;
 		this.pDb = pDb;
 		this.sharedCacheMode = sharedCacheMode;
@@ -216,7 +218,9 @@ public final class Conn {
 		final PointerByReference ppTail = new PointerByReference();
 		final int res = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail);
 		check(res, "error while preparing statement '%s'", sql);
-		return new Stmt(this, ppStmt.getValue(), ppTail.getValue(), cacheable);
+		final Pointer pStmt = ppStmt.getValue();
+		final SQLite3Stmt stmt = pStmt == null ? null: new SQLite3Stmt(pStmt);
+		return new Stmt(this, stmt, ppTail.getValue(), cacheable);
 	}
 
 	/**
@@ -282,12 +286,14 @@ public final class Conn {
 		checkOpen();
 		final PointerByReference ppBlob = new PointerByReference();
 		final int res = sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob); // ko if pDb is null
+		final Pointer pBlob = ppBlob.getValue();
+		final SQLite3Blob blob = pBlob == null ? null : new SQLite3Blob(pBlob);
 		if (res != SQLITE_OK) {
-			sqlite3_blob_close(ppBlob.getValue());
+			sqlite3_blob_close(blob);
 			throw new SQLiteException(this, String.format("error while opening a blob to (db: '%s', table: '%s', col: '%s', row: %d)",
 					dbName, tblName, colName, iRow), res);
 		}
-		return new Blob(this, ppBlob.getValue());
+		return new Blob(this, blob);
 	}
 
 	/**
@@ -518,7 +524,7 @@ public final class Conn {
 	public static Backup open(Conn dst, String dstName, Conn src, String srcName) throws ConnException {
 		dst.checkOpen();
 		src.checkOpen();
-		final Pointer pBackup = sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
+		final SQLite3Backup pBackup = sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
 		if (pBackup == null) {
 			throw new ConnException(dst, "backup init failed", dst.getErrCode());
 		}

@@ -18,7 +18,7 @@ import static org.sqlite.SQLite.*;
 
 public class Stmt {
 	final Conn c;
-	private Pointer pStmt;
+	private SQLite3Stmt pStmt;
 	private final String tail;
 	// cached parameter count
 	private int paramCount = -1;
@@ -30,7 +30,7 @@ public class Stmt {
 	private int[] columnAffinities;
 	private boolean cacheable;
 
-	Stmt(Conn c, Pointer pStmt, Pointer tail, boolean cacheable) {
+	Stmt(Conn c, SQLite3Stmt pStmt, Pointer tail, boolean cacheable) {
 		assert c != null;
 		this.c = c;
 		this.pStmt = pStmt;

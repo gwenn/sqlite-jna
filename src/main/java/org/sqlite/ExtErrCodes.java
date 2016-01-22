@@ -58,5 +58,5 @@ public interface ExtErrCodes {
 	//int SQLITE_NOTICE_RECOVER_WAL = ErrCodes.SQLITE_NOTICE | 1 << 8;
 	//int SQLITE_NOTICE_RECOVER_ROLLBACK = ErrCodes.SQLITE_NOTICE | 2 << 8;
 	//int SQLITE_WARNING_AUTOINDEX = ErrCodes.SQLITE_WARNING | 1 << 8;
-	int SQLITE_AUTH_USER  = ErrCodes.SQLITE_AUTH | 1 << 8;
+	int SQLITE_AUTH_USER = ErrCodes.SQLITE_AUTH | 1 << 8;
 }

@@ -3,6 +3,7 @@ package org.sqlite;
 import com.sun.jna.Pointer;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.sqlite.SQLite.SQLite3Context;
 
 import static org.junit.Assert.*;
 import static org.sqlite.SQLite.UTF_8_ECONDING;
@@ -181,7 +182,7 @@ public class ConnTest {
 		final Conn c = open();
 		c.createScalarFunction("test", 0, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
 			@Override
-			public void invoke(Pointer pCtx, int nArg, Pointer args) {
+			public void invoke(SQLite3Context pCtx, int nArg, Pointer args) {
 				assertNotNull(pCtx);
 				assertEquals(0, nArg);
 				//assertNull(args);
