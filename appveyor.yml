@@ -18,7 +18,7 @@ install:
   - cmd: SET PATH=%M2_HOME%\bin;%PATH%
 #  - cinst sqlite # win32_x86 dll versus JDK amd64
   - ps: Start-FileDownload 'http://sqlite.org/2016/sqlite-uap-3100200.vsix'
-  - cmd: 7z e sqlite-uap-3100200.vsix Redist\Retail\x64\sqlite3.dll -y
+  - cmd: 7z e sqlite-uap-3100200.vsix Redist\Retail\x64\sqlite3.dll -y -osrc\main\resources\win32-x86-64\
   - cmd: dir
 build_script:
   - mvn -V -B clean package -DskipTests
