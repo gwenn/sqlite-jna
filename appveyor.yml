@@ -17,14 +17,15 @@ install:
       }
   - cmd: SET PATH=%M2_HOME%\bin;%PATH%
 #  - cinst sqlite # win32_x86 dll versus JDK amd64
-  - ps: Start-FileDownload 'http://sqlite.org/2016/sqlite-uap-3100200.vsix'
+#  - ps: Start-FileDownload 'http://sqlite.org/2016/sqlite-uap-3100200.vsix'
 #  - cmd: 7z e sqlite-uap-3100200.vsix Redist\Retail\x64\sqlite3.dll -y -osrc\main\resources\win32-x86-64\
-  - cmd: 7z x sqlite-uap-3100200.vsix Redist\Retail\x64\ -y
-  - cmd: dir Redist\Retail\x64\
+  - ps: Start-FileDownload 'http://sqlite.org/2015/sqlite-dll-win64-x64-3090200.zip'
+  - cmd: 7z e sqlite-dll-win64-x64-3090200.zip -y
+  - cmd: dir
 build_script:
   - mvn -V -B clean package -DskipTests
 test_script:
-  - mvn -B test -DargLine="-Djna.library.path=C:/projects/sqlite-jna/Redist/Retail/x64/ -Djna.nosys=true -Djna.debug_load=true"
+  - mvn -B test -DargLine="-Djna.library.path=C:/projects/sqlite-jna/ -Djna.nosys=true -Djna.debug_load=true"
 cache:
   - C:\tools\apache-maven-3.3.3
   - C:\Users\appveyor\.m2
