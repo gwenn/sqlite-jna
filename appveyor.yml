@@ -24,7 +24,7 @@ install:
 build_script:
   - mvn -V -B clean package -DskipTests
 test_script:
-  - mvn -B test -DargLine="-Djna.library.path=C:/projects/sqlite-jna/Redist/Retail/x64/ -Djna.nosys=true"
+  - mvn -B test -DargLine="-Djna.library.path=C:/projects/sqlite-jna/Redist/Retail/x64/ -Djna.nosys=true -Djna.debug_load=true"
 cache:
   - C:\tools\apache-maven-3.3.3
   - C:\Users\appveyor\.m2
