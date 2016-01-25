@@ -25,7 +25,7 @@ import org.sqlite.SQLite.SQLite3Context;
  * @see Conn#createScalarFunction(String, int, int, ScalarCallback)
  * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
  */
-public interface ScalarCallback extends Callback {
+public abstract class ScalarCallback implements Callback {
 	//void (*)(sqlite3_context*,int,sqlite3_value**),
 	/**
 	 * @param pCtx <code>sqlite3_context*</code>
@@ -33,5 +33,13 @@ public interface ScalarCallback extends Callback {
 	 * @param args function arguments
 	 */
 	@SuppressWarnings("unused")
-	void invoke(SQLite3Context pCtx, int nArg, Pointer args); // FIXME Pointer args versus Pointer[] args
+	public void invoke(SQLite3Context pCtx, int nArg, Pointer args) {
+		invoke(pCtx, args.getPointerArray(0, nArg));
+	}
+
+	/**
+	 * @param pCtx <code>sqlite3_context*</code>
+	 * @param args function arguments
+	 */
+	protected abstract void invoke(SQLite3Context pCtx, Pointer[] args);
 }

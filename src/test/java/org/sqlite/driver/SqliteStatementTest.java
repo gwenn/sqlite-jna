@@ -141,7 +141,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
 			((Conn) conn).getConn().createScalarFunction("delay", 0, FunctionFlags.SQLITE_UTF8, new ScalarCallback() {
 				@Override
-				public void invoke(SQLite3Context pCtx, int nArg, Pointer args) {
+				public void invoke(SQLite3Context pCtx, Pointer[] args) {
 					try {
 						Thread.currentThread().join(1000);
 					} catch (InterruptedException e) {

@@ -6,7 +6,7 @@ import org.junit.Test;
 import org.sqlite.SQLite.SQLite3Context;
 
 import static org.junit.Assert.*;
-import static org.sqlite.SQLite.UTF_8_ECONDING;
+import static org.sqlite.SQLite.*;
 
 public class ConnTest {
 	@Test
@@ -182,9 +182,9 @@ public class ConnTest {
 		final Conn c = open();
 		c.createScalarFunction("test", 0, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
 			@Override
-			public void invoke(SQLite3Context pCtx, int nArg, Pointer args) {
+			public void invoke(SQLite3Context pCtx, Pointer[] args) {
 				assertNotNull(pCtx);
-				assertEquals(0, nArg);
+				assertEquals(0, args.length);
 				//assertNull(args);
 				SQLite.sqlite3_result_null(pCtx);
 			}
@@ -192,6 +192,30 @@ public class ConnTest {
 		c.fastExec("SELECT test()");
 		c.createScalarFunction("test", 0, 0, null);
 		c.close();
+	}
+
+	@Test
+	public void createScalarFunctionWithArg() throws SQLiteException {
+		final Conn c = open();
+		c.createScalarFunction("test", 2, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
+			@Override
+			public void invoke(SQLite3Context pCtx, Pointer[] args) {
+				assertNotNull(pCtx);
+				assertEquals(2, args.length);
+				final SQLite.SQLite3Value firstArg = new SQLite.SQLite3Value(args[0]);
+				assertEquals(ColTypes.SQLITE_INTEGER, sqlite3_value_numeric_type(firstArg));
+				final int value = sqlite3_value_int(firstArg);
+				assertEquals(123456, value);
+				final SQLite.SQLite3Value secondArg = new SQLite.SQLite3Value(args[1]);
+				assertEquals(2, sqlite3_value_int(secondArg));
+				sqlite3_result_int(pCtx, value);
+			}
+		});
+		final Stmt stmt = c.prepare("SELECT test(123456, 2)", false);
+		assertTrue(stmt.step(0));
+		assertEquals(123456, stmt.getColumnInt(0));
+		stmt.closeAndCheck();
+		c.closeAndCheck();
 	}
 
 	@Test(expected = ConnException.class)
