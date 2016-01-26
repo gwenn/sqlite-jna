@@ -21,7 +21,7 @@ public abstract class ProfileCallback implements Callback {
 	 * @param ns time in nanoseconds
 	 */
 	@SuppressWarnings("unused")
-	public void invoke(Pointer arg, String sql, long ns) {
+	public void callback(Pointer arg, String sql, long ns) {
 		profile(sql, ns);
 	}
 

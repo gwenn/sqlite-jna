@@ -23,5 +23,5 @@ public interface UpdateHook extends Callback {
 	 * @param tblName table name containing the affected row.
 	 * @param rowId id of the affected row.
 	 */
-	void invoke(Pointer pArg, int actionCode, String dbName, String tblName, long rowId);
+	void callback(Pointer pArg, int actionCode, String dbName, String tblName, long rowId);
 }

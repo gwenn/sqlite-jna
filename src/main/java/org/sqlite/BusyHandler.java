@@ -15,5 +15,5 @@ public interface BusyHandler extends Callback {
 	 * @param count the number of times that the busy handler has been invoked previously for the same locking event.
 	 * @return <code>true</code> to try again, <code>false</code> to abort.
 	 */
-	boolean invoke(Pointer pArg, int count);
+	boolean callback(Pointer pArg, int count);
 }

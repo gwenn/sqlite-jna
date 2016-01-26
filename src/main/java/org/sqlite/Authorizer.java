@@ -15,7 +15,7 @@ public interface Authorizer extends Callback {
 	 * @param actionCode {@link ActionCodes}.*
 	 * @return {@link #SQLITE_OK} or {@link #SQLITE_DENY} or {@link #SQLITE_IGNORE}
 	 */
-	int invoke(Pointer pArg, int actionCode, String arg1, String arg2, String dbName, String triggerName);
+	int callback(Pointer pArg, int actionCode, String arg1, String arg2, String dbName, String triggerName);
 
 	int SQLITE_OK = ErrCodes.SQLITE_OK;
 	/**

@@ -26,12 +26,11 @@
 
 package org.sqlite.driver;
 
-import com.sun.jna.Pointer;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.sqlite.FunctionFlags;
-import org.sqlite.SQLite;
 import org.sqlite.SQLite.SQLite3Context;
+import org.sqlite.SQLite.SQLite3Values;
 import org.sqlite.SQLiteException;
 import org.sqlite.ScalarCallback;
 
@@ -141,13 +140,13 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
 			((Conn) conn).getConn().createScalarFunction("delay", 0, FunctionFlags.SQLITE_UTF8, new ScalarCallback() {
 				@Override
-				public void invoke(SQLite3Context pCtx, Pointer[] args) {
+				public void func(SQLite3Context pCtx, SQLite3Values args) {
 					try {
 						Thread.currentThread().join(1000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					SQLite.sqlite3_result_int(pCtx, 0);
+					pCtx.setResultInt(0);
 				}
 			});
 			stmt.setQueryTimeout(1);

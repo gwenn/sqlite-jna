@@ -20,7 +20,7 @@ public abstract class TraceCallback implements Callback {
 	 * @param sql SQL statement text.
 	 */
 	@SuppressWarnings("unused")
-	public void invoke(Pointer arg, String sql) {
+	public void callback(Pointer arg, String sql) {
 		trace(sql);
 	}
 

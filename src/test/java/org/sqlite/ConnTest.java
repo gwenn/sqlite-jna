@@ -182,11 +182,10 @@ public class ConnTest {
 		final Conn c = open();
 		c.createScalarFunction("test", 0, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
 			@Override
-			public void invoke(SQLite3Context pCtx, Pointer[] args) {
+			protected void func(SQLite3Context pCtx, SQLite3Values args) {
 				assertNotNull(pCtx);
-				assertEquals(0, args.length);
-				//assertNull(args);
-				SQLite.sqlite3_result_null(pCtx);
+				assertEquals(0, args.getCount());
+				pCtx.setResultNull();
 			}
 		});
 		c.fastExec("SELECT test()");
@@ -199,16 +198,14 @@ public class ConnTest {
 		final Conn c = open();
 		c.createScalarFunction("test", 2, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
 			@Override
-			public void invoke(SQLite3Context pCtx, Pointer[] args) {
+			protected void func(SQLite3Context pCtx, SQLite3Values args) {
 				assertNotNull(pCtx);
-				assertEquals(2, args.length);
-				final SQLite.SQLite3Value firstArg = new SQLite.SQLite3Value(args[0]);
-				assertEquals(ColTypes.SQLITE_INTEGER, sqlite3_value_numeric_type(firstArg));
-				final int value = sqlite3_value_int(firstArg);
+				assertEquals(2, args.getCount());
+				assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
+				final int value = args.getInt(0);
 				assertEquals(123456, value);
-				final SQLite.SQLite3Value secondArg = new SQLite.SQLite3Value(args[1]);
-				assertEquals(2, sqlite3_value_int(secondArg));
-				sqlite3_result_int(pCtx, value);
+				assertEquals(2, args.getInt(1));
+				pCtx.setResultInt(value);
 			}
 		});
 		final Stmt stmt = c.prepare("SELECT test(123456, 2)", false);
@@ -331,7 +328,7 @@ public class ConnTest {
 		final Conn conn = Conn.open(Conn.MEMORY, OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_FULLMUTEX, null);
 		conn.setAuhtorizer(new Authorizer() {
 			@Override
-			public int invoke(Pointer pArg, int actionCode, String arg1, String arg2, String dbName, String triggerName) {
+			public int callback(Pointer pArg, int actionCode, String arg1, String arg2, String dbName, String triggerName) {
 				//System.out.println("pArg = [" + pArg + "], actionCode = [" + actionCode + "], arg1 = [" + arg1 + "], arg2 = [" + arg2 + "], dbName = [" + dbName + "], triggerName = [" + triggerName + "]");
 				return Authorizer.SQLITE_OK;
 			}

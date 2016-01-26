@@ -603,6 +603,21 @@ public final class Conn {
 		check(sqlite3_create_function_v2(pDb, name, nArg, flags, null, xFunc, null, null, null),
 				"error while registering function %s", name);
 	}
+	/**
+	 * Create a user defined SQL aggregate function.
+	 * @param name function name
+	 * @param nArg number of arguments expected
+	 * @param flags {@link org.sqlite.FunctionFlags}.*
+	 * @param xStep function implementation
+	 * @param xFinal function implementation
+	 * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
+	 */
+	public void createAggregateFunction(String name, int nArg, int flags, AggregateStepCallback xStep,
+			AggregateFinalCallback xFinal) throws ConnException {
+		checkOpen();
+		check(sqlite3_create_function_v2(pDb, name, nArg, flags, null, null, xStep, xFinal, null),
+				"error while registering function %s", name);
+	}
 
 	/**
 	 * @param dbName "main" or "temp" or attached database name
