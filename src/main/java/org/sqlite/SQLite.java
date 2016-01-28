@@ -203,8 +203,8 @@ public final class SQLite implements Library {
 	void(*)(void*)
 	*/
 	// eTextRep: SQLITE_UTF8 => 1, ...
-	static native int sqlite3_create_function_v2(SQLite3 pDb, String functionName, int nArg, int eTextRep,
-			Pointer pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, Callback xDestroy);
+	static native <A extends PointerType> int  sqlite3_create_function_v2(SQLite3 pDb, String functionName, int nArg, int eTextRep,
+			Pointer pApp, ScalarCallback xFunc, AggregateStepCallback<A> xStep, AggregateFinalCallback<A> xFinal, Destructor xDestroy);
 
 	static native void sqlite3_result_null(SQLite3Context pCtx);
 	static native void sqlite3_result_int(SQLite3Context pCtx, int i);
@@ -230,7 +230,7 @@ public final class SQLite implements Library {
 	static native int sqlite3_value_numeric_type(Pointer pValue);
 
 	static native Pointer sqlite3_get_auxdata(SQLite3Context pCtx, int n);
-	static native void sqlite3_set_auxdata(SQLite3Context pCtx, int n, Pointer p, Callback free);
+	static native void sqlite3_set_auxdata(SQLite3Context pCtx, int n, Pointer p, Destructor free);
 	static native Pointer sqlite3_user_data(SQLite3Context pCtx);
 	static native Pointer sqlite3_aggregate_context(SQLite3Context pCtx, int nBytes);
 	static native SQLite3 sqlite3_context_db_handle(SQLite3Context pCtx);
@@ -392,7 +392,7 @@ public final class SQLite implements Library {
 
 		/**
 		 * @return a copy of the pointer that was the <code>pUserData</code> parameter (the 5th parameter) of
-		 * {@link SQLite#sqlite3_create_function_v2(SQLite3, String, int, int, Pointer, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Callback)}
+		 * {@link SQLite#sqlite3_create_function_v2(SQLite3, String, int, int, Pointer, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Destructor)}
 		 * @see <a href="http://sqlite.org/c3ref/user_data.html">sqlite3_user_data</a>
          */
 		public Pointer getUserData() {
@@ -401,7 +401,7 @@ public final class SQLite implements Library {
 
 		/**
 		 * @return a copy of the pointer to the database connection (the 1st parameter) of
-		 * {@link SQLite#sqlite3_create_function_v2(SQLite3, String, int, int, Pointer, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Callback)}
+		 * {@link SQLite#sqlite3_create_function_v2(SQLite3, String, int, int, Pointer, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Destructor)}
 		 * @see <a href="http://sqlite.org/c3ref/context_db_handle.html">sqlite3_context_db_handle</a>
          */
 		public SQLite3 getDbHandle() {

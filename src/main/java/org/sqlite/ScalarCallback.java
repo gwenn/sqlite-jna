@@ -50,7 +50,7 @@ public abstract class ScalarCallback implements Callback {
 	/**
 	 * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_set_auxdata</a>
 	 */
-	public void setAuxData(SQLite3Context pCtx, int n, Pointer auxData, Callback free) {
+	public void setAuxData(SQLite3Context pCtx, int n, Pointer auxData, Destructor free) {
 		sqlite3_set_auxdata(pCtx, n, auxData, free);
 	}
 	/**
