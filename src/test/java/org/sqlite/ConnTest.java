@@ -215,6 +215,54 @@ public class ConnTest {
 		c.closeAndCheck();
 	}
 
+	@Test
+	public void createAggregateFunction() throws SQLiteException {
+		final Conn c = open();
+		c.createAggregateFunction("my_sum", 1, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new AggregateStepCallback() {
+			@Override
+			protected int numberOfBytes() {
+				return Pointer.SIZE;
+			}
+			@Override
+			protected void step(SQLite3Context pCtx, Pointer aggrCtx, SQLite3Values args) {
+				assertNotNull(pCtx);
+				assertNotNull(aggrCtx);
+				assertEquals(1, args.getCount());
+				assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
+				aggrCtx.setLong(0, aggrCtx.getLong(0) + args.getLong(0));
+			}
+		}, new AggregateFinalCallback() {
+			@Override
+			protected void finalStep(SQLite3Context pCtx, Pointer aggrCtx) {
+				assertNotNull(pCtx);
+				if (aggrCtx == null) {
+					pCtx.setResultNull();
+					return;
+				}
+				pCtx.setResultLong(aggrCtx.getLong(0));
+			}
+		});
+
+		Stmt stmt = c.prepare("SELECT my_sum(i) FROM (SELECT 2 AS i WHERE 1 <> 1)", false);
+		assertTrue(stmt.step(0));
+		assertEquals(ColTypes.SQLITE_NULL, stmt.getColumnType(0));
+		stmt.closeAndCheck();
+
+		stmt = c.prepare("SELECT my_sum(i) FROM (SELECT 2 AS i UNION ALL SELECT 2)", false);
+		assertTrue(stmt.step(0));
+		assertEquals(ColTypes.SQLITE_INTEGER, stmt.getColumnType(0));
+		assertEquals(4L, stmt.getColumnLong(0));
+		stmt.closeAndCheck();
+
+		stmt = c.prepare("SELECT my_sum(i), my_sum(j) FROM (SELECT 2 AS i, 1 AS j UNION ALL SELECT 2, 1)", false);
+		assertTrue(stmt.step(0));
+		assertEquals(4L, stmt.getColumnLong(0));
+		assertEquals(2L, stmt.getColumnLong(1));
+		stmt.closeAndCheck();
+
+		c.closeAndCheck();
+	}
+
 	@Test(expected = ConnException.class)
 	public void closedConn() throws SQLiteException {
 		final Conn c = open();

@@ -203,8 +203,8 @@ public final class SQLite implements Library {
 	void(*)(void*)
 	*/
 	// eTextRep: SQLITE_UTF8 => 1, ...
-	static native <A extends PointerType> int  sqlite3_create_function_v2(SQLite3 pDb, String functionName, int nArg, int eTextRep,
-			Pointer pApp, ScalarCallback xFunc, AggregateStepCallback<A> xStep, AggregateFinalCallback<A> xFinal, Destructor xDestroy);
+	static native int sqlite3_create_function_v2(SQLite3 pDb, String functionName, int nArg, int eTextRep,
+			Pointer pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, Destructor xDestroy);
 
 	static native void sqlite3_result_null(SQLite3Context pCtx);
 	static native void sqlite3_result_int(SQLite3Context pCtx, int i);
