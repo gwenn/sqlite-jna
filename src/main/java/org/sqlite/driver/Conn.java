@@ -130,7 +130,7 @@ class Conn implements Connection {
 	public void close() throws SQLException {
 		if (c != null) {
 			if (getGeneratedKeys != null) getGeneratedKeys.close();
-			c.closeAndCheck();
+			c.close();
 			if (clientInfo != null) clientInfo.clear();
 			c = null;
 		}

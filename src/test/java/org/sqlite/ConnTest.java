@@ -19,7 +19,7 @@ public class ConnTest {
 		final Conn c = Conn.open(Conn.TEMP_FILE, OpenFlags.SQLITE_OPEN_READWRITE, null);
 		assertNotNull(c);
 		assertEquals(Conn.TEMP_FILE, c.getFilename());
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -27,7 +27,7 @@ public class ConnTest {
 		final Conn c = open();
 		assertNotNull(c);
 		assertEquals("", c.getFilename());
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -40,7 +40,7 @@ public class ConnTest {
 		assertEquals(0, c.getErrCode());
 		assertEquals(0, c.getExtendedErrcode());
 		assertEquals("not an error", c.getErrMsg());
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -48,7 +48,7 @@ public class ConnTest {
 		final Conn c = open();
 		assertFalse("not read only", c.isReadOnly(null));
 		assertFalse("not read only", c.isReadOnly("main"));
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -60,7 +60,7 @@ public class ConnTest {
 		assertFalse("not query only", c.isQueryOnly(null));
 		c.setQueryOnly(null, true);
 		assertTrue("query only", c.isQueryOnly(null));
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -68,8 +68,8 @@ public class ConnTest {
 		final Conn c = open();
 		final Stmt s = c.prepare("SELECT 1", false);
 		assertNotNull(s);
-		s.close();
-		checkResult(c.close());
+		s.closeNoCheck();
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -83,14 +83,14 @@ public class ConnTest {
 		assertTrue(metadata[0]);
 		assertTrue(metadata[1]);
 		assertTrue(metadata[2]);
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
 	public void fastExec() throws SQLiteException {
 		final Conn c = open();
 		c.fastExec("PRAGMA encoding=\"UTF-8\"");
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -104,7 +104,7 @@ public class ConnTest {
 		assertFalse(c.areForeignKeysEnabled());
 		assertTrue(c.enableForeignKeys(true));
 		assertTrue(c.areForeignKeysEnabled());
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -113,14 +113,14 @@ public class ConnTest {
 		assertTrue(c.areTriggersEnabled());
 		assertFalse(c.enableForeignKeys(false));
 		assertFalse(c.areForeignKeysEnabled());
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
 	public void enableLoadExtension() throws SQLiteException {
 		final Conn c = open();
 		c.enableLoadExtension(true);
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Ignore
@@ -130,7 +130,7 @@ public class ConnTest {
 		c.enableLoadExtension(true);
 		final String errMsg = c.loadExtension("/home/gwen/C/sqlite-csv-ext/csv", null);
 		assertNull(errMsg);
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -190,7 +190,7 @@ public class ConnTest {
 		});
 		c.fastExec("SELECT test()");
 		c.createScalarFunction("test", 0, 0, null);
-		c.close();
+		c.closeNoCheck();
 	}
 
 	@Test
@@ -211,8 +211,8 @@ public class ConnTest {
 		final Stmt stmt = c.prepare("SELECT test(123456, 2)", false);
 		assertTrue(stmt.step(0));
 		assertEquals(123456, stmt.getColumnInt(0));
-		stmt.closeAndCheck();
-		c.closeAndCheck();
+		stmt.close();
+		c.close();
 	}
 
 	@Test
@@ -246,27 +246,27 @@ public class ConnTest {
 		Stmt stmt = c.prepare("SELECT my_sum(i) FROM (SELECT 2 AS i WHERE 1 <> 1)", false);
 		assertTrue(stmt.step(0));
 		assertEquals(ColTypes.SQLITE_NULL, stmt.getColumnType(0));
-		stmt.closeAndCheck();
+		stmt.close();
 
 		stmt = c.prepare("SELECT my_sum(i) FROM (SELECT 2 AS i UNION ALL SELECT 2)", false);
 		assertTrue(stmt.step(0));
 		assertEquals(ColTypes.SQLITE_INTEGER, stmt.getColumnType(0));
 		assertEquals(4L, stmt.getColumnLong(0));
-		stmt.closeAndCheck();
+		stmt.close();
 
 		stmt = c.prepare("SELECT my_sum(i), my_sum(j) FROM (SELECT 2 AS i, 1 AS j UNION ALL SELECT 2, 1)", false);
 		assertTrue(stmt.step(0));
 		assertEquals(4L, stmt.getColumnLong(0));
 		assertEquals(2L, stmt.getColumnLong(1));
-		stmt.closeAndCheck();
+		stmt.close();
 
-		c.closeAndCheck();
+		c.close();
 	}
 
 	@Test(expected = ConnException.class)
 	public void closedConn() throws SQLiteException {
 		final Conn c = open();
-		c.close();
+		c.closeNoCheck();
 		c.getAutoCommit();
 	}
 
@@ -274,7 +274,7 @@ public class ConnTest {
 	public void virtualTable() throws SQLiteException {
 		final Conn c = open();
 		c.fastExec("CREATE VIRTUAL TABLE names USING fts4(name, desc, tokenize=porter)");
-		c.closeAndCheck();
+		c.close();
 	}
 
 	private static class ConnState {
@@ -353,7 +353,7 @@ public class ConnTest {
 		for (ConnStateTest t: CONN_STATE_TESTS) {
 			final Conn c = Conn.open(t.uri, OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_URI, null);
 			check(t.state, c);
-			c.closeAndCheck();
+			c.close();
 		}
 	}
 
@@ -394,7 +394,7 @@ public class ConnTest {
 			return s.getColumnText(0);
 		} finally {
 			if (s != null) {
-				s.close();
+				s.closeNoCheck();
 			}
 		}
 	}

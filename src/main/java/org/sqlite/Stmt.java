@@ -16,7 +16,7 @@ import java.util.Map;
 
 import static org.sqlite.SQLite.*;
 
-public class Stmt {
+public class Stmt implements AutoCloseable {
 	final Conn c;
 	private SQLite3Stmt pStmt;
 	private final String tail;
@@ -64,7 +64,7 @@ public class Stmt {
 	/**
 	 * @return result code (No exception is thrown).
 	 */
-	public int close() {
+	public int closeNoCheck() {
 		return close(false);
 	}
 	public int close(boolean force) {
@@ -80,7 +80,8 @@ public class Stmt {
 		pStmt = null;
 		return res;
 	}
-	public void closeAndCheck() throws StmtException {
+	@Override
+	public void close() throws StmtException {
 		final int res = close(false);
 		if (res != ErrCodes.SQLITE_OK) {
 			throw new StmtException(this, "error while closing statement '%s'", res);

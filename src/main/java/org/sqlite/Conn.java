@@ -23,7 +23,7 @@ import static org.sqlite.SQLite.*;
  * Database Connection Handle
  * @see <a href="http://sqlite.org/c3ref/sqlite3.html">sqlite3</a>
  */
-public final class Conn {
+public final class Conn implements AutoCloseable {
 	/** If the filename is ":memory:", then a private, temporary in-memory database is created for the connection. */
 	public static final String MEMORY = ":memory:";
 	/** If the filename is an empty string, then a private, temporary on-disk database will be created. */
@@ -77,7 +77,7 @@ public final class Conn {
 	protected void finalize() throws Throwable {
 		if (pDb != null) {
 			sqlite3_log(-1, "dangling SQLite connection.");
-			close();
+			closeNoCheck();
 		}
 		super.finalize();
 	}
@@ -85,7 +85,7 @@ public final class Conn {
 	 * Close a database connection.
 	 * @return result code (No exception is thrown).
 	 */
-	public int close() {
+	public int closeNoCheck() {
 		if (pDb == null) {
 			return SQLITE_OK;
 		}
@@ -109,8 +109,8 @@ public final class Conn {
 	/**
 	 * Close a database connection and throw an exception if an error occured.
 	 */
-	public void closeAndCheck() throws ConnException {
-		final int res = close();
+	public void close() throws ConnException {
+		final int res = closeNoCheck();
 		if (res != ErrCodes.SQLITE_OK) {
 			throw new ConnException(this, "error while closing connection", res);
 		}
@@ -255,7 +255,7 @@ public final class Conn {
 				}
 			} finally {
 				if (s != null) {
-					s.close();
+					s.closeNoCheck();
 				}
 			}
 		}
@@ -634,7 +634,7 @@ public final class Conn {
 			return s.getColumnText(0);
 		} finally {
 			if (s != null) {
-				s.close();
+				s.closeNoCheck();
 			}
 		}
 	}
@@ -671,7 +671,7 @@ public final class Conn {
 			return s.getColumnInt(0) == 1;
 		} finally {
 			if (s != null) {
-				s.close();
+				s.closeNoCheck();
 			}
 		}
 	}

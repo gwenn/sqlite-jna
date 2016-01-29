@@ -19,7 +19,7 @@ import static org.sqlite.SQLite.*;
  * A Handle To An Open BLOB
  * <a href="https://www.sqlite.org/c3ref/blob.html">sqlite3_blob</a>
  */
-public class Blob {
+public class Blob implements AutoCloseable {
 	private final Conn c;
 	private SQLite3Blob pBlob;
 	private int readOffset;
@@ -105,7 +105,7 @@ public class Blob {
 	protected void finalize() throws Throwable {
 		if (pBlob != null) {
 			sqlite3_log(-1, "dangling SQLite blob.");
-			close();
+			closeNoCheck();
 		}
 		super.finalize();
 	}
@@ -115,7 +115,7 @@ public class Blob {
 	 * @return result code (No exception is thrown).
 	 * <a href="https://www.sqlite.org/c3ref/blob_close.html">sqlite3_blob_close</a>
 	 */
-	public int close() {
+	public int closeNoCheck() {
 		if (pBlob == null) {
 			return SQLITE_OK;
 		}
@@ -126,8 +126,9 @@ public class Blob {
 	/**
 	 * Close this BLOB and throw an exception if an error occured.
 	 */
-	public void closeAndCheck() throws SQLiteException {
-		final int res = close();
+	@Override
+	public void close() throws SQLiteException {
+		final int res = closeNoCheck();
 		if (res != ErrCodes.SQLITE_OK) {
 			throw new SQLiteException(c, "error while closing Blob", res);
 		}
@@ -238,7 +239,7 @@ public class Blob {
 		@Override
 		public void close() throws IOException {
 			try {
-				closeAndCheck();
+				Blob.this.close();
 			} catch (SQLiteException e) {
 				throw new IOException(e);
 			}
@@ -286,7 +287,7 @@ public class Blob {
 		@Override
 		public void close() throws IOException {
 			try {
-				closeAndCheck();
+				Blob.this.close();
 			} catch (SQLiteException e) {
 				throw new IOException(e);
 			}

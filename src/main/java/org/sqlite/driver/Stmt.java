@@ -152,7 +152,7 @@ class Stmt implements Statement {
 
 	private void _close() throws SQLException {
 		if (stmt != null) {
-			stmt.closeAndCheck();
+			stmt.close();
 			if (colIndexByName != null) colIndexByName.clear();
 			stmt = null;
 			status = -1;

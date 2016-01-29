@@ -14,7 +14,7 @@ import static org.sqlite.SQLite.*;
  * Online Backup Object
  * <a href="https://www.sqlite.org/c3ref/backup.html">sqlite3_backup</a>
  */
-public class Backup {
+public class Backup implements AutoCloseable {
 	private SQLite3Backup pBackup;
 	private final Conn dst, src;
 
@@ -109,7 +109,8 @@ public class Backup {
 	/**
 	 * Destroy this backup and throw an exception if an error occured.
 	 */
-	public void finishAndCheck() throws ConnException {
+	@Override
+	public void close() throws ConnException {
 		final int res = finish();
 		if (res != SQLITE_OK) {
 			throw new ConnException(dst, "backup finish failed", res);

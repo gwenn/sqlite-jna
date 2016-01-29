@@ -329,7 +329,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 		} catch (IOException e) {
 			throw new SQLException("Error while reading binary stream", e);
 		} finally {
-			blob.closeAndCheck();
+			blob.close();
 		}
 		bound[parameterIndex - 1] = true;
 	}

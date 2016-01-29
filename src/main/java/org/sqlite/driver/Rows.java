@@ -123,7 +123,7 @@ class Rows implements ResultSet {
 			stmt = null;
 			meta = null;
 			for (org.sqlite.Blob blob : blobByColIndex.values()) {
-				blob.close();
+				blob.closeNoCheck();
 			}
 			blobByColIndex.clear();
 		}
