@@ -174,6 +174,16 @@ public class Stmt implements AutoCloseable, Row {
 	}
 
 	/**
+	 * @param params Statement parameters
+	 * @return returns <code>true</code> if a query in the SQL statement it executes returns one or more rows and
+	 * <code>false</code> if the SQL returns an empty set.
+	 */
+	public boolean exists(Object... params) throws SQLiteException {
+		bind(params);
+		return step(0);
+	}
+
+	/**
 	 * @param timeout in seconds
 	 * @return true until finished.
 	 * @throws StmtException

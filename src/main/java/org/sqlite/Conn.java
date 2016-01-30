@@ -279,6 +279,18 @@ public final class Conn implements AutoCloseable {
 	}
 
 	/**
+	 * @param sql SELECT statement
+	 * @param params Statement parameters
+	 * @return returns <code>true</code> if a query in the SQL statement returns one or more rows and
+	 * <code>false</code> if the SQL returns an empty set.
+	 */
+	public boolean exists(String sql, boolean cacheable, Object... params) throws SQLiteException {
+		try (Stmt s = prepare(sql, cacheable)) {
+			return s.exists(params);
+		}
+	}
+
+	/**
 	 * Run multiple statements of SQL.
 	 * @param sql statements
 	 * @throws SQLiteException if current connection is closed or an error occured during SQL execution.
