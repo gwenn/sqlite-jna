@@ -87,11 +87,7 @@ public class SQLXMLFromRows implements SQLXML {
 				// TODO builder.setErrorHandler();
 				InputSource input = new InputSource(getReader());
 				return (T) new DOMSource(builder.parse(input));
-			} catch (ParserConfigurationException e) {
-				throw new SQLiteException(null, "Unable to decode xml data.", ErrCodes.WRAPPER_SPECIFIC, e);
-			} catch (SAXException e) {
-				throw new SQLiteException(null, "Unable to decode xml data.", ErrCodes.WRAPPER_SPECIFIC, e);
-			} catch (IOException e) {
+			} catch (ParserConfigurationException | SAXException | IOException e) {
 				throw new SQLiteException(null, "Unable to decode xml data.", ErrCodes.WRAPPER_SPECIFIC, e);
 			}
 		} else if (SAXSource.class.equals(sourceClass)) {

@@ -261,14 +261,8 @@ public final class Conn implements AutoCloseable {
 	 * @throws SQLiteException if no row is inserted or many rows are inserted.
 	 */
 	public long insert(String sql, boolean cacheable, Object... params) throws SQLiteException {
-		Stmt s = null;
-		try {
-			s = prepare(sql, cacheable);
+		try (Stmt s = prepare(sql, cacheable)) {
 			return s.insert(params);
-		} finally {
-			if (s!= null) {
-				s.closeNoCheck();
-			}
 		}
 	}
 
@@ -279,14 +273,8 @@ public final class Conn implements AutoCloseable {
 	 * @return the number of database rows that were changed or inserted or deleted.
 	 */
 	public int execDml(String sql, boolean cacheable, Object... params) throws SQLiteException {
-		Stmt s = null;
-		try {
-			s = prepare(sql, cacheable);
+		try (Stmt s = prepare(sql, cacheable)) {
 			return s.execDml(params);
-		} finally {
-			if (s!= null) {
-				s.closeNoCheck();
-			}
 		}
 	}
 
@@ -297,16 +285,10 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void exec(String sql) throws SQLiteException {
 		while (sql != null && !sql.isEmpty()) {
-			Stmt s = null;
-			try {
-				s = prepare(sql, false);
+			try (Stmt s = prepare(sql, false)) {
 				sql = s.getTail();
 				if (!s.isDumb()) { // this happens for a comment or white-space
 					s.exec();
-				}
-			} finally {
-				if (s != null) {
-					s.closeNoCheck();
 				}
 			}
 		}
@@ -676,17 +658,11 @@ public final class Conn implements AutoCloseable {
 	 * @see <a href="http://sqlite.org/pragma.html#pragma_encoding">pragma encoding</a>
 	 */
 	public String encoding(String dbName) throws SQLiteException {
-		Stmt s = null;
-		try {
-			s = prepare("PRAGMA " + qualify(dbName) + "encoding", false);
+		try (Stmt s = prepare("PRAGMA " + qualify(dbName) + "encoding", false)) {
 			if (!s.step(0)) {
 				throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
 			}
 			return s.getColumnText(0);
-		} finally {
-			if (s != null) {
-				s.closeNoCheck();
-			}
 		}
 	}
 
@@ -713,17 +689,11 @@ public final class Conn implements AutoCloseable {
 	}
 
 	boolean pragma(String dbName, String name) throws SQLiteException {
-		Stmt s = null;
-		try {
-			s = prepare("PRAGMA " + qualify(dbName) + name, false);
+		try (Stmt s = prepare("PRAGMA " + qualify(dbName) + name, false)) {
 			if (!s.step(0)) {
 				throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
 			}
 			return s.getColumnInt(0) == 1;
-		} finally {
-			if (s != null) {
-				s.closeNoCheck();
-			}
 		}
 	}
 	void pragma(String dbName, String name, boolean value) throws ConnException {
