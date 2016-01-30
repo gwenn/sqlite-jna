@@ -239,6 +239,57 @@ public final class Conn implements AutoCloseable {
 		return sqlite3_libversion_number();
 	}
 
+	public Stmt prepareAndBind(String sql, boolean cacheable, Object... params) throws SQLiteException {
+		Stmt s = null;
+		try {
+			s = prepare(sql, cacheable);
+			s.bind(params);
+			return s;
+		} catch (SQLiteException e) {
+			if (s!= null) {
+				s.closeNoCheck();
+			}
+			throw e;
+		}
+	}
+
+	/**
+	 * Execute an INSERT and return the ROWID.
+	 * @param sql INSERT statement
+	 * @param params SQL statement parameters
+	 * @return the rowid inserted.
+	 * @throws SQLiteException if no row is inserted or many rows are inserted.
+	 */
+	public long insert(String sql, boolean cacheable, Object... params) throws SQLiteException {
+		Stmt s = null;
+		try {
+			s = prepare(sql, cacheable);
+			return s.insert(params);
+		} finally {
+			if (s!= null) {
+				s.closeNoCheck();
+			}
+		}
+	}
+
+	/**
+	 * Execute a DML and return the number of rows impacted.
+	 * @param sql DML statement
+	 * @param params SQL statement parameters
+	 * @return the number of database rows that were changed or inserted or deleted.
+	 */
+	public int execDml(String sql, boolean cacheable, Object... params) throws SQLiteException {
+		Stmt s = null;
+		try {
+			s = prepare(sql, cacheable);
+			return s.execDml(params);
+		} finally {
+			if (s!= null) {
+				s.closeNoCheck();
+			}
+		}
+	}
+
 	/**
 	 * Run multiple statements of SQL.
 	 * @param sql statements
