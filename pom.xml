@@ -3,11 +3,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.sqlite</groupId>
-  <artifactId>sqlite-jna</artifactId>
+  <artifactId>sqlite-javacpp</artifactId>
   <packaging>jar</packaging>
   <version>0.1.0</version>
-  <name>SQLite JNA binding</name>
-  <description>JDBC Driver for SQLite using JNA</description>
+  <name>SQLite JavaCPP binding</name>
+  <description>JDBC Driver for SQLite using JavaCPP</description>
   <url>https://github.com/gwenn/sqlite-jna</url>
 
   <licenses>
@@ -38,13 +38,18 @@
     <sqlite.enable.column.metadata>true</sqlite.enable.column.metadata>
     <sqlite.omit.load.extension>false</sqlite.omit.load.extension>
     <sqlite.enable.stmt.scanstatus>false</sqlite.enable.stmt.scanstatus>
+    <javacpp.parser.skip>true</javacpp.parser.skip>
+    <javacpp.compiler.skip>false</javacpp.compiler.skip>
+    <javacpp.platform>macosx-x86_64</javacpp.platform>
+    <javacpp.platform.root></javacpp.platform.root>
+    <javacpp.platform.compiler></javacpp.platform.compiler>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>net.java.dev.jna</groupId>
-      <artifactId>jna</artifactId>
-      <version>4.2.1</version>
+      <groupId>org.bytedeco</groupId>
+      <artifactId>javacpp</artifactId>
+      <version>1.1</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -79,6 +84,54 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>org.bytedeco</groupId>
+        <artifactId>javacpp</artifactId>
+        <version>1.1</version>
+        <configuration>
+          <properties>${javacpp.platform}</properties>
+          <propertyKeysAndValues>
+            <property>
+              <name>platform.root</name>
+              <value>${javacpp.platform.root}</value>
+            </property>
+            <property>
+              <name>platform.compiler</name>
+              <value>${javacpp.platform.compiler}</value>
+            </property>
+          </propertyKeysAndValues>
+          <classPath>${project.build.outputDirectory}</classPath>
+          <includePath>/usr/include/</includePath>
+          <linkPath>/usr/lib/</linkPath>
+          <!--preloadPath>${basedir}/cppbuild/${javacpp.platform}/bin/</preloadPath-->
+        </configuration>
+        <executions>
+          <execution>
+            <id>generate-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+            <configuration>
+              <skip>${javacpp.parser.skip}</skip>
+              <outputDirectory>${project.build.sourceDirectory}</outputDirectory>
+              <!--classOrPackageName>org.bytedeco.javacpp.presets.*</classOrPackageName-->
+            </configuration>
+          </execution>
+          <execution>
+            <id>process-classes</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+            <configuration>
+              <skip>${javacpp.compiler.skip}</skip>
+              <classOrPackageName>org.sqlite.SQLite</classOrPackageName>
+              <copyLibs>true</copyLibs>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.1</version>
@@ -95,7 +148,6 @@
         <configuration>
           <disableXmlReport>true</disableXmlReport>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
-          <!--argLine>-Djna.library.path=/usr/local/opt/sqlite/lib</argLine-->
         </configuration>
       </plugin>
     </plugins>

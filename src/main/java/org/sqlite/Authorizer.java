@@ -1,7 +1,8 @@
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import org.bytedeco.javacpp.FunctionPointer;
+import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.Pointer;
 
 /**
  * Compile-time authorization callback
@@ -9,21 +10,22 @@ import com.sun.jna.Pointer;
  * @see Conn#setAuhtorizer(Authorizer, Pointer)
  * @see <a href="http://sqlite.org/c3ref/set_authorizer.html">sqlite3_set_authorizer</a>
  */
-public interface Authorizer extends Callback {
+public abstract class Authorizer extends FunctionPointer {
+	static { Loader.load(); }
 	/**
 	 * @param pArg       User data ({@link Conn#setAuhtorizer(Authorizer, Pointer)} second parameter)
 	 * @param actionCode {@link ActionCodes}.*
 	 * @return {@link #SQLITE_OK} or {@link #SQLITE_DENY} or {@link #SQLITE_IGNORE}
 	 */
-	int callback(Pointer pArg, int actionCode, String arg1, String arg2, String dbName, String triggerName);
+	public abstract int call(Pointer pArg, int actionCode, String arg1, String arg2, String dbName, String triggerName);
 
-	int SQLITE_OK = ErrCodes.SQLITE_OK;
+	public static final int SQLITE_OK = ErrCodes.SQLITE_OK;
 	/**
 	 * @see <a href="http://sqlite.org/c3ref/c_deny.html">Authorizer Return Codes</a>
 	 */
-	int SQLITE_DENY = 1;
+	public static final int SQLITE_DENY = 1;
 	/**
 	 * @see <a href="http://sqlite.org/c3ref/c_deny.html">Authorizer Return Codes</a>
 	 */
-	int SQLITE_IGNORE = 2;
+	public static final int SQLITE_IGNORE = 2;
 }

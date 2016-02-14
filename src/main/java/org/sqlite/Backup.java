@@ -15,10 +15,10 @@ import static org.sqlite.SQLite.*;
  * <a href="https://www.sqlite.org/c3ref/backup.html">sqlite3_backup</a>
  */
 public class Backup implements AutoCloseable {
-	private SQLite3Backup pBackup;
+	private sqlite3_backup pBackup;
 	private final Conn dst, src;
 
-	Backup(SQLite3Backup pBackup, Conn dst, Conn src) {
+	Backup(sqlite3_backup pBackup, Conn dst, Conn src) {
 		assert pBackup != null && dst != null && src != null;
 		this.pBackup = pBackup;
 		this.dst = dst;

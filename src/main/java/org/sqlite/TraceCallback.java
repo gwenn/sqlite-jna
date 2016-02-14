@@ -8,19 +8,21 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import org.bytedeco.javacpp.FunctionPointer;
+import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.Pointer;
 
 /**
  * Tracing callback.
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
  */
-public abstract class TraceCallback implements Callback {
+public abstract class TraceCallback extends FunctionPointer {
+	static { Loader.load(); }
 	/**
 	 * @param sql SQL statement text.
 	 */
 	@SuppressWarnings("unused")
-	public void callback(Pointer arg, String sql) {
+	public void call(Pointer arg, String sql) {
 		trace(sql);
 	}
 

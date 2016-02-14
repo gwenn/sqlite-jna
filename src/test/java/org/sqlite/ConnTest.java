@@ -1,9 +1,9 @@
 package org.sqlite;
 
-import com.sun.jna.Pointer;
+import org.bytedeco.javacpp.Pointer;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.sqlite.SQLite.SQLite3Context;
+import org.sqlite.SQLite.sqlite3_context;
 
 import static org.junit.Assert.*;
 import static org.sqlite.SQLite.*;
@@ -182,7 +182,7 @@ public class ConnTest {
 		final Conn c = open();
 		c.createScalarFunction("test", 0, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
 			@Override
-			protected void func(SQLite3Context pCtx, SQLite3Values args) {
+			protected void func(sqlite3_context pCtx, SQLite3Values args) {
 				assertNotNull(pCtx);
 				assertEquals(0, args.getCount());
 				pCtx.setResultNull();
@@ -198,7 +198,7 @@ public class ConnTest {
 		final Conn c = open();
 		c.createScalarFunction("test", 2, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
 			@Override
-			protected void func(SQLite3Context pCtx, SQLite3Values args) {
+			protected void func(sqlite3_context pCtx, SQLite3Values args) {
 				assertNotNull(pCtx);
 				assertEquals(2, args.getCount());
 				assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
@@ -218,13 +218,14 @@ public class ConnTest {
 	@Test
 	public void createAggregateFunction() throws SQLiteException {
 		final Conn c = open();
-		c.createAggregateFunction("my_sum", 1, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new AggregateStepCallback() {
+		fail("FIXME JavaCPP");
+		/*c.createAggregateFunction("my_sum", 1, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new AggregateStepCallback() {
 			@Override
 			protected int numberOfBytes() {
 				return Pointer.SIZE;
 			}
 			@Override
-			protected void step(SQLite3Context pCtx, Pointer aggrCtx, SQLite3Values args) {
+			protected void step(sqlite3_context pCtx, Pointer aggrCtx, SQLite3Values args) {
 				assertNotNull(pCtx);
 				assertNotNull(aggrCtx);
 				assertEquals(1, args.getCount());
@@ -233,7 +234,7 @@ public class ConnTest {
 			}
 		}, new AggregateFinalCallback() {
 			@Override
-			protected void finalStep(SQLite3Context pCtx, Pointer aggrCtx) {
+			protected void finalStep(sqlite3_context pCtx, Pointer aggrCtx) {
 				assertNotNull(pCtx);
 				if (aggrCtx == null) {
 					pCtx.setResultNull();
@@ -241,7 +242,7 @@ public class ConnTest {
 				}
 				pCtx.setResultLong(aggrCtx.getLong(0));
 			}
-		});
+		});*/
 
 		Stmt stmt = c.prepare("SELECT my_sum(i) FROM (SELECT 2 AS i WHERE 1 <> 1)", false);
 		assertTrue(stmt.step(0));
@@ -376,7 +377,7 @@ public class ConnTest {
 		final Conn conn = Conn.open(Conn.MEMORY, OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_FULLMUTEX, null);
 		conn.setAuhtorizer(new Authorizer() {
 			@Override
-			public int callback(Pointer pArg, int actionCode, String arg1, String arg2, String dbName, String triggerName) {
+			public int call(Pointer pArg, int actionCode, String arg1, String arg2, String dbName, String triggerName) {
 				//System.out.println("pArg = [" + pArg + "], actionCode = [" + actionCode + "], arg1 = [" + arg1 + "], arg2 = [" + arg2 + "], dbName = [" + dbName + "], triggerName = [" + triggerName + "]");
 				return Authorizer.SQLITE_OK;
 			}

@@ -8,9 +8,12 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
-import org.sqlite.SQLite.SQLite3Context;
+import org.bytedeco.javacpp.FunctionPointer;
+import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.PointerPointer;
+import org.bytedeco.javacpp.annotation.Cast;
+import org.sqlite.SQLite.sqlite3_context;
 import org.sqlite.SQLite.SQLite3Values;
 
 import static org.sqlite.SQLite.sqlite3_get_auxdata;
@@ -29,7 +32,8 @@ import static org.sqlite.SQLite.sqlite3_set_auxdata;
  * @see Conn#createScalarFunction(String, int, int, ScalarCallback)
  * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
  */
-public abstract class ScalarCallback implements Callback {
+public abstract class ScalarCallback extends FunctionPointer {
+	static { Loader.load(); }
 	//void (*)(sqlite3_context*,int,sqlite3_value**),
 	/**
 	 * @param pCtx <code>sqlite3_context*</code>
@@ -37,7 +41,7 @@ public abstract class ScalarCallback implements Callback {
 	 * @param args function arguments
 	 */
 	@SuppressWarnings("unused")
-	public void callback(SQLite3Context pCtx, int nArg, Pointer args) {
+	public void call(sqlite3_context pCtx, int nArg,@Cast("sqlite3_value**") PointerPointer args) {
 		func(pCtx, SQLite3Values.build(nArg, args));
 	}
 
@@ -45,18 +49,18 @@ public abstract class ScalarCallback implements Callback {
 	 * @param pCtx <code>sqlite3_context*</code>
 	 * @param args function arguments
 	 */
-	protected abstract void func(SQLite3Context pCtx, SQLite3Values args);
+	protected abstract void func(sqlite3_context pCtx, SQLite3Values args);
 
 	/**
 	 * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_set_auxdata</a>
 	 */
-	public void setAuxData(SQLite3Context pCtx, int n, Pointer auxData, Destructor free) {
+	public void setAuxData(sqlite3_context pCtx, int n, Pointer auxData, Destructor free) {
 		sqlite3_set_auxdata(pCtx, n, auxData, free);
 	}
 	/**
 	 * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_get_auxdata</a>
 	 */
-	public Pointer getAuxData(SQLite3Context pCtx, int n) {
+	public Pointer getAuxData(sqlite3_context pCtx, int n) {
 		return sqlite3_get_auxdata(pCtx, n);
 	}
 }

@@ -8,9 +8,9 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
+import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.IntPointer;
+import org.bytedeco.javacpp.Pointer;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -29,7 +29,7 @@ public final class Conn implements AutoCloseable {
 	/** If the filename is an empty string, then a private, temporary on-disk database will be created. */
 	public static final String TEMP_FILE = "";
 
-	private SQLite3 pDb;
+	private sqlite3 pDb;
 	private final boolean sharedCacheMode;
 	private TimeoutProgressCallback timeoutProgressCallback;
 
@@ -50,12 +50,11 @@ public final class Conn implements AutoCloseable {
 		if (!sqlite3_threadsafe()) {
 			throw new SQLiteException("sqlite library was not compiled for thread-safe operation", ErrCodes.WRAPPER_SPECIFIC);
 		}
-		final PointerByReference ppDb = new PointerByReference();
-		final int res = sqlite3_open_v2(filename, ppDb, flags, vfs);
-		final Pointer pDb = ppDb.getValue();
+		final sqlite3 pDb = new sqlite3();
+		final int res = sqlite3_open_v2(filename, pDb, flags, vfs);
 		if (res != SQLITE_OK) {
-			if (pDb != null) {
-				sqlite3_close(new SQLite3(pDb));
+			if (pDb.isNull()) {
+				sqlite3_close(new sqlite3(pDb));
 			}
 			throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
 		}
@@ -63,7 +62,7 @@ public final class Conn implements AutoCloseable {
 		final Map<String, String> queryParams = uri ? OpenQueryParameter.getQueryParams(filename) : Collections.<String, String>emptyMap();
 		// TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
 		final boolean sharedCacheMode = "shared".equals(queryParams.get("cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
-		final SQLite3 sqlite3 = pDb == null ? null: new SQLite3(pDb);
+		final sqlite3 sqlite3 = pDb.isNull() ? null: pDb;
 		final Conn conn = new Conn(sqlite3, sharedCacheMode);
 		if (uri && !queryParams.isEmpty()) {
 			for (OpenQueryParameter parameter : OpenQueryParameter.values()) {
@@ -93,7 +92,7 @@ public final class Conn implements AutoCloseable {
 		flush();
 
 		// Dangling statements
-		SQLite3Stmt stmt = sqlite3_next_stmt(pDb, null);
+		sqlite3_stmt stmt = sqlite3_next_stmt(pDb, null);
 		while (stmt != null) {
 			if (sqlite3_stmt_busy(stmt)) {
 				sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\"");
@@ -116,7 +115,7 @@ public final class Conn implements AutoCloseable {
 		}
 	}
 
-	private Conn(SQLite3 pDb, boolean sharedCacheMode) {
+	private Conn(sqlite3 pDb, boolean sharedCacheMode) {
 		assert pDb != null;
 		this.pDb = pDb;
 		this.sharedCacheMode = sharedCacheMode;
@@ -213,14 +212,13 @@ public final class Conn implements AutoCloseable {
 				return stmt;
 			}
 		}
-		final Pointer pSql = nativeString(sql);
-		final PointerByReference ppStmt = new PointerByReference();
-		final PointerByReference ppTail = new PointerByReference();
-		final int res = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail);
+		final BytePointer pSql = nativeString(sql);
+		sqlite3_stmt stmt = new sqlite3_stmt();
+		final BytePointer tail = new BytePointer();
+		final int res = sqlite3_prepare_v2(pDb, pSql, -1, stmt, tail);
 		check(res, "error while preparing statement '%s'", sql);
-		final Pointer pStmt = ppStmt.getValue();
-		final SQLite3Stmt stmt = pStmt == null ? null: new SQLite3Stmt(pStmt);
-		return new Stmt(this, stmt, ppTail.getValue(), cacheable);
+		stmt = stmt.isNull() ? null: stmt;
+		return new Stmt(this, stmt, tail, cacheable);
 	}
 
 	/**
@@ -228,7 +226,7 @@ public final class Conn implements AutoCloseable {
 	 * @see <a href="https://www.sqlite.org/c3ref/libversion.html">sqlite3_libversion</a>
 	 */
 	public static String libversion() {
-		return sqlite3_libversion();
+		return getString(sqlite3_libversion());
 	}
 
 	/**
@@ -329,10 +327,9 @@ public final class Conn implements AutoCloseable {
 	 */
 	public Blob open(String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
 		checkOpen();
-		final PointerByReference ppBlob = new PointerByReference();
-		final int res = sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob); // ko if pDb is null
-		final Pointer pBlob = ppBlob.getValue();
-		final SQLite3Blob blob = pBlob == null ? null : new SQLite3Blob(pBlob);
+		final sqlite3_blob pBlob = new sqlite3_blob();
+		final int res = sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, pBlob); // ko if pDb is null
+		final sqlite3_blob blob = pBlob.isNull() ? null : new sqlite3_blob(pBlob);
 		if (res != SQLITE_OK) {
 			sqlite3_blob_close(blob);
 			throw new SQLiteException(this, String.format("error while opening a blob to (db: '%s', table: '%s', col: '%s', row: %d)",
@@ -411,7 +408,7 @@ public final class Conn implements AutoCloseable {
 		if (pDb == null) {
 			return null;
 		}
-		return sqlite3_db_filename(pDb, "main"); // ko if pDb is null
+		return getString(sqlite3_db_filename(pDb, "main")); // ko if pDb is null
 	}
 
 	/**
@@ -419,7 +416,7 @@ public final class Conn implements AutoCloseable {
 	 * @see <a href="https://www.sqlite.org/c3ref/errcode.html">sqlite3_errmsg</a>
 	 */
 	public String getErrMsg() {
-		return sqlite3_errmsg(pDb); // ok if pDb is null => SQLITE_NOMEM
+		return getString(sqlite3_errmsg(pDb)); // ok if pDb is null => SQLITE_NOMEM
 	}
 
 	/**
@@ -453,7 +450,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public boolean enableForeignKeys(boolean onoff) throws ConnException {
 		checkOpen();
-		final IntByReference pOk = new IntByReference();
+		final IntPointer pOk = new IntPointer();
 		check(sqlite3_db_config(pDb, 1002, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
 		return toBool(pOk);
 	}
@@ -462,7 +459,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public boolean areForeignKeysEnabled() throws ConnException {
 		checkOpen();
-		final IntByReference pOk = new IntByReference();
+		final IntPointer pOk = new IntPointer();
 		check(sqlite3_db_config(pDb, 1002, -1, pOk), "error while querying db config on '%s'", getFilename());
 		return toBool(pOk);
 	}
@@ -471,7 +468,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public boolean enableTriggers(boolean onoff) throws ConnException {
 		checkOpen();
-		final IntByReference pOk = new IntByReference();
+		final IntPointer pOk = new IntPointer();
 		check(sqlite3_db_config(pDb, 1003, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
 		return toBool(pOk);
 	}
@@ -480,7 +477,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public boolean areTriggersEnabled() throws ConnException {
 		checkOpen();
-		final IntByReference pOk = new IntByReference();
+		final IntPointer pOk = new IntPointer();
 		check(sqlite3_db_config(pDb, 1003, -1, pOk), "error while querying db config on '%s'", getFilename());
 		return toBool(pOk);
 	}
@@ -502,11 +499,11 @@ public final class Conn implements AutoCloseable {
 	 */
 	public String loadExtension(String file, String proc) throws ConnException {
 		checkOpen();
-		final PointerByReference pErrMsg = new PointerByReference();
+		final BytePointer pErrMsg = new BytePointer();
 		final int res = sqlite3_load_extension(pDb, file, proc, pErrMsg);
 		if (res != SQLITE_OK) {
-			final String errMsg = pErrMsg.getValue().getString(0L, UTF_8_ECONDING);
-			sqlite3_free(pErrMsg.getValue());
+			final String errMsg = getString(pErrMsg);
+			sqlite3_free(pErrMsg);
 			return errMsg;
 		}
 		return null;
@@ -538,9 +535,9 @@ public final class Conn implements AutoCloseable {
 
 	boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) throws ConnException {
 		checkOpen();
-		final IntByReference pNotNull = new IntByReference();
-		final IntByReference pPrimaryKey = new IntByReference();
-		final IntByReference pAutoinc = new IntByReference();
+		final IntPointer pNotNull = new IntPointer();
+		final IntPointer pPrimaryKey = new IntPointer();
+		final IntPointer pAutoinc = new IntPointer();
 
 		check(sqlite3_table_column_metadata(pDb,
 				dbName,
@@ -552,8 +549,8 @@ public final class Conn implements AutoCloseable {
 		return new boolean[]{toBool(pNotNull), toBool(pPrimaryKey), toBool(pAutoinc)};
 	}
 
-	private static boolean toBool(IntByReference p) {
-		return p.getValue() != 0;
+	private static boolean toBool(IntPointer p) {
+		return p.get() != 0;
 	}
 
 	/**
@@ -569,7 +566,7 @@ public final class Conn implements AutoCloseable {
 	public static Backup open(Conn dst, String dstName, Conn src, String srcName) throws ConnException {
 		dst.checkOpen();
 		src.checkOpen();
-		final SQLite3Backup pBackup = sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
+		final sqlite3_backup pBackup = sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
 		if (pBackup == null) {
 			throw new ConnException(dst, "backup init failed", dst.getErrCode());
 		}

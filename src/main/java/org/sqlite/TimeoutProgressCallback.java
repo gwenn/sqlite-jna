@@ -8,21 +8,21 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
+import org.bytedeco.javacpp.Pointer;
 import org.sqlite.SQLite.ProgressCallback;
 
 /**
  * Query Progress Callback.
  * @see <a href="http://sqlite.org/c3ref/progress_handler.html">sqlite3_progress_handler</a>
  */
-public class TimeoutProgressCallback implements ProgressCallback {
+public class TimeoutProgressCallback extends ProgressCallback {
 	private long expiration;
 
 	/**
 	 * @return <code>true</code> when the operation times out.
 	 */
 	@Override
-	public boolean callback(Pointer arg) {
+	public boolean call(Pointer arg) {
 		if (expiration == 0 || System.currentTimeMillis() <= expiration) {
 			return false;
 		}

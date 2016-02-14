@@ -8,20 +8,23 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import org.bytedeco.javacpp.FunctionPointer;
+import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.annotation.Cast;
 
 /**
  * Profiling callback.
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
  */
-public abstract class ProfileCallback implements Callback {
+public abstract class ProfileCallback extends FunctionPointer {
+	static { Loader.load(); }
 	/**
 	 * @param sql SQL statement text.
 	 * @param ns time in nanoseconds
 	 */
 	@SuppressWarnings("unused")
-	public void callback(Pointer arg, String sql, long ns) {
+	public void call(Pointer arg, String sql,@Cast("sqlite3_uint64") long ns) {
 		profile(sql, ns);
 	}
 

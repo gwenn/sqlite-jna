@@ -1,8 +1,11 @@
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import org.bytedeco.javacpp.FunctionPointer;
+import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.Pointer;
 
-public interface Destructor extends Callback {
-	void callback(Pointer p);
+public abstract class Destructor extends FunctionPointer {
+	static { Loader.load(); }
+	@SuppressWarnings("unused")
+	public abstract void call(Pointer p);
 }

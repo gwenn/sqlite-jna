@@ -8,26 +8,26 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Library;
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.PointerType;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
+import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.FunctionPointer;
+import org.bytedeco.javacpp.IntPointer;
+import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.PointerPointer;
+import org.bytedeco.javacpp.annotation.ByPtrPtr;
+import org.bytedeco.javacpp.annotation.Cast;
+import org.bytedeco.javacpp.annotation.Const;
+import org.bytedeco.javacpp.annotation.Opaque;
+import org.bytedeco.javacpp.annotation.Platform;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
-public final class SQLite implements Library {
-	private static final String JNA_LIBRARY_NAME = "sqlite3";
-
-	// public static final NativeLibrary JNA_NATIVE_LIB = NativeLibrary.getInstance(SQLite.JNA_LIBRARY_NAME);
-	static {
-		Native.register(JNA_LIBRARY_NAME);
-	}
+@Platform(cinclude = "sqlite3.h", link = "sqlite3")
+public final class SQLite {
+	static { Loader.load(); }
 
 	public static final int SQLITE_OK = 0;
 
@@ -36,11 +36,11 @@ public final class SQLite implements Library {
 
 	static final int SQLITE_TRANSIENT = -1;
 
-	static native String sqlite3_libversion(); // no copy needed
+	static native @Cast("const char*") BytePointer sqlite3_libversion(); // no copy needed
 	static native int sqlite3_libversion_number();
 	static native boolean sqlite3_threadsafe();
 	static native boolean sqlite3_compileoption_used(String optName);
-	static native String sqlite3_compileoption_get(int n);
+	static native @Cast("const char*") BytePointer sqlite3_compileoption_get(int n);
 
 	public static final int SQLITE_CONFIG_SINGLETHREAD = 1,
 			SQLITE_CONFIG_MULTITHREAD = 2, SQLITE_CONFIG_SERIALIZED = 3,
@@ -57,76 +57,76 @@ public final class SQLite implements Library {
 	// Applications can use the sqlite3_log(E,F,..) API to send new messages to the log, if desired, but this is discouraged.
 	public static native void sqlite3_log(int iErrCode, String msg);
 
-	static native String sqlite3_errmsg(SQLite3 pDb); // copy needed: the error string might be overwritten or deallocated by subsequent calls to other SQLite interface functions.
-	static native int sqlite3_errcode(SQLite3 pDb);
+	static native @Cast("const char*") BytePointer sqlite3_errmsg(sqlite3 pDb); // copy needed: the error string might be overwritten or deallocated by subsequent calls to other SQLite interface functions.
+	static native int sqlite3_errcode(sqlite3 pDb);
 
-	static native int sqlite3_extended_result_codes(SQLite3 pDb, boolean onoff);
-	static native int sqlite3_extended_errcode(SQLite3 pDb);
+	static native int sqlite3_extended_result_codes(sqlite3 pDb, boolean onoff);
+	static native int sqlite3_extended_errcode(sqlite3 pDb);
 
 	static native int sqlite3_initialize();
 	static native int sqlite3_shutdown();
 
-	static native int sqlite3_open_v2(String filename, PointerByReference ppDb, int flags, String vfs); // no copy needed
-	static native int sqlite3_close(SQLite3 pDb);
-	static native int sqlite3_close_v2(SQLite3 pDb); // since 3.7.14
-	static native void sqlite3_interrupt(SQLite3 pDb);
+	static native int sqlite3_open_v2(String filename, @ByPtrPtr sqlite3 ppDb, int flags, String vfs); // no copy needed
+	static native int sqlite3_close(sqlite3 pDb);
+	static native int sqlite3_close_v2(sqlite3 pDb); // since 3.7.14
+	static native void sqlite3_interrupt(sqlite3 pDb);
 
-	static native int sqlite3_busy_handler(SQLite3 pDb, BusyHandler bh, Pointer pArg);
-	static native int sqlite3_busy_timeout(SQLite3 pDb, int ms);
-	static native int sqlite3_db_status(SQLite3 pDb, int op, IntByReference pCur, IntByReference pHiwtr, boolean resetFlg);
-	static native int sqlite3_db_config(SQLite3 pDb, int op, int v, IntByReference pOk);
+	static native int sqlite3_busy_handler(sqlite3 pDb, BusyHandler bh, Pointer pArg);
+	static native int sqlite3_busy_timeout(sqlite3 pDb, int ms);
+	static native int sqlite3_db_status(sqlite3 pDb, int op, IntPointer pCur, IntPointer pHiwtr, boolean resetFlg);
+	static native int sqlite3_db_config(sqlite3 pDb, int op, int v, IntPointer pOk);
 	//#if mvn.project.property.sqlite.omit.load.extension == "true"
 	static int sqlite3_enable_load_extension(Object pDb, boolean onoff) {
 		throw new UnsupportedOperationException("SQLITE_OMIT_LOAD_EXTENSION activated");
 	}
-	static int sqlite3_load_extension(Object pDb, String file, String proc, PointerByReference errMsg) {
+	static int sqlite3_load_extension(Object pDb, String file, String proc, @Cast("char**") @ByPtrPtr BytePointer errMsg) {
 		throw new UnsupportedOperationException("SQLITE_OMIT_LOAD_EXTENSION activated");
 	}
 	//#else
-	static native int sqlite3_enable_load_extension(SQLite3 pDb, boolean onoff);
-	static native int sqlite3_load_extension(SQLite3 pDb, String file, String proc, PointerByReference errMsg);
+	static native int sqlite3_enable_load_extension(sqlite3 pDb, boolean onoff);
+	static native int sqlite3_load_extension(sqlite3 pDb, String file, String proc, @Cast("char**") @ByPtrPtr BytePointer errMsg);
 	//#endif
 	public static final int SQLITE_LIMIT_LENGTH = 0, SQLITE_LIMIT_SQL_LENGTH = 1, SQLITE_LIMIT_COLUMN = 2,
 			SQLITE_LIMIT_EXPR_DEPTH = 3, SQLITE_LIMIT_COMPOUND_SELECT = 4, SQLITE_LIMIT_VDBE_OP = 5,
 			SQLITE_LIMIT_FUNCTION_ARG = 6, SQLITE_LIMIT_ATTACHED = 7, SQLITE_LIMIT_LIKE_PATTERN_LENGTH = 8,
 			SQLITE_LIMIT_VARIABLE_NUMBER = 9, SQLITE_LIMIT_TRIGGER_DEPTH = 10;
-	static native int sqlite3_limit(SQLite3 pDb, int id, int newVal);
-	static native boolean sqlite3_get_autocommit(SQLite3 pDb);
+	static native int sqlite3_limit(sqlite3 pDb, int id, int newVal);
+	static native boolean sqlite3_get_autocommit(sqlite3 pDb);
 
-	static native int sqlite3_changes(SQLite3 pDb);
-	static native int sqlite3_total_changes(SQLite3 pDb);
-	static native long sqlite3_last_insert_rowid(SQLite3 pDb);
+	static native int sqlite3_changes(sqlite3 pDb);
+	static native int sqlite3_total_changes(sqlite3 pDb);
+	static native @Cast("sqlite3_int64") long sqlite3_last_insert_rowid(sqlite3 pDb);
 
-	static native String sqlite3_db_filename(SQLite3 pDb, String dbName); // no copy needed
-	static native int sqlite3_db_readonly(SQLite3 pDb, String dbName); // no copy needed
+	static native @Cast("const char*") BytePointer sqlite3_db_filename(sqlite3 pDb, String dbName); // no copy needed
+	static native int sqlite3_db_readonly(sqlite3 pDb, String dbName); // no copy needed
 
-	static native SQLite3Stmt sqlite3_next_stmt(SQLite3 pDb, SQLite3Stmt pStmt);
+	static native sqlite3_stmt sqlite3_next_stmt(sqlite3 pDb, sqlite3_stmt pStmt);
 
-	static native int sqlite3_table_column_metadata(SQLite3 pDb, String dbName, String tableName, String columnName,
-			PointerByReference pzDataType, PointerByReference pzCollSeq,
-			IntByReference pNotNull, IntByReference pPrimaryKey, IntByReference pAutoinc); // no copy needed
+	static native int sqlite3_table_column_metadata(sqlite3 pDb, String dbName, String tableName, String columnName,
+																									@Cast("char const**") @ByPtrPtr BytePointer pzDataType, @Cast("char const**") @ByPtrPtr BytePointer pzCollSeq,
+																									IntPointer pNotNull, IntPointer pPrimaryKey, IntPointer pAutoinc); // no copy needed
 
-	static native int sqlite3_exec(SQLite3 pDb, String cmd, Callback c, Pointer udp, PointerByReference errMsg);
+	static native int sqlite3_exec(sqlite3 pDb, String cmd, /*Function*/Pointer c, Pointer udp, @Cast("char**") @ByPtrPtr BytePointer errMsg);
 
-	static native int sqlite3_prepare_v2(SQLite3 pDb, Pointer sql, int nByte, PointerByReference ppStmt,
-			PointerByReference pTail);
-	static native String sqlite3_sql(SQLite3Stmt pStmt); // no copy needed
-	static native int sqlite3_finalize(SQLite3Stmt pStmt);
-	static native int sqlite3_step(SQLite3Stmt pStmt);
-	static native int sqlite3_reset(SQLite3Stmt pStmt);
-	static native int sqlite3_clear_bindings(SQLite3Stmt pStmt);
-	static native boolean sqlite3_stmt_busy(SQLite3Stmt pStmt);
-	static native boolean sqlite3_stmt_readonly(SQLite3Stmt pStmt);
+	static native int sqlite3_prepare_v2(sqlite3 pDb, @Cast("const char*") BytePointer sql, int nByte, @ByPtrPtr sqlite3_stmt ppStmt,
+																			 @Cast("const char**") @ByPtrPtr BytePointer pTail);
+	static native @Cast("const char*") BytePointer sqlite3_sql(sqlite3_stmt pStmt); // no copy needed
+	static native int sqlite3_finalize(sqlite3_stmt pStmt);
+	static native int sqlite3_step(sqlite3_stmt pStmt);
+	static native int sqlite3_reset(sqlite3_stmt pStmt);
+	static native int sqlite3_clear_bindings(sqlite3_stmt pStmt);
+	static native boolean sqlite3_stmt_busy(sqlite3_stmt pStmt);
+	static native boolean sqlite3_stmt_readonly(sqlite3_stmt pStmt);
 
-	static native int sqlite3_column_count(SQLite3Stmt pStmt);
-	static native int sqlite3_data_count(SQLite3Stmt pStmt);
-	static native int sqlite3_column_type(SQLite3Stmt pStmt, int iCol);
-	static native String sqlite3_column_name(SQLite3Stmt pStmt, int iCol); // copy needed: The returned string pointer is valid until either the prepared statement is destroyed by sqlite3_finalize() or until the statement is automatically reprepared by the first call to sqlite3_step() for a particular run or until the next call to sqlite3_column_name() or sqlite3_column_name16() on the same column.
+	static native int sqlite3_column_count(sqlite3_stmt pStmt);
+	static native int sqlite3_data_count(sqlite3_stmt pStmt);
+	static native int sqlite3_column_type(sqlite3_stmt pStmt, int iCol);
+	static native @Cast("const char*") BytePointer sqlite3_column_name(sqlite3_stmt pStmt, int iCol); // copy needed: The returned string pointer is valid until either the prepared statement is destroyed by sqlite3_finalize() or until the statement is automatically reprepared by the first call to sqlite3_step() for a particular run or until the next call to sqlite3_column_name() or sqlite3_column_name16() on the same column.
 	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
-	static native String sqlite3_column_origin_name(SQLite3Stmt pStmt, int iCol); // copy needed
-	static native String sqlite3_column_table_name(SQLite3Stmt pStmt, int iCol); // copy needed
-	static native String sqlite3_column_database_name(SQLite3Stmt pStmt, int iCol); // copy needed
-	static native String sqlite3_column_decltype(SQLite3Stmt pStmt, int iCol); // copy needed
+	static native @Cast("const char*") BytePointer sqlite3_column_origin_name(sqlite3_stmt pStmt, int iCol); // copy needed
+	static native @Cast("const char*") BytePointer sqlite3_column_table_name(sqlite3_stmt pStmt, int iCol); // copy needed
+	static native @Cast("const char*") BytePointer sqlite3_column_database_name(sqlite3_stmt pStmt, int iCol); // copy needed
+	static native @Cast("const char*") BytePointer sqlite3_column_decltype(sqlite3_stmt pStmt, int iCol); // copy needed
 	//#else
 	static String sqlite3_column_origin_name(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
@@ -142,59 +142,59 @@ public final class SQLite implements Library {
 	}
 	//#endif
 
-	static native Pointer sqlite3_column_blob(SQLite3Stmt pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
-	static native int sqlite3_column_bytes(SQLite3Stmt pStmt, int iCol);
-	static native double sqlite3_column_double(SQLite3Stmt pStmt, int iCol);
-	static native int sqlite3_column_int(SQLite3Stmt pStmt, int iCol);
-	static native long sqlite3_column_int64(SQLite3Stmt pStmt, int iCol);
-	static native String sqlite3_column_text(SQLite3Stmt pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
+	static native @Const Pointer sqlite3_column_blob(sqlite3_stmt pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
+	static native int sqlite3_column_bytes(sqlite3_stmt pStmt, int iCol);
+	static native double sqlite3_column_double(sqlite3_stmt pStmt, int iCol);
+	static native int sqlite3_column_int(sqlite3_stmt pStmt, int iCol);
+	static native @Cast("sqlite3_int64") long sqlite3_column_int64(sqlite3_stmt pStmt, int iCol);
+	static native @Cast("const unsigned char*") BytePointer sqlite3_column_text(sqlite3_stmt pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
 	//const void *sqlite3_column_text16(SQLite3Stmt pStmt, int iCol);
 	//sqlite3_value *sqlite3_column_value(SQLite3Stmt pStmt, int iCol);
 
-	static native int sqlite3_bind_parameter_count(SQLite3Stmt pStmt);
-	static native int sqlite3_bind_parameter_index(SQLite3Stmt pStmt, String name); // no copy needed
-	static native String sqlite3_bind_parameter_name(SQLite3Stmt pStmt, int i); // copy needed
+	static native int sqlite3_bind_parameter_count(sqlite3_stmt pStmt);
+	static native int sqlite3_bind_parameter_index(sqlite3_stmt pStmt, String name); // no copy needed
+	static native @Cast("const char*") BytePointer sqlite3_bind_parameter_name(sqlite3_stmt pStmt, int i); // copy needed
 
-	static native int sqlite3_bind_blob(SQLite3Stmt pStmt, int i, byte[] value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
-	static native int sqlite3_bind_double(SQLite3Stmt pStmt, int i, double value);
-	static native int sqlite3_bind_int(SQLite3Stmt pStmt, int i, int value);
-	static native int sqlite3_bind_int64(SQLite3Stmt pStmt, int i, long value);
-	static native int sqlite3_bind_null(SQLite3Stmt pStmt, int i);
-	static native int sqlite3_bind_text(SQLite3Stmt pStmt, int i, String value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	static native int sqlite3_bind_blob(sqlite3_stmt pStmt, int i, byte[] value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	static native int sqlite3_bind_double(sqlite3_stmt pStmt, int i, double value);
+	static native int sqlite3_bind_int(sqlite3_stmt pStmt, int i, int value);
+	static native int sqlite3_bind_int64(sqlite3_stmt pStmt, int i, @Cast("sqlite3_int64") long value);
+	static native int sqlite3_bind_null(sqlite3_stmt pStmt, int i);
+	static native int sqlite3_bind_text(sqlite3_stmt pStmt, int i, String value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
 	//static native int sqlite3_bind_text16(SQLite3Stmt pStmt, int i, const void*, int, void(*)(void*));
 	//static native int sqlite3_bind_value(SQLite3Stmt pStmt, int i, const sqlite3_value*);
-	static native int sqlite3_bind_zeroblob(SQLite3Stmt pStmt, int i, int n);
-	static native int sqlite3_stmt_status(SQLite3Stmt pStmt, int op, boolean reset);
+	static native int sqlite3_bind_zeroblob(sqlite3_stmt pStmt, int i, int n);
+	static native int sqlite3_stmt_status(sqlite3_stmt pStmt, int op, boolean reset);
 	//#if mvn.project.property.sqlite.enable.stmt.scanstatus == "true"
-	static native int sqlite3_stmt_scanstatus(SQLite3Stmt pStmt, int idx, int iScanStatusOp, PointerByReference pOut);
-	static native void sqlite3_stmt_scanstatus_reset(SQLite3Stmt pStmt);
+	static native int sqlite3_stmt_scanstatus(sqlite3_stmt pStmt, int idx, int iScanStatusOp, Pointer pOut);
+	static native void sqlite3_stmt_scanstatus_reset(sqlite3_stmt pStmt);
 	//#endif
 
 	static native void sqlite3_free(Pointer p);
 
-	static native int sqlite3_blob_open(SQLite3 pDb, String dbName, String tableName, String columnName,
-			long iRow, boolean flags, PointerByReference ppBlob); // no copy needed
-	static native int sqlite3_blob_reopen(SQLite3Blob pBlob, long iRow);
-	static native int sqlite3_blob_bytes(SQLite3Blob pBlob);
-	static native int sqlite3_blob_read(SQLite3Blob pBlob, ByteBuffer z, int n, int iOffset);
-	static native int sqlite3_blob_write(SQLite3Blob pBlob, ByteBuffer z, int n, int iOffset);
-	static native int sqlite3_blob_close(SQLite3Blob pBlob);
+	static native int sqlite3_blob_open(sqlite3 pDb, String dbName, String tableName, String columnName,
+																			@Cast("sqlite3_int64") long iRow, boolean flags, @ByPtrPtr sqlite3_blob ppBlob); // no copy needed
+	static native int sqlite3_blob_reopen(sqlite3_blob pBlob, @Cast("sqlite3_int64") long iRow);
+	static native int sqlite3_blob_bytes(sqlite3_blob pBlob);
+	static native int sqlite3_blob_read(sqlite3_blob pBlob, ByteBuffer z, int n, int iOffset);
+	static native int sqlite3_blob_write(sqlite3_blob pBlob, ByteBuffer z, int n, int iOffset);
+	static native int sqlite3_blob_close(sqlite3_blob pBlob);
 
-	static native SQLite3Backup sqlite3_backup_init(SQLite3 pDst, String dstName, SQLite3 pSrc, String srcName);
-	static native int sqlite3_backup_step(SQLite3Backup pBackup, int nPage);
-	static native int sqlite3_backup_remaining(SQLite3Backup pBackup);
-	static native int sqlite3_backup_pagecount(SQLite3Backup pBackup);
-	static native int sqlite3_backup_finish(SQLite3Backup pBackup);
+	static native sqlite3_backup sqlite3_backup_init(sqlite3 pDst, String dstName, sqlite3 pSrc, String srcName);
+	static native int sqlite3_backup_step(sqlite3_backup pBackup, int nPage);
+	static native int sqlite3_backup_remaining(sqlite3_backup pBackup);
+	static native int sqlite3_backup_pagecount(sqlite3_backup pBackup);
+	static native int sqlite3_backup_finish(sqlite3_backup pBackup);
 
 	// As there is only one ProgressCallback by connection, and it is used to implement query timeout,
 	// the method visibility is restricted.
-	static native void sqlite3_progress_handler(SQLite3 pDb, int nOps, ProgressCallback xProgress, Pointer pArg);
-	static native void sqlite3_trace(SQLite3 pDb, TraceCallback xTrace, Pointer pArg);
-	static native void sqlite3_profile(SQLite3 pDb, ProfileCallback xProfile, Pointer pArg);
+	static native void sqlite3_progress_handler(sqlite3 pDb, int nOps, ProgressCallback xProgress, Pointer pArg);
+	static native void sqlite3_trace(sqlite3 pDb, TraceCallback xTrace, Pointer pArg);
+	static native void sqlite3_profile(sqlite3 pDb, ProfileCallback xProfile, Pointer pArg);
 
 	// TODO sqlite3_commit_hook, sqlite3_rollback_hook
-	static native Pointer sqlite3_update_hook(SQLite3 pDb, UpdateHook xUpdate, Pointer pArg);
-	static native int sqlite3_set_authorizer(SQLite3 pDb, Authorizer authorizer, Pointer pUserData);
+	static native Pointer sqlite3_update_hook(sqlite3 pDb, UpdateHook xUpdate, Pointer pArg);
+	static native int sqlite3_set_authorizer(sqlite3 pDb, Authorizer authorizer, Pointer pUserData);
 
 	/*
 	void (*)(sqlite3_context*,int,sqlite3_value**),
@@ -203,46 +203,57 @@ public final class SQLite implements Library {
 	void(*)(void*)
 	*/
 	// eTextRep: SQLITE_UTF8 => 1, ...
-	static native int sqlite3_create_function_v2(SQLite3 pDb, String functionName, int nArg, int eTextRep,
-			Pointer pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, Destructor xDestroy);
+	static native int sqlite3_create_function_v2(sqlite3 pDb, String functionName, int nArg, int eTextRep,
+																							 Pointer pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, Destructor xDestroy);
 
-	static native void sqlite3_result_null(SQLite3Context pCtx);
-	static native void sqlite3_result_int(SQLite3Context pCtx, int i);
-	static native void sqlite3_result_double(SQLite3Context pCtx, double d);
-	static native void sqlite3_result_text(SQLite3Context pCtx, String text, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
-	static native void sqlite3_result_blob(SQLite3Context pCtx, byte[] blob, int n, long xDel);
-	static native void sqlite3_result_int64(SQLite3Context pCtx, long l);
-	static native void sqlite3_result_zeroblob(SQLite3Context pCtx, int n);
+	static native void sqlite3_result_null(sqlite3_context pCtx);
+	static native void sqlite3_result_int(sqlite3_context pCtx, int i);
+	static native void sqlite3_result_double(sqlite3_context pCtx, double d);
+	static native void sqlite3_result_text(sqlite3_context pCtx, String text, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	static native void sqlite3_result_blob(sqlite3_context pCtx, byte[] blob, int n, long xDel);
+	static native void sqlite3_result_int64(sqlite3_context pCtx, @Cast("sqlite3_int64") long l);
+	static native void sqlite3_result_zeroblob(sqlite3_context pCtx, int n);
 
-	static native void sqlite3_result_error(SQLite3Context pCtx, String err, int length);
-	static native void sqlite3_result_error_code(SQLite3Context pCtx, int errCode);
-	static native void sqlite3_result_error_nomem(SQLite3Context pCtx);
-	static native void sqlite3_result_error_toobig(SQLite3Context pCtx);
-	static native void sqlite3_result_subtype(SQLite3Context pCtx, /*unsigned*/ int subtype);
+	static native void sqlite3_result_error(sqlite3_context pCtx, String err, int length);
+	static native void sqlite3_result_error_code(sqlite3_context pCtx, int errCode);
+	static native void sqlite3_result_error_nomem(sqlite3_context pCtx);
+	static native void sqlite3_result_error_toobig(sqlite3_context pCtx);
+	static native void sqlite3_result_subtype(sqlite3_context pCtx, /*unsigned*/ int subtype);
 
-	static native Pointer sqlite3_value_blob(Pointer pValue);
+	static native @Const Pointer sqlite3_value_blob(Pointer pValue);
 	static native int sqlite3_value_bytes(Pointer pValue);
 	static native double sqlite3_value_double(Pointer pValue);
 	static native int sqlite3_value_int(Pointer pValue);
-	static native long sqlite3_value_int64(Pointer pValue);
-	static native String sqlite3_value_text(Pointer pValue);
+	static native @Cast("sqlite3_int64") long sqlite3_value_int64(Pointer pValue);
+	static native @Cast("const unsigned char*") BytePointer sqlite3_value_text(Pointer pValue);
 	static native int sqlite3_value_type(Pointer pValue);
 	static native int sqlite3_value_numeric_type(Pointer pValue);
 
-	static native Pointer sqlite3_get_auxdata(SQLite3Context pCtx, int n);
-	static native void sqlite3_set_auxdata(SQLite3Context pCtx, int n, Pointer p, Destructor free);
-	static native Pointer sqlite3_user_data(SQLite3Context pCtx);
-	static native Pointer sqlite3_aggregate_context(SQLite3Context pCtx, int nBytes);
-	static native SQLite3 sqlite3_context_db_handle(SQLite3Context pCtx);
+	static native Pointer sqlite3_get_auxdata(sqlite3_context pCtx, int n);
+	static native void sqlite3_set_auxdata(sqlite3_context pCtx, int n, Pointer p, Destructor free);
+	static native Pointer sqlite3_user_data(sqlite3_context pCtx);
+	static native Pointer sqlite3_aggregate_context(sqlite3_context pCtx, int nBytes);
+	static native sqlite3 sqlite3_context_db_handle(sqlite3_context pCtx);
 
 	public static final Charset UTF_8 = Charset.forName("UTF-8");
 	public static final String UTF_8_ECONDING = UTF_8.name();
-	static Pointer nativeString(String sql) {
-		final byte[] data = sql.getBytes(UTF_8);
-		final Pointer pointer = new Memory(data.length + 1);
-		pointer.write(0L, data, 0, data.length);
-		pointer.setByte(data.length, (byte) 0);
-		return pointer;
+	static BytePointer nativeString(String sql) {
+		try {
+			return new BytePointer().putString(sql, UTF_8_ECONDING);
+		} catch (UnsupportedEncodingException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+	static String getString(BytePointer ptr) {
+		if (ptr == null || ptr.isNull()) {
+			return null;
+		} else {
+			try {
+				return ptr.getString(UTF_8_ECONDING);
+			} catch (UnsupportedEncodingException e) {
+				throw new IllegalStateException(e);
+			}
+		}
 	}
 
 	// http://sqlite.org/datatype3.html
@@ -296,14 +307,14 @@ public final class SQLite implements Library {
 		return '"' + escapeIdentifier(dbName) + '"' + '.'; // surround identifier with quote
 	}
 
-	public interface LogCallback extends Callback {
+	public static abstract class LogCallback extends FunctionPointer {
 		@SuppressWarnings("unused")
-		void callback(Pointer udp, int err, String msg);
+		public abstract void call(Pointer udp, int err, String msg);
 	}
 
 	private static final LogCallback LOG_CALLBACK = new LogCallback() {
 		@Override
-		public void callback(Pointer udp, int err, String msg) {
+		public void call(Pointer udp, int err, String msg) {
 			System.out.printf("%d: %s%n", err, msg);
 		}
 	};
@@ -322,23 +333,24 @@ public final class SQLite implements Library {
 	 * Query Progress Callback.
 	 * @see <a href="http://sqlite.org/c3ref/progress_handler.html">sqlite3_progress_handler</a>
 	 */
-	public interface ProgressCallback extends Callback {
+	public static abstract class ProgressCallback extends FunctionPointer {
 		/**
 		 * @param arg
 		 * @return <code>true</code> to interrupt
 		 */
 		@SuppressWarnings("unused")
-		boolean callback(Pointer arg);
+		public abstract boolean call(Pointer arg);
 	}
 
 	/**
 	 * Database connection handle
 	 * @see <a href="http://sqlite.org/c3ref/sqlite3.html">sqlite3</a>
 	 */
-	public static class SQLite3 extends PointerType {
-		public SQLite3() {
+	@Opaque
+	public static class sqlite3 extends Pointer {
+		public sqlite3() {
 		}
-		public SQLite3(Pointer p) {
+		public sqlite3(Pointer p) {
 			super(p);
 		}
 	}
@@ -347,10 +359,11 @@ public final class SQLite implements Library {
 	 * Prepared statement object
 	 * @see <a href="http://sqlite.org/c3ref/stmt.html">sqlite3_stmt</a>
 	 */
-	public static class SQLite3Stmt extends PointerType {
-		public SQLite3Stmt() {
+	@Opaque
+	public static class sqlite3_stmt extends Pointer {
+		public sqlite3_stmt() {
 		}
-		public SQLite3Stmt(Pointer p) {
+		public sqlite3_stmt(Pointer p) {
 			super(p);
 		}
 	}
@@ -359,10 +372,11 @@ public final class SQLite implements Library {
 	 * A handle to an open BLOB
 	 * @see <a href="http://sqlite.org/c3ref/blob.html">sqlite3_blob</a>
 	 */
-	public static class SQLite3Blob extends PointerType {
-		public SQLite3Blob() {
+	@Opaque
+	public static class sqlite3_blob extends Pointer {
+		public sqlite3_blob() {
 		}
-		public SQLite3Blob(Pointer p) {
+		public sqlite3_blob(Pointer p) {
 			super(p);
 		}
 	}
@@ -371,10 +385,11 @@ public final class SQLite implements Library {
 	 * Online backup object
 	 * @see <a href="http://sqlite.org/c3ref/backup.html">sqlite3_backup</a>
 	 */
-	public static class SQLite3Backup extends PointerType {
-		public SQLite3Backup() {
+	@Opaque
+	public static class sqlite3_backup extends Pointer {
+		public sqlite3_backup() {
 		}
-		public SQLite3Backup(Pointer p) {
+		public sqlite3_backup(Pointer p) {
 			super(p);
 		}
 	}
@@ -383,16 +398,17 @@ public final class SQLite implements Library {
 	 * SQL function context object
 	 * @see <a href="http://sqlite.org/c3ref/context.html">sqlite3_context</a>
 	 */
-	public static class SQLite3Context extends PointerType {
-		public SQLite3Context() {
+	@Opaque
+	public static class sqlite3_context extends Pointer {
+		public sqlite3_context() {
 		}
-		public SQLite3Context(Pointer p) {
+		public sqlite3_context(Pointer p) {
 			super(p);
 		}
 
 		/**
 		 * @return a copy of the pointer that was the <code>pUserData</code> parameter (the 5th parameter) of
-		 * {@link SQLite#sqlite3_create_function_v2(SQLite3, String, int, int, Pointer, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Destructor)}
+		 * {@link SQLite#sqlite3_create_function_v2(sqlite3, String, int, int, Pointer, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Destructor)}
 		 * @see <a href="http://sqlite.org/c3ref/user_data.html">sqlite3_user_data</a>
          */
 		public Pointer getUserData() {
@@ -401,10 +417,10 @@ public final class SQLite implements Library {
 
 		/**
 		 * @return a copy of the pointer to the database connection (the 1st parameter) of
-		 * {@link SQLite#sqlite3_create_function_v2(SQLite3, String, int, int, Pointer, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Destructor)}
+		 * {@link SQLite#sqlite3_create_function_v2(sqlite3, String, int, int, Pointer, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Destructor)}
 		 * @see <a href="http://sqlite.org/c3ref/context_db_handle.html">sqlite3_context_db_handle</a>
          */
-		public SQLite3 getDbHandle() {
+		public sqlite3 getDbHandle() {
 			return sqlite3_context_db_handle(this);
 		}
 
@@ -501,17 +517,18 @@ public final class SQLite implements Library {
 	 * @see <a href="http://sqlite.org/c3ref/value.html">sqlite3_value</a>
 	 */
 	public static class SQLite3Values {
-		private static SQLite3Values NO_ARG = new SQLite3Values(new Pointer[0]);
-		private Pointer[] args;
+		private static SQLite3Values NO_ARG = new SQLite3Values(new PointerPointer());
+		private PointerPointer args;
 
-		public static SQLite3Values build(int nArg, Pointer args) {
+		public static SQLite3Values build(int nArg, PointerPointer args) {
 			if (nArg == 0) {
 				return NO_ARG;
 			}
-			return new SQLite3Values(args.getPointerArray(0, nArg));
+			args.limit(nArg);
+			return new SQLite3Values(args);
 		}
 
-		private SQLite3Values(Pointer[] args) {
+		private SQLite3Values(PointerPointer args) {
 			this.args = args;
 		}
 
@@ -519,7 +536,7 @@ public final class SQLite implements Library {
 		 * @return arg count
 		 */
 		public int getCount() {
-			return args.length;
+			return args.limit();
 		}
 
 		/**
@@ -527,12 +544,14 @@ public final class SQLite implements Library {
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_blob</a>
 		 */
 		public byte[] getBlob(int i) {
-			Pointer arg = args[i];
+			Pointer arg = args.get(i);
 			Pointer blob = sqlite3_value_blob(arg);
 			if (blob == null) {
 				return null;
 			} else {
-				return blob.getByteArray(0L, sqlite3_value_bytes(arg)); // a copy is made...
+				final ByteBuffer byteBuffer = blob.asByteBuffer();
+				byteBuffer.limit(sqlite3_value_bytes(arg));
+				return byteBuffer.array(); // a copy is made...
 			}
 		}
 		/**
@@ -540,28 +559,28 @@ public final class SQLite implements Library {
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_double</a>
 		 */
 		public double getDouble(int i) {
-			return sqlite3_value_double(args[i]);
+			return sqlite3_value_double(args.get(i));
 		}
 		/**
 		 * @param i 0...
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_int</a>
 		 */
 		public int getInt(int i) {
-			return sqlite3_value_int(args[i]);
+			return sqlite3_value_int(args.get(i));
 		}
 		/**
 		 * @param i 0...
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_int64</a>
 		 */
 		public long getLong(int i) {
-			return sqlite3_value_int64(args[i]);
+			return sqlite3_value_int64(args.get(i));
 		}
 		/**
 		 * @param i 0...
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_text</a>
 		 */
 		public String getText(int i) {
-			return sqlite3_value_text(args[i]);
+			return getString(sqlite3_value_text(args.get(i)));
 		}
 		/**
 		 * @param i 0...
@@ -569,7 +588,7 @@ public final class SQLite implements Library {
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_type</a>
 		 */
 		public int getType(int i) {
-			return sqlite3_value_type(args[i]);
+			return sqlite3_value_type(args.get(i));
 		}
 		/**
 		 * @param i 0...
@@ -577,7 +596,7 @@ public final class SQLite implements Library {
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_numeric_type</a>
 		 */
 		public int getNumericType(int i) {
-			return sqlite3_value_numeric_type(args[i]);
+			return sqlite3_value_numeric_type(args.get(i));
 		}
 	}
 }

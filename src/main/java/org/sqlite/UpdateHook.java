@@ -1,7 +1,8 @@
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import org.bytedeco.javacpp.FunctionPointer;
+import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.Pointer;
 
 /**
  * Data change notification callback.
@@ -14,7 +15,8 @@ import com.sun.jna.Pointer;
  * @see Conn#updateHook(UpdateHook, Pointer)
  * @see <a href="http://sqlite.org/c3ref/update_hook.html">sqlite3_update_hook</a>
  */
-public interface UpdateHook extends Callback {
+public abstract class UpdateHook extends FunctionPointer {
+	static { Loader.load(); }
 	/**
 	 * Data Change Notification Callback
 	 * @param pArg a copy of the second argument to {@link Conn#updateHook(UpdateHook, Pointer)}.
@@ -23,5 +25,5 @@ public interface UpdateHook extends Callback {
 	 * @param tblName table name containing the affected row.
 	 * @param rowId id of the affected row.
 	 */
-	void callback(Pointer pArg, int actionCode, String dbName, String tblName, long rowId);
+	public abstract void call(Pointer pArg, int actionCode, String dbName, String tblName, long rowId);
 }

@@ -8,8 +8,10 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
+import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.Pointer;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -20,7 +22,7 @@ import static org.sqlite.SQLite.*;
 
 public class Stmt implements AutoCloseable, Row {
 	final Conn c;
-	private SQLite3Stmt pStmt;
+	private sqlite3_stmt pStmt;
 	private final String tail;
 	// cached parameter count
 	private int paramCount = -1;
@@ -32,11 +34,11 @@ public class Stmt implements AutoCloseable, Row {
 	private int[] columnAffinities;
 	private boolean cacheable;
 
-	Stmt(Conn c, SQLite3Stmt pStmt, Pointer tail, boolean cacheable) {
+	Stmt(Conn c, sqlite3_stmt pStmt, BytePointer tail, boolean cacheable) {
 		assert c != null;
 		this.c = c;
 		this.pStmt = pStmt;
-		this.tail = blankToNull(tail.getString(0L, UTF_8_ECONDING));
+		this.tail = blankToNull(getString(tail));
 		this.cacheable = cacheable;
 	}
 
@@ -45,7 +47,7 @@ public class Stmt implements AutoCloseable, Row {
 	}
 
 	public String getSql() {
-		return sqlite3_sql(pStmt); // ok if pStmt is null
+		return getString(sqlite3_sql(pStmt)); // ok if pStmt is null
 	}
 	public String getTail() {
 		return tail;
@@ -278,7 +280,7 @@ public class Stmt implements AutoCloseable, Row {
 	public String getColumnDeclType(int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
-		return sqlite3_column_decltype(pStmt, iCol); // ko if pStmt is null
+		return getString(sqlite3_column_decltype(pStmt, iCol)); // ko if pStmt is null
 	}
 
 	@Override
@@ -303,26 +305,26 @@ public class Stmt implements AutoCloseable, Row {
 		} else if (columnNames[iCol] != null) {
 			return columnNames[iCol];
 		}
-		columnNames[iCol] = sqlite3_column_name(pStmt, iCol); // ko if pStmt is null
+		columnNames[iCol] = getString(sqlite3_column_name(pStmt, iCol)); // ko if pStmt is null
 		return columnNames[iCol];
 	}
 	@Override
 	public String getColumnOriginName(int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
-		return sqlite3_column_origin_name(pStmt, iCol); // ko if pStmt is null
+		return getString(sqlite3_column_origin_name(pStmt, iCol)); // ko if pStmt is null
 	}
 	@Override
 	public String getColumnTableName(int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
-		return sqlite3_column_table_name(pStmt, iCol); // ko if pStmt is null
+		return getString(sqlite3_column_table_name(pStmt, iCol)); // ko if pStmt is null
 	}
 	@Override
 	public String getColumnDatabaseName(int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
-		return sqlite3_column_database_name(pStmt, iCol); // ko if pStmt is null
+		return getString(sqlite3_column_database_name(pStmt, iCol)); // ko if pStmt is null
 	}
 
 	@Override
@@ -332,7 +334,9 @@ public class Stmt implements AutoCloseable, Row {
 		if (p == null) {
 			return null;
 		} else {
-			return p.getByteArray(0L, getColumnBytes(iCol)); // a copy is made...
+			final ByteBuffer byteBuffer = p.asByteBuffer();
+			byteBuffer.limit(getColumnBytes(iCol));
+			return byteBuffer.array(); // a copy is made...
 		}
 	}
 
@@ -360,7 +364,7 @@ public class Stmt implements AutoCloseable, Row {
 	@Override
 	public String getColumnText(int iCol) throws StmtException {
 		checkColumnIndex(iCol);
-		return sqlite3_column_text(pStmt, iCol); // ok if pStmt is null
+		return getString(sqlite3_column_text(pStmt, iCol)); // ok if pStmt is null
 	}
 
 	public void bind(Object... params) throws StmtException {
@@ -450,7 +454,7 @@ public class Stmt implements AutoCloseable, Row {
 	 * @return SQL parameter name or null.
 	 */
 	public String getBindParameterName(int i) { // TODO Cache?
-		return sqlite3_bind_parameter_name(pStmt, i); // ok if pStmt is null
+		return getString(sqlite3_bind_parameter_name(pStmt, i)); // ok if pStmt is null
 	}
 
 	/**

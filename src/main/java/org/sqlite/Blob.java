@@ -21,12 +21,12 @@ import static org.sqlite.SQLite.*;
  */
 public class Blob implements AutoCloseable {
 	private final Conn c;
-	private SQLite3Blob pBlob;
+	private sqlite3_blob pBlob;
 	private int readOffset;
 	private int writeOffset;
 	private int size = -1;
 
-	Blob(Conn c, SQLite3Blob pBlob) {
+	Blob(Conn c, sqlite3_blob pBlob) {
 		assert c != null;
 		this.c = c;
 		this.pBlob = pBlob;
