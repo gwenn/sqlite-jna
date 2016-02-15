@@ -209,7 +209,7 @@ public final class SQLite implements Library {
 	static native void sqlite3_result_null(SQLite3Context pCtx);
 	static native void sqlite3_result_int(SQLite3Context pCtx, int i);
 	static native void sqlite3_result_double(SQLite3Context pCtx, double d);
-	static native void sqlite3_result_text(SQLite3Context pCtx, String text, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	static native void sqlite3_result_text(SQLite3Context pCtx, String text, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
 	static native void sqlite3_result_blob(SQLite3Context pCtx, byte[] blob, int n, long xDel);
 	static native void sqlite3_result_int64(SQLite3Context pCtx, long l);
 	static native void sqlite3_result_zeroblob(SQLite3Context pCtx, int n);
@@ -448,7 +448,7 @@ public final class SQLite implements Library {
 		 * @see <a href="http://sqlite.org/c3ref/result_blob.html">sqlite3_result_text</a>
 		 */
 		public void setResultText(String result) {
-			sqlite3_result_text(this, result, SQLITE_TRANSIENT);
+			sqlite3_result_text(this, result, -1, SQLITE_TRANSIENT);
 		}
 		/**
 		 * Sets the return value of the application-defined function to be a BLOB containing all zero bytes and N bytes in size.
