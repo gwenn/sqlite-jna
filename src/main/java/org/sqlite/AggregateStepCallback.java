@@ -37,7 +37,7 @@ public abstract class AggregateStepCallback extends FunctionPointer {
 	public void call(sqlite3_context pCtx, int nArg,@Cast("sqlite3_value**") PointerPointer args) {
 		final int nBytes = numberOfBytes();
 		final Pointer p = sqlite3_aggregate_context(pCtx, nBytes);
-		if (p == null && nBytes > 0) {
+		if ((p == null || p.isNull()) && nBytes > 0) {
 			sqlite3_result_error_nomem(pCtx);
 			return;
 		}

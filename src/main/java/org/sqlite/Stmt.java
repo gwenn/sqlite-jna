@@ -60,7 +60,7 @@ public class Stmt implements AutoCloseable, Row {
 	@Override
 	protected void finalize() throws Throwable {
 		if (pStmt != null) {
-			sqlite3_log(-1, "dangling SQLite statement.");
+			sqlite3_log(-1, nativeString("dangling SQLite statement."));
 			close(true);
 		}
 		super.finalize();
@@ -330,13 +330,13 @@ public class Stmt implements AutoCloseable, Row {
 	@Override
 	public byte[] getColumnBlob(int iCol) throws StmtException {
 		checkColumnIndex(iCol);
-		final Pointer p = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
-		if (p == null) {
+		final BytePointer p = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
+		if (p == null || p.isNull()) {
 			return null;
 		} else {
-			final ByteBuffer byteBuffer = p.asByteBuffer();
-			byteBuffer.limit(getColumnBytes(iCol));
-			return byteBuffer.array(); // a copy is made...
+			final byte[] bytes = new byte[getColumnBytes(iCol)];
+			p.get(bytes);
+			return bytes; // a copy is made...
 		}
 	}
 
@@ -442,7 +442,7 @@ public class Stmt implements AutoCloseable, Row {
 		if (index != null) {
 			return index;
 		}
-		final int i = sqlite3_bind_parameter_index(pStmt, name); // ok if pStmt is null
+		final int i = sqlite3_bind_parameter_index(pStmt, nativeString(name)); // ok if pStmt is null
 		if (i == 0) { // Invalid name
 			return i;
 		}
@@ -516,7 +516,7 @@ public class Stmt implements AutoCloseable, Row {
 			return;
 		}
 		// ok if pStmt is null => SQLITE_MISUSE
-		checkBind(sqlite3_bind_text(pStmt, i, value, -1, SQLITE_TRANSIENT), "sqlite3_bind_text", i);
+		checkBind(sqlite3_bind_text(pStmt, i, nativeString(value), -1, SQLITE_TRANSIENT), "sqlite3_bind_text", i);
 	}
 	/**
 	 * @param i The leftmost SQL parameter has an index of 1

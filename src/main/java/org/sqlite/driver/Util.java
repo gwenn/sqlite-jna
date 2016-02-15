@@ -33,6 +33,6 @@ final class Util {
 	}
 
 	static void trace(String method) {
-		SQLite.sqlite3_log(0, method);
+		SQLite.sqlite3_log(0, SQLite.nativeString(method));
 	}
 }

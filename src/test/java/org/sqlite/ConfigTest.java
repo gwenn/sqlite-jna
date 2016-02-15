@@ -4,6 +4,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.sqlite.SQLite.nativeString;
 
 public class ConfigTest {
 	@BeforeClass
@@ -38,7 +39,7 @@ public class ConfigTest {
       }
     }, null);
     assertEquals(SQLite.SQLITE_OK, rv);*/
-		SQLite.sqlite3_log(-1, "testLog");
+		SQLite.sqlite3_log(-1, nativeString("testLog"));
     /*rv = SQLite.sqlite3_config(SQLite.SQLITE_CONFIG_LOG, null, null);
     assertEquals(SQLite.SQLITE_OK, rv);*/
 	}

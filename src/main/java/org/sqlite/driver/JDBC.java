@@ -24,6 +24,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 import static org.sqlite.OpenQueryParameter.*;
+import static org.sqlite.SQLite.nativeString;
 
 /**
  * JDBC 4.x driver implementation for SQLite 3.
@@ -138,24 +139,24 @@ public class JDBC implements Driver {
 		if ("on".equals(fks)) {
 			if (!conn.enableForeignKeys(true)) {
 				warnings = addWarning(warnings, new SQLWarning("cannot enable the enforcement of foreign key constraints.", null, ErrCodes.WRAPPER_SPECIFIC));
-				SQLite.sqlite3_log(-1, "cannot enable the enforcement of foreign key constraints.");
+				SQLite.sqlite3_log(-1, nativeString("cannot enable the enforcement of foreign key constraints."));
 			}
 		} else if ("off".equals(fks)) {
 			if (conn.enableForeignKeys(false)) {
 				warnings = addWarning(warnings, new SQLWarning("cannot disable the enforcement of foreign key constraints.", null, ErrCodes.WRAPPER_SPECIFIC));
-				SQLite.sqlite3_log(-1, "cannot disable the enforcement of foreign key constraints.");
+				SQLite.sqlite3_log(-1, nativeString("cannot disable the enforcement of foreign key constraints."));
 			}
 		}
 		final String triggers = info.getProperty(ENABLE_TRIGGERS.name);
 		if ("on".equals(triggers)) {
 			if (!conn.enableTriggers(true)) {
 				warnings = addWarning(warnings, new SQLWarning("cannot enable triggers.", null, ErrCodes.WRAPPER_SPECIFIC));
-				SQLite.sqlite3_log(-1, "cannot enable triggers.");
+				SQLite.sqlite3_log(-1, nativeString("cannot enable triggers."));
 			}
 		} else if ("off".equals(fks)) {
 			if (conn.enableTriggers(false)) {
 				warnings = addWarning(warnings, new SQLWarning("cannot disable triggers.", null, ErrCodes.WRAPPER_SPECIFIC));
-				SQLite.sqlite3_log(-1, "cannot disable triggers.");
+				SQLite.sqlite3_log(-1, nativeString("cannot disable triggers."));
 			}
 		}
 		if ("on".equals(info.getProperty(ENABLE_LOAD_EXTENSION.name))) {

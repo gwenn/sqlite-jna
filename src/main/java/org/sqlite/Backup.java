@@ -35,7 +35,7 @@ public class Backup implements AutoCloseable {
 		checkInit();
 		final int res = sqlite3_backup_step(pBackup, nPage);
 		if (res == SQLITE_OK || res == ErrCodes.SQLITE_BUSY || res == ErrCodes.SQLITE_LOCKED) {
-			sqlite3_log(-1, "busy/locked error during backup.");
+			sqlite3_log(-1, nativeString("busy/locked error during backup."));
 			return true;
 		} else if (res == SQLITE_DONE) {
 			return false;
@@ -87,7 +87,7 @@ public class Backup implements AutoCloseable {
 	@Override
 	protected void finalize() throws Throwable {
 		if (pBackup != null) {
-			sqlite3_log(-1, "dangling SQLite backup.");
+			sqlite3_log(-1, nativeString("dangling SQLite backup."));
 			finish();
 		}
 		super.finalize();

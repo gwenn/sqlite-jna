@@ -51,7 +51,7 @@ public final class Conn implements AutoCloseable {
 			throw new SQLiteException("sqlite library was not compiled for thread-safe operation", ErrCodes.WRAPPER_SPECIFIC);
 		}
 		final sqlite3 pDb = new sqlite3();
-		final int res = sqlite3_open_v2(filename, pDb, flags, vfs);
+		final int res = sqlite3_open_v2(nativeString(filename), pDb, flags, nativeString(vfs));
 		if (res != SQLITE_OK) {
 			if (pDb.isNull()) {
 				sqlite3_close(new sqlite3(pDb));
@@ -75,7 +75,7 @@ public final class Conn implements AutoCloseable {
 	@Override
 	protected void finalize() throws Throwable {
 		if (pDb != null) {
-			sqlite3_log(-1, "dangling SQLite connection.");
+			sqlite3_log(-1, nativeString("dangling SQLite connection."));
 			closeNoCheck();
 		}
 		super.finalize();
@@ -93,11 +93,11 @@ public final class Conn implements AutoCloseable {
 
 		// Dangling statements
 		sqlite3_stmt stmt = sqlite3_next_stmt(pDb, null);
-		while (stmt != null) {
+		while (stmt != null && !stmt.isNull()) {
 			if (sqlite3_stmt_busy(stmt)) {
-				sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\"");
+				sqlite3_log(ErrCodes.SQLITE_MISUSE, nativeString("Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\""));
 			} else {
-				sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\"");
+				sqlite3_log(ErrCodes.SQLITE_MISUSE, nativeString("Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\""));
 			}
 			stmt = sqlite3_next_stmt(pDb, stmt);
 		}
@@ -130,7 +130,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public boolean isReadOnly(String dbName) throws ConnException {
 		checkOpen();
-		final int res = sqlite3_db_readonly(pDb, dbName); // ko if pDb is null
+		final int res = sqlite3_db_readonly(pDb, nativeString(dbName)); // ko if pDb is null
 		if (res < 0) {
 			throw new ConnException(this, String.format("'%s' is not the name of a database", dbName), ErrCodes.WRAPPER_SPECIFIC);
 		}
@@ -311,7 +311,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void fastExec(String sql) throws ConnException {
 		checkOpen();
-		check(sqlite3_exec(pDb, sql, null, null, null), "error while executing '%s'", sql);
+		check(sqlite3_exec(pDb, nativeString(sql), null, null, null), "error while executing '%s'", sql);
 	}
 
 	/**
@@ -328,7 +328,7 @@ public final class Conn implements AutoCloseable {
 	public Blob open(String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
 		checkOpen();
 		final sqlite3_blob pBlob = new sqlite3_blob();
-		final int res = sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, pBlob); // ko if pDb is null
+		final int res = sqlite3_blob_open(pDb, nativeString(dbName), nativeString(tblName), nativeString(colName), iRow, rw, pBlob); // ko if pDb is null
 		final sqlite3_blob blob = pBlob.isNull() ? null : new sqlite3_blob(pBlob);
 		if (res != SQLITE_OK) {
 			sqlite3_blob_close(blob);
@@ -408,7 +408,7 @@ public final class Conn implements AutoCloseable {
 		if (pDb == null) {
 			return null;
 		}
-		return getString(sqlite3_db_filename(pDb, "main")); // ko if pDb is null
+		return getString(sqlite3_db_filename(pDb, nativeString("main"))); // ko if pDb is null
 	}
 
 	/**
@@ -500,7 +500,7 @@ public final class Conn implements AutoCloseable {
 	public String loadExtension(String file, String proc) throws ConnException {
 		checkOpen();
 		final BytePointer pErrMsg = new BytePointer();
-		final int res = sqlite3_load_extension(pDb, file, proc, pErrMsg);
+		final int res = sqlite3_load_extension(pDb, nativeString(file), nativeString(proc), pErrMsg);
 		if (res != SQLITE_OK) {
 			final String errMsg = getString(pErrMsg);
 			sqlite3_free(pErrMsg);
@@ -540,9 +540,9 @@ public final class Conn implements AutoCloseable {
 		final IntPointer pAutoinc = new IntPointer(1);
 
 		check(sqlite3_table_column_metadata(pDb,
-				dbName,
-				tblName,
-				colName,
+				nativeString(dbName),
+				nativeString(tblName),
+				nativeString(colName),
 				null, null,
 				pNotNull, pPrimaryKey, pAutoinc), "error while accessing table column metatada of '%s'", tblName);
 
@@ -566,8 +566,8 @@ public final class Conn implements AutoCloseable {
 	public static Backup open(Conn dst, String dstName, Conn src, String srcName) throws ConnException {
 		dst.checkOpen();
 		src.checkOpen();
-		final sqlite3_backup pBackup = sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
-		if (pBackup == null) {
+		final sqlite3_backup pBackup = sqlite3_backup_init(dst.pDb, nativeString(dstName), src.pDb, nativeString(srcName));
+		if (pBackup == null || pBackup.isNull()) {
 			throw new ConnException(dst, "backup init failed", dst.getErrCode());
 		}
 		return new Backup(pBackup, dst, src);
@@ -642,7 +642,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void createScalarFunction(String name, int nArg, int flags, ScalarCallback xFunc) throws ConnException {
 		checkOpen();
-		check(sqlite3_create_function_v2(pDb, name, nArg, flags, null, xFunc, null, null, null),
+		check(sqlite3_create_function_v2(pDb, nativeString(name), nArg, flags, null, xFunc, null, null, null),
 				"error while registering function %s", name);
 	}
 	/**
@@ -657,7 +657,7 @@ public final class Conn implements AutoCloseable {
 	public void createAggregateFunction(String name, int nArg, int flags, AggregateStepCallback xStep,
 			AggregateFinalCallback xFinal) throws ConnException {
 		checkOpen();
-		check(sqlite3_create_function_v2(pDb, name, nArg, flags, null, null, xStep, xFinal, null),
+		check(sqlite3_create_function_v2(pDb, nativeString(name), nArg, flags, null, null, xStep, xFinal, null),
 				"error while registering function %s", name);
 	}
 
