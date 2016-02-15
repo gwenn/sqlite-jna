@@ -9,12 +9,11 @@
 package org.sqlite;
 
 import org.bytedeco.javacpp.FunctionPointer;
-import org.bytedeco.javacpp.Loader;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.PointerPointer;
 import org.bytedeco.javacpp.annotation.Cast;
-import org.sqlite.SQLite.sqlite3_context;
 import org.sqlite.SQLite.SQLite3Values;
+import org.sqlite.SQLite.sqlite3_context;
 
 import static org.sqlite.SQLite.sqlite3_get_auxdata;
 import static org.sqlite.SQLite.sqlite3_set_auxdata;

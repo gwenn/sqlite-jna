@@ -1,7 +1,6 @@
 package org.sqlite;
 
 import org.bytedeco.javacpp.FunctionPointer;
-import org.bytedeco.javacpp.Loader;
 import org.bytedeco.javacpp.Pointer;
 
 /**

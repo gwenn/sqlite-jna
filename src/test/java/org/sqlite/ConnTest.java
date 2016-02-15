@@ -6,7 +6,8 @@ import org.junit.Test;
 import org.sqlite.SQLite.sqlite3_context;
 
 import static org.junit.Assert.*;
-import static org.sqlite.SQLite.*;
+import static org.sqlite.SQLite.SQLite3Values;
+import static org.sqlite.SQLite.UTF_8_ECONDING;
 
 public class ConnTest {
 	@Test
