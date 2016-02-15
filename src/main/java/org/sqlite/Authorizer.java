@@ -11,7 +11,6 @@ import org.bytedeco.javacpp.Pointer;
  * @see <a href="http://sqlite.org/c3ref/set_authorizer.html">sqlite3_set_authorizer</a>
  */
 public abstract class Authorizer extends FunctionPointer {
-	static { Loader.load(); }
 	/**
 	 * @param pArg       User data ({@link Conn#setAuhtorizer(Authorizer, Pointer)} second parameter)
 	 * @param actionCode {@link ActionCodes}.*

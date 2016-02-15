@@ -450,7 +450,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public boolean enableForeignKeys(boolean onoff) throws ConnException {
 		checkOpen();
-		final IntPointer pOk = new IntPointer();
+		final IntPointer pOk = new IntPointer(1);
 		check(sqlite3_db_config(pDb, 1002, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
 		return toBool(pOk);
 	}
@@ -459,7 +459,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public boolean areForeignKeysEnabled() throws ConnException {
 		checkOpen();
-		final IntPointer pOk = new IntPointer();
+		final IntPointer pOk = new IntPointer(1);
 		check(sqlite3_db_config(pDb, 1002, -1, pOk), "error while querying db config on '%s'", getFilename());
 		return toBool(pOk);
 	}
@@ -468,7 +468,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public boolean enableTriggers(boolean onoff) throws ConnException {
 		checkOpen();
-		final IntPointer pOk = new IntPointer();
+		final IntPointer pOk = new IntPointer(1);
 		check(sqlite3_db_config(pDb, 1003, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
 		return toBool(pOk);
 	}
@@ -477,7 +477,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public boolean areTriggersEnabled() throws ConnException {
 		checkOpen();
-		final IntPointer pOk = new IntPointer();
+		final IntPointer pOk = new IntPointer(1);
 		check(sqlite3_db_config(pDb, 1003, -1, pOk), "error while querying db config on '%s'", getFilename());
 		return toBool(pOk);
 	}
@@ -535,9 +535,9 @@ public final class Conn implements AutoCloseable {
 
 	boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) throws ConnException {
 		checkOpen();
-		final IntPointer pNotNull = new IntPointer();
-		final IntPointer pPrimaryKey = new IntPointer();
-		final IntPointer pAutoinc = new IntPointer();
+		final IntPointer pNotNull = new IntPointer(1);
+		final IntPointer pPrimaryKey = new IntPointer(1);
+		final IntPointer pAutoinc = new IntPointer(1);
 
 		check(sqlite3_table_column_metadata(pDb,
 				dbName,

@@ -5,7 +5,6 @@ import org.bytedeco.javacpp.Loader;
 import org.bytedeco.javacpp.Pointer;
 
 public abstract class Destructor extends FunctionPointer {
-	static { Loader.load(); }
 	@SuppressWarnings("unused")
 	public abstract void call(Pointer p);
 }

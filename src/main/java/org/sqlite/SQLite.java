@@ -20,7 +20,6 @@ import org.bytedeco.javacpp.annotation.Const;
 import org.bytedeco.javacpp.annotation.Opaque;
 import org.bytedeco.javacpp.annotation.Platform;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
@@ -34,7 +33,7 @@ public final class SQLite {
 	public static final int SQLITE_ROW = 100;
 	public static final int SQLITE_DONE = 101;
 
-	static final int SQLITE_TRANSIENT = -1;
+	static final long SQLITE_TRANSIENT = -1;
 
 	static native @Cast("const char*") BytePointer sqlite3_libversion(); // no copy needed
 	static native int sqlite3_libversion_number();
@@ -106,7 +105,7 @@ public final class SQLite {
 																									@Cast("char const**") @ByPtrPtr BytePointer pzDataType, @Cast("char const**") @ByPtrPtr BytePointer pzCollSeq,
 																									IntPointer pNotNull, IntPointer pPrimaryKey, IntPointer pAutoinc); // no copy needed
 
-	static native int sqlite3_exec(sqlite3 pDb, String cmd, /*Function*/Pointer c, Pointer udp, @Cast("char**") @ByPtrPtr BytePointer errMsg);
+	static native int sqlite3_exec(sqlite3 pDb, String cmd, ExecCallback c, Pointer udp, @Cast("char**") @ByPtrPtr BytePointer errMsg);
 
 	static native int sqlite3_prepare_v2(sqlite3 pDb, @Cast("const char*") BytePointer sql, int nByte, @ByPtrPtr sqlite3_stmt ppStmt,
 																			 @Cast("const char**") @ByPtrPtr BytePointer pTail);
@@ -128,16 +127,16 @@ public final class SQLite {
 	static native @Cast("const char*") BytePointer sqlite3_column_database_name(sqlite3_stmt pStmt, int iCol); // copy needed
 	static native @Cast("const char*") BytePointer sqlite3_column_decltype(sqlite3_stmt pStmt, int iCol); // copy needed
 	//#else
-	static String sqlite3_column_origin_name(Object pStmt, int iCol) {
+	static BytePointer sqlite3_column_origin_name(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
-	static String sqlite3_column_table_name(Object pStmt, int iCol) {
+	static BytePointer sqlite3_column_table_name(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
-	static String sqlite3_column_database_name(Object pStmt, int iCol) {
+	static BytePointer sqlite3_column_database_name(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
-	static String sqlite3_column_decltype(Object pStmt, int iCol) {
+	static BytePointer sqlite3_column_decltype(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
 	//#endif
@@ -155,12 +154,12 @@ public final class SQLite {
 	static native int sqlite3_bind_parameter_index(sqlite3_stmt pStmt, String name); // no copy needed
 	static native @Cast("const char*") BytePointer sqlite3_bind_parameter_name(sqlite3_stmt pStmt, int i); // copy needed
 
-	static native int sqlite3_bind_blob(sqlite3_stmt pStmt, int i, byte[] value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	static native int sqlite3_bind_blob(sqlite3_stmt pStmt, int i, byte[] value, int n,@Cast("void(*)(void*)") long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
 	static native int sqlite3_bind_double(sqlite3_stmt pStmt, int i, double value);
 	static native int sqlite3_bind_int(sqlite3_stmt pStmt, int i, int value);
 	static native int sqlite3_bind_int64(sqlite3_stmt pStmt, int i, @Cast("sqlite3_int64") long value);
 	static native int sqlite3_bind_null(sqlite3_stmt pStmt, int i);
-	static native int sqlite3_bind_text(sqlite3_stmt pStmt, int i, String value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	static native int sqlite3_bind_text(sqlite3_stmt pStmt, int i, String value, int n,@Cast("void(*)(void*)") long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
 	//static native int sqlite3_bind_text16(SQLite3Stmt pStmt, int i, const void*, int, void(*)(void*));
 	//static native int sqlite3_bind_value(SQLite3Stmt pStmt, int i, const sqlite3_value*);
 	static native int sqlite3_bind_zeroblob(sqlite3_stmt pStmt, int i, int n);
@@ -209,8 +208,8 @@ public final class SQLite {
 	static native void sqlite3_result_null(sqlite3_context pCtx);
 	static native void sqlite3_result_int(sqlite3_context pCtx, int i);
 	static native void sqlite3_result_double(sqlite3_context pCtx, double d);
-	static native void sqlite3_result_text(sqlite3_context pCtx, String text, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
-	static native void sqlite3_result_blob(sqlite3_context pCtx, byte[] blob, int n, long xDel);
+	static native void sqlite3_result_text(sqlite3_context pCtx, String text, int n,@Cast("void(*)(void*)") long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	static native void sqlite3_result_blob(sqlite3_context pCtx, byte[] blob, int n,@Cast("void(*)(void*)") long xDel);
 	static native void sqlite3_result_int64(sqlite3_context pCtx, @Cast("sqlite3_int64") long l);
 	static native void sqlite3_result_zeroblob(sqlite3_context pCtx, int n);
 
@@ -218,16 +217,16 @@ public final class SQLite {
 	static native void sqlite3_result_error_code(sqlite3_context pCtx, int errCode);
 	static native void sqlite3_result_error_nomem(sqlite3_context pCtx);
 	static native void sqlite3_result_error_toobig(sqlite3_context pCtx);
-	static native void sqlite3_result_subtype(sqlite3_context pCtx, /*unsigned*/ int subtype);
+	//static native void sqlite3_result_subtype(sqlite3_context pCtx, /*unsigned*/ int subtype);
 
-	static native @Const Pointer sqlite3_value_blob(Pointer pValue);
-	static native int sqlite3_value_bytes(Pointer pValue);
-	static native double sqlite3_value_double(Pointer pValue);
-	static native int sqlite3_value_int(Pointer pValue);
-	static native @Cast("sqlite3_int64") long sqlite3_value_int64(Pointer pValue);
-	static native @Cast("const unsigned char*") BytePointer sqlite3_value_text(Pointer pValue);
-	static native int sqlite3_value_type(Pointer pValue);
-	static native int sqlite3_value_numeric_type(Pointer pValue);
+	static native @Const Pointer sqlite3_value_blob(sqlite3_value pValue);
+	static native int sqlite3_value_bytes(sqlite3_value pValue);
+	static native double sqlite3_value_double(sqlite3_value pValue);
+	static native int sqlite3_value_int(sqlite3_value pValue);
+	static native @Cast("sqlite3_int64") long sqlite3_value_int64(sqlite3_value pValue);
+	static native @Cast("const unsigned char*") BytePointer sqlite3_value_text(sqlite3_value pValue);
+	static native int sqlite3_value_type(sqlite3_value pValue);
+	static native int sqlite3_value_numeric_type(sqlite3_value pValue);
 
 	static native Pointer sqlite3_get_auxdata(sqlite3_context pCtx, int n);
 	static native void sqlite3_set_auxdata(sqlite3_context pCtx, int n, Pointer p, Destructor free);
@@ -238,21 +237,17 @@ public final class SQLite {
 	public static final Charset UTF_8 = Charset.forName("UTF-8");
 	public static final String UTF_8_ECONDING = UTF_8.name();
 	static BytePointer nativeString(String sql) {
-		try {
-			return new BytePointer().putString(sql, UTF_8_ECONDING);
-		} catch (UnsupportedEncodingException e) {
-			throw new IllegalStateException(e);
-		}
+		byte[] bytes = sql.getBytes(UTF_8);
+		final BytePointer ptr = new BytePointer(bytes.length + 1);
+		ptr.put(bytes).put(bytes.length, (byte)0).limit(bytes.length);
+		return ptr;
 	}
 	static String getString(BytePointer ptr) {
 		if (ptr == null || ptr.isNull()) {
 			return null;
 		} else {
-			try {
-				return ptr.getString(UTF_8_ECONDING);
-			} catch (UnsupportedEncodingException e) {
-				throw new IllegalStateException(e);
-			}
+			final byte[] bytes = ptr.getStringBytes();
+			return new String(bytes, UTF_8);
 		}
 	}
 
@@ -330,6 +325,15 @@ public final class SQLite {
 	}
 
 	/**
+	 * sqlite3_exec() callback function.
+	 * @see <a href="http://sqlite.org/c3ref/exec.html">sqlite3_exec</a>
+	 */
+	public static abstract class ExecCallback extends FunctionPointer {
+		@SuppressWarnings("unused")
+		public abstract int call(Pointer arg, int n,@Cast("char**") BytePointer values,@Cast("char**") BytePointer names);
+	}
+
+	/**
 	 * Query Progress Callback.
 	 * @see <a href="http://sqlite.org/c3ref/progress_handler.html">sqlite3_progress_handler</a>
 	 */
@@ -339,7 +343,14 @@ public final class SQLite {
 		 * @return <code>true</code> to interrupt
 		 */
 		@SuppressWarnings("unused")
-		public abstract boolean call(Pointer arg);
+		public int call(Pointer arg) {
+			return progress(arg) ? 1 : 0;
+		}
+		/**
+		 * @param arg
+		 * @return <code>true</code> to interrupt
+		 */
+		protected abstract boolean progress(Pointer arg);
 	}
 
 	/**
@@ -390,6 +401,19 @@ public final class SQLite {
 		public sqlite3_backup() {
 		}
 		public sqlite3_backup(Pointer p) {
+			super(p);
+		}
+	}
+
+	/**
+	 * Dynamically Typed Value Object
+	 * @see <a href="http://sqlite.org/c3ref/value.html">sqlite3_value</a>
+	 */
+	@Opaque
+	public static class sqlite3_value extends Pointer {
+		public sqlite3_value() {
+		}
+		public sqlite3_value(Pointer p) {
 			super(p);
 		}
 	}
@@ -464,7 +488,7 @@ public final class SQLite {
 		 * @see <a href="http://sqlite.org/c3ref/result_blob.html">sqlite3_result_text</a>
 		 */
 		public void setResultText(String result) {
-			sqlite3_result_text(this, result, SQLITE_TRANSIENT);
+			sqlite3_result_text(this, result, -1, SQLITE_TRANSIENT);
 		}
 		/**
 		 * Sets the return value of the application-defined function to be a BLOB containing all zero bytes and N bytes in size.
@@ -474,13 +498,13 @@ public final class SQLite {
 			sqlite3_result_zeroblob(this, result.n);
 		}
 
-		/**
+		/*
 		 * Causes the subtype of the result from the application-defined SQL function to be the value given.
 		 * @see <a href="http://sqlite.org/c3ref/result_subtype.html">sqlite3_result_subtype</a>
-         */
-		public void setResultSubType(int subtype) {
+		 */
+		/*public void setResultSubType(int subtype) {
 			sqlite3_result_subtype(this, subtype);
-		}
+		}*/
 
 		/**
 		 * Causes the implemented SQL function to throw an exception.
@@ -539,12 +563,16 @@ public final class SQLite {
 			return args.limit();
 		}
 
+		public sqlite3_value getValue(int i) {
+			return new sqlite3_value(args.get(i));
+		}
+
 		/**
 		 * @param i 0...
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_blob</a>
 		 */
 		public byte[] getBlob(int i) {
-			Pointer arg = args.get(i);
+			sqlite3_value arg = getValue(i);
 			Pointer blob = sqlite3_value_blob(arg);
 			if (blob == null) {
 				return null;
@@ -559,28 +587,28 @@ public final class SQLite {
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_double</a>
 		 */
 		public double getDouble(int i) {
-			return sqlite3_value_double(args.get(i));
+			return sqlite3_value_double(getValue(i));
 		}
 		/**
 		 * @param i 0...
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_int</a>
 		 */
 		public int getInt(int i) {
-			return sqlite3_value_int(args.get(i));
+			return sqlite3_value_int(getValue(i));
 		}
 		/**
 		 * @param i 0...
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_int64</a>
 		 */
 		public long getLong(int i) {
-			return sqlite3_value_int64(args.get(i));
+			return sqlite3_value_int64(getValue(i));
 		}
 		/**
 		 * @param i 0...
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_text</a>
 		 */
 		public String getText(int i) {
-			return getString(sqlite3_value_text(args.get(i)));
+			return getString(sqlite3_value_text(getValue(i)));
 		}
 		/**
 		 * @param i 0...
@@ -588,7 +616,7 @@ public final class SQLite {
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_type</a>
 		 */
 		public int getType(int i) {
-			return sqlite3_value_type(args.get(i));
+			return sqlite3_value_type(getValue(i));
 		}
 		/**
 		 * @param i 0...
@@ -596,7 +624,7 @@ public final class SQLite {
 		 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_numeric_type</a>
 		 */
 		public int getNumericType(int i) {
-			return sqlite3_value_numeric_type(args.get(i));
+			return sqlite3_value_numeric_type(getValue(i));
 		}
 	}
 }

@@ -17,7 +17,6 @@ import org.bytedeco.javacpp.Pointer;
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
  */
 public abstract class TraceCallback extends FunctionPointer {
-	static { Loader.load(); }
 	/**
 	 * @param sql SQL statement text.
 	 */

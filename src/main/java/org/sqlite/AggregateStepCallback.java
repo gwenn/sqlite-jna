@@ -28,7 +28,6 @@ import static org.sqlite.SQLite.sqlite3_result_error_nomem;
  * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
  */
 public abstract class AggregateStepCallback extends FunctionPointer {
-	static { Loader.load(); }
 	//void (*)(sqlite3_context*,int,sqlite3_value**),
 	/**
 	 * @param pCtx <code>sqlite3_context*</code>

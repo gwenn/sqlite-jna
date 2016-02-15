@@ -18,7 +18,6 @@ import org.bytedeco.javacpp.annotation.Cast;
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
  */
 public abstract class ProfileCallback extends FunctionPointer {
-	static { Loader.load(); }
 	/**
 	 * @param sql SQL statement text.
 	 * @param ns time in nanoseconds

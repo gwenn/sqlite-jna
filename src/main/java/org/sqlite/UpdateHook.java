@@ -16,7 +16,6 @@ import org.bytedeco.javacpp.Pointer;
  * @see <a href="http://sqlite.org/c3ref/update_hook.html">sqlite3_update_hook</a>
  */
 public abstract class UpdateHook extends FunctionPointer {
-	static { Loader.load(); }
 	/**
 	 * Data Change Notification Callback
 	 * @param pArg a copy of the second argument to {@link Conn#updateHook(UpdateHook, Pointer)}.
