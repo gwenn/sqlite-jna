@@ -2,6 +2,7 @@ package org.sqlite;
 
 import org.bytedeco.javacpp.FunctionPointer;
 import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.annotation.Cast;
 
 /**
  * Callback to handle SQLITE_BUSY errors
@@ -15,13 +16,5 @@ public abstract class BusyHandler extends FunctionPointer {
 	 * @param count the number of times that the busy handler has been invoked previously for the same locking event.
 	 * @return <code>true</code> to try again, <code>false</code> to abort.
 	 */
-	public int call(Pointer pArg, int count) {
-		return busy(pArg, count) ? 1 : 0;
-	}
-	/**
-	 * @param pArg  User data ({@link Conn#setBusyHandler(BusyHandler, Pointer)} second argument)
-	 * @param count the number of times that the busy handler has been invoked previously for the same locking event.
-	 * @return <code>true</code> to try again, <code>false</code> to abort.
-	 */
-	protected abstract boolean busy(Pointer pArg, int count);
+	public abstract @Cast("int") boolean call(Pointer pArg, int count);
 }

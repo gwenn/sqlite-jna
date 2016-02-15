@@ -105,7 +105,7 @@ public final class SQLite {
 																									@Cast("char const**") @ByPtrPtr BytePointer pzDataType, @Cast("char const**") @ByPtrPtr BytePointer pzCollSeq,
 																									IntPointer pNotNull, IntPointer pPrimaryKey, IntPointer pAutoinc); // no copy needed
 
-	static native int sqlite3_exec(sqlite3 pDb, String cmd, ExecCallback c, Pointer udp, @Cast("char**") @ByPtrPtr BytePointer errMsg);
+	static native int sqlite3_exec(sqlite3 pDb, String cmd, @Cast("int (*)(void*,int,char**,char**)") Pointer c, Pointer udp, @Cast("char**") @ByPtrPtr BytePointer errMsg);
 
 	static native int sqlite3_prepare_v2(sqlite3 pDb, @Cast("const char*") BytePointer sql, int nByte, @ByPtrPtr sqlite3_stmt ppStmt,
 																			 @Cast("const char**") @ByPtrPtr BytePointer pTail);
@@ -325,15 +325,6 @@ public final class SQLite {
 	}
 
 	/**
-	 * sqlite3_exec() callback function.
-	 * @see <a href="http://sqlite.org/c3ref/exec.html">sqlite3_exec</a>
-	 */
-	public static abstract class ExecCallback extends FunctionPointer {
-		@SuppressWarnings("unused")
-		public abstract int call(Pointer arg, int n,@Cast("char**") BytePointer values,@Cast("char**") BytePointer names);
-	}
-
-	/**
 	 * Query Progress Callback.
 	 * @see <a href="http://sqlite.org/c3ref/progress_handler.html">sqlite3_progress_handler</a>
 	 */
@@ -343,14 +334,7 @@ public final class SQLite {
 		 * @return <code>true</code> to interrupt
 		 */
 		@SuppressWarnings("unused")
-		public int call(Pointer arg) {
-			return progress(arg) ? 1 : 0;
-		}
-		/**
-		 * @param arg
-		 * @return <code>true</code> to interrupt
-		 */
-		protected abstract boolean progress(Pointer arg);
+		public abstract @Cast("int") boolean call(Pointer arg);
 	}
 
 	/**

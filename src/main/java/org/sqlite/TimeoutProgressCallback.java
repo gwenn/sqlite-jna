@@ -22,7 +22,7 @@ public class TimeoutProgressCallback extends ProgressCallback {
 	 * @return <code>true</code> when the operation times out.
 	 */
 	@Override
-	public boolean progress(Pointer arg) {
+	public boolean call(Pointer arg) {
 		if (expiration == 0 || System.currentTimeMillis() <= expiration) {
 			return false;
 		}
