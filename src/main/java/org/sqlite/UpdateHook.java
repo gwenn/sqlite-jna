@@ -2,6 +2,7 @@ package org.sqlite;
 
 import org.bytedeco.javacpp.FunctionPointer;
 import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.annotation.Cast;
 
 /**
  * Data change notification callback.
@@ -23,5 +24,5 @@ public abstract class UpdateHook extends FunctionPointer {
 	 * @param tblName table name containing the affected row.
 	 * @param rowId id of the affected row.
 	 */
-	public abstract void call(Pointer pArg, int actionCode, String dbName, String tblName, long rowId);
+	public abstract void call(Pointer pArg, int actionCode, String dbName, String tblName,@Cast("sqlite3_int64") long rowId);
 }
