@@ -218,7 +218,7 @@ public final class SQLite implements Library {
 	static native void sqlite3_result_error_code(SQLite3Context pCtx, int errCode);
 	static native void sqlite3_result_error_nomem(SQLite3Context pCtx);
 	static native void sqlite3_result_error_toobig(SQLite3Context pCtx);
-	static native void sqlite3_result_subtype(SQLite3Context pCtx, /*unsigned*/ int subtype);
+	//static native void sqlite3_result_subtype(SQLite3Context pCtx, /*unsigned*/ int subtype);
 
 	static native Pointer sqlite3_value_blob(Pointer pValue);
 	static native int sqlite3_value_bytes(Pointer pValue);
@@ -458,13 +458,13 @@ public final class SQLite implements Library {
 			sqlite3_result_zeroblob(this, result.n);
 		}
 
-		/**
+		/*
 		 * Causes the subtype of the result from the application-defined SQL function to be the value given.
 		 * @see <a href="http://sqlite.org/c3ref/result_subtype.html">sqlite3_result_subtype</a>
-         */
-		public void setResultSubType(int subtype) {
+		 */
+		/*public void setResultSubType(int subtype) {
 			sqlite3_result_subtype(this, subtype);
-		}
+		}*/
 
 		/**
 		 * Causes the implemented SQL function to throw an exception.
