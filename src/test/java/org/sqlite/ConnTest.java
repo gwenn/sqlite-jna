@@ -1,8 +1,15 @@
 package org.sqlite;
 
+import org.bytedeco.javacpp.LongPointer;
 import org.bytedeco.javacpp.Pointer;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.sqlite.SQLite.AggregateFinalCallback;
+import org.sqlite.SQLite.AggregateStepCallback;
+import org.sqlite.SQLite.Authorizer;
+import org.sqlite.SQLite.ProfileCallback;
+import org.sqlite.SQLite.ScalarCallback;
+import org.sqlite.SQLite.TraceCallback;
 import org.sqlite.SQLite.sqlite3_context;
 
 import static org.junit.Assert.*;
@@ -219,11 +226,10 @@ public class ConnTest {
 	@Test
 	public void createAggregateFunction() throws SQLiteException {
 		final Conn c = open();
-		fail("FIXME JavaCPP");
-		/*c.createAggregateFunction("my_sum", 1, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new AggregateStepCallback() {
+		c.createAggregateFunction("my_sum", 1, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new AggregateStepCallback() {
 			@Override
 			protected int numberOfBytes() {
-				return Pointer.SIZE;
+				return new LongPointer().sizeof();
 			}
 			@Override
 			protected void step(sqlite3_context pCtx, Pointer aggrCtx, SQLite3Values args) {
@@ -231,7 +237,8 @@ public class ConnTest {
 				assertNotNull(aggrCtx);
 				assertEquals(1, args.getCount());
 				assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
-				aggrCtx.setLong(0, aggrCtx.getLong(0) + args.getLong(0));
+				LongPointer l = new LongPointer(aggrCtx);
+				l.put(l.get() + args.getLong(0));
 			}
 		}, new AggregateFinalCallback() {
 			@Override
@@ -241,9 +248,10 @@ public class ConnTest {
 					pCtx.setResultNull();
 					return;
 				}
-				pCtx.setResultLong(aggrCtx.getLong(0));
+				LongPointer l = new LongPointer(aggrCtx);
+				pCtx.setResultLong(l.get());
 			}
-		});*/
+		});
 
 		Stmt stmt = c.prepare("SELECT my_sum(i) FROM (SELECT 2 AS i WHERE 1 <> 1)", false);
 		assertTrue(stmt.step(0));
@@ -378,7 +386,7 @@ public class ConnTest {
 		final Conn conn = Conn.open(Conn.MEMORY, OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_FULLMUTEX, null);
 		conn.setAuhtorizer(new Authorizer() {
 			@Override
-			public int call(Pointer pArg, int actionCode, String arg1, String arg2, String dbName, String triggerName) {
+			public int authorize(Pointer pArg, int actionCode, String arg1, String arg2, String dbName, String triggerName) {
 				//System.out.println("pArg = [" + pArg + "], actionCode = [" + actionCode + "], arg1 = [" + arg1 + "], arg2 = [" + arg2 + "], dbName = [" + dbName + "], triggerName = [" + triggerName + "]");
 				return Authorizer.SQLITE_OK;
 			}
