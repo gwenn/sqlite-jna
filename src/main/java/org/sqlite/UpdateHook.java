@@ -2,6 +2,7 @@ package org.sqlite;
 
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
+import jnr.ffi.annotations.Encoding;
 
 // The update hook is not invoked when internal system tables are modified (i.e. sqlite_master and sqlite_sequence).
 // The update hook is not invoked when WITHOUT ROWID tables are modified.
@@ -12,5 +13,5 @@ public interface UpdateHook {
 	 * @param actionCode org.sqlite.ActionCodes.SQLITE_INSERT | SQLITE_UPDATE | SQLITE_DELETE
 	 */
 	@Delegate
-	void invoke(Pointer pArg, int actionCode, String dbName, String tblName, long rowId);
+	void invoke(Pointer pArg, int actionCode,@Encoding("UTF-8") String dbName,@Encoding("UTF-8") String tblName, long rowId);
 }

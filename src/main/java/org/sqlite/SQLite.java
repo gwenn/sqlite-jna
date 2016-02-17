@@ -13,6 +13,7 @@ import jnr.ffi.LibraryOption;
 import jnr.ffi.Memory;
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
+import jnr.ffi.annotations.Encoding;
 import jnr.ffi.annotations.IgnoreError;
 import jnr.ffi.annotations.In;
 import jnr.ffi.annotations.Out;
@@ -409,7 +410,7 @@ public final class SQLite {
 	public interface LogCallback {
 		@SuppressWarnings("unused")
 		@Delegate
-		void invoke(Pointer udp, int err, String msg);
+		void invoke(Pointer udp, int err,@Encoding("UTF-8") String msg);
 	}
 
 	private static final LogCallback LOG_CALLBACK = new LogCallback() {
@@ -438,13 +439,13 @@ public final class SQLite {
 
 	public interface LibSQLite {
 		@IgnoreError
-		String sqlite3_libversion(); // no copy needed
+		@Encoding("UTF-8")String sqlite3_libversion(); // no copy needed
 		@IgnoreError
 		int sqlite3_libversion_number();
 		@IgnoreError
 		boolean sqlite3_threadsafe();
 		@IgnoreError
-		boolean sqlite3_compileoption_used(@In String optName);
+		boolean sqlite3_compileoption_used(@In @Encoding("UTF-8")String optName);
 
 		@IgnoreError
 		int sqlite3_config(int op);
@@ -453,10 +454,10 @@ public final class SQLite {
 		@IgnoreError
 		int sqlite3_config(int op, @In SQLite.LogCallback xLog, @In Pointer udp);
 		@IgnoreError
-		void sqlite3_log(int iErrCode, @In String msg);
+		void sqlite3_log(int iErrCode, @In @Encoding("UTF-8")String msg);
 
 		@IgnoreError
-		String sqlite3_errmsg(@In Pointer pDb); // copy needed: the error string might be overwritten or deallocated by subsequent calls to other SQLite interface functions.
+		@Encoding("UTF-8")String sqlite3_errmsg(@In Pointer pDb); // copy needed: the error string might be overwritten or deallocated by subsequent calls to other SQLite interface functions.
 		@IgnoreError
 		int sqlite3_errcode(@In Pointer pDb);
 
@@ -471,7 +472,7 @@ public final class SQLite {
 		int sqlite3_shutdown();
 
 		@IgnoreError
-		int sqlite3_open_v2(@In String filename, @Out PointerByReference ppDb, int flags, @In String vfs); // no copy needed
+		int sqlite3_open_v2(@In @Encoding("UTF-8")String filename, @Out PointerByReference ppDb, int flags, @In @Encoding("UTF-8")String vfs); // no copy needed
 		@IgnoreError
 		int sqlite3_close(@In Pointer pDb);
 		@IgnoreError
@@ -486,7 +487,7 @@ public final class SQLite {
 		@IgnoreError
 		int sqlite3_enable_load_extension(@In Pointer pDb, boolean onoff);
 		@IgnoreError
-		int sqlite3_load_extension(@In Pointer pDb, @In String file, @In String proc, @Out PointerByReference errMsg);
+		int sqlite3_load_extension(@In Pointer pDb, @In @Encoding("UTF-8")String file, @In @Encoding("UTF-8")String proc, @Out PointerByReference errMsg);
 		@IgnoreError
 		int sqlite3_limit(@In Pointer pDb, int id, int newVal);
 		@IgnoreError
@@ -500,25 +501,25 @@ public final class SQLite {
 		long sqlite3_last_insert_rowid(@In Pointer pDb);
 
 		@IgnoreError
-		String sqlite3_db_filename(@In Pointer pDb, @In String dbName); // no copy needed
+		@Encoding("UTF-8")String sqlite3_db_filename(@In Pointer pDb, @In @Encoding("UTF-8")String dbName); // no copy needed
 		@IgnoreError
-		int sqlite3_db_readonly(@In Pointer pDb, @In String dbName); // no copy needed
+		int sqlite3_db_readonly(@In Pointer pDb, @In @Encoding("UTF-8")String dbName); // no copy needed
 
 		@IgnoreError
 		Pointer sqlite3_next_stmt(@In Pointer pDb, @In Pointer pStmt);
 
 		@IgnoreError
-		int sqlite3_table_column_metadata(@In Pointer pDb, @In String dbName, @In String tableName, @In String columnName,
+		int sqlite3_table_column_metadata(@In Pointer pDb, @In @Encoding("UTF-8")String dbName, @In @Encoding("UTF-8")String tableName, @In @Encoding("UTF-8")String columnName,
 																			@Out PointerByReference pzDataType, @Out PointerByReference pzCollSeq,
 																			@Out IntByReference pNotNull, @Out IntByReference pPrimaryKey, @Out IntByReference pAutoinc); // no copy needed
 		@IgnoreError
-		int sqlite3_exec(@In Pointer pDb, @In String cmd, @In Pointer c, @In Pointer udp, @Out PointerByReference errMsg);
+		int sqlite3_exec(@In Pointer pDb, @In @Encoding("UTF-8")String cmd, @In Pointer c, @In Pointer udp, @Out PointerByReference errMsg);
 
 		@IgnoreError
 		int sqlite3_prepare_v2(@In Pointer pDb, Pointer sql, int nByte, @Out PointerByReference ppStmt,
 													 @Out PointerByReference pTail);
 		@IgnoreError
-		String sqlite3_sql(@In Pointer pStmt); // no copy needed
+		@Encoding("UTF-8")String sqlite3_sql(@In Pointer pStmt); // no copy needed
 		@IgnoreError
 		int sqlite3_finalize(@In Pointer pStmt);
 		@IgnoreError
@@ -539,15 +540,15 @@ public final class SQLite {
 		@IgnoreError
 		int sqlite3_column_type(@In Pointer pStmt, int iCol);
 		@IgnoreError
-		String sqlite3_column_name(@In Pointer pStmt, int iCol); // copy needed: The returned string pointer is valid until either the prepared statement is destroyed by sqlite3_finalize() or until the statement is automatically reprepared by the first call to sqlite3_step() for a particular run or until the next call to sqlite3_column_name() or sqlite3_column_name16() on the same column.
+		@Encoding("UTF-8")String sqlite3_column_name(@In Pointer pStmt, int iCol); // copy needed: The returned string pointer is valid until either the prepared statement is destroyed by sqlite3_finalize() or until the statement is automatically reprepared by the first call to sqlite3_step() for a particular run or until the next call to sqlite3_column_name() or sqlite3_column_name16() on the same column.
 		@IgnoreError
-		String sqlite3_column_origin_name(@In Pointer pStmt, int iCol); // copy needed
+		@Encoding("UTF-8")String sqlite3_column_origin_name(@In Pointer pStmt, int iCol); // copy needed
 		@IgnoreError
-		String sqlite3_column_table_name(@In Pointer pStmt, int iCol); // copy needed
+		@Encoding("UTF-8")String sqlite3_column_table_name(@In Pointer pStmt, int iCol); // copy needed
 		@IgnoreError
-		String sqlite3_column_database_name(@In Pointer pStmt, int iCol); // copy needed
+		@Encoding("UTF-8")String sqlite3_column_database_name(@In Pointer pStmt, int iCol); // copy needed
 		@IgnoreError
-		String sqlite3_column_decltype(@In Pointer pStmt, int iCol); // copy needed
+		@Encoding("UTF-8")String sqlite3_column_decltype(@In Pointer pStmt, int iCol); // copy needed
 
 		@IgnoreError
 		Pointer sqlite3_column_blob(@In Pointer pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
@@ -560,16 +561,16 @@ public final class SQLite {
 		@IgnoreError
 		long sqlite3_column_int64(@In Pointer pStmt, int iCol);
 		@IgnoreError
-		String sqlite3_column_text(@In Pointer pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
+		@Encoding("UTF-8")String sqlite3_column_text(@In Pointer pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
 		//const void *sqlite3_column_text16(Pointer pStmt, int iCol);
 		//sqlite3_value *sqlite3_column_value(Pointer pStmt, int iCol);
 
 		@IgnoreError
 		int sqlite3_bind_parameter_count(@In Pointer pStmt);
 		@IgnoreError
-		int sqlite3_bind_parameter_index(@In Pointer pStmt, String name); // no copy needed
+		int sqlite3_bind_parameter_index(@In Pointer pStmt, @Encoding("UTF-8")String name); // no copy needed
 		@IgnoreError
-		String sqlite3_bind_parameter_name(@In Pointer pStmt, int i); // copy needed
+		@Encoding("UTF-8")String sqlite3_bind_parameter_name(@In Pointer pStmt, int i); // copy needed
 
 		@IgnoreError
 		int sqlite3_bind_blob(@In Pointer pStmt, int i, @In byte[] value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
@@ -582,7 +583,7 @@ public final class SQLite {
 		@IgnoreError
 		int sqlite3_bind_null(@In Pointer pStmt, int i);
 		@IgnoreError
-		int sqlite3_bind_text(@In Pointer pStmt, int i, @In String value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+		int sqlite3_bind_text(@In Pointer pStmt, int i, @In @Encoding("UTF-8")String value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
 		//int sqlite3_bind_text16(Pointer pStmt, int i, const void*, int, void(*)(void*));
 		//int sqlite3_bind_value(Pointer pStmt, int i, const sqlite3_value*);
 		@IgnoreError
@@ -594,7 +595,7 @@ public final class SQLite {
 		void sqlite3_free(@In Pointer p);
 
 		@IgnoreError
-		int sqlite3_blob_open(@In Pointer pDb, @In String dbName, @In String tableName, @In String columnName,
+		int sqlite3_blob_open(@In Pointer pDb, @In @Encoding("UTF-8")String dbName, @In @Encoding("UTF-8")String tableName, @In @Encoding("UTF-8")String columnName,
 													long iRow, boolean flags, @Out PointerByReference ppBlob); // no copy needed
 		@IgnoreError
 		int sqlite3_blob_reopen(@In Pointer pBlob, long iRow);
@@ -608,7 +609,7 @@ public final class SQLite {
 		int sqlite3_blob_close(@In Pointer pBlob);
 
 		@IgnoreError
-		Pointer sqlite3_backup_init(@In Pointer pDst, @In String dstName, @In Pointer pSrc, @In String srcName);
+		Pointer sqlite3_backup_init(@In Pointer pDst, @In @Encoding("UTF-8")String dstName, @In Pointer pSrc, @In @Encoding("UTF-8")String srcName);
 		@IgnoreError
 		int sqlite3_backup_step(@In Pointer pBackup, int nPage);
 		@IgnoreError
@@ -629,7 +630,7 @@ public final class SQLite {
 		Pointer sqlite3_update_hook(@In Pointer pDb, @In UpdateHook xUpdate, @In Pointer pArg);
 
 		@IgnoreError
-		int sqlite3_create_function_v2(@In Pointer pDb, @In String functionName, int nArg, int eTextRep,
+		int sqlite3_create_function_v2(@In Pointer pDb, @In @Encoding("UTF-8")String functionName, int nArg, int eTextRep,
 																	 @In Pointer pApp, @In ScalarCallback xFunc, @In Pointer xStep, @In Pointer xFinal, @In Pointer xDestroy);
 		@IgnoreError
 		void sqlite3_result_null(@In Pointer pCtx);

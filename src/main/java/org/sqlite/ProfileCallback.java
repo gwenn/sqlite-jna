@@ -10,11 +10,12 @@ package org.sqlite;
 
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
+import jnr.ffi.annotations.Encoding;
 
 public abstract class ProfileCallback {
 	@SuppressWarnings("unused")
 	@Delegate
-	public void invoke(Pointer arg, String sql, long ns) {
+	public void invoke(Pointer arg, @Encoding("UTF-8") String sql, long ns) {
 		profile(sql, ns);
 	}
 
