@@ -154,12 +154,12 @@ public final class SQLite {
 	static native int sqlite3_bind_parameter_index(sqlite3_stmt pStmt,@Cast("const char*") BytePointer name); // no copy needed
 	static native @Cast("const char*") BytePointer sqlite3_bind_parameter_name(sqlite3_stmt pStmt, int i); // copy needed
 
-	static native int sqlite3_bind_blob(sqlite3_stmt pStmt, int i, byte[] value, int n,@Cast("void(*)(void*)") long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	static native int sqlite3_bind_blob(sqlite3_stmt pStmt, int i, byte[] value, int n,@Cast("sqlite3_destructor_type") long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
 	static native int sqlite3_bind_double(sqlite3_stmt pStmt, int i, double value);
 	static native int sqlite3_bind_int(sqlite3_stmt pStmt, int i, int value);
 	static native int sqlite3_bind_int64(sqlite3_stmt pStmt, int i, @Cast("sqlite3_int64") long value);
 	static native int sqlite3_bind_null(sqlite3_stmt pStmt, int i);
-	static native int sqlite3_bind_text(sqlite3_stmt pStmt, int i,@Cast("const char*") BytePointer value, int n,@Cast("void(*)(void*)") long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	static native int sqlite3_bind_text(sqlite3_stmt pStmt, int i,@Cast("const char*") BytePointer value, int n,@Cast("sqlite3_destructor_type") long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
 	//static native int sqlite3_bind_text16(SQLite3Stmt pStmt, int i, const void*, int, void(*)(void*));
 	//static native int sqlite3_bind_value(SQLite3Stmt pStmt, int i, const sqlite3_value*);
 	static native int sqlite3_bind_zeroblob(sqlite3_stmt pStmt, int i, int n);
@@ -208,8 +208,8 @@ public final class SQLite {
 	static native void sqlite3_result_null(sqlite3_context pCtx);
 	static native void sqlite3_result_int(sqlite3_context pCtx, int i);
 	static native void sqlite3_result_double(sqlite3_context pCtx, double d);
-	static native void sqlite3_result_text(sqlite3_context pCtx,@Cast("const char*") BytePointer text, int n,@Cast("void(*)(void*)") long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
-	static native void sqlite3_result_blob(sqlite3_context pCtx, byte[] blob, int n,@Cast("void(*)(void*)") long xDel);
+	static native void sqlite3_result_text(sqlite3_context pCtx,@Cast("const char*") BytePointer text, int n,@Cast("sqlite3_destructor_type") long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	static native void sqlite3_result_blob(sqlite3_context pCtx, byte[] blob, int n,@Cast("sqlite3_destructor_type") long xDel);
 	static native void sqlite3_result_int64(sqlite3_context pCtx, @Cast("sqlite3_int64") long l);
 	static native void sqlite3_result_zeroblob(sqlite3_context pCtx, int n);
 
