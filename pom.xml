@@ -114,5 +114,16 @@
         <os.family>mac</os.family>
       </properties>
     </profile>
+    <profile>
+      <id>windows</id>
+      <activation>
+        <os>
+          <family>windows</family>
+        </os>
+      </activation>
+      <properties>
+        <os.family>windows</os.family>
+      </properties>
+    </profile>
   </profiles>
 </project>
