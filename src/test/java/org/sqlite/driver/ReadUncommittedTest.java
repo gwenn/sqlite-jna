@@ -18,7 +18,7 @@ public class ReadUncommittedTest {
 
 	@Before
 	public void connect() throws Exception {
-		conn = DriverManager.getConnection(JDBC.PREFIX + "file:memdb1?mode=memory&cache=shared");
+		conn = DriverManager.getConnection(JDBC.PREFIX + "file:memdb2?mode=memory&cache=shared");
 		stat = conn.createStatement();
 		stat.executeUpdate("create table test (id integer primary key, fn, sn);");
 		stat.executeUpdate("create view testView as select * from test;");
