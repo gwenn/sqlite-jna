@@ -4,6 +4,7 @@
 #include "sqlite_jni.h"
 
 #define PTR_TO_JLONG(ptr) ((jlong)(size_t)(ptr))
+#define JLONG_TO_PTR(jl) ((void *)(size_t)(jl))
 
 //#define GLOBAL_REF(v) (*env)->NewGlobalRef(env, v)
 //#define DEL_GLOBAL_REF(v) (*env)->DeleteGlobalRef(env, v)
@@ -54,7 +55,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     return JNI_ERR;
   }
 
-  jclass cls = (*env)->FindClass(env, "java/lang/String");
+  jclass cls = (*env)->FindClass(env, "java/lang/RuntimeException");
   if (!cls) {
     return JNI_ERR;
   }
@@ -108,7 +109,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1config__IZ(
 }
 
 static callback_context *logger_cc = 0;
-static void log(void *udp, int err, const char *zMsg) {
+static void my_log(void *udp, int err, const char *zMsg) {
   callback_context *cc = (callback_context *)udp;
   JNIEnv *env = cc->env;
   jstring msg = (*env)->NewStringUTF(env, zMsg);
@@ -136,7 +137,7 @@ Java_org_sqlite_SQLite_sqlite3_1config__ILorg_sqlite_SQLite_LogCallback_2(
   if (!cc) {
     return SQLITE_NOMEM;
   }
-  int rc = sqlite3_config(op, log, cc);
+  int rc = sqlite3_config(op, my_log, cc);
   if (rc == SQLITE_OK) {
     free_callback_context(logger_cc);
     logger_cc = cc;
@@ -235,7 +236,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1busy_1timeout(
 }
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1db_1config(
     JNIEnv *env, jclass cls, jlong pDb, jint op, jint v, jintArray pOk) {
-  int ok = 0;
+  jint ok = 0;
   int rc = sqlite3_db_config(JLONG_TO_SQLITE3_PTR(pDb), op, v, &ok);
   (*env)->SetIntArrayRegion(env, pOk, 0, 1, &ok);
   return rc;
@@ -394,7 +395,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1table_1column_1metadata(
     }
     (*env)->SetObjectArrayElement(env, pCollSeq, 0, collSeq);
   }
-  (*env)->SetIntArrayRegion(env, pFlags, 0, 3, flags);
+  (*env)->SetIntArrayRegion(env, pFlags, 0, 3, flags); // FIXME expected 'const jint * {aka const long int *}' but argument is of type 'int *'
   return rc;
 }
 
@@ -803,8 +804,6 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1backup_1finish(
     JNIEnv *env, jclass cls, jlong pBackup) {
   return sqlite3_backup_finish(JLONG_TO_SQLITE3_BACKUP_PTR(pBackup));
 }
-
-#define JLONG_TO_PTR(jl) ((void *)(size_t)(jl))
 
 JNIEXPORT void JNICALL Java_org_sqlite_SQLite_free_1callback_1context(
     JNIEnv *env, jclass cls, jlong p) {
