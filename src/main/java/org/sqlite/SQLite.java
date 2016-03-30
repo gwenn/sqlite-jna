@@ -203,7 +203,7 @@ public final class SQLite {
 	*/
 	// eTextRep: SQLITE_UTF8 => 1, ...
 	static native int sqlite3_create_function_v2(sqlite3 pDb,@Cast("const char*") BytePointer functionName, int nArg, int eTextRep,
-																							 Pointer pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, Destructor xDestroy);
+		 Pointer pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, Destructor xDestroy);
 
 	static native void sqlite3_result_null(sqlite3_context pCtx);
 	static native void sqlite3_result_int(sqlite3_context pCtx, int i);
