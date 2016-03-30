@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -84,6 +85,18 @@ public class RSMetaDataTest {
 		assertEquals(ResultSetMetaData.columnNullable, meta.isNullable(1));
 		assertEquals(ResultSetMetaData.columnNullable, meta.isNullable(2));
 		assertEquals(ResultSetMetaData.columnNullable, meta.isNullable(3));
+	}
+
+	@Test
+	public void expression() throws SQLException {
+		final ResultSet rs = stat.executeQuery("SELECT NULL UNION SELECT 1");
+		meta = rs.getMetaData();
+		assertNull(meta.getColumnTypeName(1));
+		rs.next();
+		assertNull(meta.getColumnTypeName(1));
+		rs.next();
+		assertNull(meta.getColumnTypeName(1));
+		rs.close();
 	}
 
 	@Test
