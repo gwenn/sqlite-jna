@@ -15,7 +15,7 @@ import java.io.OutputStream;
 import java.sql.Blob;
 import java.sql.SQLException;
 
-class BlobImpl implements Blob {
+class BlobImpl implements Blob, AutoCloseable {
 	private final org.sqlite.Blob blob;
 
 	BlobImpl(org.sqlite.Blob blob) {
@@ -92,7 +92,12 @@ class BlobImpl implements Blob {
 		if (blob == null) {
 			return;
 		}
-		blob.closeAndCheck();
+		blob.close();
+	}
+
+	@Override
+	public void close() throws SQLException {
+		free();
 	}
 
 	@Override

@@ -8,6 +8,10 @@
  */
 package org.sqlite;
 
+/**
+ * SQLite Result Codes.
+ * @see <a href="http://sqlite.org/rescode.html">Primary Result Code List</a>
+ */
 public interface ErrCodes {
 	/**
 	 * Error in SQLite Wrapper

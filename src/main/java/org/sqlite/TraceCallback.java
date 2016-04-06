@@ -8,7 +8,14 @@
  */
 package org.sqlite;
 
+/**
+ * Tracing callback.
+ * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
+ */
 public interface TraceCallback {
+	/**
+	 * @param sql SQL statement text.
+	 */
 	@SuppressWarnings("unused")
 	void trace(String sql);
 }

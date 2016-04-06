@@ -8,6 +8,10 @@
  */
 package org.sqlite;
 
+/**
+ * Type affinity of a column.
+ * @see <a href="http://sqlite.org/datatype3.html#affinity">Type Affinity</a>
+ */
 public interface ColAffinities {
 	int INTEGER = 0;
 	int TEXT = 1;

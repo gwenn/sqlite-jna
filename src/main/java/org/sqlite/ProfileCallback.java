@@ -8,8 +8,15 @@
  */
 package org.sqlite;
 
-
+/**
+ * Profiling callback.
+ * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
+ */
 public interface ProfileCallback {
+	/**
+	 * @param sql SQL statement text.
+	 * @param ns time in nanoseconds
+	 */
 	@SuppressWarnings("unused")
 	void profile(String sql, long ns);
 }

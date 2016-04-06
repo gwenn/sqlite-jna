@@ -13,9 +13,9 @@ public class StmtTest {
 		for (int i = 0; i < 100; i++) {
 			final Stmt s = c.prepare("SELECT 1", false);
 			assertNotNull(s);
-			checkResult(s.close());
+			checkResult(s.closeNoCheck());
 		}
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -32,8 +32,8 @@ public class StmtTest {
 			}
 			s.reset();
 		}
-		checkResult(s.close());
-		checkResult(c.close());
+		checkResult(s.closeNoCheck());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -46,8 +46,8 @@ public class StmtTest {
 		} else {
 			fail("No result");
 		}
-		checkResult(s.close());
-		checkResult(c.close());
+		checkResult(s.closeNoCheck());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -59,9 +59,9 @@ public class StmtTest {
 		for (String sql : sqls) {
 			final Stmt s = c.prepare(sql, false);
 			assertTrue("readOnly expected", s.isReadOnly());
-			checkResult(s.close());
+			checkResult(s.closeNoCheck());
 		}
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -69,9 +69,9 @@ public class StmtTest {
 		final Conn c = ConnTest.open();
 		final Stmt stmt = c.prepare("SELECT 1", false);
 		stmt.getColumnCount();
-		stmt.closeAndCheck();
+		stmt.close();
 		assertEquals(ColTypes.SQLITE_NULL, stmt.getColumnType(0));
-		checkResult(c.close());
+		checkResult(c.closeNoCheck());
 	}
 
 	@Test
@@ -82,8 +82,8 @@ public class StmtTest {
 		assertEquals(0, s.status(StmtStatus.SQLITE_STMTSTATUS_SORT, false));
 		assertEquals(0, s.status(StmtStatus.SQLITE_STMTSTATUS_AUTOINDEX, false));
 		assertEquals(0, s.status(StmtStatus.SQLITE_STMTSTATUS_VM_STEP, false));
-		checkResult(s.close());
-		checkResult(c.close());
+		checkResult(s.closeNoCheck());
+		checkResult(c.closeNoCheck());
 	}
 
 	//@Rule
@@ -99,8 +99,8 @@ public class StmtTest {
 		ins.exec();
 
 		assertFalse(ins.isBusy());
-		ins.closeAndCheck();
-		c.closeAndCheck();
+		ins.close();
+		c.close();
 	}
 
 	@Test
@@ -113,14 +113,14 @@ public class StmtTest {
 		final String text = new String(Character.toChars(0x1F604));
 		ins.bindText(1, text);
 		ins.exec();
-		ins.closeAndCheck();
+		ins.close();
 
 		final Stmt sel = c.prepare("SELECT data FROM foo", false);
 		assertTrue(sel.step(0));
 		final byte[] bytes = sel.getColumnBlob(0);
 		assertArrayEquals(text.getBytes(StandardCharsets.UTF_8), bytes);
-		sel.closeAndCheck();
-		c.closeAndCheck();
+		sel.close();
+		c.close();
 	}
 
 	static void checkResult(int res) {

@@ -23,6 +23,12 @@ import java.sql.SQLWarning;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import static org.sqlite.OpenQueryParameter.*;
+
+/**
+ * JDBC 4.x driver implementation for SQLite 3.
+ * @see java.sql.Driver
+ */
 public class JDBC implements Driver {
 	public static final String PREFIX;
 
@@ -40,10 +46,6 @@ public class JDBC implements Driver {
 	public static final String VFS = "vfs";
 	public static final String MODE = "mode";
 	public static final String CACHE = "cache";
-	public static final String FOREIGN_KEYS = "foreign_keys";
-	public static final String ENABLE_TRIGGERS = "enable_triggers";
-	public static final String ENABLE_LOAD_EXTENSION = "enable_load_extension";
-	public static final String ENCODING = "encoding";
 
 	@Override
 	public Connection connect(String url, Properties info) throws SQLException {
@@ -96,20 +98,20 @@ public class JDBC implements Driver {
 		cache.description = "Choose to participate or not participate in shared cache mode.";
 		cache.choices = new String[]{"shared", "private"};
 
-		final DriverPropertyInfo fks = new DriverPropertyInfo(FOREIGN_KEYS, info == null ? null : info.getProperty(FOREIGN_KEYS));
+		final DriverPropertyInfo fks = new DriverPropertyInfo(FOREIGN_KEYS.name, info == null ? null : info.getProperty(FOREIGN_KEYS.name));
 		fks.description = "Enable or disable the enforcement of foreign key constraints.";
 		fks.choices = new String[]{"on", "off"};
 
-		final DriverPropertyInfo triggers = new DriverPropertyInfo(ENABLE_TRIGGERS, info == null ? null : info.getProperty(ENABLE_TRIGGERS));
+		final DriverPropertyInfo triggers = new DriverPropertyInfo(ENABLE_TRIGGERS.name, info == null ? null : info.getProperty(ENABLE_TRIGGERS.name));
 		triggers.description = "Enable or disable triggers.";
 		triggers.choices = new String[]{"on", "off"};
 
-		final DriverPropertyInfo ele = new DriverPropertyInfo(ENABLE_LOAD_EXTENSION, info == null ? null : info.getProperty(ENABLE_LOAD_EXTENSION));
+		final DriverPropertyInfo ele = new DriverPropertyInfo(ENABLE_LOAD_EXTENSION.name, info == null ? null : info.getProperty(ENABLE_LOAD_EXTENSION.name));
 		ele.description = "Turn extension loading on or off.";
 		ele.choices = new String[]{"on", "off"};
 		if (ele.value == null) ele.value = "off"; // default
 
-		final DriverPropertyInfo encoding = new DriverPropertyInfo(ENCODING, info == null ? null : info.getProperty(ENCODING));
+		final DriverPropertyInfo encoding = new DriverPropertyInfo(ENCODING.name, info == null ? null : info.getProperty(ENCODING.name));
 		encoding.description = "Set the encoding.";
 		encoding.choices = new String[]{"UTF-8", "UTF-16", "UTF-16le", "UTF-16be"};
 
@@ -127,11 +129,11 @@ public class JDBC implements Driver {
 		if (info == null) {
 			return null;
 		}
-		final String encoding = info.getProperty(ENCODING);
+		final String encoding = info.getProperty(ENCODING.name);
 		if (encoding != null && !encoding.isEmpty()) {
 			conn.fastExec("PRAGMA encoding=" + SQLite.doubleQuote(encoding));
 		}
-		final String fks = info.getProperty(FOREIGN_KEYS);
+		final String fks = info.getProperty(FOREIGN_KEYS.name);
 		SQLWarning warnings = null;
 		if ("on".equals(fks)) {
 			if (!conn.enableForeignKeys(true)) {
@@ -144,7 +146,7 @@ public class JDBC implements Driver {
 				SQLite.sqlite3_log(-1, "cannot disable the enforcement of foreign key constraints.");
 			}
 		}
-		final String triggers = info.getProperty(ENABLE_TRIGGERS);
+		final String triggers = info.getProperty(ENABLE_TRIGGERS.name);
 		if ("on".equals(triggers)) {
 			if (!conn.enableTriggers(true)) {
 				warnings = addWarning(warnings, new SQLWarning("cannot enable triggers.", null, ErrCodes.WRAPPER_SPECIFIC));
@@ -156,7 +158,7 @@ public class JDBC implements Driver {
 				SQLite.sqlite3_log(-1, "cannot disable triggers.");
 			}
 		}
-		if ("on".equals(info.getProperty(ENABLE_LOAD_EXTENSION))) {
+		if ("on".equals(info.getProperty(ENABLE_LOAD_EXTENSION.name))) {
 			conn.enableLoadExtension(true);
 		} // disabled by default
 		return warnings;
@@ -185,10 +187,12 @@ public class JDBC implements Driver {
 		return false;
 	}
 
+	//#if mvn.project.property.jdbc.specification.version >= "4.1"
 	@Override
 	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
 		throw Util.unsupported("Driver.getParentLogger");
 	}
+	//#endif
 
 	private static Driver registeredDriver;
 	public static void register() throws SQLException {

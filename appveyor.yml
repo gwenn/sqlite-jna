@@ -3,26 +3,26 @@ branches:
     - master
 skip_tags: true
 environment:
-  JAVA_HOME: C:\Program Files\Java\jdk1.7.0
-  M2_HOME: C:\bin\apache-maven-3.2.5
+  JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+  M2_HOME: C:\tools\apache-maven-3.3.3
 install:
-#  - cinst sqlite # win32_x86 dll versus JDK amd64
-  - nuget install System.Data.SQLite.Core -Verbosity detailed
   - ps: |
       $MVNDIR = $env:M2_HOME
       if (!(Test-Path -Path $MVNDIR )) {
         Write-Host (Test-Path -Path $MVNDIR)
         Write-Host 'Installing Maven'
-        choco install maven -Version 3.2.5 -y
+        choco install maven -Version 3.3.3 -y
       } else {
         Write-Host 'Found Maven cached installation'
       }
   - cmd: SET PATH=%M2_HOME%\bin;%PATH%
-  - cmd: copy System.Data.SQLite.Core.1.0.98.1\build\net451\x64\SQLite.Interop.dll sqlite3.dll
+#  - cinst sqlite # win32_x86 dll versus JDK amd64
+  - ps: Start-FileDownload 'http://sqlite.org/2016/sqlite-dll-win64-x64-3110100.zip'
+  - cmd: 7z e sqlite-dll-win64-x64-3110100.zip -y > nul
 build_script:
   - mvn -V -B clean package -DskipTests
 test_script:
-  - mvn -B test -DargLine="-Djna.library.path=C:\tools\SQLite -Djna.nosys=true"
+  - mvn -B test
 cache:
-  - C:\bin\apache-maven-3.2.5\
+  - C:\tools\apache-maven-3.3.3
   - C:\Users\appveyor\.m2

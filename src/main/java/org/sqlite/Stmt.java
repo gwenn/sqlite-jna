@@ -10,11 +10,13 @@ package org.sqlite;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import static org.sqlite.SQLite.*;
 
-public class Stmt {
+public class Stmt implements AutoCloseable, Row {
 	final Conn c;
 	private long pStmt;
 	private final String tail;
@@ -62,7 +64,7 @@ public class Stmt {
 	/**
 	 * @return result code (No exception is thrown).
 	 */
-	public int close() {
+	public int closeNoCheck() {
 		return close(false);
 	}
 	public int close(boolean force) {
@@ -78,11 +80,105 @@ public class Stmt {
 		pStmt = 0;
 		return res;
 	}
-	public void closeAndCheck() throws StmtException {
+	@Override
+	public void close() throws StmtException {
 		final int res = close(false);
 		if (res != ErrCodes.SQLITE_OK) {
 			throw new StmtException(this, "error while closing statement '%s'", res);
 		}
+	}
+
+	/**
+	 * Execute an INSERT and return the ROWID.
+	 * @param params SQL statement parameters
+	 * @return the rowid of the most recent successful INSERT into the database.
+	 * @throws SQLiteException if no row is inserted or many rows are inserted.
+	 */
+	public long insert(Object... params) throws SQLiteException {
+		final int changes = execDml(params);
+		if (changes == 1) {
+			return c.getLastInsertRowid();
+		} else if (changes == 0) {
+			throw new StmtException(this, String.format("No row inserted by '%s'", getSql()), ErrCodes.WRAPPER_SPECIFIC);
+		} else {
+			throw new StmtException(this, String.format("%d rows inserted by '%s'", changes, getSql()), ErrCodes.WRAPPER_SPECIFIC);
+		}
+	}
+
+	/**
+	 * Execute a DML and return the number of rows impacted.
+	 * @param params SQL statement parameters
+	 * @return the number of database rows that were changed or inserted or deleted.
+	 */
+	public int execDml(Object... params) throws SQLiteException {
+		bind(params);
+		exec();
+		return c.getChanges();
+	}
+
+	/**
+	 * Executes the prepared statement and maps a function over the resulting rows.
+	 * @param mapper Row mapper
+	 * @param params Statement parameters
+	 * @return an iterator of mapped rows
+	 */
+	public <T> Iterator<T> queryMap(RowMapper<T> mapper, Object... params) throws SQLiteException {
+		bind(params);
+		return new Iterator<T>() {
+			private State state = State.NOT_READY;
+			@Override
+			public boolean hasNext() {
+				if (State.FAILED == state) {
+					throw new IllegalStateException();
+				}
+				if (State.DONE == state) {
+					return false;
+				} else if (State.READY == state) {
+					return true;
+				}
+				state = State.FAILED;
+				try {
+					if (Stmt.this.step(0)) {
+						state = State.READY;
+						return true;
+					} else {
+						state = State.DONE;
+						return false;
+					}
+				} catch (SQLiteException e) {
+					throw new IllegalStateException(e);
+				}
+			}
+			@Override
+			public T next() {
+				if (!hasNext()) {
+					throw new NoSuchElementException();
+				}
+				state = State.NOT_READY;
+				try {
+					return mapper.map(Stmt.this);
+				} catch (StmtException e) {
+					throw new IllegalStateException(e);
+				}
+			}
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	}
+	private enum State {
+		READY, NOT_READY, DONE, FAILED,
+	}
+
+	/**
+	 * @param params Statement parameters
+	 * @return returns <code>true</code> if a query in the SQL statement it executes returns one or more rows and
+	 * <code>false</code> if the SQL returns an empty set.
+	 */
+	public boolean exists(Object... params) throws SQLiteException {
+		bind(params);
+		return step(0);
 	}
 
 	/**
@@ -155,9 +251,7 @@ public class Stmt {
 		check(sqlite3_clear_bindings(pStmt), "Error while clearing bindings '%s'");
 	}
 
-	/**
-	 * @return column count
-	 */
+	@Override
 	public int getColumnCount() {
 		if (columnCount == -1) {
 			columnCount = sqlite3_column_count(pStmt); // ok if pStmt is null
@@ -172,32 +266,20 @@ public class Stmt {
 		return sqlite3_data_count(pStmt); // ok if pStmt is null
 	}
 
-	/**
-	 * @param iCol The leftmost column is number 0.
-	 * @return org.sqlite.ColTypes.*
-	 * @throws StmtException
-	 */
+	@Override
 	public int getColumnType(int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		return sqlite3_column_type(pStmt, iCol); // ok if pStmt is null
 	}
 
-	/**
-	 * @param iCol The leftmost column is number 0.
-	 * @return Column declared type
-	 * @throws StmtException
-	 */
+	@Override
 	public String getColumnDeclType(int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
 		return sqlite3_column_decltype(pStmt, iCol); // ko if pStmt is null
 	}
 
-	/**
-	 * @param iCol The leftmost column is number 0.
-	 * @return org.sqlite.ColAffinities.*
-	 * @throws StmtException
-	 */
+	@Override
 	public int getColumnAffinity(int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		if (null == columnAffinities) {
@@ -210,11 +292,7 @@ public class Stmt {
 		return columnAffinities[iCol];
 	}
 
-	/**
-	 * @param iCol The leftmost column is number 0.
-	 * @return Column name
-	 * @throws StmtException
-	 */
+	@Override
 	public String getColumnName(int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
@@ -226,37 +304,26 @@ public class Stmt {
 		columnNames[iCol] = sqlite3_column_name(pStmt, iCol); // ko if pStmt is null
 		return columnNames[iCol];
 	}
-	/**
-	 * @param iCol The leftmost column is number 0.
-	 * @return Column origin name
-	 * @throws StmtException
-	 */
+	@Override
 	public String getColumnOriginName(int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
 		return sqlite3_column_origin_name(pStmt, iCol); // ko if pStmt is null
 	}
-	/**
-	 * @param iCol The leftmost column is number 0.
-	 * @return Table name
-	 * @throws StmtException
-	 */
+	@Override
 	public String getColumnTableName(int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
 		return sqlite3_column_table_name(pStmt, iCol); // ko if pStmt is null
 	}
-	/**
-	 * @param iCol The leftmost column is number 0.
-	 * @return Database name
-	 * @throws StmtException
-	 */
+	@Override
 	public String getColumnDatabaseName(int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
 		return sqlite3_column_database_name(pStmt, iCol); // ko if pStmt is null
 	}
 
+	@Override
 	public byte[] getColumnBlob(int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		final byte[] bytes = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
@@ -267,48 +334,28 @@ public class Stmt {
 		}
 	}
 
-	/**
-	 * @param iCol The leftmost column is number 0.
-	 * @return the number of bytes in that BLOB or string.
-	 * @throws StmtException
-	 */
+	@Override
 	public int getColumnBytes(int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		return sqlite3_column_bytes(pStmt, iCol); // ok if pStmt is null
 	}
 
-	/**
-	 * @param iCol The leftmost column is number 0.
-	 * @return double value
-	 * @throws StmtException
-	 */
+	@Override
 	public double getColumnDouble(int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		return sqlite3_column_double(pStmt, iCol); // ok if pStmt is null
 	}
-	/**
-	 * @param iCol The leftmost column is number 0.
-	 * @return int value
-	 * @throws StmtException
-	 */
+	@Override
 	public int getColumnInt(int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		return sqlite3_column_int(pStmt, iCol); // ok if pStmt is null
 	}
-	/**
-	 * @param iCol The leftmost column is number 0.
-	 * @return long value
-	 * @throws StmtException
-	 */
+	@Override
 	public long getColumnLong(int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		return sqlite3_column_int64(pStmt, iCol); // ok if pStmt is null
 	}
-	/**
-	 * @param iCol The leftmost column is number 0.
-	 * @return text value
-	 * @throws StmtException
-	 */
+	@Override
 	public String getColumnText(int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		return sqlite3_column_text(pStmt, iCol); // ok if pStmt is null
@@ -538,6 +585,9 @@ public class Stmt {
 			return c.open(getColumnDatabaseName(iCol), getColumnTableName(iCol), colName, iRow, rw);
 		}
 		return null;
+	}
+	public String encoding(int iCol) throws SQLiteException {
+		return c.encoding(getColumnDatabaseName(iCol));
 	}
 
 	public int status(StmtStatus op, boolean reset) throws StmtException {

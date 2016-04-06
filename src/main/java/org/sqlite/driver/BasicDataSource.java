@@ -10,14 +10,26 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
+/**
+ * Simple DataSource which does not perform connection pooling. In order to use the DataSource, you
+ * must set the property filename.
+ */
 public class BasicDataSource extends JDBC implements DataSource, Referenceable {
 	private String filename = org.sqlite.Conn.TEMP_FILE;
 	private int loginTimeout;
 	private PrintWriter logWriter;
 
+	/**
+	 * Gets the path of the SQLite database.
+	 * @return path of the SQLite database.
+	 */
 	public String getFilename() {
 		return filename;
 	}
+	/**
+	 * Sets the path of the SQLite database. If this is changed, it will only affect future calls to getConnection.
+	 * @param filename path of the SQLite database.
+	 */
 	public void setFilename(String filename) {
 		if (filename == null) {
 			filename = org.sqlite.Conn.TEMP_FILE;

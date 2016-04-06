@@ -4,6 +4,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Method;
 import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.Date;
@@ -14,7 +15,11 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * These tests are designed to stress Statements on memory databases.
@@ -385,8 +390,13 @@ public class StatementTest {
 		stat.executeUpdate("create table t1 (c1);");
 		stat.executeUpdate("insert into t1 values (4);");
 		stat.executeUpdate("insert into t1 values (4);");
-		conn.createStatement().executeQuery("select * from t1;").next();
-		stat.executeUpdate("drop table t1;");
+		final Statement statement = conn.createStatement();
+		try {
+			statement.executeQuery("select * from t1;").next();
+			stat.executeUpdate("drop table t1;");
+		} finally {
+			statement.close();
+		}
 	}
 
 	@Test(expected = SQLException.class)
@@ -496,5 +506,39 @@ public class StatementTest {
 	@Test(expected = SQLFeatureNotSupportedException.class)
 	public void setEscapeProcessingToTrue() throws SQLException {
 		stat.setEscapeProcessing(true);
+	}
+
+	@Test
+	public void unwrapTest() throws SQLException {
+		assertTrue(conn.isWrapperFor(Connection.class));
+		assertFalse(conn.isWrapperFor(Statement.class));
+		assertEquals(conn, conn.unwrap(Connection.class));
+		assertEquals(conn, conn.unwrap(Conn.class));
+
+		assertTrue(stat.isWrapperFor(Statement.class));
+		assertEquals(stat, stat.unwrap(Statement.class));
+		assertEquals(stat, stat.unwrap(Stmt.class));
+
+		ResultSet rs = stat.executeQuery("select 1");
+
+		assertTrue(rs.isWrapperFor(ResultSet.class));
+		assertEquals(rs, rs.unwrap(ResultSet.class));
+
+		rs.close();
+	}
+
+	@Test
+	public void closeOnCompletionTest() throws Exception {
+		Method mIsCloseOnCompletion = Stmt.class.getDeclaredMethod("isCloseOnCompletion");
+		Method mCloseOnCompletion = Stmt.class.getDeclaredMethod("closeOnCompletion");
+		assertFalse((Boolean) mIsCloseOnCompletion.invoke(stat));
+
+		mCloseOnCompletion.invoke(stat);
+		assertTrue((Boolean) mIsCloseOnCompletion.invoke(stat));
+
+		ResultSet rs = stat.executeQuery("select 1");
+		rs.close();
+
+		assertTrue(stat.isClosed());
 	}
 }

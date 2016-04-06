@@ -10,11 +10,18 @@ package org.sqlite;
 
 import org.sqlite.SQLite.ProgressCallback;
 
+/**
+ * Query Progress Callback.
+ * @see <a href="http://sqlite.org/c3ref/progress_handler.html">sqlite3_progress_handler</a>
+ */
 public class TimeoutProgressCallback implements ProgressCallback {
 	private long expiration;
 
+	/**
+	 * @return <code>true</code> when the operation times out.
+	 */
 	@Override
-	public boolean progress() {
+	public boolean callback() {
 		if (expiration == 0 || System.currentTimeMillis() <= expiration) {
 			return false;
 		}
