@@ -408,7 +408,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public int setBusyHandler(BusyHandler bh) throws ConnException {
 		checkOpen();
-		return sqlite3_busy_handler(pDb, bh);
+		return sqlite3_busy_handler(pDb, bh); // FIXME free callback_context
 	}
 
 	/**
@@ -632,7 +632,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public int setAuhtorizer(Authorizer auth) throws ConnException {
 		checkOpen();
-		return sqlite3_set_authorizer(pDb, auth);
+		return sqlite3_set_authorizer(pDb, auth); // FIXME
 	}
 
 	/**
@@ -645,7 +645,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void createScalarFunction(String name, int nArg, int flags, ScalarCallback xFunc) throws ConnException {
 		checkOpen();
-		check(sqlite3_create_function_v2(pDb, name, nArg, flags, null, xFunc, null, null, null),
+		check(sqlite3_create_function_v2(pDb, name, nArg, flags, xFunc, null, null),
 				"error while registering function %s", name);
 	}
 	/**
@@ -660,7 +660,7 @@ public final class Conn implements AutoCloseable {
 	public void createAggregateFunction(String name, int nArg, int flags, AggregateStepCallback xStep,
 			AggregateFinalCallback xFinal) throws ConnException {
 		checkOpen();
-		check(sqlite3_create_function_v2(pDb, name, nArg, flags, null, null, xStep, xFinal, null),
+		check(sqlite3_create_function_v2(pDb, name, nArg, flags, null, xStep, xFinal),
 				"error while registering function %s", name);
 	}
 

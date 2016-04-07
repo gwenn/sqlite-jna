@@ -1,7 +1,7 @@
 //#include <stdio.h> //printf
-#include <string.h> // memcpy
-#include "sqlite3.h"
 #include "sqlite_jni.h"
+#include "sqlite3.h"
+#include <string.h> // memcpy
 
 #define PTR_TO_JLONG(ptr) ((jlong)(size_t)(ptr))
 #define JLONG_TO_PTR(jl) ((void *)(size_t)(jl))
@@ -96,6 +96,10 @@ JNIEXPORT jboolean JNICALL Java_org_sqlite_SQLite_sqlite3_1compileoption_1used(
   int rc = sqlite3_compileoption_used(zOptName);
   (*env)->ReleaseStringUTFChars(env, optName, zOptName);
   return rc == 0 ? JNI_FALSE : JNI_TRUE;
+}
+JNIEXPORT jstring JNICALL Java_org_sqlite_SQLite_sqlite3_1compileoption_1get(
+    JNIEnv *env, jclass cls, jint n) {
+  return (*env)->NewStringUTF(env, sqlite3_compileoption_get(n));
 }
 
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1config__I(JNIEnv *env,
@@ -230,10 +234,47 @@ JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1interrupt(JNIEnv *env,
   sqlite3_interrupt(JLONG_TO_SQLITE3_PTR(pDb));
 }
 
+static int busy(void *udp, int count) {
+  callback_context *cc = (callback_context *)udp;
+  JNIEnv *env = cc->env;
+  return (*env)->CallBooleanMethod(env, cc->obj, cc->mid, count);
+}
+
+JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1busy_1handler(
+    JNIEnv *env, jclass cls, jlong pDb, jobject xBusy) {
+  if (!xBusy) {
+    return sqlite3_busy_handler(JLONG_TO_SQLITE3_PTR(pDb), 0, 0);
+  }
+  jclass clz = (*env)->GetObjectClass(env, xBusy);
+  jmethodID mid = (*env)->GetMethodID(env, clz, "busy", "(I)Z");
+  if (!mid) {
+    throwException(env, "expected 'boolean busy(int)' method");
+    return 0;
+  }
+  callback_context *cc = create_callback_context(env, mid, xBusy);
+  if (!cc) {
+    return 0;
+  }
+  return sqlite3_busy_handler(JLONG_TO_SQLITE3_PTR(pDb), busy, cc);
+  // return PTR_TO_JLONG(cc); FIXME return callback_context
+}
+
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1busy_1timeout(
     JNIEnv *env, jclass cls, jlong pDb, jint ms) {
   return sqlite3_busy_timeout(JLONG_TO_SQLITE3_PTR(pDb), ms);
 }
+JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1db_1status(
+    JNIEnv *env, jclass cls, jlong pDb, jint op, jintArray pCur,
+    jintArray pHiwtr, jboolean resetFlg) {
+  jint cur = 0;
+  jint hiwtr = 0;
+  int rc =
+      sqlite3_db_status(JLONG_TO_SQLITE3_PTR(pDb), op, &cur, &hiwtr, resetFlg);
+  (*env)->SetIntArrayRegion(env, pCur, 0, 1, &cur);
+  (*env)->SetIntArrayRegion(env, pHiwtr, 0, 1, &hiwtr);
+  return rc;
+}
+
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1db_1config(
     JNIEnv *env, jclass cls, jlong pDb, jint op, jint v, jintArray pOk) {
   jint ok = 0;
@@ -395,7 +436,10 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1table_1column_1metadata(
     }
     (*env)->SetObjectArrayElement(env, pCollSeq, 0, collSeq);
   }
-  (*env)->SetIntArrayRegion(env, pFlags, 0, 3, flags); // FIXME expected 'const jint * {aka const long int *}' but argument is of type 'int *'
+  (*env)->SetIntArrayRegion(env, pFlags, 0, 3, flags); // FIXME expected 'const
+                                                       // jint * {aka const long
+                                                       // int *}' but argument
+                                                       // is of type 'int *'
   return rc;
 }
 
@@ -476,8 +520,8 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1prepare_1v2(
 JNIEXPORT jstring JNICALL Java_org_sqlite_SQLite_sqlite3_1sql(JNIEnv *env,
                                                               jclass cls,
                                                               jlong pStmt) {
-  return (*env)
-      ->NewStringUTF(env, sqlite3_sql(JLONG_TO_SQLITE3_STMT_PTR(pStmt)));
+  return (*env)->NewStringUTF(env,
+                              sqlite3_sql(JLONG_TO_SQLITE3_STMT_PTR(pStmt)));
 }
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1finalize(JNIEnv *env,
                                                                 jclass cls,
@@ -623,8 +667,7 @@ JNIEXPORT jstring JNICALL Java_org_sqlite_SQLite_sqlite3_1bind_1parameter_1name(
 }
 
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1bind_1blob(
-    JNIEnv *env, jclass cls, jlong pStmt, jint i, jbyteArray v, jint n,
-    jlong xDel) {
+    JNIEnv *env, jclass cls, jlong pStmt, jint i, jbyteArray v, jint n) {
   if (!v) {
     return sqlite3_bind_null(JLONG_TO_SQLITE3_STMT_PTR(pStmt), i);
   }
@@ -661,8 +704,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1bind_1null(JNIEnv *env,
   return sqlite3_bind_null(JLONG_TO_SQLITE3_STMT_PTR(pStmt), i);
 }
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1bind_1text(
-    JNIEnv *env, jclass cls, jlong pStmt, jint i, jstring v, jint n,
-    jlong xDel) {
+    JNIEnv *env, jclass cls, jlong pStmt, jint i, jstring v, jint n) {
   if (!v) {
     return sqlite3_bind_null(JLONG_TO_SQLITE3_STMT_PTR(pStmt), i);
   }
@@ -698,6 +740,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1stmt_1status(
     JNIEnv *env, jclass cls, jlong pStmt, jint op, jboolean reset) {
   return sqlite3_stmt_status(JLONG_TO_SQLITE3_STMT_PTR(pStmt), op, reset);
 }
+
 #define JLONG_TO_SQLITE3_BLOB_PTR(jl) ((sqlite3_blob *)(size_t)(jl))
 
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1blob_1open(
@@ -913,10 +956,10 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1update_1hook(
   }
   jclass clz = (*env)->GetObjectClass(env, xUpdateHook);
   jmethodID mid = (*env)->GetMethodID(
-      env, clz, "invoke", "(ILjava/lang/String;Ljava/lang/String;J)V");
+      env, clz, "update", "(ILjava/lang/String;Ljava/lang/String;J)V");
   if (!mid) {
     throwException(env,
-                   "expected 'void invoke(int, String, String, long)' method");
+                   "expected 'void update(int, String, String, long)' method");
     return 0;
   }
   callback_context *cc = create_callback_context(env, mid, xUpdateHook);
@@ -928,15 +971,50 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1update_1hook(
   return PTR_TO_JLONG(cc);
 }
 
+static int authorizer(void *arg, int actionCode, const char *zArg1,
+                      const char *zArg2, const char *zDbName,
+                      const char *zTriggerName) {
+  callback_context *cc = (callback_context *)arg;
+  JNIEnv *env = cc->env;
+  jstring arg1 = (*env)->NewStringUTF(env, zArg1);
+  jstring arg2 = (*env)->NewStringUTF(env, zArg2);
+  jstring dbName = (*env)->NewStringUTF(env, zDbName);
+  jstring triggerName = (*env)->NewStringUTF(env, zTriggerName);
+  return (*env)->CallIntMethod(env, cc->obj, cc->mid, actionCode, arg1, arg2, dbName,
+                         triggerName);
+}
+
+JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1authorizer(
+    JNIEnv *env, jclass cls, jlong pDb, jobject xAuthorizer) {
+  if (!xAuthorizer) {
+    return sqlite3_set_authorizer(JLONG_TO_SQLITE3_PTR(pDb), 0, 0);
+  }
+  jclass clz = (*env)->GetObjectClass(env, xAuthorizer);
+  jmethodID mid = (*env)->GetMethodID(
+      env, clz, "authorize", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/"
+                             "String;Ljava/lang/String;)I");
+  if (!mid) {
+    throwException(
+        env,
+        "expected 'int authorize(int, String, String, String, String)' method");
+    return 0;
+  }
+  callback_context *cc = create_callback_context(env, mid, xAuthorizer);
+  if (!cc) {
+    return 0;
+  }
+  return sqlite3_set_authorizer(JLONG_TO_SQLITE3_PTR(pDb), authorizer, cc);
+  // return PTR_TO_JLONG(cc); FIXME return callback_context
+}
+
 static void scalar_func(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
   callback_context *h = (callback_context *)sqlite3_user_data(ctx);
   JNIEnv *env = h->env;
-  (*env)->CallVoidMethod(env, h->obj, h->mid, ctx, argc, argv);
+  (*env)->CallVoidMethod(env, h->obj, h->mid, ctx, argc, argv); // FIXME
 }
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
     JNIEnv *env, jclass cls, jlong pDb, jstring functionName, jint nArg,
-    jint eTextRep, jobject pApp, jobject xFunc, jobject xStep, jobject xFinal,
-    jobject xDestroy) {
+    jint eTextRep, jobject xFunc, jobject xStep, jobject xFinal) {
   const char *zFunctionName = (*env)->GetStringUTFChars(env, functionName, 0);
   if (!zFunctionName) {
     return SQLITE_NOMEM; /* OutOfMemoryError already thrown */
@@ -944,10 +1022,11 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
   callback_context *cc = 0;
   if (xFunc) {
     jclass clz = (*env)->GetObjectClass(env, xFunc);
-    jmethodID mid =
-        (*env)->GetMethodID(env, clz, "invoke", "(JILjava/lang/Object;)V");
+    jmethodID mid = (*env)->GetMethodID(env, clz, "invoke",
+                                        "(JILjava/lang/Object;)V"); // FIXME
     if (!mid) {
-      throwException(env, "expected 'void invoke(long, int, Object)' method");
+      throwException(
+          env, "expected 'void invoke(long, int, Object)' method"); // FIXME
       return 0;
     }
     cc = create_callback_context(env, mid, xFunc);
@@ -962,13 +1041,195 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
   (*env)->ReleaseStringUTFChars(env, functionName, zFunctionName);
   return rc;
 }
+
+#define JLONG_TO_SQLITE3_CTX_PTR(jl) ((sqlite3_context *)(size_t)(jl))
+
 JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1result_1null(
     JNIEnv *env, jclass cls, jlong pCtx) {
-  sqlite3_result_null((sqlite3_context *)pCtx);
+  sqlite3_result_null(JLONG_TO_SQLITE3_CTX_PTR(pCtx));
 }
+
 JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1result_1int(JNIEnv *env,
                                                                    jclass cls,
                                                                    jlong pCtx,
                                                                    jint i) {
-  sqlite3_result_int((sqlite3_context *)pCtx, i);
+  sqlite3_result_int(JLONG_TO_SQLITE3_CTX_PTR(pCtx), i);
+}
+
+JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1result_1double(
+    JNIEnv *env, jclass cls, jlong pCtx, jdouble d) {
+  sqlite3_result_double(JLONG_TO_SQLITE3_CTX_PTR(pCtx), d);
+}
+
+JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1result_1text(
+    JNIEnv *env, jclass cls, jlong pCtx, jstring s, jint n) {
+  if (!s) {
+    sqlite3_result_null(JLONG_TO_SQLITE3_CTX_PTR(pCtx));
+    return;
+  }
+  jsize len = (*env)->GetStringLength(env, s) * sizeof(jchar);
+  if (len > 0) {
+    const jchar *data = (*env)->GetStringCritical(env, s, 0);
+    if (!data) {
+      sqlite3_result_error_nomem(JLONG_TO_SQLITE3_CTX_PTR(pCtx));
+      return;
+    }
+    sqlite3_result_text16(JLONG_TO_SQLITE3_CTX_PTR(pCtx), data, len,
+                          SQLITE_TRANSIENT);
+    (*env)->ReleaseStringCritical(env, s, data);
+    /*const char *data = (*env)->GetStringUTFChars(env, s, 0);
+    if (!data) {
+            return -1; // Wrapper specific error code
+    }
+    sqlite3_result_text(JLONG_TO_SQLITE3_CTX_PTR(pCtx), data, -1,
+    SQLITE_TRANSIENT);
+    (*env)->ReleaseStringUTFChars(env, s, data);*/
+  } else {
+    sqlite3_result_text16(JLONG_TO_SQLITE3_CTX_PTR(pCtx), "", 0, SQLITE_STATIC);
+    // sqlite3_result_text(JLONG_TO_SQLITE3_CTX_PTR(pCtx), "", 0,
+    // SQLITE_STATIC);
+  }
+}
+
+JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1result_1blob(
+    JNIEnv *env, jclass cls, jlong pCtx, jbyteArray b, jint n) {
+  if (!b) {
+    sqlite3_result_null(JLONG_TO_SQLITE3_CTX_PTR(pCtx));
+    return;
+  }
+  jsize len = (*env)->GetArrayLength(env, b);
+  if (len > 0) {
+    void *data = (*env)->GetPrimitiveArrayCritical(env, b, 0);
+    if (!data) {
+      sqlite3_result_error_nomem(JLONG_TO_SQLITE3_CTX_PTR(pCtx));
+      return;
+    }
+    sqlite3_result_blob(JLONG_TO_SQLITE3_CTX_PTR(pCtx), data, len,
+                        SQLITE_TRANSIENT);
+    (*env)->ReleasePrimitiveArrayCritical(env, b, data, 0);
+  } else {
+    sqlite3_result_zeroblob(JLONG_TO_SQLITE3_CTX_PTR(pCtx), 0);
+  }
+}
+
+JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1result_1int64(
+    JNIEnv *env, jclass cls, jlong pCtx, jlong l) {
+  sqlite3_result_int64(JLONG_TO_SQLITE3_CTX_PTR(pCtx), l);
+}
+
+JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1result_1zeroblob(
+    JNIEnv *env, jclass cls, jlong pCtx, jint n) {
+  sqlite3_result_zeroblob(JLONG_TO_SQLITE3_CTX_PTR(pCtx), n);
+}
+
+JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1result_1error(
+    JNIEnv *env, jclass cls, jlong pCtx, jstring err, jint len) {
+  const char *zErr = (*env)->GetStringUTFChars(env, err, 0);
+  if (!zErr) {
+    return; /* OutOfMemoryError already thrown */
+  }
+  sqlite3_result_error(JLONG_TO_SQLITE3_CTX_PTR(pCtx), zErr, -1);
+  (*env)->ReleaseStringUTFChars(env, err, zErr);
+}
+
+JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1result_1error_1code(
+    JNIEnv *env, jclass cls, jlong pCtx, jint errCode) {
+  sqlite3_result_error_code(JLONG_TO_SQLITE3_CTX_PTR(pCtx), errCode);
+}
+
+JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1result_1error_1nomem(
+    JNIEnv *env, jclass cls, jlong pCtx) {
+  sqlite3_result_error_nomem(JLONG_TO_SQLITE3_CTX_PTR(pCtx));
+}
+
+JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1result_1error_1toobig(
+    JNIEnv *env, jclass cls, jlong pCtx) {
+  sqlite3_result_error_toobig(JLONG_TO_SQLITE3_CTX_PTR(pCtx));
+}
+
+#define JLONG_TO_SQLITE3_VALUE_PTR(jl) ((sqlite3_value *)(size_t)(jl))
+
+JNIEXPORT jbyteArray JNICALL Java_org_sqlite_SQLite_sqlite3_1value_1blob(
+    JNIEnv *env, jclass cls, jlong pValue) {
+  const void *blob = sqlite3_value_blob(JLONG_TO_SQLITE3_VALUE_PTR(pValue));
+  if (!blob) {
+    return 0;
+  }
+  int len = sqlite3_value_bytes(JLONG_TO_SQLITE3_VALUE_PTR(pValue));
+  jbyteArray b = (*env)->NewByteArray(env, len);
+  if (!b) {
+    return 0; /* OutOfMemoryError already thrown */
+  }
+  //(*env)->SetByteArrayRegion(env, b, 0, len, blob);
+  void *data = (*env)->GetPrimitiveArrayCritical(env, b, 0);
+  if (!data) {
+    return 0;
+  }
+  memcpy(data, blob, len);
+  (*env)->ReleasePrimitiveArrayCritical(env, b, data, 0);
+  return b;
+}
+
+JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1value_1bytes(
+    JNIEnv *env, jclass cls, jlong pValue) {
+  return sqlite3_value_bytes(JLONG_TO_SQLITE3_VALUE_PTR(pValue));
+}
+
+JNIEXPORT jdouble JNICALL Java_org_sqlite_SQLite_sqlite3_1value_1double(
+    JNIEnv *env, jclass cls, jlong pValue) {
+  return sqlite3_value_double(JLONG_TO_SQLITE3_VALUE_PTR(pValue));
+}
+
+JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1value_1int(
+    JNIEnv *env, jclass cls, jlong pValue) {
+  return sqlite3_value_int(JLONG_TO_SQLITE3_VALUE_PTR(pValue));
+}
+
+JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1value_1int64(
+    JNIEnv *env, jclass cls, jlong pValue) {
+  return sqlite3_value_int64(JLONG_TO_SQLITE3_VALUE_PTR(pValue));
+}
+
+JNIEXPORT jstring JNICALL Java_org_sqlite_SQLite_sqlite3_1value_1text(
+    JNIEnv *env, jclass cls, jlong pValue) {
+  // return (*env)->NewStringUTF(env, (const
+  // char*)sqlite3_value_text(JLONG_TO_SQLITE3_VALUE_PTR(pValue)));
+  const void *text = sqlite3_value_text16(JLONG_TO_SQLITE3_VALUE_PTR(pValue));
+  if (!text) {
+    return 0;
+  }
+  int len = sqlite3_value_bytes16(JLONG_TO_SQLITE3_VALUE_PTR(pValue));
+  return (*env)->NewString(env, text, len / sizeof(jchar));
+}
+
+JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1value_1type(
+    JNIEnv *env, jclass cls, jlong pValue) {
+  return sqlite3_value_type(JLONG_TO_SQLITE3_VALUE_PTR(pValue));
+}
+
+JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1value_1numeric_1type(
+    JNIEnv *env, jclass cls, jlong pValue) {
+  return sqlite3_value_numeric_type(JLONG_TO_SQLITE3_VALUE_PTR(pValue));
+}
+
+JNIEXPORT jobject JNICALL Java_org_sqlite_SQLite_sqlite3_1get_1auxdata(
+    JNIEnv *env, jclass cls, jlong pCtx, jint n) {
+  // FIXME
+  return sqlite3_get_auxdata(JLONG_TO_SQLITE3_CTX_PTR(pCtx), n);
+}
+
+JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1auxdata(
+    JNIEnv *env, jclass cls, jlong pCtx, jint n, jobject p, jobject xDel) {
+  // FIXME incompatible pointer types passing 'jobject' (aka 'struct _jobject *') to parameter of type 'void (*)(void *)'
+  sqlite3_set_auxdata(JLONG_TO_SQLITE3_CTX_PTR(pCtx), n, p, /*xDel*/0);
+}
+
+JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1aggregate_1context(
+    JNIEnv *env, jclass cls, jlong pCtx, jint nBytes) {
+  return PTR_TO_JLONG(sqlite3_aggregate_context(JLONG_TO_SQLITE3_CTX_PTR(pCtx), nBytes));
+}
+
+JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1context_1db_1handle(
+    JNIEnv *env, jclass cls, jlong pCtx) {
+  return PTR_TO_JLONG(sqlite3_context_db_handle(JLONG_TO_SQLITE3_CTX_PTR(pCtx)));
 }

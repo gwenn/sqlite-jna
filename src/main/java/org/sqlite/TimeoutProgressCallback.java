@@ -21,7 +21,7 @@ public class TimeoutProgressCallback implements ProgressCallback {
 	 * @return <code>true</code> when the operation times out.
 	 */
 	@Override
-	public boolean callback() {
+	public boolean progress() {
 		if (expiration == 0 || System.currentTimeMillis() <= expiration) {
 			return false;
 		}

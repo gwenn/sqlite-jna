@@ -37,6 +37,7 @@ public abstract class AggregateFinalCallback {
 	/**
 	 * Obtain aggregate function context.
 	 *
+	 * @param pCtx <code>sqlite3_context*</code>
 	 * @return <code>null</code> when no rows match an aggregate query.
 	 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_get_auxdata</a>
 	 */

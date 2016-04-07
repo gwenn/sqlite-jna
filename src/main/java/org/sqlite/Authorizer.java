@@ -11,7 +11,7 @@ public interface Authorizer {
 	 * @param actionCode {@link ActionCodes}.*
 	 * @return {@link #SQLITE_OK} or {@link #SQLITE_DENY} or {@link #SQLITE_IGNORE}
 	 */
-	int callback(int actionCode, String arg1, String arg2, String dbName, String triggerName);
+	int authorize(int actionCode, String arg1, String arg2, String dbName, String triggerName);
 
 	int SQLITE_OK = ErrCodes.SQLITE_OK;
 	/**

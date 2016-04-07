@@ -19,5 +19,5 @@ public interface UpdateHook {
 	 * @param tblName table name containing the affected row.
 	 * @param rowId id of the affected row.
 	 */
-	void invoke(int actionCode, String dbName, String tblName, long rowId);
+	void update(int actionCode, String dbName, String tblName, long rowId);
 }

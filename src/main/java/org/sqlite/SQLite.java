@@ -20,8 +20,6 @@ public final class SQLite {
 	public static final int SQLITE_ROW = 100;
 	public static final int SQLITE_DONE = 101;
 
-	static final int SQLITE_TRANSIENT = -1;
-
 	static native String sqlite3_libversion(); // no copy needed
 	static native int sqlite3_libversion_number();
 	static native boolean sqlite3_threadsafe();
@@ -141,12 +139,12 @@ public final class SQLite {
 	static native int sqlite3_bind_parameter_index(long pStmt, String name); // no copy needed
 	static native String sqlite3_bind_parameter_name(long pStmt, int i); // copy needed
 
-	static native int sqlite3_bind_blob(long pStmt, int i, byte[] value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	static native int sqlite3_bind_blob(long pStmt, int i, byte[] value, int n); // no copy needed
 	static native int sqlite3_bind_double(long pStmt, int i, double value);
 	static native int sqlite3_bind_int(long pStmt, int i, int value);
 	static native int sqlite3_bind_int64(long pStmt, int i, long value);
 	static native int sqlite3_bind_null(long pStmt, int i);
-	static native int sqlite3_bind_text(long pStmt, int i, String value, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	static native int sqlite3_bind_text(long pStmt, int i, String value, int n); // no copy needed
 	//static native int sqlite3_bind_text16(long pStmt, int i, const void*, int, void(*)(void*));
 	//static native int sqlite3_bind_value(long pStmt, int i, const sqlite3_value*);
 	static native int sqlite3_bind_zeroblob(long pStmt, int i, int n);
@@ -155,8 +153,6 @@ public final class SQLite {
 	/*static native int sqlite3_stmt_scanstatus(long pStmt, int idx, int iScanStatusOp, Object[] pOut);
 	static native void sqlite3_stmt_scanstatus_reset(long pStmt);*/
 	//#endif
-
-	static native void sqlite3_free(Object p);
 
 	static native int sqlite3_blob_open(long pDb, String dbName, String tableName, String columnName,
 			long iRow, boolean flags, long[] ppBlob); // no copy needed
@@ -192,13 +188,13 @@ public final class SQLite {
 	*/
 	// eTextRep: SQLITE_UTF8 => 1, ...
 	static native int sqlite3_create_function_v2(long pDb, String functionName, int nArg, int eTextRep,
-			Object pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, Destructor xDestroy);
+			ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal);
 
 	static native void sqlite3_result_null(long pCtx);
 	static native void sqlite3_result_int(long pCtx, int i);
 	static native void sqlite3_result_double(long pCtx, double d);
-	static native void sqlite3_result_text(long pCtx, String text, int n, long xDel); // no copy needed when xDel == SQLITE_TRANSIENT == -1
-	static native void sqlite3_result_blob(long pCtx, byte[] blob, int n, long xDel);
+	static native void sqlite3_result_text(long pCtx, String text, int n); // no copy needed
+	static native void sqlite3_result_blob(long pCtx, byte[] blob, int n);
 	static native void sqlite3_result_int64(long pCtx, long l);
 	static native void sqlite3_result_zeroblob(long pCtx, int n);
 
@@ -219,7 +215,6 @@ public final class SQLite {
 
 	static native Object sqlite3_get_auxdata(long pCtx, int n);
 	static native void sqlite3_set_auxdata(long pCtx, int n, Object p, Destructor free);
-	static native Object sqlite3_user_data(long pCtx);
 	static native long sqlite3_aggregate_context(long pCtx, int nBytes);
 	static native long sqlite3_context_db_handle(long pCtx);
 
@@ -279,12 +274,12 @@ public final class SQLite {
 
 	public interface LogCallback {
 		@SuppressWarnings("unused")
-		void callback(int err, String msg);
+		void log(int err, String msg);
 	}
 
 	private static final LogCallback LOG_CALLBACK = new LogCallback() {
 		@Override
-		public void callback(int err, String msg) {
+		public void log(int err, String msg) {
 			System.out.printf("%d: %s%n", err, msg);
 		}
 	};
@@ -308,7 +303,7 @@ public final class SQLite {
 		 * @return <code>true</code> to interrupt
 		 */
 		@SuppressWarnings("unused")
-		boolean callback();
+		boolean progress();
 	}
 
 
@@ -317,24 +312,15 @@ public final class SQLite {
 	 * @see <a href="http://sqlite.org/c3ref/context.html">sqlite3_context</a>
 	 */
 	public static class SQLite3Context {
-		private final long pCtx;
+		public final long pCtx;
 
 		public SQLite3Context(long pCtx) {
 			this.pCtx = pCtx;
 		}
 
 		/**
-		 * @return a copy of the pointer that was the <code>pUserData</code> parameter (the 5th parameter) of
-		 * {@link SQLite#sqlite3_create_function_v2(long, String, int, int, Object, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Destructor)}
-		 * @see <a href="http://sqlite.org/c3ref/user_data.html">sqlite3_user_data</a>
-		 */
-		public Object getUserData() {
-			return sqlite3_user_data(pCtx);
-		}
-
-		/**
 		 * @return a copy of the pointer to the database connection (the 1st parameter) of
-		 * {@link SQLite#sqlite3_create_function_v2(long, String, int, int, Object, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Destructor)}
+		 * {@link SQLite#sqlite3_create_function_v2(long, String, int, int, ScalarCallback, AggregateStepCallback, AggregateFinalCallback)}
 		 * @see <a href="http://sqlite.org/c3ref/context_db_handle.html">sqlite3_context_db_handle</a>
 		 */
 		public long getDbHandle() {
@@ -346,7 +332,7 @@ public final class SQLite {
 		 * @see <a href="http://sqlite.org/c3ref/result_blob.html">sqlite3_result_blob</a>
 		 */
 		public void setResultBlob(byte[] result) {
-			sqlite3_result_blob(pCtx, result, result.length, SQLITE_TRANSIENT);
+			sqlite3_result_blob(pCtx, result, result.length);
 		}
 		/**
 		 * Sets the return value of the application-defined function to be the floating point value given.
@@ -381,7 +367,7 @@ public final class SQLite {
 		 * @see <a href="http://sqlite.org/c3ref/result_blob.html">sqlite3_result_text</a>
 		 */
 		public void setResultText(String result) {
-			sqlite3_result_text(pCtx, result, -1, SQLITE_TRANSIENT);
+			sqlite3_result_text(pCtx, result, -1);
 		}
 		/**
 		 * Sets the return value of the application-defined function to be a BLOB containing all zero bytes and N bytes in size.

@@ -47,13 +47,13 @@ public abstract class ScalarCallback {
 	/**
 	 * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_set_auxdata</a>
 	 */
-	public void setAuxData(long pCtx, int n, Object auxData, Destructor free) {
-		sqlite3_set_auxdata(pCtx, n, auxData, free);
+	public void setAuxData(SQLite3Context pCtx, int n, Object auxData, Destructor free) {
+		sqlite3_set_auxdata(pCtx.pCtx, n, auxData, free);
 	}
 	/**
 	 * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_get_auxdata</a>
 	 */
-	public Object getAuxData(long pCtx, int n) {
-		return sqlite3_get_auxdata(pCtx, n);
+	public Object getAuxData(SQLite3Context pCtx, int n) {
+		return sqlite3_get_auxdata(pCtx.pCtx, n);
 	}
 }

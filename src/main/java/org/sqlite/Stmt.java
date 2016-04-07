@@ -462,7 +462,7 @@ public class Stmt implements AutoCloseable, Row {
 			return;
 		}
 		// ok if pStmt is null => SQLITE_MISUSE
-		checkBind(sqlite3_bind_blob(pStmt, i, value, value.length, SQLITE_TRANSIENT), "sqlite3_bind_blob", i);
+		checkBind(sqlite3_bind_blob(pStmt, i, value, value.length), "sqlite3_bind_blob", i);
 	}
 	/**
 	 * @param i     The leftmost SQL parameter has an index of 1
@@ -510,7 +510,7 @@ public class Stmt implements AutoCloseable, Row {
 			return;
 		}
 		// ok if pStmt is null => SQLITE_MISUSE
-		checkBind(sqlite3_bind_text(pStmt, i, value, -1, SQLITE_TRANSIENT), "sqlite3_bind_text", i);
+		checkBind(sqlite3_bind_text(pStmt, i, value, -1), "sqlite3_bind_text", i);
 	}
 	/**
 	 * @param i The leftmost SQL parameter has an index of 1
