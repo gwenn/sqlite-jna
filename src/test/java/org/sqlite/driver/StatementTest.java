@@ -3,6 +3,7 @@ package org.sqlite.driver;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.sqlite.ConnException;
 
 import java.lang.reflect.Method;
 import java.sql.BatchUpdateException;
@@ -538,7 +539,7 @@ public class StatementTest {
 		assertTrue(stat.isClosed());
 	}
 
-	@Test(expected = NullPointerException.class)
+	@Test(expected = ConnException.class)
 	public void nullQuery() throws Exception {
 		stat.executeQuery(null);
 	}
