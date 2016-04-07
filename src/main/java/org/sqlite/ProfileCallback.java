@@ -15,13 +15,13 @@ import com.sun.jna.Pointer;
  * Profiling callback.
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
  */
-public abstract class ProfileCallback implements Callback {
+public interface ProfileCallback extends Callback {
 	/**
 	 * @param sql SQL statement text.
 	 * @param ns time in nanoseconds
 	 */
 	@SuppressWarnings("unused")
-	public void callback(Pointer arg, String sql, long ns) {
+	default void callback(Pointer arg, String sql, long ns) {
 		profile(sql, ns);
 	}
 
@@ -29,5 +29,5 @@ public abstract class ProfileCallback implements Callback {
 	 * @param sql SQL statement text.
 	 * @param ns time in nanoseconds
 	 */
-	protected abstract void profile(String sql, long ns);
+	void profile(String sql, long ns);
 }
