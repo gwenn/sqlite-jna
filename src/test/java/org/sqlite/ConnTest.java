@@ -376,7 +376,7 @@ public class ConnTest {
 		conn.setAuhtorizer(new Authorizer() {
 			@Override
 			public int authorize(int actionCode, String arg1, String arg2, String dbName, String triggerName) {
-				//System.out.println(actionCode = [" + actionCode + "], arg1 = [" + arg1 + "], arg2 = [" + arg2 + "], dbName = [" + dbName + "], triggerName = [" + triggerName + "]");
+				//System.out.println("actionCode = [" + actionCode + "], arg1 = [" + arg1 + "], arg2 = [" + arg2 + "], dbName = [" + dbName + "], triggerName = [" + triggerName + "]");
 				return Authorizer.SQLITE_OK;
 			}
 		});
