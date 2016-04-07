@@ -1010,7 +1010,14 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1authorizer(
 static void scalar_func(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
   callback_context *h = (callback_context *)sqlite3_user_data(ctx);
   JNIEnv *env = h->env;
-  (*env)->CallVoidMethod(env, h->obj, h->mid, ctx, argc, argv); // FIXME
+  jlongArray b = (*env)->NewLongArray(env, argc);
+  if (!b) {
+    sqlite3_result_error_nomem(ctx);
+    return;
+  }
+  // FIXME incompatible pointer types passing 'sqlite3_value **' (aka 'struct Mem **') to parameter of type 'const jlong *' (aka 'const long *')
+  (*env)->SetLongArrayRegion(env, b, 0, argc, argv);
+  (*env)->CallVoidMethod(env, h->obj, h->mid, ctx, b);
 }
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
     JNIEnv *env, jclass cls, jlong pDb, jstring functionName, jint nArg,
@@ -1022,13 +1029,14 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
   callback_context *cc = 0;
   if (xFunc) {
     jclass clz = (*env)->GetObjectClass(env, xFunc);
-    jmethodID mid = (*env)->GetMethodID(env, clz, "invoke",
-                                        "(JILjava/lang/Object;)V"); // FIXME
+    jmethodID mid = (*env)->GetMethodID(env, clz, "callback",
+                                        "(J[J)V");
     if (!mid) {
       throwException(
-          env, "expected 'void invoke(long, int, Object)' method"); // FIXME
+          env, "expected 'void callback(long, long[])' method");
       return 0;
     }
+    // TODO xStep, xFinal
     cc = create_callback_context(env, mid, xFunc);
     if (!cc) {
       (*env)->ReleaseStringUTFChars(env, functionName, zFunctionName);
