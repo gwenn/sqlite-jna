@@ -607,6 +607,9 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void trace(TraceCallback tc) throws ConnException {
 		checkOpen();
+		if (pTraceCallbackContext != 0) {
+			free_callback_context(pTraceCallbackContext);
+		}
 		pTraceCallbackContext = sqlite3_trace(pDb, tc);
 	}
 
@@ -616,6 +619,9 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void profile(ProfileCallback pc) throws ConnException {
 		checkOpen();
+		if (pProfileContext != 0) {
+			free_callback_context(pProfileContext);
+		}
 		pProfileContext = sqlite3_profile(pDb, pc);
 	}
 
@@ -625,6 +631,9 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void updateHook(UpdateHook uh) throws ConnException {
 		checkOpen();
+		if (pUpdateHookContext != 0) {
+			free_callback_context(pUpdateHookContext);
+		}
 		pUpdateHookContext = sqlite3_update_hook(pDb, uh);
 	}
 	/**
@@ -635,7 +644,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public int setAuhtorizer(Authorizer auth) throws ConnException {
 		checkOpen();
-		return sqlite3_set_authorizer(pDb, auth); // FIXME
+		return sqlite3_set_authorizer(pDb, auth); // FIXME free callback_context
 	}
 
 	/**
@@ -649,7 +658,7 @@ public final class Conn implements AutoCloseable {
 	public void createScalarFunction(String name, int nArg, int flags, ScalarCallback xFunc) throws ConnException {
 		checkOpen();
 		check(sqlite3_create_function_v2(pDb, name, nArg, flags, xFunc, null, null),
-				"error while registering function %s", name);
+				"error while registering function %s", name); // FIXME free callback_context
 	}
 	/**
 	 * Create a user defined SQL aggregate function.
@@ -664,7 +673,7 @@ public final class Conn implements AutoCloseable {
 			AggregateFinalCallback xFinal) throws ConnException {
 		checkOpen();
 		check(sqlite3_create_function_v2(pDb, name, nArg, flags, null, xStep, xFinal),
-				"error while registering function %s", name);
+				"error while registering function %s", name); // FIXME free callback_context
 	}
 
 	/**

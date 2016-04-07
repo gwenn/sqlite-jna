@@ -1044,12 +1044,13 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
           env, "expected 'void callback(long, long[])' method");
       return 0;
     }
-    // TODO xStep, xFinal
     cc = create_callback_context(env, mid, xFunc);
     if (!cc) {
       (*env)->ReleaseStringUTFChars(env, functionName, zFunctionName);
       return SQLITE_NOMEM;
     }
+  } else if (xStep) {
+    // TODO xStep, xFinal
   }
   int rc = sqlite3_create_function_v2(
       JLONG_TO_SQLITE3_PTR(pDb), zFunctionName, nArg, eTextRep, cc,
