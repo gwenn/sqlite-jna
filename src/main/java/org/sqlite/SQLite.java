@@ -231,7 +231,6 @@ public final class SQLite implements Library {
 
 	static native Pointer sqlite3_get_auxdata(SQLite3Context pCtx, int n);
 	static native void sqlite3_set_auxdata(SQLite3Context pCtx, int n, Pointer p, Destructor free);
-	static native Pointer sqlite3_user_data(SQLite3Context pCtx);
 	static native Pointer sqlite3_aggregate_context(SQLite3Context pCtx, int nBytes);
 	static native SQLite3 sqlite3_context_db_handle(SQLite3Context pCtx);
 
@@ -395,15 +394,6 @@ public final class SQLite implements Library {
 		}
 		public SQLite3Context(Pointer p) {
 			super(p);
-		}
-
-		/**
-		 * @return a copy of the pointer that was the <code>pUserData</code> parameter (the 5th parameter) of
-		 * {@link SQLite#sqlite3_create_function_v2(SQLite3, String, int, int, Pointer, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Destructor)}
-		 * @see <a href="http://sqlite.org/c3ref/user_data.html">sqlite3_user_data</a>
-         */
-		public Pointer getUserData() {
-			return sqlite3_user_data(this);
 		}
 
 		/**
