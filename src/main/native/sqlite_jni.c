@@ -986,8 +986,8 @@ static int authorizer(void *arg, int actionCode, const char *zArg1,
   jstring arg2 = (*env)->NewStringUTF(env, zArg2);
   jstring dbName = (*env)->NewStringUTF(env, zDbName);
   jstring triggerName = (*env)->NewStringUTF(env, zTriggerName);
-  return (*env)->CallIntMethod(env, cc->obj, cc->mid, actionCode, arg1, arg2, dbName,
-                         triggerName);
+  return (*env)->CallIntMethod(env, cc->obj, cc->mid, actionCode, arg1, arg2,
+                               dbName, triggerName);
 }
 
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1authorizer(
@@ -1014,17 +1014,64 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1authorizer(
   // return PTR_TO_JLONG(cc); FIXME return callback_context
 }
 
-static void scalar_func(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
-  callback_context *h = (callback_context *)sqlite3_user_data(ctx);
+typedef struct {
+  JNIEnv *env;
+  jmethodID mid; // scalar func or aggregate step
+  jobject obj;
+  jmethodID fid; // aggregate final
+  jobject fobj;
+} udf_callback_context;
+
+static udf_callback_context *
+create_udf_callback_context(JNIEnv *env, jmethodID mid, jobject obj,
+                            jmethodID fid, jobject fobj) {
+  udf_callback_context *cc = sqlite3_malloc(sizeof(udf_callback_context));
+  if (!cc) {
+    throwException(env, "OOM");
+    return cc;
+  }
+  cc->env = env;
+  cc->mid = mid;
+  cc->obj = WEAK_GLOBAL_REF(obj);
+  cc->fid = fid;
+  if (fobj) {
+    cc->fobj = WEAK_GLOBAL_REF(fobj);
+  } else {
+    cc->fobj = 0;
+  }
+  return cc;
+}
+
+static void free_udf_callback_context(void *p) {
+  if (p) {
+    udf_callback_context *cc = (udf_callback_context *)p;
+    JNIEnv *env = cc->env;
+    DEL_WEAK_GLOBAL_REF(cc->obj);
+    if (cc->fobj) {
+      DEL_WEAK_GLOBAL_REF(cc->fobj);
+    }
+  }
+  sqlite3_free(p);
+}
+
+static void func_or_step(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
+  udf_callback_context *h = (udf_callback_context *)sqlite3_user_data(ctx);
   JNIEnv *env = h->env;
   jlongArray b = (*env)->NewLongArray(env, argc);
   if (!b) {
     sqlite3_result_error_nomem(ctx);
     return;
   }
-  // FIXME incompatible pointer types passing 'sqlite3_value **' (aka 'struct Mem **') to parameter of type 'const jlong *' (aka 'const long *')
+  // FIXME incompatible pointer types passing 'sqlite3_value **' (aka 'struct
+  // Mem **') to parameter of type 'const jlong *' (aka 'const long *')
   (*env)->SetLongArrayRegion(env, b, 0, argc, argv);
   (*env)->CallVoidMethod(env, h->obj, h->mid, ctx, b);
+}
+
+static void final_step(sqlite3_context *ctx) {
+  udf_callback_context *h = (udf_callback_context *)sqlite3_user_data(ctx);
+  JNIEnv *env = h->env;
+  (*env)->CallVoidMethod(env, h->fobj, h->fid, ctx);
 }
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
     JNIEnv *env, jclass cls, jlong pDb, jstring functionName, jint nArg,
@@ -1033,28 +1080,37 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
   if (!zFunctionName) {
     return SQLITE_NOMEM; /* OutOfMemoryError already thrown */
   }
-  callback_context *cc = 0;
-  if (xFunc) {
-    jclass clz = (*env)->GetObjectClass(env, xFunc);
-    jmethodID mid = (*env)->GetMethodID(env, clz, "callback",
-                                        "(J[J)V");
+  udf_callback_context *cc = 0;
+  if (xFunc || xStep) {
+    jclass clz = (*env)->GetObjectClass(env, xFunc ? xFunc : xStep);
+    jmethodID mid = (*env)->GetMethodID(env, clz, "callback", "(J[J)V");
     (*env)->DeleteLocalRef(env, clz);
     if (!mid) {
-      throwException(
-          env, "expected 'void callback(long, long[])' method");
-      return 0;
+      throwException(env, "expected 'void callback(long, long[])' method");
+      return -1;
     }
-    cc = create_callback_context(env, mid, xFunc);
+    jmethodID fid = 0;
+    if (xFinal) {
+      jclass clz = (*env)->GetObjectClass(env, xFinal);
+      fid = (*env)->GetMethodID(env, clz, "callback", "(J)V");
+      (*env)->DeleteLocalRef(env, clz);
+      if (!fid) {
+        throwException(env, "expected 'void callback(long)' method");
+        return -1;
+      }
+    }
+
+    cc = create_udf_callback_context(env, mid, xFunc ? xFunc : xStep, fid,
+                                     xFinal);
     if (!cc) {
       (*env)->ReleaseStringUTFChars(env, functionName, zFunctionName);
       return SQLITE_NOMEM;
     }
-  } else if (xStep) {
-    // TODO xStep, xFinal
   }
   int rc = sqlite3_create_function_v2(
       JLONG_TO_SQLITE3_PTR(pDb), zFunctionName, nArg, eTextRep, cc,
-      xFunc ? scalar_func : 0, 0, 0, free_callback_context);
+      xFunc ? func_or_step : 0, xStep ? func_or_step : 0,
+      xFinal ? final_step : 0, free_udf_callback_context);
   (*env)->ReleaseStringUTFChars(env, functionName, zFunctionName);
   return rc;
 }
@@ -1237,16 +1293,19 @@ JNIEXPORT jobject JNICALL Java_org_sqlite_SQLite_sqlite3_1get_1auxdata(
 
 JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1auxdata(
     JNIEnv *env, jclass cls, jlong pCtx, jint n, jobject p, jobject xDel) {
-  // FIXME incompatible pointer types passing 'jobject' (aka 'struct _jobject *') to parameter of type 'void (*)(void *)'
-  sqlite3_set_auxdata(JLONG_TO_SQLITE3_CTX_PTR(pCtx), n, p, /*xDel*/0);
+  // FIXME incompatible pointer types passing 'jobject' (aka 'struct _jobject
+  // *') to parameter of type 'void (*)(void *)'
+  sqlite3_set_auxdata(JLONG_TO_SQLITE3_CTX_PTR(pCtx), n, p, /*xDel*/ 0);
 }
 
 JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1aggregate_1context(
     JNIEnv *env, jclass cls, jlong pCtx, jint nBytes) {
-  return PTR_TO_JLONG(sqlite3_aggregate_context(JLONG_TO_SQLITE3_CTX_PTR(pCtx), nBytes));
+  return PTR_TO_JLONG(
+      sqlite3_aggregate_context(JLONG_TO_SQLITE3_CTX_PTR(pCtx), nBytes));
 }
 
 JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1context_1db_1handle(
     JNIEnv *env, jclass cls, jlong pCtx) {
-  return PTR_TO_JLONG(sqlite3_context_db_handle(JLONG_TO_SQLITE3_CTX_PTR(pCtx)));
+  return PTR_TO_JLONG(
+      sqlite3_context_db_handle(JLONG_TO_SQLITE3_CTX_PTR(pCtx)));
 }

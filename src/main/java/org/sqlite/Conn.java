@@ -658,7 +658,7 @@ public final class Conn implements AutoCloseable {
 	public void createScalarFunction(String name, int nArg, int flags, ScalarCallback xFunc) throws ConnException {
 		checkOpen();
 		check(sqlite3_create_function_v2(pDb, name, nArg, flags, xFunc, null, null),
-				"error while registering function %s", name); // FIXME free callback_context
+				"error while registering function %s", name);
 	}
 	/**
 	 * Create a user defined SQL aggregate function.
@@ -673,7 +673,7 @@ public final class Conn implements AutoCloseable {
 			AggregateFinalCallback xFinal) throws ConnException {
 		checkOpen();
 		check(sqlite3_create_function_v2(pDb, name, nArg, flags, null, xStep, xFinal),
-				"error while registering function %s", name); // FIXME free callback_context
+				"error while registering function %s", name);
 	}
 
 	/**
