@@ -44,7 +44,7 @@ public abstract class AggregateStepCallback implements Callback {
 
 	/**
 	 * @return number of bytes to allocate.
-	 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_get_auxdata</a>
+	 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_aggregate_context</a>
 	 */
 	protected abstract int numberOfBytes();
 

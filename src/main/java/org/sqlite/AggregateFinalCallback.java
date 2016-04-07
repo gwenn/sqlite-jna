@@ -40,7 +40,7 @@ public abstract class AggregateFinalCallback implements Callback {
 	 * Obtain aggregate function context.
 	 *
 	 * @return <code>null</code> when no rows match an aggregate query.
-	 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_get_auxdata</a>
+	 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_aggregate_context</a>
 	 */
 	protected Pointer getAggregateContext(SQLite3Context pCtx) {
 		// Within the xFinal callback, it is customary to set N=0 in calls to sqlite3_aggregate_context(C,N)
