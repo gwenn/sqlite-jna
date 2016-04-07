@@ -298,12 +298,15 @@ public final class SQLite implements Library {
 
 	public interface LogCallback extends Callback {
 		@SuppressWarnings("unused")
-		void callback(Pointer udp, int err, String msg);
+		default void callback(Pointer udp, int err, String msg) {
+			log(err, msg);
+		}
+		void log(int err, String msg);
 	}
 
 	private static final LogCallback LOG_CALLBACK = new LogCallback() {
 		@Override
-		public void callback(Pointer udp, int err, String msg) {
+		public void log(int err, String msg) {
 			System.out.printf("%d: %s%n", err, msg);
 		}
 	};
@@ -328,7 +331,11 @@ public final class SQLite implements Library {
 		 * @return <code>true</code> to interrupt
 		 */
 		@SuppressWarnings("unused")
-		boolean callback(Pointer arg);
+		default boolean callback(Pointer arg) {
+			return progress();
+		}
+
+		boolean progress();
 	}
 
 	/**

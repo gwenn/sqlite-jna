@@ -15,17 +15,17 @@ import com.sun.jna.Pointer;
  * Tracing callback.
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
  */
-public abstract class TraceCallback implements Callback {
+public interface TraceCallback extends Callback {
 	/**
 	 * @param sql SQL statement text.
 	 */
 	@SuppressWarnings("unused")
-	public void callback(Pointer arg, String sql) {
+	default void callback(Pointer arg, String sql) {
 		trace(sql);
 	}
 
 	/**
 	 * @param sql SQL statement text.
 	 */
-	protected abstract void trace(String sql);
+	void trace(String sql);
 }

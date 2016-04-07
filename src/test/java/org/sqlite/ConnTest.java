@@ -154,7 +154,7 @@ public class ConnTest {
 			public void trace(String sql) {
 				traces[i++] = sql;
 			}
-		}, null);
+		});
 		final String sql = "SELECT 1";
 		c.fastExec(sql);
 		assertArrayEquals("traces", new String[]{sql}, traces);
@@ -171,7 +171,7 @@ public class ConnTest {
 			public void profile(String sql, long ns) {
 				profiles[i++] = sql;
 			}
-		}, null);
+		});
 		final String sql = "SELECT 1";
 		c.fastExec(sql);
 		assertArrayEquals("profiles", new String[]{sql}, profiles);
@@ -376,11 +376,11 @@ public class ConnTest {
 		final Conn conn = Conn.open(Conn.MEMORY, OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_FULLMUTEX, null);
 		conn.setAuhtorizer(new Authorizer() {
 			@Override
-			public int callback(Pointer pArg, int actionCode, String arg1, String arg2, String dbName, String triggerName) {
-				//System.out.println("pArg = [" + pArg + "], actionCode = [" + actionCode + "], arg1 = [" + arg1 + "], arg2 = [" + arg2 + "], dbName = [" + dbName + "], triggerName = [" + triggerName + "]");
+			public int authorize(int actionCode, String arg1, String arg2, String dbName, String triggerName) {
+				//System.out.println("actionCode = [" + actionCode + "], arg1 = [" + arg1 + "], arg2 = [" + arg2 + "], dbName = [" + dbName + "], triggerName = [" + triggerName + "]");
 				return Authorizer.SQLITE_OK;
 			}
-		}, null);
+		});
 		return conn;
 	}
 
