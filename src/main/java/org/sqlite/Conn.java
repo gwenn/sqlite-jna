@@ -220,6 +220,9 @@ public final class Conn implements AutoCloseable {
 	 * @see <a href="https://www.sqlite.org/c3ref/prepare.html">sqlite3_prepare_v2</a>
 	 */
 	public Stmt prepare(String sql, boolean cacheable) throws ConnException {
+		if (sql == null) {
+			throw new NullPointerException("sql is null");
+		}
 		checkOpen();
 		if (cacheable) {
 			final Stmt stmt = find(sql);

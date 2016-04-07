@@ -133,6 +133,7 @@ Java_org_sqlite_SQLite_sqlite3_1config__ILorg_sqlite_SQLite_LogCallback_2(
   jclass clz = (*env)->GetObjectClass(env, xLog);
   jmethodID mid =
       (*env)->GetMethodID(env, clz, "log", "(ILjava/lang/String;)V");
+  (*env)->DeleteLocalRef(env, clz);
   if (!mid) {
     throwException(env, "expected 'void log(int, String)' method");
     return -1;
@@ -247,6 +248,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1busy_1handler(
   }
   jclass clz = (*env)->GetObjectClass(env, xBusy);
   jmethodID mid = (*env)->GetMethodID(env, clz, "busy", "(I)Z");
+  (*env)->DeleteLocalRef(env, clz);
   if (!mid) {
     throwException(env, "expected 'boolean busy(int)' method");
     return 0;
@@ -867,6 +869,7 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1progress_1handler(
   }
   jclass clz = (*env)->GetObjectClass(env, xProgress);
   jmethodID mid = (*env)->GetMethodID(env, clz, "progress", "()Z");
+  (*env)->DeleteLocalRef(env, clz);
   if (!mid) {
     throwException(env, "expected 'boolean progress()' method");
     return 0;
@@ -897,6 +900,7 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1trace(JNIEnv *env,
   jclass clz = (*env)->GetObjectClass(env, xTrace);
   jmethodID mid =
       (*env)->GetMethodID(env, clz, "trace", "(Ljava/lang/String;)V");
+  (*env)->DeleteLocalRef(env, clz);
   if (!mid) {
     throwException(env, "expected 'void trace(String)' method");
     return 0;
@@ -925,6 +929,7 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1profile(
   jclass clz = (*env)->GetObjectClass(env, xProfile);
   jmethodID mid =
       (*env)->GetMethodID(env, clz, "profile", "(Ljava/lang/String;J)V");
+  (*env)->DeleteLocalRef(env, clz);
   if (!mid) {
     throwException(env, "expected 'void profile(String, long)' method");
     return 0;
@@ -957,6 +962,7 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1update_1hook(
   jclass clz = (*env)->GetObjectClass(env, xUpdateHook);
   jmethodID mid = (*env)->GetMethodID(
       env, clz, "update", "(ILjava/lang/String;Ljava/lang/String;J)V");
+  (*env)->DeleteLocalRef(env, clz);
   if (!mid) {
     throwException(env,
                    "expected 'void update(int, String, String, long)' method");
@@ -993,6 +999,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1authorizer(
   jmethodID mid = (*env)->GetMethodID(
       env, clz, "authorize", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/"
                              "String;Ljava/lang/String;)I");
+  (*env)->DeleteLocalRef(env, clz);
   if (!mid) {
     throwException(
         env,
@@ -1031,6 +1038,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
     jclass clz = (*env)->GetObjectClass(env, xFunc);
     jmethodID mid = (*env)->GetMethodID(env, clz, "callback",
                                         "(J[J)V");
+    (*env)->DeleteLocalRef(env, clz);
     if (!mid) {
       throwException(
           env, "expected 'void callback(long, long[])' method");
