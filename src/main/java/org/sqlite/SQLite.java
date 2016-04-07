@@ -215,7 +215,7 @@ public final class SQLite {
 
 	static native Object sqlite3_get_auxdata(long pCtx, int n);
 	static native void sqlite3_set_auxdata(long pCtx, int n, Object p, Destructor free);
-	static native long sqlite3_aggregate_context(long pCtx, int nBytes);
+	static native Object sqlite3_aggregate_context(long pCtx, boolean p);
 	static native long sqlite3_context_db_handle(long pCtx);
 
 	public static final Charset UTF_8 = Charset.forName("UTF-8");

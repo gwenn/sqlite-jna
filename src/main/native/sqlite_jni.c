@@ -1017,14 +1017,15 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1authorizer(
 typedef struct {
   JNIEnv *env;
   jmethodID mid; // scalar func or aggregate step
+  jmethodID cid; // createAggregateContext
   jobject obj;
   jmethodID fid; // aggregate final
   jobject fobj;
 } udf_callback_context;
 
 static udf_callback_context *
-create_udf_callback_context(JNIEnv *env, jmethodID mid, jobject obj,
-                            jmethodID fid, jobject fobj) {
+create_udf_callback_context(JNIEnv *env, jmethodID mid, jmethodID cid,
+                            jobject obj, jmethodID fid, jobject fobj) {
   udf_callback_context *cc = sqlite3_malloc(sizeof(udf_callback_context));
   if (!cc) {
     throwException(env, "OOM");
@@ -1032,6 +1033,7 @@ create_udf_callback_context(JNIEnv *env, jmethodID mid, jobject obj,
   }
   cc->env = env;
   cc->mid = mid;
+  cc->cid = cid;
   cc->obj = WEAK_GLOBAL_REF(obj);
   cc->fid = fid;
   if (fobj) {
@@ -1084,11 +1086,23 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
   if (xFunc || xStep) {
     jclass clz = (*env)->GetObjectClass(env, xFunc ? xFunc : xStep);
     jmethodID mid = (*env)->GetMethodID(env, clz, "callback", "(J[J)V");
-    (*env)->DeleteLocalRef(env, clz);
     if (!mid) {
+      (*env)->DeleteLocalRef(env, clz);
       throwException(env, "expected 'void callback(long, long[])' method");
       return -1;
     }
+    jmethodID cid = 0;
+    if (xStep) {
+      cid = (*env)->GetMethodID(env, clz, "createAggregateContext",
+                                "()Ljava/lang/Object;");
+      if (!cid) {
+        (*env)->DeleteLocalRef(env, clz);
+        throwException(env,
+                       "expected 'Object createAggregateContext()' method");
+        return -1;
+      }
+    }
+    (*env)->DeleteLocalRef(env, clz);
     jmethodID fid = 0;
     if (xFinal) {
       jclass clz = (*env)->GetObjectClass(env, xFinal);
@@ -1100,7 +1114,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
       }
     }
 
-    cc = create_udf_callback_context(env, mid, xFunc ? xFunc : xStep, fid,
+    cc = create_udf_callback_context(env, mid, cid, xFunc ? xFunc : xStep, fid,
                                      xFinal);
     if (!cc) {
       (*env)->ReleaseStringUTFChars(env, functionName, zFunctionName);
@@ -1298,10 +1312,32 @@ JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1auxdata(
   sqlite3_set_auxdata(JLONG_TO_SQLITE3_CTX_PTR(pCtx), n, p, /*xDel*/ 0);
 }
 
-JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1aggregate_1context(
-    JNIEnv *env, jclass cls, jlong pCtx, jint nBytes) {
-  return PTR_TO_JLONG(
-      sqlite3_aggregate_context(JLONG_TO_SQLITE3_CTX_PTR(pCtx), nBytes));
+JNIEXPORT jobject JNICALL Java_org_sqlite_SQLite_sqlite3_1aggregate_1context(
+    JNIEnv *env, jclass cls, jlong pCtx, jboolean allocate) {
+  if (allocate) {
+    jobject *pAggrCtx = sqlite3_aggregate_context(
+        JLONG_TO_SQLITE3_CTX_PTR(pCtx), sizeof(jobject));
+    if (!pAggrCtx) {
+      return 0;
+    }
+    jobject aggrCtx = *pAggrCtx;
+    if (!aggrCtx) {
+      udf_callback_context *h = (udf_callback_context *)sqlite3_user_data(JLONG_TO_SQLITE3_CTX_PTR(pCtx));
+      JNIEnv *env = h->env;
+      aggrCtx = (*env)->CallObjectMethod(env, h->obj, h->cid);
+      WEAK_GLOBAL_REF(aggrCtx);
+      *pAggrCtx = aggrCtx;
+    }
+    return aggrCtx;
+  } else {
+    jobject *pAggrCtx = sqlite3_aggregate_context(JLONG_TO_SQLITE3_CTX_PTR(pCtx), 0);
+    if (!pAggrCtx) {
+      return 0;
+    }
+    jobject aggrCtx = *pAggrCtx;
+    DEL_WEAK_GLOBAL_REF(aggrCtx);
+    return aggrCtx;
+  }
 }
 
 JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1context_1db_1handle(

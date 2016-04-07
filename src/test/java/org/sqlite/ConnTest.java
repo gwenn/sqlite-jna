@@ -217,28 +217,28 @@ public class ConnTest {
 	@Test
 	public void createAggregateFunction() throws SQLiteException {
 		final Conn c = open();
-		c.createAggregateFunction("my_sum", 1, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new AggregateStepCallback() {
+		c.createAggregateFunction("my_sum", 1, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new AggregateStepCallback<long[]>() {
 			@Override
-			protected int numberOfBytes() {
-				return 8; // FIXME
+			protected long[] createAggregateContext() {
+				return new long[1];
 			}
 			@Override
-			protected void step(SQLite3Context pCtx, Object aggrCtx, SQLite3Values args) {
+			protected void step(SQLite3Context pCtx, long[] aggrCtx, SQLite3Values args) {
 				assertNotNull(pCtx);
 				assertNotNull(aggrCtx);
 				assertEquals(1, args.getCount());
 				assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
-				// FIXME aggrCtx.setLong(0, aggrCtx.getLong(0) + args.getLong(0));
+				aggrCtx[0] = aggrCtx[0] + args.getLong(0);
 			}
-		}, new AggregateFinalCallback() {
+		}, new AggregateFinalCallback<long[]>() {
 			@Override
-			protected void finalStep(SQLite3Context pCtx, Object aggrCtx) {
+			protected void finalStep(SQLite3Context pCtx, long[] aggrCtx) {
 				assertNotNull(pCtx);
 				if (aggrCtx == null) {
 					pCtx.setResultNull();
 					return;
 				}
-				// FIXME pCtx.setResultLong(aggrCtx.getLong(0));
+				pCtx.setResultLong(aggrCtx[0]);
 			}
 		});
 

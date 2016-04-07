@@ -22,7 +22,7 @@ import static org.sqlite.SQLite.sqlite3_result_error_nomem;
  * @see Conn#createAggregateFunction(String, int, int, AggregateStepCallback, AggregateFinalCallback)
  * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
  */
-public abstract class AggregateStepCallback {
+public abstract class AggregateStepCallback<A> {
 	//void (*)(sqlite3_context*,int,sqlite3_value**),
 	/**
 	 * @param pCtx <code>sqlite3_context*</code>
@@ -30,9 +30,8 @@ public abstract class AggregateStepCallback {
 	 */
 	@SuppressWarnings("unused")
 	public void callback(long pCtx, long[] args) {
-		final int nBytes = numberOfBytes();
-		final Object p = sqlite3_aggregate_context(pCtx, nBytes);
-		if (p == null && nBytes > 0) {
+		final A p = (A) sqlite3_aggregate_context(pCtx, true);
+		if (p == null) {
 			sqlite3_result_error_nomem(pCtx);
 			return;
 		}
@@ -40,15 +39,15 @@ public abstract class AggregateStepCallback {
 	}
 
 	/**
-	 * @return number of bytes to allocate.
-	 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_get_auxdata</a>
+	 * @return aggregate contexte
+	 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_aggregate_context</a>
 	 */
-	protected abstract int numberOfBytes();
+	protected abstract A createAggregateContext();
 
 	/**
 	 * @param pCtx <code>sqlite3_context*</code>
 	 * @param aggrCtx aggregate context
 	 * @param args function arguments
 	 */
-	protected abstract void step(SQLite3Context pCtx, Object aggrCtx, SQLite3Values args);
+	protected abstract void step(SQLite3Context pCtx, A aggrCtx, SQLite3Values args);
 }
