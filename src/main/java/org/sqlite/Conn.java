@@ -391,13 +391,12 @@ public final class Conn implements AutoCloseable {
 	/**
 	 * Register a callback to handle SQLITE_BUSY errors
 	 * @param bh Busy handler
-	 * @param pArg User data
 	 * @return result code
 	 * @see <a href="http://sqlite.org/c3ref/busy_handler.html">sqlite3_busy_handler</a>
 	 */
-	public int setBusyHandler(BusyHandler bh, Pointer pArg) throws ConnException {
+	public int setBusyHandler(BusyHandler bh) throws ConnException {
 		checkOpen();
-		return sqlite3_busy_handler(pDb, bh, pArg);
+		return sqlite3_busy_handler(pDb, bh, null);
 	}
 
 	/**
@@ -593,43 +592,39 @@ public final class Conn implements AutoCloseable {
 
 	/**
 	 * @param tc Tracing callback
-	 * @param arg Client data
 	 * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
 	 */
-	public void trace(TraceCallback tc, Pointer arg) throws ConnException {
+	public void trace(TraceCallback tc) throws ConnException {
 		checkOpen();
-		sqlite3_trace(pDb, tc, arg);
+		sqlite3_trace(pDb, tc, null);
 	}
 
 	/**
 	 * @param pc Profiling callback
-	 * @param arg Client data
 	 * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
 	 */
-	public void profile(ProfileCallback pc, Pointer arg) throws ConnException {
+	public void profile(ProfileCallback pc) throws ConnException {
 		checkOpen();
-		sqlite3_profile(pDb, pc, arg);
+		sqlite3_profile(pDb, pc, null);
 	}
 
 	/**
 	 * @param uh Data change notification callback.
-	 * @param arg Client data
 	 * @see <a href="http://sqlite.org/c3ref/update_hook.html">sqlite3_update_hook</a>
 	 */
-	public Pointer updateHook(UpdateHook uh, Pointer arg) throws ConnException {
+	public Pointer updateHook(UpdateHook uh) throws ConnException {
 		checkOpen();
-		return sqlite3_update_hook(pDb, uh, arg);
+		return sqlite3_update_hook(pDb, uh, null);
 	}
 	/**
 	 * Register an authorizer callback.
 	 * @param auth Compile-time authorization callback (may be null)
-	 * @param arg User data
 	 * @return result code
 	 * @see <a href="http://sqlite.org/c3ref/set_authorizer.html">sqlite3_set_authorizer</a>
 	 */
-	public int setAuhtorizer(Authorizer auth, Pointer arg) throws ConnException {
+	public int setAuhtorizer(Authorizer auth) throws ConnException {
 		checkOpen();
-		return sqlite3_set_authorizer(pDb, auth, arg);
+		return sqlite3_set_authorizer(pDb, auth, null);
 	}
 
 	/**

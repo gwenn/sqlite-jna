@@ -537,4 +537,9 @@ public class StatementTest {
 
 		assertTrue(stat.isClosed());
 	}
+
+	@Test(expected = NullPointerException.class)
+	public void nullQuery() throws Exception {
+		stat.executeQuery(null);
+	}
 }
