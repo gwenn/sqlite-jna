@@ -1324,8 +1324,7 @@ JNIEXPORT jobject JNICALL Java_org_sqlite_SQLite_sqlite3_1aggregate_1context(
     if (!aggrCtx) {
       udf_callback_context *h = (udf_callback_context *)sqlite3_user_data(JLONG_TO_SQLITE3_CTX_PTR(pCtx));
       JNIEnv *env = h->env;
-      aggrCtx = (*env)->CallObjectMethod(env, h->obj, h->cid);
-      WEAK_GLOBAL_REF(aggrCtx);
+      aggrCtx = WEAK_GLOBAL_REF((*env)->CallObjectMethod(env, h->obj, h->cid));
       *pAggrCtx = aggrCtx;
     }
     return aggrCtx;
@@ -1335,7 +1334,7 @@ JNIEXPORT jobject JNICALL Java_org_sqlite_SQLite_sqlite3_1aggregate_1context(
       return 0;
     }
     jobject aggrCtx = *pAggrCtx;
-    DEL_WEAK_GLOBAL_REF(aggrCtx);
+    // FIXME DEL_WEAK_GLOBAL_REF(aggrCtx);
     return aggrCtx;
   }
 }
