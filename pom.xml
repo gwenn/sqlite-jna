@@ -96,6 +96,7 @@
           <disableXmlReport>true</disableXmlReport>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <!--argLine>-Djna.library.path=/usr/local/opt/sqlite/lib</argLine-->
+          <!--argLine>-Xcheck:jni</argLine-->
         </configuration>
       </plugin>
     </plugins>
