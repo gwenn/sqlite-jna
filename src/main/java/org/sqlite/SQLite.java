@@ -55,7 +55,7 @@ public final class SQLite {
 	static native int sqlite3_close_v2(long pDb); // since 3.7.14
 	static native void sqlite3_interrupt(long pDb);
 
-	static native int sqlite3_busy_handler(long pDb, BusyHandler bh/* FIXME, long[] pCc*/);
+	static native int sqlite3_busy_handler(long pDb, BusyHandler bh, long[] pCc);
 	static native int sqlite3_busy_timeout(long pDb, int ms);
 	static native int sqlite3_db_status(long pDb, int op, int[] pCur, int[] pHiwtr, boolean resetFlg);
 	static native int sqlite3_db_config(long pDb, int op, int v, int[] pOk);
@@ -178,7 +178,7 @@ public final class SQLite {
 
 	// TODO sqlite3_commit_hook, sqlite3_rollback_hook
 	static native long sqlite3_update_hook(long pDb, UpdateHook xUpdate);
-	static native int sqlite3_set_authorizer(long pDb, Authorizer authorizer/* FIXME, long[] pCc*/);
+	static native int sqlite3_set_authorizer(long pDb, Authorizer authorizer, long[] pCc);
 
 	/*
 	void (*)(sqlite3_context*,int,sqlite3_value**),

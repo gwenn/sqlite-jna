@@ -240,9 +240,8 @@ static int busy(void *udp, int count) {
   JNIEnv *env = cc->env;
   return (*env)->CallBooleanMethod(env, cc->obj, cc->mid, count);
 }
-
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1busy_1handler(
-    JNIEnv *env, jclass cls, jlong pDb, jobject xBusy) {
+    JNIEnv *env, jclass cls, jlong pDb, jobject xBusy, jlongArray pCc) {
   if (!xBusy) {
     return sqlite3_busy_handler(JLONG_TO_SQLITE3_PTR(pDb), 0, 0);
   }
@@ -255,10 +254,11 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1busy_1handler(
   }
   callback_context *cc = create_callback_context(env, mid, xBusy);
   if (!cc) {
-    return 0;
+    return SQLITE_NOMEM;
   }
+  jlong p = PTR_TO_JLONG(cc);
+  (*env)->SetLongArrayRegion(env, pCc, 0, 1, &p);
   return sqlite3_busy_handler(JLONG_TO_SQLITE3_PTR(pDb), busy, cc);
-  // return PTR_TO_JLONG(cc); FIXME return callback_context
 }
 
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1busy_1timeout(
@@ -991,7 +991,7 @@ static int authorizer(void *arg, int actionCode, const char *zArg1,
 }
 
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1authorizer(
-    JNIEnv *env, jclass cls, jlong pDb, jobject xAuthorizer) {
+    JNIEnv *env, jclass cls, jlong pDb, jobject xAuthorizer, jlongArray pCc) {
   if (!xAuthorizer) {
     return sqlite3_set_authorizer(JLONG_TO_SQLITE3_PTR(pDb), 0, 0);
   }
@@ -1004,14 +1004,15 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1authorizer(
     throwException(
         env,
         "expected 'int authorize(int, String, String, String, String)' method");
-    return 0;
+    return SQLITE_NOMEM;
   }
   callback_context *cc = create_callback_context(env, mid, xAuthorizer);
   if (!cc) {
-    return 0;
+    return SQLITE_NOMEM;
   }
+  jlong p = PTR_TO_JLONG(cc);
+  (*env)->SetLongArrayRegion(env, pCc, 0, 1, &p);
   return sqlite3_set_authorizer(JLONG_TO_SQLITE3_PTR(pDb), authorizer, cc);
-  // return PTR_TO_JLONG(cc); FIXME return callback_context
 }
 
 typedef struct {

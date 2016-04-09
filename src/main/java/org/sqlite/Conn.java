@@ -32,6 +32,8 @@ public final class Conn implements AutoCloseable {
 	private long pTraceCallbackContext;
 	private long pProfileContext;
 	private long pUpdateHookContext;
+	private long pBusyHandlerContext;
+	private long pAuthorizerContext;
 
 	private final LinkedList<Stmt> cache = new LinkedList<Stmt>();
 	private int maxCacheSize = 100; // TODO parameterize
@@ -117,6 +119,14 @@ public final class Conn implements AutoCloseable {
 		if (pUpdateHookContext != 0) {
 			free_callback_context(pUpdateHookContext);
 			pUpdateHookContext = 0;
+		}
+		if (pBusyHandlerContext != 0) {
+			free_callback_context(pBusyHandlerContext);
+			pBusyHandlerContext = 0;
+		}
+		if (pAuthorizerContext != 0) {
+			free_callback_context(pAuthorizerContext);
+			pAuthorizerContext = 0;
 		}
 		return res;
 	}
@@ -406,12 +416,27 @@ public final class Conn implements AutoCloseable {
 	/**
 	 * Register a callback to handle SQLITE_BUSY errors
 	 * @param bh Busy handler
-	 * @return result code
+	 * @throws ConnException if current connection is closed
 	 * @see <a href="http://sqlite.org/c3ref/busy_handler.html">sqlite3_busy_handler</a>
 	 */
-	public int setBusyHandler(BusyHandler bh) throws ConnException {
+	public void setBusyHandler(BusyHandler bh) throws ConnException {
 		checkOpen();
-		return sqlite3_busy_handler(pDb, bh); // FIXME free callback_context
+		if (pBusyHandlerContext != 0) {
+			free_callback_context(pBusyHandlerContext);
+			pBusyHandlerContext = 0;
+		}
+		long[] pCc = new long[1];
+		boolean success = false;
+		try {
+			check(sqlite3_busy_handler(pDb, bh, pCc), "error while setting busy handler on '%s'", getFilename());
+			success = true;
+		} finally {
+			pBusyHandlerContext = pCc[0];
+			if (!success && pBusyHandlerContext != 0) {
+				free_callback_context(pBusyHandlerContext);
+				pBusyHandlerContext = 0;
+			}
+		}
 	}
 
 	/**
@@ -630,12 +655,27 @@ public final class Conn implements AutoCloseable {
 	/**
 	 * Register an authorizer callback.
 	 * @param auth Compile-time authorization callback (may be null)
-	 * @return result code
+	 * @throws ConnException if current connection is closed
 	 * @see <a href="http://sqlite.org/c3ref/set_authorizer.html">sqlite3_set_authorizer</a>
 	 */
-	public int setAuhtorizer(Authorizer auth) throws ConnException {
+	public void setAuhtorizer(Authorizer auth) throws ConnException {
 		checkOpen();
-		return sqlite3_set_authorizer(pDb, auth); // FIXME free callback_context
+		if (pAuthorizerContext != 0) {
+			free_callback_context(pAuthorizerContext);
+			pAuthorizerContext = 0;
+		}
+		long[] pCc = new long[1];
+		boolean success = false;
+		try {
+			check(sqlite3_set_authorizer(pDb, auth, pCc), "error while setting authorizer on '%s'", getFilename());
+			success = true;
+		} finally {
+			pAuthorizerContext = pCc[0];
+			if (!success && pAuthorizerContext != 0) {
+				free_callback_context(pAuthorizerContext);
+				pAuthorizerContext = 0;
+			}
+		}
 	}
 
 	/**
