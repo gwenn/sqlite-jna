@@ -40,10 +40,16 @@ static callback_context *create_callback_context(JNIEnv *env, jmethodID mid,
   return cc;
 }
 
-static void free_callback_context(void *p) {
+/*
+FATAL ERROR in native method: Using JNIEnv in the wrong thread
+http://stackoverflow.com/questions/23962972/fatal-error-in-native-method-using-jnienv-in-non-java-thread
+Do not save instances of JNIEnv* unless you are sure they will be referenced in
+the same thread.
+ */
+static void free_callback_context(JNIEnv *env, void *p) {
   if (p) {
     callback_context *cc = (callback_context *)p;
-    JNIEnv *env = cc->env;
+    // JNIEnv *env = cc->env;
     DEL_WEAK_GLOBAL_REF(cc->obj);
   }
   sqlite3_free(p);
@@ -126,7 +132,7 @@ Java_org_sqlite_SQLite_sqlite3_1config__ILorg_sqlite_SQLite_LogCallback_2(
   if (!xLog) {
     int rc = sqlite3_config(op, 0, 0);
     if (rc == SQLITE_OK) {
-      free_callback_context(logger_cc);
+      free_callback_context(env, logger_cc);
     }
     return rc;
   }
@@ -144,7 +150,7 @@ Java_org_sqlite_SQLite_sqlite3_1config__ILorg_sqlite_SQLite_LogCallback_2(
   }
   int rc = sqlite3_config(op, my_log, cc);
   if (rc == SQLITE_OK) {
-    free_callback_context(logger_cc);
+    free_callback_context(env, logger_cc);
     logger_cc = cc;
   } // TODO else free_callback_context(cc) ?
   return rc;
@@ -852,7 +858,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1backup_1finish(
 
 JNIEXPORT void JNICALL Java_org_sqlite_SQLite_free_1callback_1context(
     JNIEnv *env, jclass cls, jlong p) {
-  free_callback_context(JLONG_TO_PTR(p));
+  free_callback_context(env, JLONG_TO_PTR(p));
 }
 
 static int progress(void *udp) {
@@ -894,7 +900,7 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1trace(JNIEnv *env,
                                                               jlong pDb,
                                                               jobject xTrace) {
   if (!xTrace) {
-    free_callback_context(sqlite3_trace(JLONG_TO_SQLITE3_PTR(pDb), 0, 0));
+    free_callback_context(env, sqlite3_trace(JLONG_TO_SQLITE3_PTR(pDb), 0, 0));
     return 0;
   }
   jclass clz = (*env)->GetObjectClass(env, xTrace);
@@ -909,7 +915,8 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1trace(JNIEnv *env,
   if (!cc) {
     return 0;
   }
-  free_callback_context(sqlite3_trace(JLONG_TO_SQLITE3_PTR(pDb), trace, cc));
+  free_callback_context(env,
+                        sqlite3_trace(JLONG_TO_SQLITE3_PTR(pDb), trace, cc));
   return PTR_TO_JLONG(cc);
 }
 
@@ -923,7 +930,8 @@ static void profile(void *arg, const char *zMsg, sqlite3_uint64 ns) {
 JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1profile(
     JNIEnv *env, jclass cls, jlong pDb, jobject xProfile) {
   if (!xProfile) {
-    free_callback_context(sqlite3_profile(JLONG_TO_SQLITE3_PTR(pDb), 0, 0));
+    free_callback_context(env,
+                          sqlite3_profile(JLONG_TO_SQLITE3_PTR(pDb), 0, 0));
     return 0;
   }
   jclass clz = (*env)->GetObjectClass(env, xProfile);
@@ -939,7 +947,7 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1profile(
     return 0;
   }
   free_callback_context(
-      sqlite3_profile(JLONG_TO_SQLITE3_PTR(pDb), profile, cc));
+      env, sqlite3_profile(JLONG_TO_SQLITE3_PTR(pDb), profile, cc));
   return PTR_TO_JLONG(cc);
 }
 
@@ -956,7 +964,8 @@ static void update_hook(void *arg, int actionCode, const char *zDbName,
 JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1update_1hook(
     JNIEnv *env, jclass cls, jlong pDb, jobject xUpdateHook) {
   if (!xUpdateHook) {
-    free_callback_context(sqlite3_update_hook(JLONG_TO_SQLITE3_PTR(pDb), 0, 0));
+    free_callback_context(env,
+                          sqlite3_update_hook(JLONG_TO_SQLITE3_PTR(pDb), 0, 0));
     return 0;
   }
   jclass clz = (*env)->GetObjectClass(env, xUpdateHook);
@@ -973,7 +982,7 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1update_1hook(
     return 0;
   }
   free_callback_context(
-      sqlite3_update_hook(JLONG_TO_SQLITE3_PTR(pDb), update_hook, cc));
+      env, sqlite3_update_hook(JLONG_TO_SQLITE3_PTR(pDb), update_hook, cc));
   return PTR_TO_JLONG(cc);
 }
 
@@ -1323,14 +1332,16 @@ JNIEXPORT jobject JNICALL Java_org_sqlite_SQLite_sqlite3_1aggregate_1context(
     }
     jobject aggrCtx = *pAggrCtx;
     if (!aggrCtx) {
-      udf_callback_context *h = (udf_callback_context *)sqlite3_user_data(JLONG_TO_SQLITE3_CTX_PTR(pCtx));
+      udf_callback_context *h = (udf_callback_context *)sqlite3_user_data(
+          JLONG_TO_SQLITE3_CTX_PTR(pCtx));
       JNIEnv *env = h->env;
       aggrCtx = WEAK_GLOBAL_REF((*env)->CallObjectMethod(env, h->obj, h->cid));
       *pAggrCtx = aggrCtx;
     }
     return aggrCtx;
   } else {
-    jobject *pAggrCtx = sqlite3_aggregate_context(JLONG_TO_SQLITE3_CTX_PTR(pCtx), 0);
+    jobject *pAggrCtx =
+        sqlite3_aggregate_context(JLONG_TO_SQLITE3_CTX_PTR(pCtx), 0);
     if (!pAggrCtx) {
       return 0;
     }
