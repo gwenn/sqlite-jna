@@ -149,6 +149,7 @@
         <configuration>
           <disableXmlReport>true</disableXmlReport>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <!--argLine>-Xcheck:jni</argLine-->
         </configuration>
       </plugin>
     </plugins>
