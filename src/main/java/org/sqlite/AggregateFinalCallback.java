@@ -29,7 +29,11 @@ public abstract class AggregateFinalCallback<A> {
 	 */
 	@SuppressWarnings("unused")
 	public void callback(long pCtx) {
-		finalStep(new SQLite3Context(pCtx), getAggregateContext(pCtx));
+		try {
+			finalStep(new SQLite3Context(pCtx), getAggregateContext(pCtx));
+		} finally {
+			sqlite3_aggregate_context(pCtx, -1); // free
+		}
 	}
 
 	protected abstract void finalStep(SQLite3Context pCtx, A aggrCtx);
@@ -44,6 +48,6 @@ public abstract class AggregateFinalCallback<A> {
 	protected A getAggregateContext(long pCtx) {
 		// Within the xFinal callback, it is customary to set N=0 in calls to sqlite3_aggregate_context(C,N)
 		// so that no pointless memory allocations occur.
-		return (A) sqlite3_aggregate_context(pCtx, false);
+		return (A) sqlite3_aggregate_context(pCtx, 0);
 	}
 }

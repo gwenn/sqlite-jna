@@ -1313,8 +1313,8 @@ JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1auxdata(
 }
 
 JNIEXPORT jobject JNICALL Java_org_sqlite_SQLite_sqlite3_1aggregate_1context(
-    JNIEnv *env, jclass cls, jlong pCtx, jboolean allocate) {
-  if (allocate) {
+    JNIEnv *env, jclass cls, jlong pCtx, jint allocate) {
+  if (allocate == 1) {
     jobject *pAggrCtx = sqlite3_aggregate_context(
         JLONG_TO_SQLITE3_CTX_PTR(pCtx), sizeof(jobject));
     if (!pAggrCtx) {
@@ -1334,8 +1334,12 @@ JNIEXPORT jobject JNICALL Java_org_sqlite_SQLite_sqlite3_1aggregate_1context(
       return 0;
     }
     jobject aggrCtx = *pAggrCtx;
-    // FIXME DEL_WEAK_GLOBAL_REF(aggrCtx);
-    return aggrCtx;
+    if (allocate == 0) {
+      return aggrCtx;
+    } else {
+      DEL_WEAK_GLOBAL_REF(aggrCtx);
+      return 0;
+    }
   }
 }
 

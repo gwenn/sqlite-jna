@@ -607,9 +607,6 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void trace(TraceCallback tc) throws ConnException {
 		checkOpen();
-		if (pTraceCallbackContext != 0) {
-			free_callback_context(pTraceCallbackContext);
-		}
 		pTraceCallbackContext = sqlite3_trace(pDb, tc);
 	}
 
@@ -619,9 +616,6 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void profile(ProfileCallback pc) throws ConnException {
 		checkOpen();
-		if (pProfileContext != 0) {
-			free_callback_context(pProfileContext);
-		}
 		pProfileContext = sqlite3_profile(pDb, pc);
 	}
 
@@ -631,9 +625,6 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void updateHook(UpdateHook uh) throws ConnException {
 		checkOpen();
-		if (pUpdateHookContext != 0) {
-			free_callback_context(pUpdateHookContext);
-		}
 		pUpdateHookContext = sqlite3_update_hook(pDb, uh);
 	}
 	/**

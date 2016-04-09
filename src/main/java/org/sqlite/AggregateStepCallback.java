@@ -30,7 +30,7 @@ public abstract class AggregateStepCallback<A> {
 	 */
 	@SuppressWarnings("unused")
 	public void callback(long pCtx, long[] args) {
-		final A p = (A) sqlite3_aggregate_context(pCtx, true);
+		final A p = (A) sqlite3_aggregate_context(pCtx, 1);
 		if (p == null) {
 			sqlite3_result_error_nomem(pCtx);
 			return;
