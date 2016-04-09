@@ -22,7 +22,7 @@ static void throwException(JNIEnv *env, const char *message) {
 }
 
 typedef struct {
-  JNIEnv *env;
+  JavaVM *vm;
   jmethodID mid;
   jobject obj;
 } callback_context;
@@ -34,7 +34,7 @@ static callback_context *create_callback_context(JNIEnv *env, jmethodID mid,
     throwException(env, "OOM");
     return cc;
   }
-  cc->env = env;
+  (*env)->GetJavaVM(env, &cc->vm);
   cc->mid = mid;
   cc->obj = WEAK_GLOBAL_REF(obj);
   return cc;
@@ -49,7 +49,6 @@ the same thread.
 static void free_callback_context(JNIEnv *env, void *p) {
   if (p) {
     callback_context *cc = (callback_context *)p;
-    // JNIEnv *env = cc->env;
     DEL_WEAK_GLOBAL_REF(cc->obj);
   }
   sqlite3_free(p);
@@ -121,7 +120,8 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1config__IZ(
 static callback_context *logger_cc = 0;
 static void my_log(void *udp, int err, const char *zMsg) {
   callback_context *cc = (callback_context *)udp;
-  JNIEnv *env = cc->env;
+  JNIEnv *env = 0;
+  (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
   jstring msg = (*env)->NewStringUTF(env, zMsg);
   (*env)->CallVoidMethod(env, cc->obj, cc->mid, err, msg);
 }
@@ -243,7 +243,8 @@ JNIEXPORT void JNICALL Java_org_sqlite_SQLite_sqlite3_1interrupt(JNIEnv *env,
 
 static int busy(void *udp, int count) {
   callback_context *cc = (callback_context *)udp;
-  JNIEnv *env = cc->env;
+  JNIEnv *env = 0;
+  (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
   return (*env)->CallBooleanMethod(env, cc->obj, cc->mid, count);
 }
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1busy_1handler(
@@ -863,7 +864,8 @@ JNIEXPORT void JNICALL Java_org_sqlite_SQLite_free_1callback_1context(
 
 static int progress(void *udp) {
   callback_context *cc = (callback_context *)udp;
-  JNIEnv *env = cc->env;
+  JNIEnv *env = 0;
+  (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
   return (*env)->CallBooleanMethod(env, cc->obj, cc->mid);
 }
 
@@ -890,7 +892,8 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1progress_1handler(
 
 static void trace(void *arg, const char *zMsg) {
   callback_context *cc = (callback_context *)arg;
-  JNIEnv *env = cc->env;
+  JNIEnv *env = 0;
+  (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
   jstring msg = (*env)->NewStringUTF(env, zMsg);
   (*env)->CallVoidMethod(env, cc->obj, cc->mid, msg);
 }
@@ -922,7 +925,8 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1trace(JNIEnv *env,
 
 static void profile(void *arg, const char *zMsg, sqlite3_uint64 ns) {
   callback_context *cc = (callback_context *)arg;
-  JNIEnv *env = cc->env;
+  JNIEnv *env = 0;
+  (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
   jstring msg = (*env)->NewStringUTF(env, zMsg);
   (*env)->CallVoidMethod(env, cc->obj, cc->mid, msg, ns);
 }
@@ -954,7 +958,8 @@ JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1profile(
 static void update_hook(void *arg, int actionCode, const char *zDbName,
                         const char *zTblName, sqlite3_int64 rowId) {
   callback_context *cc = (callback_context *)arg;
-  JNIEnv *env = cc->env;
+  JNIEnv *env = 0;
+  (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
   jstring dbName = (*env)->NewStringUTF(env, zDbName);
   jstring tblName = (*env)->NewStringUTF(env, zTblName);
   (*env)->CallVoidMethod(env, cc->obj, cc->mid, actionCode, dbName, tblName,
@@ -990,7 +995,8 @@ static int authorizer(void *arg, int actionCode, const char *zArg1,
                       const char *zArg2, const char *zDbName,
                       const char *zTriggerName) {
   callback_context *cc = (callback_context *)arg;
-  JNIEnv *env = cc->env;
+  JNIEnv *env = 0;
+  (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
   jstring arg1 = (*env)->NewStringUTF(env, zArg1);
   jstring arg2 = (*env)->NewStringUTF(env, zArg2);
   jstring dbName = (*env)->NewStringUTF(env, zDbName);
@@ -1025,7 +1031,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1authorizer(
 }
 
 typedef struct {
-  JNIEnv *env;
+  JavaVM *vm;
   jmethodID mid; // scalar func or aggregate step
   jmethodID cid; // createAggregateContext
   jobject obj;
@@ -1041,7 +1047,7 @@ create_udf_callback_context(JNIEnv *env, jmethodID mid, jmethodID cid,
     throwException(env, "OOM");
     return cc;
   }
-  cc->env = env;
+  (*env)->GetJavaVM(env, &cc->vm);
   cc->mid = mid;
   cc->cid = cid;
   cc->obj = WEAK_GLOBAL_REF(obj);
@@ -1057,7 +1063,8 @@ create_udf_callback_context(JNIEnv *env, jmethodID mid, jmethodID cid,
 static void free_udf_callback_context(void *p) {
   if (p) {
     udf_callback_context *cc = (udf_callback_context *)p;
-    JNIEnv *env = cc->env;
+    JNIEnv *env = 0;
+    (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
     DEL_WEAK_GLOBAL_REF(cc->obj);
     if (cc->fobj) {
       DEL_WEAK_GLOBAL_REF(cc->fobj);
@@ -1068,7 +1075,8 @@ static void free_udf_callback_context(void *p) {
 
 static void func_or_step(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
   udf_callback_context *h = (udf_callback_context *)sqlite3_user_data(ctx);
-  JNIEnv *env = h->env;
+  JNIEnv *env = 0;
+  (*h->vm)->AttachCurrentThread(h->vm, (void **)&env, 0);
   jlongArray b = (*env)->NewLongArray(env, argc);
   if (!b) {
     sqlite3_result_error_nomem(ctx);
@@ -1082,7 +1090,8 @@ static void func_or_step(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
 
 static void final_step(sqlite3_context *ctx) {
   udf_callback_context *h = (udf_callback_context *)sqlite3_user_data(ctx);
-  JNIEnv *env = h->env;
+  JNIEnv *env = 0;
+  (*h->vm)->AttachCurrentThread(h->vm, (void **)&env, 0);
   (*env)->CallVoidMethod(env, h->fobj, h->fid, ctx);
 }
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
@@ -1334,7 +1343,8 @@ JNIEXPORT jobject JNICALL Java_org_sqlite_SQLite_sqlite3_1aggregate_1context(
     if (!aggrCtx) {
       udf_callback_context *h = (udf_callback_context *)sqlite3_user_data(
           JLONG_TO_SQLITE3_CTX_PTR(pCtx));
-      JNIEnv *env = h->env;
+      JNIEnv *env = 0;
+      (*h->vm)->AttachCurrentThread(h->vm, (void **)&env, 0);
       aggrCtx = WEAK_GLOBAL_REF((*env)->CallObjectMethod(env, h->obj, h->cid));
       *pAggrCtx = aggrCtx;
     }
