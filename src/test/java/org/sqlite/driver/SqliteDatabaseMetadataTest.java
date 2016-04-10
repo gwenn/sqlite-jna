@@ -26,15 +26,19 @@
 
 package org.sqlite.driver;
 
-import org.junit.Test;
-
 import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 	@Test
@@ -49,7 +53,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 		return new Object[][]{
 				{"allProceduresAreCallable", false},
 				{"allTablesAreSelectable", true},
-				{"getURL", "jdbc:sqlite:" + dbFile.getAbsolutePath()},
+				{"getURL", JDBC.PREFIX + dbFile.getAbsolutePath()},
 				{"getUserName", null},
 				{"nullsAreSortedHigh", false},
 				{"nullsAreSortedLow", true},

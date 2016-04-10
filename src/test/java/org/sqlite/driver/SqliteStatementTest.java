@@ -26,14 +26,6 @@
 
 package org.sqlite.driver;
 
-import jnr.ffi.Pointer;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.sqlite.FunctionFlags;
-import org.sqlite.SQLite;
-import org.sqlite.SQLiteException;
-import org.sqlite.ScalarCallback;
-
 import java.sql.BatchUpdateException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -43,7 +35,20 @@ import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLTimeoutException;
 import java.sql.Statement;
 
-import static org.junit.Assert.*;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.sqlite.FunctionFlags;
+import org.sqlite.SQLite.SQLite3Context;
+import org.sqlite.SQLite.SQLite3Values;
+import org.sqlite.SQLiteException;
+import org.sqlite.ScalarCallback;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class SqliteStatementTest extends SqliteTestHelper {
 	private static final String[] BATCH_ATTACH_RESULT = {
@@ -140,13 +145,13 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
 			((Conn) conn).getConn().createScalarFunction("delay", 0, FunctionFlags.SQLITE_UTF8, new ScalarCallback() {
 				@Override
-				public void invoke(Pointer pCtx, int nArg, Pointer args) {
+				public void func(SQLite3Context pCtx, SQLite3Values args) {
 					try {
 						Thread.currentThread().join(1000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					SQLite.sqlite3_result_int(pCtx, 0);
+					pCtx.setResultInt(0);
 				}
 			});
 			stmt.setQueryTimeout(1);

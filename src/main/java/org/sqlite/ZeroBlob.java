@@ -8,6 +8,11 @@
  */
 package org.sqlite;
 
+/**
+ * Zeroblobs are intended to serve as placeholders for BLOBs whose content is later written using incremental BLOB I/O routines.
+ * @see Stmt#bindZeroblob(int, int)
+ * @see Stmt#bindByIndex(int, Object)
+ */
 public class ZeroBlob {
 	// length of BLOB
 	public final int n;

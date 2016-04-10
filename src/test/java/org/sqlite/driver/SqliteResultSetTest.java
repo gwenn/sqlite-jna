@@ -26,9 +26,6 @@
 
 package org.sqlite.driver;
 
-import org.junit.Test;
-import org.sqlite.ErrCodes;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -42,7 +39,14 @@ import java.sql.Types;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
+import org.sqlite.ErrCodes;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class SqliteResultSetTest extends SqliteTestHelper {
 	@Test

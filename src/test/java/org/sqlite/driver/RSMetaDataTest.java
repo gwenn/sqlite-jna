@@ -26,18 +26,22 @@ SUCH DAMAGE.
 
 package org.sqlite.driver;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class RSMetaDataTest {
 	private Connection conn;
@@ -84,6 +88,18 @@ public class RSMetaDataTest {
 		assertEquals(ResultSetMetaData.columnNullable, meta.isNullable(1));
 		assertEquals(ResultSetMetaData.columnNullable, meta.isNullable(2));
 		assertEquals(ResultSetMetaData.columnNullable, meta.isNullable(3));
+	}
+
+	@Test
+	public void expression() throws SQLException {
+		final ResultSet rs = stat.executeQuery("SELECT NULL UNION SELECT 1");
+		meta = rs.getMetaData();
+		assertNull(meta.getColumnTypeName(1));
+		rs.next();
+		assertNull(meta.getColumnTypeName(1));
+		rs.next();
+		assertNull(meta.getColumnTypeName(1));
+		rs.close();
 	}
 
 	@Test

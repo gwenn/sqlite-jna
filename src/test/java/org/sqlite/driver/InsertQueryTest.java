@@ -66,7 +66,7 @@ public class InsertQueryTest {
 
 	class IndependentConnectionFactory implements ConnectionFactory {
 		public Connection getConnection() throws SQLException {
-			return DriverManager.getConnection("jdbc:sqlite:" + dbName);
+			return DriverManager.getConnection(JDBC.PREFIX + dbName);
 		}
 
 		public void dispose() throws SQLException {
@@ -80,7 +80,7 @@ public class InsertQueryTest {
 
 		public Connection getConnection() throws SQLException {
 			if (conn == null)
-				conn = DriverManager.getConnection("jdbc:sqlite:" + dbName);
+				conn = DriverManager.getConnection(JDBC.PREFIX + dbName);
 			return conn;
 		}
 
@@ -200,8 +200,8 @@ public class InsertQueryTest {
 
 	@Test(expected = SQLException.class)
 	public void reproduceDatabaseLocked() throws SQLException {
-		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbName);
-		Connection conn2 = DriverManager.getConnection("jdbc:sqlite:" + dbName);
+		Connection conn = DriverManager.getConnection(JDBC.PREFIX + dbName);
+		Connection conn2 = DriverManager.getConnection(JDBC.PREFIX + dbName);
 		Statement stat = conn.createStatement();
 		Statement stat2 = conn2.createStatement();
 

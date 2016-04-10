@@ -26,14 +26,16 @@
 
 package org.sqlite.driver;
 
-import org.junit.Test;
-
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.Types;
 
-import static org.junit.Assert.*;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class SqliteResultSetMetadataTest extends SqliteTestHelper {
 	@Test

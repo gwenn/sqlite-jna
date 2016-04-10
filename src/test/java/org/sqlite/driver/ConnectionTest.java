@@ -26,10 +26,6 @@ SUCH DAMAGE.
 
 package org.sqlite.driver;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -40,7 +36,14 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 
-import static org.junit.Assert.*;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class ConnectionTest {
 	@Rule
@@ -75,7 +78,7 @@ public class ConnectionTest {
         SQLiteConfig config = new SQLiteConfig();
         config.setReadOnly(true);
 
-        Connection conn = DriverManager.getConnection("jdbc:sqlite:", config.toProperties());
+        Connection conn = DriverManager.getConnection(JDBC.PREFIX, config.toProperties());
         Statement stat = conn.createStatement();
         try {
             assertTrue(conn.isReadOnly());
@@ -100,7 +103,7 @@ public class ConnectionTest {
             fail("should not change read only flag after opening connection");
         }
         catch (SQLException e) {
-           assert(e.getMessage().contains("Cannot change read-only flag after establishing a connection.")); 
+           assert(e.getMessage().contains("Cannot change read-only flag after establishing a connection."));
         }
         finally {
             conn.close();
@@ -111,7 +114,7 @@ public class ConnectionTest {
     public void foreignKeys() throws SQLException {
         SQLiteConfig config = new SQLiteConfig();
         config.enforceForeignKeys(true);
-        Connection conn = DriverManager.getConnection("jdbc:sqlite:", config.toProperties());
+        Connection conn = DriverManager.getConnection(JDBC.PREFIX, config.toProperties());
         Statement stat = conn.createStatement();
 
         try {
@@ -139,7 +142,7 @@ public class ConnectionTest {
     public void canWrite() throws SQLException {
         SQLiteConfig config = new SQLiteConfig();
         config.enforceForeignKeys(true);
-        Connection conn = DriverManager.getConnection("jdbc:sqlite:", config.toProperties());
+        Connection conn = DriverManager.getConnection(JDBC.PREFIX, config.toProperties());
         Statement stat = conn.createStatement();
 
         try {
@@ -155,7 +158,7 @@ public class ConnectionTest {
     public void synchronous() throws SQLException {
         SQLiteConfig config = new SQLiteConfig();
         config.setSynchronous(SynchronousMode.OFF);
-        Connection conn = DriverManager.getConnection("jdbc:sqlite:", config.toProperties());
+        Connection conn = DriverManager.getConnection(JDBC.PREFIX, config.toProperties());
         Statement stat = conn.createStatement();
 
         try {
@@ -270,14 +273,14 @@ public class ConnectionTest {
 		File testdb = new File(folder.getRoot(), "test.db");
 
 		assertFalse(testdb.exists());
-		Connection conn = DriverManager.getConnection("jdbc:sqlite:" + testdb);
+		Connection conn = DriverManager.getConnection(JDBC.PREFIX + testdb);
 		if (org.sqlite.Conn.libversionNumber() >= 3008000) {
 			assertFalse(conn.isReadOnly());
 		}
 		conn.close();
 
 		assertTrue(testdb.exists());
-		conn = DriverManager.getConnection("jdbc:sqlite:" + testdb);
+		conn = DriverManager.getConnection(JDBC.PREFIX + testdb);
 		if (org.sqlite.Conn.libversionNumber() >= 3008000) {
 			assertFalse(conn.isReadOnly());
 		}

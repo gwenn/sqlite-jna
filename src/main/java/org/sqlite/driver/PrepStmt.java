@@ -30,6 +30,9 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
+//#if mvn.project.property.jdbc.specification.version >= "4.2"
+import java.sql.SQLType;
+//#endif
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -326,7 +329,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 		} catch (IOException e) {
 			throw new SQLException("Error while reading binary stream", e);
 		} finally {
-			blob.closeAndCheck();
+			blob.close();
 		}
 		bound[parameterIndex - 1] = true;
 	}
@@ -350,10 +353,23 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 	public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
 		setObject(parameterIndex, x, targetSqlType, 0);
 	}
+	//#if mvn.project.property.jdbc.specification.version >= "4.2"
+	@Override
+	public void setObject(int parameterIndex, Object x, SQLType targetSqlType) throws SQLException {
+		setObject(parameterIndex, x, targetSqlType, 0);
+	}
+	//#endif
+
 	@Override
 	public void setObject(String parameterName, Object x, int targetSqlType) throws SQLException {
 		setObject(getBindParameterIndex(parameterName), x, targetSqlType);
 	}
+	//#if mvn.project.property.jdbc.specification.version >= "4.2"
+	@Override
+	public void setObject(String parameterName, Object x, SQLType targetSqlType) throws SQLException {
+		setObject(getBindParameterIndex(parameterName), x, targetSqlType);
+	}
+	//#endif
 
 	@Override
 	public void setObject(int parameterIndex, Object x) throws SQLException {
@@ -657,7 +673,11 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 
 	@Override
 	public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
-		throw Util.unsupported("PreparedStatement.setSQLXML");
+		if (xmlObject == null) {
+			bindNull(parameterIndex);
+		} else {
+			bindText(parameterIndex, xmlObject.getString());
+		}
 	}
 	@Override
 	public void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException {
@@ -697,10 +717,23 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 		// no conversion (targetSqlTpe and scaleOrLength are ignored)
 		setObject(parameterIndex, x);
 	}
+	//#if mvn.project.property.jdbc.specification.version >= "4.2"
 	@Override
-	public void setObject(String parameterName, Object x, int targetSqlType, int scale) throws SQLException {
-		setObject(getBindParameterIndex(parameterName), x, targetSqlType, scale);
+	public void setObject(int parameterIndex, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+		setObject(parameterIndex, x, targetSqlType.getVendorTypeNumber(), scaleOrLength);
 	}
+	//#endif
+
+	@Override
+	public void setObject(String parameterName, Object x, int targetSqlType, int scaleOrLength) throws SQLException {
+		setObject(getBindParameterIndex(parameterName), x, targetSqlType, scaleOrLength);
+	}
+	//#if mvn.project.property.jdbc.specification.version >= "4.2"
+	@Override
+	public void setObject(String parameterName, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException {
+		setObject(getBindParameterIndex(parameterName), x, targetSqlType, scaleOrLength);
+	}
+	//#endif
 
 	@Override
 	public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {

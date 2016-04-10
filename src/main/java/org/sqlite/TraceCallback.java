@@ -12,12 +12,22 @@ import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
 import jnr.ffi.annotations.Encoding;
 
-public abstract class TraceCallback {
+/**
+ * Tracing callback.
+ * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
+ */
+public interface TraceCallback {
+	/**
+	 * @param sql SQL statement text.
+	 */
 	@SuppressWarnings("unused")
 	@Delegate
-	public void invoke(Pointer arg,@Encoding("UTF-8") String sql) {
+	default void callback(Pointer arg,@Encoding("UTF-8") String sql) {
 		trace(sql);
 	}
 
-	protected abstract void trace(String sql);
+	/**
+	 * @param sql SQL statement text.
+	 */
+	void trace(String sql);
 }

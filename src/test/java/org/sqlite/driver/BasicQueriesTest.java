@@ -26,10 +26,6 @@
 
 package org.sqlite.driver;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -38,7 +34,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class BasicQueriesTest {
 	private Connection conn;
@@ -103,7 +107,7 @@ public class BasicQueriesTest {
 		try (Statement stmt = conn.createStatement()) {
 			assertEquals(conn, stmt.getConnection());
 
-			assertEquals("jdbc:sqlite:", conn.getMetaData().getURL());
+			assertEquals(JDBC.PREFIX, conn.getMetaData().getURL());
 
 			stmt.executeUpdate("CREATE TABLE IF NOT EXISTS test_table " +
 					"(id INTEGER PRIMARY KEY, name TEXT, start DATETIME)");

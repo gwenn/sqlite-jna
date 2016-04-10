@@ -26,13 +26,6 @@
 
 package org.sqlite.driver;
 
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.sqlite.SQLiteException;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.sql.Connection;
@@ -40,7 +33,18 @@ import java.sql.Driver;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 
-import static org.junit.Assert.*;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.sqlite.SQLiteException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class SqliteDriverTest {
 	@Rule
@@ -56,7 +60,7 @@ public class SqliteDriverTest {
 	public void testAcceptsUrl() throws Exception {
 		assertFalse(driver.acceptsURL(""));
 		assertFalse(driver.acceptsURL("jdbc:sqlite"));
-		assertTrue(driver.acceptsURL("jdbc:sqlite:"));
+		assertTrue(driver.acceptsURL(JDBC.PREFIX));
 		assertTrue(driver.acceptsURL("jdbc:sqlite::memory:"));
 		assertTrue(driver.acceptsURL("jdbc:sqlite:/tmp/test.db"));
 	}
@@ -85,12 +89,12 @@ public class SqliteDriverTest {
 			fw.write("Hello, World!");
 			fw.flush();
 		}
-		driver.connect("jdbc:sqlite:" + tempFile.getAbsolutePath(), null);
+		driver.connect(JDBC.PREFIX + tempFile.getAbsolutePath(), null);
 	}
 
 	@Test(expected = SQLiteException.class)
 	public void testDirectory() throws Exception {
-		driver.connect("jdbc:sqlite:" + testFolder.getRoot().getAbsolutePath(), null);
+		driver.connect(JDBC.PREFIX + testFolder.getRoot().getAbsolutePath(), null);
 	}
 
 	@Test
@@ -104,12 +108,12 @@ public class SqliteDriverTest {
 		File tempFile = testFolder.newFile("test.db");
 
 		assertTrue(tempFile.setReadable(false));
-		driver.connect("jdbc:sqlite:" + tempFile.getAbsolutePath(), null);
+		driver.connect(JDBC.PREFIX + tempFile.getAbsolutePath(), null);
 	}
 
 	@Test
 	public void testWorking() throws Exception {
-		try (Connection conn = driver.connect("jdbc:sqlite:", null)) {
+		try (Connection conn = driver.connect(JDBC.PREFIX, null)) {
 			assertEquals(null, conn.getWarnings());
 		}
 	}

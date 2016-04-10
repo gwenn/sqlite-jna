@@ -8,9 +8,17 @@
  */
 package org.sqlite;
 
+/**
+ * Connection related exception.
+ */
 public class ConnException extends SQLiteException {
 	private final transient Conn c;
 
+	/**
+	 * @param c a connection (may be null)
+	 * @param reason a description of the exception
+	 * @param errCode a database vendor-specific exception code
+	 */
 	public ConnException(Conn c, String reason, int errCode) {
 		super(c, reason, errCode);
 		this.c = c;

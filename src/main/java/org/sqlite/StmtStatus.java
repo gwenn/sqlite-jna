@@ -1,5 +1,10 @@
 package org.sqlite;
 
+/**
+ * Status Parameters for prepared statements
+ * @see Stmt#status(StmtStatus, boolean)
+ * @see <a href="http://sqlite.org/c3ref/c_stmtstatus_counter.html">Status Parameters</a>
+ */
 public enum StmtStatus {
 	SQLITE_STMTSTATUS_FULLSCAN_STEP(1),
 	SQLITE_STMTSTATUS_SORT(2),

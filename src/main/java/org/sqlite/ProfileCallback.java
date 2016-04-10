@@ -12,12 +12,24 @@ import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
 import jnr.ffi.annotations.Encoding;
 
-public abstract class ProfileCallback {
+/**
+ * Profiling callback.
+ * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
+ */
+public interface ProfileCallback {
+	/**
+	 * @param sql SQL statement text.
+	 * @param ns time in nanoseconds
+	 */
 	@SuppressWarnings("unused")
 	@Delegate
-	public void invoke(Pointer arg, @Encoding("UTF-8") String sql, long ns) {
+	default void callback(Pointer arg,@Encoding("UTF-8") String sql, long ns) {
 		profile(sql, ns);
 	}
 
-	protected abstract void profile(String sql, long ns);
+	/**
+	 * @param sql SQL statement text.
+	 * @param ns time in nanoseconds
+	 */
+	void profile(String sql, long ns);
 }

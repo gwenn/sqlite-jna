@@ -26,9 +26,6 @@
 
 package org.sqlite.driver;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -51,7 +48,15 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class SqliteConnectionTest extends SqliteTestHelper {
 	@Ignore
@@ -497,9 +502,9 @@ public class SqliteConnectionTest extends SqliteTestHelper {
 		conn.setTypeMap(new HashMap<String, Class<?>>());
 	}
 
-	@Test(expected = SQLFeatureNotSupportedException.class)
+	@Test
 	public void testCreateSQLXML() throws Exception {
-		conn.createSQLXML();
+		assertNotNull(conn.createSQLXML());
 	}
 
 	@Test(expected = SQLFeatureNotSupportedException.class)

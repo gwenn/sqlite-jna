@@ -11,6 +11,9 @@ import java.sql.NClob;
 import java.sql.PreparedStatement;
 import java.sql.RowId;
 import java.sql.SQLException;
+//#if mvn.project.property.jdbc.specification.version >= "4.2"
+import java.sql.SQLType;
+//#endif
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -37,6 +40,9 @@ public interface SQLitePreparedStatement extends PreparedStatement/*, CallableSt
 	void setAsciiStream(String parameterName, InputStream x, int length) throws SQLException;
 	void setBinaryStream(String parameterName, InputStream x, int length) throws SQLException;
 	void setObject(String parameterName, Object x, int targetSqlType) throws SQLException;
+	//#if mvn.project.property.jdbc.specification.version >= "4.2"
+	void setObject(String parameterName, Object x, SQLType targetSqlType) throws SQLException;
+	//#endif
 	void setObject(String parameterName, Object x) throws SQLException;
 	void setCharacterStream(String parameterName, Reader reader, int length) throws SQLException;
 	void setBlob(String parameterName, Blob x) throws SQLException;
@@ -54,7 +60,10 @@ public interface SQLitePreparedStatement extends PreparedStatement/*, CallableSt
 	void setBlob(String parameterName, InputStream inputStream, long length) throws SQLException;
 	void setNClob(String parameterName, Reader reader, long length) throws SQLException;
 	void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException;
-	void setObject(String parameterName, Object x, int targetSqlType, int scale) throws SQLException;
+	void setObject(String parameterName, Object x, int targetSqlType, int scaleOrLength) throws SQLException;
+	//#if mvn.project.property.jdbc.specification.version >= "4.2"
+	void setObject(String parameterName, Object x, SQLType targetSqlType, int scaleOrLength) throws SQLException;
+	//#endif
 	void setAsciiStream(String parameterName, InputStream x, long length) throws SQLException;
 	void setBinaryStream(String parameterName, InputStream x, long length) throws SQLException;
 	void setCharacterStream(String parameterName, Reader reader, long length) throws SQLException;

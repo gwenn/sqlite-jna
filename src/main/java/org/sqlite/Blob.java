@@ -15,13 +15,19 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-import static org.sqlite.SQLite.*;
+import static org.sqlite.SQLite.SQLITE_OK;
+import static org.sqlite.SQLite.sqlite3_blob_bytes;
+import static org.sqlite.SQLite.sqlite3_blob_close;
+import static org.sqlite.SQLite.sqlite3_blob_read;
+import static org.sqlite.SQLite.sqlite3_blob_reopen;
+import static org.sqlite.SQLite.sqlite3_blob_write;
+import static org.sqlite.SQLite.sqlite3_log;
 
-/*
- blob   0         offset    size
- byte[] 0   offset        length
+/**
+ * A Handle To An Open BLOB
+ * <a href="https://www.sqlite.org/c3ref/blob.html">sqlite3_blob</a>
  */
-public class Blob {
+public class Blob implements AutoCloseable {
 	private final Conn c;
 	private Pointer pBlob;
 	private int readOffset;
@@ -36,6 +42,7 @@ public class Blob {
 
 	/**
 	 * @return the size of an opened BLOB
+	 * <a href="https://www.sqlite.org/c3ref/blob_bytes.html">sqlite3_blob_bytes</a>
 	 */
 	public int getBytes() throws SQLiteException {
 		checkOpen();
@@ -45,6 +52,12 @@ public class Blob {
 		return size;
 	}
 
+	/**
+	 * Read data from this BLOB incrementally
+	 * @param b buffer to read into
+	 * @return number of bytes read
+	 * <a href="https://www.sqlite.org/c3ref/blob_read.html">sqlite3_blob_read</a>
+	 */
 	public int read(ByteBuffer b) throws SQLiteException {
 		if (b == null) {
 			throw new NullPointerException();
@@ -59,6 +72,12 @@ public class Blob {
 		return n;
 	}
 
+	/**
+	 * Write data into this BLOB incrementally
+	 * @param b bytes to write
+	 * @return number of bytes written
+	 * <a href="https://www.sqlite.org/c3ref/blob_write.html">sqlite3_blob_write</a>
+	 */
 	public int write(ByteBuffer b) throws SQLiteException {
 		if (b == null) {
 			throw new NullPointerException();
@@ -73,6 +92,12 @@ public class Blob {
 		return n;
 	}
 
+	/**
+	 * Move this BLOB handle to a new row
+	 * @param iRow new row id
+	 * @throws SQLiteException if this BLOB is closed
+	 * <a href="https://www.sqlite.org/c3ref/blob_reopen.html">sqlite3_blob_reopen</a>
+	 */
 	public void reopen(long iRow) throws SQLiteException {
 		checkOpen();
 		final int res = sqlite3_blob_reopen(pBlob, iRow);
@@ -88,12 +113,17 @@ public class Blob {
 	protected void finalize() throws Throwable {
 		if (pBlob != null) {
 			sqlite3_log(-1, "dangling SQLite blob.");
-			close();
+			closeNoCheck();
 		}
 		super.finalize();
 	}
 
-	public int close() {
+	/**
+	 * Close this BLOB handle
+	 * @return result code (No exception is thrown).
+	 * <a href="https://www.sqlite.org/c3ref/blob_close.html">sqlite3_blob_close</a>
+	 */
+	public int closeNoCheck() {
 		if (pBlob == null) {
 			return SQLITE_OK;
 		}
@@ -101,14 +131,19 @@ public class Blob {
 		pBlob = null;
 		return res;
 	}
-
-	public void closeAndCheck() throws SQLiteException {
-		final int res = close();
+	/**
+	 * Close this BLOB and throw an exception if an error occured.
+	 */
+	@Override
+	public void close() throws SQLiteException {
+		final int res = closeNoCheck();
 		if (res != ErrCodes.SQLITE_OK) {
 			throw new SQLiteException(c, "error while closing Blob", res);
 		}
 	}
-
+	/**
+	 * @return whether or not this BLOB is closed
+	 */
 	public boolean isClosed() {
 		return pBlob == null;
 	}
@@ -212,7 +247,7 @@ public class Blob {
 		@Override
 		public void close() throws IOException {
 			try {
-				closeAndCheck();
+				Blob.this.close();
 			} catch (SQLiteException e) {
 				throw new IOException(e);
 			}
@@ -260,7 +295,7 @@ public class Blob {
 		@Override
 		public void close() throws IOException {
 			try {
-				closeAndCheck();
+				Blob.this.close();
 			} catch (SQLiteException e) {
 				throw new IOException(e);
 			}

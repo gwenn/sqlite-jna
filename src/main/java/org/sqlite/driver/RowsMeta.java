@@ -67,8 +67,13 @@ class RowsMeta implements ResultSetMetaData {
 
 	@Override
 	public boolean isSigned(int column) throws SQLException {
-		checkColumn(column);
-		return true;
+		switch (stmt.getColumnAffinity(fixCol(column))) {
+			case ColAffinities.INTEGER:
+			case ColAffinities.NUMERIC:
+			case ColAffinities.REAL:
+				return true;
+		}
+		return false;
 	}
 
 	@Override
