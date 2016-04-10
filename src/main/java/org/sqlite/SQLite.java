@@ -378,7 +378,11 @@ public final class SQLite {
 	// eTextRep: SQLITE_UTF8 => 1, ...
 	static int sqlite3_create_function_v2(Pointer pDb, String functionName, int nArg, int eTextRep,
 																							 Pointer pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, Pointer xDestroy) {
-		return library.sqlite3_create_function_v2(pDb, functionName, nArg, eTextRep, pApp, xFunc, xStep, xFinal, xDestroy);
+		if (xFunc != null) {
+			return library.sqlite3_create_function_v2(pDb, functionName, nArg, eTextRep, pApp, xFunc, null, null, xDestroy);
+		} else {
+			return library.sqlite3_create_function_v2(pDb, functionName, nArg, eTextRep, pApp, null, xStep, xFinal, xDestroy);
+		}
 	}
 	static void sqlite3_result_null(Pointer pCtx) {
 		library.sqlite3_result_null(pCtx);
@@ -765,9 +769,13 @@ public final class SQLite {
 		@IgnoreError
 		int sqlite3_set_authorizer(@In Pointer pDb, @In Authorizer authorizer, @In Pointer pUserData);
 
+		// https://github.com/jnr/jnr-ffi/issues/61
 		@IgnoreError
 		int sqlite3_create_function_v2(@In Pointer pDb, @In @Encoding("UTF-8")String functionName, int nArg, int eTextRep,
-																	 @In Pointer pApp, @In ScalarCallback xFunc, @In AggregateStepCallback xStep, @In AggregateFinalCallback xFinal, @In Pointer xDestroy);
+																	 @In Pointer pApp, @In ScalarCallback xFunc, @In Pointer xStep, @In Pointer xFinal, @In Pointer xDestroy);
+		@IgnoreError
+		int sqlite3_create_function_v2(@In Pointer pDb, @In @Encoding("UTF-8")String functionName, int nArg, int eTextRep,
+				@In Pointer pApp, @In Pointer xFunc, @In AggregateStepCallback xStep, @In AggregateFinalCallback xFinal, @In Pointer xDestroy);
 		@IgnoreError
 		void sqlite3_result_null(@In Pointer pCtx);
 		@IgnoreError
