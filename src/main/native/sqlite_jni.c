@@ -502,6 +502,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1prepare_1v2(
         return SQLITE_NOMEM; // OutOfMemoryError already thrown
       }
       (*env)->SetObjectArrayElement(env, pTail, 0, tail);
+      (*env)->DeleteLocalRef(env, tail);
     } else {
       (*env)->SetObjectArrayElement(env, pTail, 0, 0);
     }
