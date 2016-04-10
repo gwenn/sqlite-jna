@@ -124,6 +124,10 @@ static void my_log(void *udp, int err, const char *zMsg) {
   (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
   jstring msg = (*env)->NewStringUTF(env, zMsg);
   (*env)->CallVoidMethod(env, cc->obj, cc->mid, err, msg);
+  (*env)->DeleteLocalRef(env, msg);
+  if ((*env)->ExceptionCheck(env)) {
+    return;
+  }
 }
 
 JNIEXPORT jint JNICALL
@@ -245,7 +249,11 @@ static int busy(void *udp, int count) {
   callback_context *cc = (callback_context *)udp;
   JNIEnv *env = 0;
   (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
-  return (*env)->CallBooleanMethod(env, cc->obj, cc->mid, count);
+  int busy = (*env)->CallBooleanMethod(env, cc->obj, cc->mid, count);
+  if ((*env)->ExceptionCheck(env)) {
+    return busy; // FIXME
+  }
+  return busy;
 }
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1busy_1handler(
     JNIEnv *env, jclass cls, jlong pDb, jobject xBusy, jlongArray pCc) {
@@ -321,6 +329,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1load_1extension(
   if (zErrMsg) {
     jstring errMsg = (*env)->NewStringUTF(env, zErrMsg);
     (*env)->SetObjectArrayElement(env, ppErrMsg, 0, errMsg);
+    (*env)->DeleteLocalRef(env, errMsg);
     sqlite3_free(zErrMsg);
   } else {
     (*env)->SetObjectArrayElement(env, ppErrMsg, 0, 0);
@@ -437,6 +446,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1table_1column_1metadata(
       return SQLITE_NOMEM; /* OutOfMemoryError already thrown */
     }
     (*env)->SetObjectArrayElement(env, pDataType, 0, dataType);
+    (*env)->DeleteLocalRef(env, dataType);
   }
   if (pCollSeq) {
     jstring collSeq = (*env)->NewStringUTF(env, zCollSeq);
@@ -444,6 +454,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1table_1column_1metadata(
       return SQLITE_NOMEM; /* OutOfMemoryError already thrown */
     }
     (*env)->SetObjectArrayElement(env, pCollSeq, 0, collSeq);
+    (*env)->DeleteLocalRef(env, collSeq);
   }
   (*env)->SetIntArrayRegion(env, pFlags, 0, 3, flags); // FIXME expected 'const
                                                        // jint * {aka const long
@@ -866,7 +877,11 @@ static int progress(void *udp) {
   callback_context *cc = (callback_context *)udp;
   JNIEnv *env = 0;
   (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
-  return (*env)->CallBooleanMethod(env, cc->obj, cc->mid);
+  int progress = (*env)->CallBooleanMethod(env, cc->obj, cc->mid);
+  if ((*env)->ExceptionCheck(env)) {
+    return progress; // FIXME
+  }
+  return progress;
 }
 
 JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1progress_1handler(
@@ -896,6 +911,10 @@ static void trace(void *arg, const char *zMsg) {
   (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
   jstring msg = (*env)->NewStringUTF(env, zMsg);
   (*env)->CallVoidMethod(env, cc->obj, cc->mid, msg);
+  (*env)->DeleteLocalRef(env, msg);
+  if ((*env)->ExceptionCheck(env)) {
+    return;
+  }
 }
 
 JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1trace(JNIEnv *env,
@@ -929,6 +948,10 @@ static void profile(void *arg, const char *zMsg, sqlite3_uint64 ns) {
   (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
   jstring msg = (*env)->NewStringUTF(env, zMsg);
   (*env)->CallVoidMethod(env, cc->obj, cc->mid, msg, ns);
+  (*env)->DeleteLocalRef(env, msg);
+  if ((*env)->ExceptionCheck(env)) {
+    return;
+  }
 }
 
 JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1profile(
@@ -964,6 +987,11 @@ static void update_hook(void *arg, int actionCode, const char *zDbName,
   jstring tblName = (*env)->NewStringUTF(env, zTblName);
   (*env)->CallVoidMethod(env, cc->obj, cc->mid, actionCode, dbName, tblName,
                          rowId);
+  (*env)->DeleteLocalRef(env, dbName);
+  (*env)->DeleteLocalRef(env, tblName);
+  if ((*env)->ExceptionCheck(env)) {
+    return;
+  }
 }
 
 JNIEXPORT jlong JNICALL Java_org_sqlite_SQLite_sqlite3_1update_1hook(
@@ -1001,8 +1029,16 @@ static int authorizer(void *arg, int actionCode, const char *zArg1,
   jstring arg2 = (*env)->NewStringUTF(env, zArg2);
   jstring dbName = (*env)->NewStringUTF(env, zDbName);
   jstring triggerName = (*env)->NewStringUTF(env, zTriggerName);
-  return (*env)->CallIntMethod(env, cc->obj, cc->mid, actionCode, arg1, arg2,
-                               dbName, triggerName);
+  int authorize = (*env)->CallIntMethod(env, cc->obj, cc->mid, actionCode, arg1,
+                                        arg2, dbName, triggerName);
+  (*env)->DeleteLocalRef(env, arg1);
+  (*env)->DeleteLocalRef(env, arg2);
+  (*env)->DeleteLocalRef(env, dbName);
+  (*env)->DeleteLocalRef(env, triggerName);
+  if ((*env)->ExceptionCheck(env)) {
+    return authorize; // FIXME
+  }
+  return authorize;
 }
 
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1set_1authorizer(
@@ -1086,6 +1122,11 @@ static void func_or_step(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
   // Mem **') to parameter of type 'const jlong *' (aka 'const long *')
   (*env)->SetLongArrayRegion(env, b, 0, argc, argv);
   (*env)->CallVoidMethod(env, h->obj, h->mid, ctx, b);
+  (*env)->DeleteLocalRef(env, b);
+  if ((*env)->ExceptionCheck(env)) {
+    // FIXME sqlite3_result_error();
+    return;
+  }
 }
 
 static void final_step(sqlite3_context *ctx) {
@@ -1093,6 +1134,10 @@ static void final_step(sqlite3_context *ctx) {
   JNIEnv *env = 0;
   (*h->vm)->AttachCurrentThread(h->vm, (void **)&env, 0);
   (*env)->CallVoidMethod(env, h->fobj, h->fid, ctx);
+  if ((*env)->ExceptionCheck(env)) {
+    // FIXME sqlite3_result_error();
+    return;
+  }
 }
 JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1create_1function_1v2(
     JNIEnv *env, jclass cls, jlong pDb, jstring functionName, jint nArg,
@@ -1345,8 +1390,11 @@ JNIEXPORT jobject JNICALL Java_org_sqlite_SQLite_sqlite3_1aggregate_1context(
           JLONG_TO_SQLITE3_CTX_PTR(pCtx));
       JNIEnv *env = 0;
       (*h->vm)->AttachCurrentThread(h->vm, (void **)&env, 0);
-      aggrCtx = WEAK_GLOBAL_REF((*env)->CallObjectMethod(env, h->obj, h->cid));
-      *pAggrCtx = aggrCtx;
+      aggrCtx = (*env)->CallObjectMethod(env, h->obj, h->cid);
+      if ((*env)->ExceptionCheck(env)) {
+        return 0; // FIXME
+      }
+      *pAggrCtx = WEAK_GLOBAL_REF(aggrCtx);
     }
     return aggrCtx;
   } else {
