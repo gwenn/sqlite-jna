@@ -190,4 +190,16 @@ public class QueryTest {
 		}
 		ps.close();
 	}
+
+	@Test
+	public void emptyBlobTest() throws SQLException {
+		try (Statement st = conn.createStatement()) {
+			st.executeUpdate("CREATE TABLE test (data BLOB)");
+			st.executeUpdate("INSERT INTO test (data) VALUES (zeroblob(0))");
+			try (ResultSet rs = st.executeQuery("SELECT data from test")) {
+				assertTrue(rs.next());
+				assertArrayEquals(new byte[0], rs.getBytes(1));
+			}
+		}
+	}
 }
