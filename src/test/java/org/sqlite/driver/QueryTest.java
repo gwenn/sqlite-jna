@@ -57,6 +57,14 @@ public class QueryTest {
 	}
 
 	@Test
+	public void nullQuery() throws Exception {
+		try (Statement stmt = conn.createStatement()) {
+			stmt.execute(null);
+		} catch (NullPointerException e) {
+		}
+	}
+
+	@Test
 	public void createTable() throws Exception {
 		Statement stmt = conn.createStatement();
 		stmt.execute("CREATE TABLE IF NOT EXISTS sample " + "(id INTEGER PRIMARY KEY, descr VARCHAR(40))");
@@ -199,6 +207,30 @@ public class QueryTest {
 			try (ResultSet rs = st.executeQuery("SELECT data from test")) {
 				assertTrue(rs.next());
 				assertArrayEquals(new byte[0], rs.getBytes(1));
+			}
+		}
+	}
+
+	@Test
+	public void notEmptyBlobTest() throws SQLException {
+		try (Statement st = conn.createStatement()) {
+			st.executeUpdate("CREATE TABLE test (data BLOB)");
+			st.executeUpdate("INSERT INTO test (data) VALUES (zeroblob(5))");
+			try (ResultSet rs = st.executeQuery("SELECT data from test")) {
+				assertTrue(rs.next());
+				assertArrayEquals(new byte[5], rs.getBytes(1));
+			}
+		}
+	}
+
+	@Test
+	public void nullBlobTest() throws SQLException {
+		try (Statement st = conn.createStatement()) {
+			st.executeUpdate("CREATE TABLE test (data BLOB)");
+			st.executeUpdate("INSERT INTO test (data) VALUES (NULL)");
+			try (ResultSet rs = st.executeQuery("SELECT data from test")) {
+				assertTrue(rs.next());
+				assertNull(rs.getBytes(1));
 			}
 		}
 	}
