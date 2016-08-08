@@ -305,7 +305,6 @@ public final class SQLite {
 	}
 
 	public static abstract class LogCallback extends FunctionPointer {
-		static { Loader.load(); }
 		protected LogCallback() {
 			allocate();
 		}
@@ -338,7 +337,6 @@ public final class SQLite {
 	 * @see <a href="http://sqlite.org/c3ref/progress_handler.html">sqlite3_progress_handler</a>
 	 */
 	public static abstract class ProgressCallback extends FunctionPointer {
-		static { Loader.load(); }
 		protected ProgressCallback() {
 			allocate();
 		}
@@ -551,7 +549,7 @@ public final class SQLite {
 		/**
 		 * @return arg count
 		 */
-		public int getCount() {
+		public long getCount() {
 			return args.limit();
 		}
 
@@ -621,7 +619,6 @@ public final class SQLite {
 	}
 
 	public abstract static class Destructor extends FunctionPointer {
-        static { Loader.load(); }
         protected Destructor() {
             allocate();
         }
@@ -644,7 +641,6 @@ public final class SQLite {
      * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
      */
     public abstract static class ScalarCallback extends FunctionPointer {
-        static { Loader.load(); }
         protected ScalarCallback() {
             allocate();
         }
@@ -697,7 +693,6 @@ public final class SQLite {
      * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
      */
     public abstract static class AggregateStepCallback extends FunctionPointer {
-        static { Loader.load(); }
         protected AggregateStepCallback() {
             allocate();
         }
@@ -753,7 +748,6 @@ public final class SQLite {
 	 * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
 	 */
 	public abstract static class AggregateFinalCallback extends FunctionPointer {
-		static { Loader.load(); }
 		protected AggregateFinalCallback() {
 			allocate();
 		}
@@ -789,7 +783,6 @@ public final class SQLite {
      * @see <a href="http://sqlite.org/c3ref/busy_handler.html">sqlite3_busy_handler</a>
      */
     public abstract static class BusyHandler extends FunctionPointer {
-        static { Loader.load(); }
         protected BusyHandler() {
             allocate();
         }
@@ -822,7 +815,6 @@ public final class SQLite {
      * @see <a href="http://sqlite.org/c3ref/update_hook.html">sqlite3_update_hook</a>
      */
     public abstract static class UpdateHook extends FunctionPointer {
-        static { Loader.load(); }
         protected UpdateHook() {
             allocate();
         }
@@ -854,7 +846,6 @@ public final class SQLite {
      * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
      */
     public abstract static class TraceCallback extends FunctionPointer {
-        static { Loader.load(); }
         protected TraceCallback() {
             allocate();
         }
@@ -878,7 +869,6 @@ public final class SQLite {
      * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
      */
     public abstract static class ProfileCallback extends FunctionPointer {
-        static { Loader.load(); }
         protected ProfileCallback() {
             allocate();
         }
@@ -906,7 +896,6 @@ public final class SQLite {
      * @see <a href="http://sqlite.org/c3ref/set_authorizer.html">sqlite3_set_authorizer</a>
      */
     public abstract static class Authorizer extends FunctionPointer {
-        static { Loader.load(); }
         protected Authorizer() {
             allocate();
         }
