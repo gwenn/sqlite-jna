@@ -4,6 +4,12 @@ import org.bytedeco.javacpp.LongPointer;
 import org.bytedeco.javacpp.Pointer;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.sqlite.SQLite.AggregateFinalCallback;
+import org.sqlite.SQLite.AggregateStepCallback;
+import org.sqlite.SQLite.Authorizer;
+import org.sqlite.SQLite.ProfileCallback;
+import org.sqlite.SQLite.ScalarCallback;
+import org.sqlite.SQLite.TraceCallback;
 import org.sqlite.SQLite.sqlite3_context;
 
 import static org.junit.Assert.*;
