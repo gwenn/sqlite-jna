@@ -30,7 +30,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.sqlite.FunctionFlags;
 import org.sqlite.SQLite.SQLite3Values;
-import org.sqlite.SQLite.ScalarCallback;
+import org.sqlite.ScalarCallback;
 import org.sqlite.SQLite.sqlite3_context;
 import org.sqlite.SQLiteException;
 

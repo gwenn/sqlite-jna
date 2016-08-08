@@ -2,7 +2,7 @@ package org.sqlite;
 
 /**
  * User defined function creation flags.
- * @see org.sqlite.Conn#createScalarFunction(String, int, int, SQLite.ScalarCallback)
+ * @see org.sqlite.Conn#createScalarFunction(String, int, int, ScalarCallback)
  * @see <a href="http://sqlite.org/c3ref/c_any.html">Text Encodings</a>
  * @see <a href="http://sqlite.org/c3ref/create_function.html">UDF</a>
  */
