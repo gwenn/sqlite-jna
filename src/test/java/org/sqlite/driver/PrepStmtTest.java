@@ -626,38 +626,41 @@ public class PrepStmtTest {
 		Time d3 = new Time(now);
 
 		stat.execute("create table t (c1);");
-		PreparedStatement prep = conn.prepareStatement(
-				"insert into t values (?);");
-		prep.setTimestamp(1, d1);
-		prep.executeUpdate();
-		prep.close();
+		try (PreparedStatement prep = conn.prepareStatement("insert into t values (?);")) {
+			prep.setTimestamp(1, d1);
+			prep.executeUpdate();
+		}
 
-		ResultSet rs = stat.executeQuery("select c1 from t;");
-		assertTrue(rs.next());
-		assertEquals(d1, rs.getTimestamp(1));
+		try (ResultSet rs = stat.executeQuery("select c1 from t;")) {
+			assertTrue(rs.next());
+			assertEquals(d1, rs.getTimestamp(1));
+		}
 
-		rs = stat.executeQuery("select date(c1, 'localtime') from t;");
-		assertTrue(rs.next());
-		assertEquals(d2.toString(), rs.getString(1));
+		try (ResultSet rs = stat.executeQuery("select date(c1, 'localtime') from t;")) {
+			assertTrue(rs.next());
+			assertEquals(d2.toString(), rs.getString(1));
+		}
 
-		rs = stat.executeQuery("select time(c1, 'localtime') from t;");
-		assertTrue(rs.next());
-		assertEquals(d3.toString(), rs.getString(1));
+		try (ResultSet rs = stat.executeQuery("select time(c1, 'localtime') from t;")) {
+			assertTrue(rs.next());
+			assertEquals(d3.toString(), rs.getString(1));
+		}
 
-		rs = stat.executeQuery("select strftime('%Y-%m-%d %H:%M:%f', c1, 'localtime') from t;");
-		assertTrue(rs.next());
-		// assertEquals(d1.toString(), rs.getString(1)); // ms are not occurate...
+		try (ResultSet rs = stat.executeQuery("select strftime('%Y-%m-%d %H:%M:%f', c1, 'localtime') from t;")) {
+			assertTrue(rs.next());
+			// assertEquals(d1.toString(), rs.getString(1)); // ms are not occurate...
+		}
 	}
 
 	@Test
 	public void changeSchema() throws SQLException {
 		stat.execute("create table t (c1);");
-		PreparedStatement prep = conn.prepareStatement("insert into t values (?);");
-		stat.execute("create table t2 (c2);");
-		prep.setInt(1, 1000);
-		prep.execute();
-		prep.executeUpdate();
-		prep.close();
+		try (PreparedStatement prep = conn.prepareStatement("insert into t values (?);")) {
+			stat.execute("create table t2 (c2);");
+			prep.setInt(1, 1000);
+			prep.execute();
+			prep.executeUpdate();
+		}
 	}
 
 	//    @Ignore
@@ -680,20 +683,20 @@ public class PrepStmtTest {
 
 		for (int i = 0; i < 10; i++) {
 			prep.setInt(2, i);
-			ResultSet rs = prep.executeQuery();
-			assertTrue(rs.next());
-			assertEquals(9, rs.getInt(1));
-			assertEquals(i, rs.getInt(2));
-			rs.close();
+			try (ResultSet rs = prep.executeQuery()) {
+				assertTrue(rs.next());
+				assertEquals(9, rs.getInt(1));
+				assertEquals(i, rs.getInt(2));
+			}
 		}
 
 		for (int i = 0; i < 10; i++) {
 			prep.setInt(2, i);
-			ResultSet rs = prep.executeQuery();
-			assertTrue(rs.next());
-			assertEquals(9, rs.getInt(1));
-			assertEquals(i, rs.getInt(2));
-			rs.close();
+			try (ResultSet rs = prep.executeQuery()) {
+				assertTrue(rs.next());
+				assertEquals(9, rs.getInt(1));
+				assertEquals(i, rs.getInt(2));
+			}
 		}
 
 		prep.close();
@@ -708,13 +711,13 @@ public class PrepStmtTest {
 
 		prep.setString(1, "foo");
 
-		ResultSet rs = prep.executeQuery();
-		prep.clearParameters();
-		rs.next();
+		try (ResultSet rs = prep.executeQuery()) {
 
-		assertEquals(1, rs.getInt(1));
+			prep.clearParameters();
+			rs.next();
 
-		rs.close();
+			assertEquals(1, rs.getInt(1));
+		}
 
 		try {
 			prep.execute();
@@ -724,8 +727,9 @@ public class PrepStmtTest {
 		}
 
 		try {
-			rs = prep.executeQuery();
-			fail("Returned result when values not bound to prepared statement");
+			try (ResultSet rs = prep.executeQuery()) {
+				fail("Returned result when values not bound to prepared statement");
+			}
 		} catch (Exception e) {
 			assertEquals("a value must be provided for each parameter marker in the PreparedStatement object before it can be executed.", e.getMessage());
 		}
@@ -746,48 +750,46 @@ public class PrepStmtTest {
 
 	@Test
 	public void setmaxrows() throws SQLException {
-		PreparedStatement prep = conn.prepareStatement(
-				"select 1 union select 2;");
-		prep.setMaxRows(1);
-		ResultSet rs = prep.executeQuery();
-		assertTrue(rs.next());
-		assertEquals(1, rs.getInt(1));
-		assertFalse(rs.next());
-		prep.close();
+		try (PreparedStatement prep = conn.prepareStatement("select 1 union select 2;")) {
+			prep.setMaxRows(1);
+			try (ResultSet rs = prep.executeQuery()) {
+				assertTrue(rs.next());
+				assertEquals(1, rs.getInt(1));
+				assertFalse(rs.next());
+			}
+		}
 	}
 
 	@Test
 	public void doubleclose() throws SQLException {
 		PreparedStatement prep = conn.prepareStatement("select null;");
-		ResultSet rs = prep.executeQuery();
-		rs.close();
+		try (ResultSet rs = prep.executeQuery()) {
+			rs.close();
+		}
 		prep.close();
 		prep.close();
 	}
 
 	@Test(expected = SQLException.class)
 	public void noSuchTable() throws SQLException {
-		PreparedStatement prep = conn.prepareStatement("select * from doesnotexist;");
-		prep.executeQuery();
+		try (PreparedStatement prep = conn.prepareStatement("select * from doesnotexist;")) {
+			prep.executeQuery();
+		}
 	}
 
 	@Test(expected = SQLException.class)
 	public void noSuchCol() throws SQLException {
-		PreparedStatement prep = conn.prepareStatement("select notacol from (select 1);");
-		prep.executeQuery();
+		try (PreparedStatement prep = conn.prepareStatement("select notacol from (select 1);")) {
+			prep.executeQuery();
+		}
 	}
 
 	@Test(expected = SQLException.class)
 	public void noSuchColName() throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement("select 1;");
-			ResultSet rs = stmt.executeQuery();
-			assertTrue(rs.next());
-			rs.getInt("noSuchColName");
-		} finally {
-			if (stmt != null) {
-				stmt.close();
+		try (PreparedStatement stmt = conn.prepareStatement("select 1;")) {
+			try (ResultSet rs = stmt.executeQuery()) {
+				assertTrue(rs.next());
+				rs.getInt("noSuchColName");
 			}
 		}
 	}
