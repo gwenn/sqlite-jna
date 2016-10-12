@@ -78,4 +78,23 @@ public class SqliteResultSetMetadataTest extends SqliteTestHelper {
 			}
 		}
 	}
+
+	@Test
+	public void testNoTable() throws Exception {
+		try (Statement stmt = conn.createStatement()) {
+			try (ResultSet rs = stmt.executeQuery("SELECT 1")) {
+				ResultSetMetaData rsm = rs.getMetaData();
+
+				assertEquals(1, rsm.getColumnCount());
+
+				assertEquals("", rsm.getCatalogName(1));
+				assertEquals("", rsm.getTableName(1));
+				assertFalse(rsm.isAutoIncrement(1));
+				assertEquals(ResultSetMetaData.columnNullable, rsm.isNullable(1));
+				assertEquals("1", rsm.getColumnLabel(1));
+				assertEquals("1", rsm.getColumnName(1));
+				assertEquals(Types.OTHER, rsm.getColumnType(1));
+			}
+		}
+	}
 }

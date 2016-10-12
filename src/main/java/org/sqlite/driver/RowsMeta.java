@@ -132,12 +132,12 @@ class RowsMeta implements ResultSetMetaData {
 
 	@Override
 	public String getTableName(int column) throws SQLException {
-		return stmt.getColumnTableName(fixCol(column));
+		return nullToEmpty(stmt.getColumnTableName(fixCol(column)));
 	}
 
 	@Override
 	public String getCatalogName(int column) throws SQLException {
-		return stmt.getColumnDatabaseName(fixCol(column));
+		return nullToEmpty(stmt.getColumnDatabaseName(fixCol(column)));
 	}
 
 	@Override
@@ -202,5 +202,9 @@ class RowsMeta implements ResultSetMetaData {
 		if (column > getColumnCount()) {
 			throw new StmtException(stmt, String.format("column index (%d) > column count (%d)", column, getColumnCount()), ErrCodes.WRAPPER_SPECIFIC);
 		}
+	}
+
+	private static String nullToEmpty(String s) {
+		return s == null ? "" : s;
 	}
 }

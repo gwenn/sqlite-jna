@@ -41,8 +41,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class QueryTest {
@@ -56,6 +58,14 @@ public class QueryTest {
 	@After
 	public void close() throws SQLException {
 		conn.close();
+	}
+
+	@Test
+	public void nullQuery() throws Exception {
+		try (Statement stmt = conn.createStatement()) {
+			stmt.execute(null);
+		} catch (NullPointerException e) {
+		}
 	}
 
 	@Test
@@ -191,5 +201,41 @@ public class QueryTest {
 			assertEquals("Y,abc", rs.getString(1));
 		}
 		ps.close();
+	}
+
+	@Test
+	public void emptyBlobTest() throws SQLException {
+		try (Statement st = conn.createStatement()) {
+			st.executeUpdate("CREATE TABLE test (data BLOB)");
+			st.executeUpdate("INSERT INTO test (data) VALUES (zeroblob(0))");
+			try (ResultSet rs = st.executeQuery("SELECT data from test")) {
+				assertTrue(rs.next());
+				assertArrayEquals(new byte[0], rs.getBytes(1));
+			}
+		}
+	}
+
+	@Test
+	public void notEmptyBlobTest() throws SQLException {
+		try (Statement st = conn.createStatement()) {
+			st.executeUpdate("CREATE TABLE test (data BLOB)");
+			st.executeUpdate("INSERT INTO test (data) VALUES (zeroblob(5))");
+			try (ResultSet rs = st.executeQuery("SELECT data from test")) {
+				assertTrue(rs.next());
+				assertArrayEquals(new byte[5], rs.getBytes(1));
+			}
+		}
+	}
+
+	@Test
+	public void nullBlobTest() throws SQLException {
+		try (Statement st = conn.createStatement()) {
+			st.executeUpdate("CREATE TABLE test (data BLOB)");
+			st.executeUpdate("INSERT INTO test (data) VALUES (NULL)");
+			try (ResultSet rs = st.executeQuery("SELECT data from test")) {
+				assertTrue(rs.next());
+				assertNull(rs.getBytes(1));
+			}
+		}
 	}
 }
