@@ -5,6 +5,6 @@ sudo: false
 addons:
   apt:
     sources:
-    - travis-ci/sqlite3
+    - ubuntu-toolchain-r-test
     packages:
     - libsqlite3-dev
