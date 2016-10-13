@@ -751,6 +751,9 @@ public class DBMetaDataTest {
 
 	@Test
 	public void getIndexInfoIndexedSingleExpr() throws SQLException {
+		if (org.sqlite.Conn.libversionNumber() < 3009000) {
+			return;
+		}
 		stat.executeUpdate("create table testindex (id integer primary key, fn float default 0.0, sn not null);");
 		stat.executeUpdate("create index testindex_idx on testindex (sn, fn/2);");
 
