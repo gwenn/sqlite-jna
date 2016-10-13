@@ -716,7 +716,7 @@ public final class SQLite {
 
         /**
          * @return number of bytes to allocate.
-         * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_get_auxdata</a>
+         * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_aggregate_context</a>
          */
         protected abstract int numberOfBytes();
 
@@ -767,7 +767,7 @@ public final class SQLite {
 		 * Obtain aggregate function context.
 		 *
 		 * @return <code>null</code> when no rows match an aggregate query.
-		 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_get_auxdata</a>
+		 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_aggregate_context</a>
 		 */
 		protected Pointer getAggregateContext(sqlite3_context pCtx) {
 			// Within the xFinal callback, it is customary to set N=0 in calls to sqlite3_aggregate_context(C,N)

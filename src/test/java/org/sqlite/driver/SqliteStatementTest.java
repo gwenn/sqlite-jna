@@ -117,6 +117,14 @@ public class SqliteStatementTest extends SqliteTestHelper {
 			assertEquals(1, stmt.executeUpdate("INSERT INTO test_table VALUES (2, 'testing')"));
 			assertFalse(stmt.isClosed());
 		}
+
+		try (Statement stmt = conn.createStatement()) {
+			stmt.closeOnCompletion();
+			try (ResultSet rs = stmt.executeQuery("SELECT 1 WHERE 1 = 0")) {
+				formatResultSet(rs);
+			}
+			assertTrue(stmt.isClosed());
+		}
 	}
 
 	@Test(expected = SQLException.class)

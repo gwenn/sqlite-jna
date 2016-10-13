@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import static org.sqlite.ColTypes.SQLITE_NULL;
 import static org.sqlite.SQLite.*;
 
 public class Stmt implements AutoCloseable, Row {
@@ -330,9 +331,19 @@ public class Stmt implements AutoCloseable, Row {
 	@Override
 	public byte[] getColumnBlob(int iCol) throws StmtException {
 		checkColumnIndex(iCol);
+		final int type = getColumnType(iCol);
+		if (type == SQLITE_NULL) {
+			return null;
+		}
 		final BytePointer p = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
 		if (p == null || p.isNull()) {
-			return null;
+			final int bytes = getColumnBytes(iCol);
+			// The return value from sqlite3_column_blob() for a zero-length BLOB is a NULL pointer.
+			if (bytes == 0) {
+				return new byte[0];
+			}
+			throw new StmtException(this, String.format("sqlite3_column_blob returns a NULL pointer for a %d-length BLOB", bytes),
+					ErrCodes.WRAPPER_SPECIFIC);
 		} else {
 			final byte[] bytes = new byte[getColumnBytes(iCol)];
 			p.get(bytes);
