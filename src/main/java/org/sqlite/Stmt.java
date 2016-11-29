@@ -443,7 +443,7 @@ public class Stmt implements AutoCloseable, Row {
 	 */
 	public int getBindParameterIndex(String name) {
 		if (params == null) {
-			params = new HashMap<String, Integer>(getBindParameterCount());
+			params = new HashMap<>(getBindParameterCount());
 		}
 		final Integer index = params.get(name);
 		if (index != null) {

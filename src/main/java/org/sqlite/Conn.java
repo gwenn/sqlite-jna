@@ -33,7 +33,7 @@ public final class Conn implements AutoCloseable {
 	private final boolean sharedCacheMode;
 	private TimeoutProgressCallback timeoutProgressCallback;
 
-	private final LinkedList<Stmt> cache = new LinkedList<Stmt>();
+	private final LinkedList<Stmt> cache = new LinkedList<>();
 	private int maxCacheSize = 100; // TODO parameterize
 
 	/**
@@ -60,7 +60,7 @@ public final class Conn implements AutoCloseable {
 			throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
 		}
 		final boolean uri = (flags & OpenFlags.SQLITE_OPEN_URI) != 0;
-		final Map<String, String> queryParams = uri ? OpenQueryParameter.getQueryParams(filename) : Collections.<String, String>emptyMap();
+		final Map<String, String> queryParams = uri ? OpenQueryParameter.getQueryParams(filename) : Collections.emptyMap();
 		// TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
 		final boolean sharedCacheMode = "shared".equals(queryParams.get("cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
 		final SQLite3 sqlite3 = pDb == null ? null: new SQLite3(pDb);

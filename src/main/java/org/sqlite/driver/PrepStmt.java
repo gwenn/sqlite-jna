@@ -313,7 +313,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 			blob = getStmt().open(parameterIndex, RowIdImpl.getValue(rowId), true); // FIXME getColumnOriginName can be called only with SELECT...
 			if (blob != null) {
 				if (blobByParamIndex.isEmpty() && !(blobByParamIndex instanceof TreeMap)) {
-					blobByParamIndex = new TreeMap<Integer, org.sqlite.Blob>();
+					blobByParamIndex = new TreeMap<>();
 				}
 				blobByParamIndex.put(parameterIndex, blob);
 			} else {
@@ -378,15 +378,15 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 		} else if (x instanceof String) {
 			setString(parameterIndex, (String) x);
 		} else if (x instanceof Boolean) {
-			setBoolean(parameterIndex, ((Boolean) x).booleanValue());
+			setBoolean(parameterIndex, (Boolean) x);
 		} else if (x instanceof Integer) {
-			setInt(parameterIndex, ((Integer) x).intValue());
+			setInt(parameterIndex, (Integer) x);
 		} else if (x instanceof Long) {
-			setLong(parameterIndex, ((Long) x).longValue());
+			setLong(parameterIndex, (Long) x);
 		} else if (x instanceof Float) {
-			setFloat(parameterIndex, ((Float) x).floatValue());
+			setFloat(parameterIndex, (Float) x);
 		} else if (x instanceof Double) {
-			setDouble(parameterIndex, ((Double) x).doubleValue());
+			setDouble(parameterIndex, (Double) x);
 		} else if (x instanceof Date) {
 			setDate(parameterIndex, (Date) x);
 		} else if (x instanceof Time) {
@@ -396,9 +396,9 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 		} else if (x instanceof BigDecimal) {
 			setBigDecimal(parameterIndex, (BigDecimal) x);
 		} else if (x instanceof Byte) {
-			setByte(parameterIndex, ((Byte) x).byteValue());
+			setByte(parameterIndex, (Byte) x);
 		} else if (x instanceof Short) {
-			setShort(parameterIndex, ((Short) x).shortValue());
+			setShort(parameterIndex, (Short) x);
 		} else if (x instanceof Character) {
 			setString(parameterIndex, x.toString());
 		} else if (x instanceof byte[]) {
@@ -436,7 +436,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 			batching = true;
 		}
 		if (batch == null) {
-			batch = new ArrayList<Object[]>();
+			batch = new ArrayList<>();
 		}
 		if (!boundChecked) {
 			checkParameters(getStmt());

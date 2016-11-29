@@ -8,7 +8,6 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
 import org.sqlite.SQLite.ProgressCallback;
 
 /**
