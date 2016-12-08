@@ -36,6 +36,9 @@ public final class Conn implements AutoCloseable {
 	private final LinkedList<Stmt> cache = new LinkedList<>();
 	private int maxCacheSize = 100; // TODO parameterize
 
+	// Make sure a stmt is not finalized while current conn is being closed
+	final Object lock = new Object();
+
 	/**
 	 * Open a new database connection.
 	 * <p>
@@ -90,21 +93,23 @@ public final class Conn implements AutoCloseable {
 			return SQLITE_OK;
 		}
 
-		flush();
+		synchronized (lock) {
+			flush();
 
-		// Dangling statements
-		SQLite3Stmt stmt = sqlite3_next_stmt(pDb, null);
-		while (stmt != null) {
-			if (sqlite3_stmt_busy(stmt)) {
-				sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\"");
-			} else {
-				sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\"");
+			// Dangling statements
+			SQLite3Stmt stmt = sqlite3_next_stmt(pDb, null);
+			while (stmt != null) {
+				if (sqlite3_stmt_busy(stmt)) {
+					sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\"");
+				} else {
+					sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\"");
+				}
+				stmt = sqlite3_next_stmt(pDb, stmt);
 			}
-			stmt = sqlite3_next_stmt(pDb, stmt);
+			final int res = sqlite3_close_v2(pDb); // must be called only once...
+			pDb = null;
+			return res;
 		}
-		final int res = sqlite3_close_v2(pDb); // must be called only once...
-		pDb = null;
-		return res;
 	}
 	/**
 	 * Close a database connection and throw an exception if an error occured.

@@ -79,9 +79,11 @@ public class Stmt implements AutoCloseable, Row {
 				return SQLITE_OK;
 			}
 		}
-		final int res = sqlite3_finalize(pStmt); // must be called only once
-		pStmt = null;
-		return res;
+		synchronized (c.lock) {
+			final int res = sqlite3_finalize(pStmt); // must be called only once
+			pStmt = null;
+			return res;
+		}
 	}
 	@Override
 	public void close() throws StmtException {
