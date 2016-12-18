@@ -251,7 +251,7 @@ static int busy(void *udp, int count) {
   (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
   int busy = (*env)->CallBooleanMethod(env, cc->obj, cc->mid, count);
   if ((*env)->ExceptionCheck(env)) {
-    return busy; // FIXME
+    return busy;
   }
   return busy;
 }
@@ -471,7 +471,7 @@ JNIEXPORT jint JNICALL Java_org_sqlite_SQLite_sqlite3_1exec(
   if (!zSql) {
     return SQLITE_NOMEM; /* OutOfMemoryError already thrown */
   }
-  int rc = sqlite3_exec(JLONG_TO_SQLITE3_PTR(pDb), zSql, 0, 0, 0); // TODO
+  int rc = sqlite3_exec(JLONG_TO_SQLITE3_PTR(pDb), zSql, 0, 0, 0); // TODO sqlite3_exec16 ???
   (*env)->ReleaseStringUTFChars(env, sql, zSql);
   return rc;
 }
@@ -880,7 +880,7 @@ static int progress(void *udp) {
   (*cc->vm)->AttachCurrentThread(cc->vm, (void **)&env, 0);
   int progress = (*env)->CallBooleanMethod(env, cc->obj, cc->mid);
   if ((*env)->ExceptionCheck(env)) {
-    return progress; // FIXME
+    return progress;
   }
   return progress;
 }
@@ -1037,7 +1037,7 @@ static int authorizer(void *arg, int actionCode, const char *zArg1,
   (*env)->DeleteLocalRef(env, dbName);
   (*env)->DeleteLocalRef(env, triggerName);
   if ((*env)->ExceptionCheck(env)) {
-    return authorize; // FIXME
+    return authorize;
   }
   return authorize;
 }
@@ -1125,7 +1125,6 @@ static void func_or_step(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
   (*env)->CallVoidMethod(env, h->obj, h->mid, ctx, b);
   (*env)->DeleteLocalRef(env, b);
   if ((*env)->ExceptionCheck(env)) {
-    // FIXME sqlite3_result_error();
     return;
   }
 }
@@ -1136,7 +1135,6 @@ static void final_step(sqlite3_context *ctx) {
   (*h->vm)->AttachCurrentThread(h->vm, (void **)&env, 0);
   (*env)->CallVoidMethod(env, h->fobj, h->fid, ctx);
   if ((*env)->ExceptionCheck(env)) {
-    // FIXME sqlite3_result_error();
     return;
   }
 }
