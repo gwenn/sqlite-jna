@@ -81,9 +81,11 @@ public class Stmt implements AutoCloseable, Row {
 				return SQLITE_OK;
 			}
 		}
-		final int res = sqlite3_finalize(pStmt); // must be called only once
-		pStmt = null;
-		return res;
+		synchronized (c.lock) {
+			final int res = sqlite3_finalize(pStmt); // must be called only once
+			pStmt = null;
+			return res;
+		}
 	}
 	@Override
 	public void close() throws StmtException {
@@ -447,7 +449,7 @@ public class Stmt implements AutoCloseable, Row {
 	 */
 	public int getBindParameterIndex(String name) {
 		if (params == null) {
-			params = new HashMap<String, Integer>(getBindParameterCount());
+			params = new HashMap<>(getBindParameterCount());
 		}
 		final Integer index = params.get(name);
 		if (index != null) {

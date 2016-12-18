@@ -531,8 +531,8 @@ public final class SQLite {
 	 * @see <a href="http://sqlite.org/c3ref/value.html">sqlite3_value</a>
 	 */
 	public static class SQLite3Values {
-		private static SQLite3Values NO_ARG = new SQLite3Values(new PointerPointer());
-		private PointerPointer args;
+		private static final SQLite3Values NO_ARG = new SQLite3Values(new PointerPointer());
+		private final PointerPointer args;
 
 		public static SQLite3Values build(int nArg, PointerPointer args) {
 			if (nArg == 0) {

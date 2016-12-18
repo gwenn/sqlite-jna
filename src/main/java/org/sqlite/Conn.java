@@ -33,8 +33,11 @@ public final class Conn implements AutoCloseable {
 	private final boolean sharedCacheMode;
 	private TimeoutProgressCallback timeoutProgressCallback;
 
-	private final LinkedList<Stmt> cache = new LinkedList<Stmt>();
+	private final LinkedList<Stmt> cache = new LinkedList<>();
 	private int maxCacheSize = 100; // TODO parameterize
+
+	// Make sure a stmt is not finalized while current conn is being closed
+	final Object lock = new Object();
 
 	/**
 	 * Open a new database connection.
@@ -59,7 +62,7 @@ public final class Conn implements AutoCloseable {
 			throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
 		}
 		final boolean uri = (flags & OpenFlags.SQLITE_OPEN_URI) != 0;
-		final Map<String, String> queryParams = uri ? OpenQueryParameter.getQueryParams(filename) : Collections.<String, String>emptyMap();
+		final Map<String, String> queryParams = uri ? OpenQueryParameter.getQueryParams(filename) : Collections.emptyMap();
 		// TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
 		final boolean sharedCacheMode = "shared".equals(queryParams.get("cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
 		final sqlite3 sqlite3 = pDb.isNull() ? null: pDb;
@@ -89,21 +92,23 @@ public final class Conn implements AutoCloseable {
 			return SQLITE_OK;
 		}
 
-		flush();
+		synchronized (lock) {
+			flush();
 
-		// Dangling statements
-		sqlite3_stmt stmt = sqlite3_next_stmt(pDb, null);
-		while (stmt != null && !stmt.isNull()) {
-			if (sqlite3_stmt_busy(stmt)) {
-				sqlite3_log(ErrCodes.SQLITE_MISUSE, nativeString("Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\""));
-			} else {
-				sqlite3_log(ErrCodes.SQLITE_MISUSE, nativeString("Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\""));
+			// Dangling statements
+			sqlite3_stmt stmt = sqlite3_next_stmt(pDb, null);
+			while (stmt != null && !stmt.isNull()) {
+				if (sqlite3_stmt_busy(stmt)) {
+					sqlite3_log(ErrCodes.SQLITE_MISUSE, nativeString("Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\""));
+				} else {
+					sqlite3_log(ErrCodes.SQLITE_MISUSE, nativeString("Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\""));
+					stmt = sqlite3_next_stmt(pDb, stmt);
+				}
 			}
-			stmt = sqlite3_next_stmt(pDb, stmt);
+			final int res = sqlite3_close_v2(pDb); // must be called only once...
+			pDb = null;
+			return res;
 		}
-		final int res = sqlite3_close_v2(pDb); // must be called only once...
-		pDb = null;
-		return res;
 	}
 	/**
 	 * Close a database connection and throw an exception if an error occured.

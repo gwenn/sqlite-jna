@@ -105,7 +105,7 @@ class Stmt implements Statement {
 
 	private void addColIndexInCache(String col, int index, int columnCount) {
 		if (null == colIndexByName) {
-			colIndexByName = new HashMap<String, Integer>(columnCount);
+			colIndexByName = new HashMap<>(columnCount);
 		}
 		colIndexByName.put(col, index);
 	}
@@ -358,7 +358,7 @@ class Stmt implements Statement {
 		} else {
 			checkOpen();
 			if (batch == null) {
-				batch = new ArrayList<String>();
+				batch = new ArrayList<>();
 			}
 			batch.add(sql);
 		}

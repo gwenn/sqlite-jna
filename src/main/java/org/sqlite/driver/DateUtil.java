@@ -35,7 +35,7 @@ final class DateUtil {
 	private static final ThreadLocal<Map<String, DateFormat>> DATE_FORMATS = new ThreadLocal<Map<String, DateFormat>>() {
 		@Override
 		protected Map<String, DateFormat> initialValue() {
-			return new HashMap<String, DateFormat>();
+			return new HashMap<>();
 		}
 	};
 	private static final Calendar UTC = GregorianCalendar.getInstance(TimeZone.getTimeZone("GMT"));
