@@ -35,8 +35,11 @@ public final class Conn implements AutoCloseable {
 	private long pBusyHandlerContext;
 	private long pAuthorizerContext;
 
-	private final LinkedList<Stmt> cache = new LinkedList<Stmt>();
+	private final LinkedList<Stmt> cache = new LinkedList<>();
 	private int maxCacheSize = 100; // TODO parameterize
+
+	// Make sure a stmt is not finalized while current conn is being closed
+	final Object lock = new Object();
 
 	/**
 	 * Open a new database connection.
@@ -61,7 +64,7 @@ public final class Conn implements AutoCloseable {
 			throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
 		}
 		final boolean uri = (flags & OpenFlags.SQLITE_OPEN_URI) != 0;
-		final Map<String, String> queryParams = uri ? OpenQueryParameter.getQueryParams(filename) : Collections.<String, String>emptyMap();
+		final Map<String, String> queryParams = uri ? OpenQueryParameter.getQueryParams(filename) : Collections.emptyMap();
 		// TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
 		final boolean sharedCacheMode = "shared".equals(queryParams.get("cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
 		final Conn conn = new Conn(ppDb[0], sharedCacheMode);
@@ -90,45 +93,47 @@ public final class Conn implements AutoCloseable {
 			return SQLITE_OK;
 		}
 
-		flush();
+		synchronized (lock) {
+			flush();
 
-		// Dangling statements
-		long stmt = sqlite3_next_stmt(pDb, 0);
-		while (stmt != 0) {
-			if (sqlite3_stmt_busy(stmt)) {
-				sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\"");
-			} else {
-				sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\"");
+			// Dangling statements
+			long stmt = sqlite3_next_stmt(pDb, 0);
+			while (stmt != 0) {
+				if (sqlite3_stmt_busy(stmt)) {
+					sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\"");
+				} else {
+					sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\"");
+				}
+				stmt = sqlite3_next_stmt(pDb, stmt);
 			}
-			stmt = sqlite3_next_stmt(pDb, stmt);
+			final int res = sqlite3_close_v2(pDb); // must be called only once...
+			pDb = 0;
+			if (pTimeoutProgressCallbackContext != 0) {
+				free_callback_context(pTimeoutProgressCallbackContext);
+				pTimeoutProgressCallbackContext = 0;
+			}
+			if (pTraceCallbackContext != 0) {
+				free_callback_context(pTraceCallbackContext);
+				pTraceCallbackContext = 0;
+			}
+			if (pProfileContext != 0) {
+				free_callback_context(pProfileContext);
+				pProfileContext = 0;
+			}
+			if (pUpdateHookContext != 0) {
+				free_callback_context(pUpdateHookContext);
+				pUpdateHookContext = 0;
+			}
+			if (pBusyHandlerContext != 0) {
+				free_callback_context(pBusyHandlerContext);
+				pBusyHandlerContext = 0;
+			}
+			if (pAuthorizerContext != 0) {
+				free_callback_context(pAuthorizerContext);
+				pAuthorizerContext = 0;
+			}
+			return res;
 		}
-		final int res = sqlite3_close_v2(pDb); // must be called only once...
-		pDb = 0;
-		if (pTimeoutProgressCallbackContext != 0) {
-			free_callback_context(pTimeoutProgressCallbackContext);
-			pTimeoutProgressCallbackContext = 0;
-		}
-		if (pTraceCallbackContext != 0) {
-			free_callback_context(pTraceCallbackContext);
-			pTraceCallbackContext = 0;
-		}
-		if (pProfileContext != 0) {
-			free_callback_context(pProfileContext);
-			pProfileContext = 0;
-		}
-		if (pUpdateHookContext != 0) {
-			free_callback_context(pUpdateHookContext);
-			pUpdateHookContext = 0;
-		}
-		if (pBusyHandlerContext != 0) {
-			free_callback_context(pBusyHandlerContext);
-			pBusyHandlerContext = 0;
-		}
-		if (pAuthorizerContext != 0) {
-			free_callback_context(pAuthorizerContext);
-			pAuthorizerContext = 0;
-		}
-		return res;
 	}
 	/**
 	 * Close a database connection and throw an exception if an error occured.

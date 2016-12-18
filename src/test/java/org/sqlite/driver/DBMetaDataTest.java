@@ -723,6 +723,88 @@ public class DBMetaDataTest {
 	}
 
 	@Test
+	public void getIndexInfoOnTest() throws SQLException {
+		ResultSet rs = meta.getIndexInfo(null,null,"test",false,false);
+
+		assertNotNull(rs);
+		rs.close();
+	}
+
+	@Test
+	public void getIndexInfoIndexedSingle() throws SQLException {
+		stat.executeUpdate("create table testindex (id integer primary key, fn float default 0.0, sn not null);");
+		stat.executeUpdate("create index testindex_idx on testindex (sn);");
+
+		ResultSet rs = meta.getIndexInfo(null,null,"testindex",false,false);
+
+		assertNotNull(rs);
+		assertTrue(rs.next());
+		assertEquals("testindex", rs.getString(3));
+		assertTrue("not uniq", rs.getBoolean(4));
+		assertEquals("testindex_idx", rs.getString(6));
+		assertEquals(0, rs.getInt(8));
+		assertEquals("sn", rs.getString(9));
+		assertFalse(rs.next());
+		rs.close();
+	}
+
+
+	@Test
+	public void getIndexInfoIndexedSingleExpr() throws SQLException {
+		if (org.sqlite.Conn.libversionNumber() < 3009000) {
+			return;
+		}
+		stat.executeUpdate("create table testindex (id integer primary key, fn float default 0.0, sn not null);");
+		stat.executeUpdate("create index testindex_idx on testindex (sn, fn/2);");
+
+		ResultSet rs = meta.getIndexInfo(null,null,"testindex",false,false);
+
+		assertNotNull(rs);
+		assertTrue(rs.next());
+		assertEquals("testindex", rs.getString(3));
+		assertTrue("not uniq", rs.getBoolean(4));
+		assertEquals("testindex_idx", rs.getString(6));
+		assertEquals(0, rs.getInt(8));
+		assertEquals("sn", rs.getString(9));
+
+		assertTrue(rs.next());
+		assertEquals("testindex", rs.getString(3));
+		assertTrue("not uniq", rs.getBoolean(4));
+		assertEquals("testindex_idx", rs.getString(6));
+		assertEquals(1, rs.getInt(8));
+		assertNull(rs.getString(9));
+		assertFalse(rs.next());
+		rs.close();
+	}
+
+
+	@Test
+	public void getIndexInfoIndexedMulti() throws SQLException {
+		stat.executeUpdate("create table testindex (id integer primary key, fn float default 0.0, sn not null);");
+		stat.executeUpdate("create index testindex_idx on testindex (sn);");
+		stat.executeUpdate("create index testindex_pk_idx on testindex (id);");
+
+		ResultSet rs = meta.getIndexInfo(null,null,"testindex",false,false);
+
+		assertNotNull(rs);
+		assertTrue(rs.next());
+		assertEquals("testindex", rs.getString(3));
+		assertTrue("not uniq", rs.getBoolean(4));
+		assertEquals("testindex_idx", rs.getString(6));
+		assertEquals(0, rs.getInt(8));
+		assertEquals("sn", rs.getString(9));
+
+		assertTrue(rs.next());
+		assertEquals("testindex", rs.getString(3));
+		assertTrue("not uniq", rs.getBoolean(4));
+		assertEquals("testindex_pk_idx", rs.getString(6));
+		assertEquals(0, rs.getInt(8));
+		assertEquals("id", rs.getString(9));
+		assertFalse(rs.next());
+		rs.close();
+	}
+
+	@Test
 	public void version() throws SQLException {
 		assertNotNull(meta.getDatabaseProductVersion());
 		assertTrue("1.0".equals(meta.getDriverVersion()));

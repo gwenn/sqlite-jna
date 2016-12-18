@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import static org.sqlite.ColTypes.SQLITE_NULL;
 import static org.sqlite.SQLite.*;
 
 public class Stmt implements AutoCloseable, Row {
@@ -76,9 +77,11 @@ public class Stmt implements AutoCloseable, Row {
 				return SQLITE_OK;
 			}
 		}
-		final int res = sqlite3_finalize(pStmt); // must be called only once
-		pStmt = 0;
-		return res;
+		synchronized (c.lock) {
+			final int res = sqlite3_finalize(pStmt); // must be called only once
+			pStmt = 0;
+			return res;
+		}
 	}
 	@Override
 	public void close() throws StmtException {
@@ -326,11 +329,21 @@ public class Stmt implements AutoCloseable, Row {
 	@Override
 	public byte[] getColumnBlob(int iCol) throws StmtException {
 		checkColumnIndex(iCol);
-		final byte[] bytes = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
-		if (bytes == null) {
+		final int type = getColumnType(iCol);
+		if (type == SQLITE_NULL) {
 			return null;
+		}
+		final byte[] blob = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
+		if (blob == null) {
+			final int bytes = getColumnBytes(iCol);
+			// The return value from sqlite3_column_blob() for a zero-length BLOB is a NULL pointer.
+			if (bytes == 0) {
+				return new byte[0];
+			}
+			throw new StmtException(this, String.format("sqlite3_column_blob returns a NULL pointer for a %d-length BLOB", bytes),
+					ErrCodes.WRAPPER_SPECIFIC);
 		} else {
-			return bytes;
+			return blob;
 		}
 	}
 
@@ -430,7 +443,7 @@ public class Stmt implements AutoCloseable, Row {
 	 */
 	public int getBindParameterIndex(String name) {
 		if (params == null) {
-			params = new HashMap<String, Integer>(getBindParameterCount());
+			params = new HashMap<>(getBindParameterCount());
 		}
 		final Integer index = params.get(name);
 		if (index != null) {

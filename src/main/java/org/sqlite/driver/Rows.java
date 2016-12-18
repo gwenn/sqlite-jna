@@ -839,7 +839,7 @@ class Rows implements ResultSet {
 			blob = getStmt().open(fixCol(columnIndex), rowId.value, false);
 			if (blob != null) {
 				if (blobByColIndex.isEmpty() && !(blobByColIndex instanceof TreeMap)) {
-					blobByColIndex = new TreeMap<Integer, org.sqlite.Blob>();
+					blobByColIndex = new TreeMap<>();
 				}
 				blobByColIndex.put(columnIndex, blob);
 			}

@@ -4,14 +4,14 @@ branches:
 skip_tags: true
 environment:
   JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-  M2_HOME: C:\tools\apache-maven-3.3.3
+  M2_HOME: C:\tools\apache-maven-3.3.9
 install:
   - ps: |
       $MVNDIR = $env:M2_HOME
       if (!(Test-Path -Path $MVNDIR )) {
         Write-Host (Test-Path -Path $MVNDIR)
         Write-Host 'Installing Maven'
-        choco install maven -Version 3.3.3 -y
+        choco install maven --version 3.3.9.1 -y
       } else {
         Write-Host 'Found Maven cached installation'
       }
@@ -24,5 +24,5 @@ build_script:
 test_script:
   - mvn -B test
 cache:
-  - C:\tools\apache-maven-3.3.3
+  - C:\tools\apache-maven-3.3.9
   - C:\Users\appveyor\.m2

@@ -420,8 +420,8 @@ public final class SQLite {
 	 * @see <a href="http://sqlite.org/c3ref/value.html">sqlite3_value</a>
 	 */
 	public static class SQLite3Values {
-		private static SQLite3Values NO_ARG = new SQLite3Values(new long[0]);
-		private long[] args;
+		private static final SQLite3Values NO_ARG = new SQLite3Values(new long[0]);
+		private final long[] args;
 
 		public static SQLite3Values build(long[] args) {
 			if (args == null || args.length == 0) {
