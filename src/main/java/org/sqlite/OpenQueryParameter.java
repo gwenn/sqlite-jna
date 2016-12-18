@@ -210,8 +210,8 @@ public enum OpenQueryParameter {
 
 	public abstract void config(Map<String, String> params, Conn conn) throws SQLiteException;
 
-	private static String[] TRUES = new String[]{"on", "true", "yes"};
-	private static String[] FALSES = new String[]{"false", "no", "off"};
+	private static final String[] TRUES = new String[]{"on", "true", "yes"};
+	private static final String[] FALSES = new String[]{"false", "no", "off"};
 	private static boolean uri_boolean(Map<String, String> params, String param, boolean defaultB) {
 		String value = params.get(param);
 		if (value == null || value.isEmpty()) {
@@ -236,7 +236,7 @@ public enum OpenQueryParameter {
 			return Collections.emptyMap();
 		}
 		try {
-			final Map<String, String> params = new HashMap<String, String>();
+			final Map<String, String> params = new HashMap<>();
 
 			final String query = urlParts[1];
 			for (String param : query.split("&")) {
