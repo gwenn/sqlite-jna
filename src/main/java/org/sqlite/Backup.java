@@ -86,11 +86,14 @@ public class Backup implements AutoCloseable {
 
 	@Override
 	protected void finalize() throws Throwable {
-		if (pBackup != 0) {
-			sqlite3_log(-1, "dangling SQLite backup.");
-			finish();
+		try {
+			if (pBackup != 0) {
+				sqlite3_log(-1, "dangling SQLite backup.");
+				finish();
+			}
+		} finally {
+			super.finalize();
 		}
-		super.finalize();
 	}
 
 	/**

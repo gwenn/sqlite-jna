@@ -102,11 +102,14 @@ public class Blob implements AutoCloseable {
 
 	@Override
 	protected void finalize() throws Throwable {
-		if (pBlob != 0) {
-			sqlite3_log(-1, "dangling SQLite blob.");
-			closeNoCheck();
+		try {
+			if (pBlob != 0) {
+				sqlite3_log(-1, "dangling SQLite blob.");
+				closeNoCheck();
+			}
+		} finally {
+			super.finalize();
 		}
-		super.finalize();
 	}
 
 	/**

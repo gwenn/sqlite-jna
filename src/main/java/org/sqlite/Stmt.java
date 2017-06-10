@@ -56,11 +56,14 @@ public class Stmt implements AutoCloseable, Row {
 
 	@Override
 	protected void finalize() throws Throwable {
-		if (pStmt != 0) {
-			sqlite3_log(-1, "dangling SQLite statement.");
-			close(true);
+		try {
+			if (pStmt != 0) {
+				sqlite3_log(-1, "dangling SQLite statement.");
+				close(true);
+			}
+		} finally {
+			super.finalize();
 		}
-		super.finalize();
 	}
 	/**
 	 * @return result code (No exception is thrown).

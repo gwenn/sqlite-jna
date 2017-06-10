@@ -78,11 +78,14 @@ public final class Conn implements AutoCloseable {
 
 	@Override
 	protected void finalize() throws Throwable {
-		if (pDb != 0) {
-			sqlite3_log(-1, "dangling SQLite connection.");
-			closeNoCheck();
+		try {
+			if (pDb != 0) {
+				sqlite3_log(-1, "dangling SQLite connection.");
+				closeNoCheck();
+			}
+		} finally {
+			super.finalize();
 		}
-		super.finalize();
 	}
 	/**
 	 * Close a database connection.
