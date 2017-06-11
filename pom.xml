@@ -113,7 +113,7 @@
         <configuration>
           <disableXmlReport>true</disableXmlReport>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
-          <!--argLine>-Djava.library.path=${project.build.directory}</argLine-->
+          <argLine>-Djava.library.path=${project.build.directory}</argLine>
           <!--argLine>-Xcheck:jni</argLine-->
         </configuration>
       </plugin>
