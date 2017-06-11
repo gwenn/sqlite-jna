@@ -9,10 +9,10 @@ before_script:
   - tar xzvf sqlite-autoconf-$SQLITEVERSION.tar.gz
   - cd sqlite-autoconf-$SQLITEVERSION
   - export CFLAGS="-DSQLITE_ENABLE_COLUMN_METADATA=1"
-  - ./configure --disable-dependency-tracking --prefix=$PWD
+  - ./configure --disable-dependency-tracking --prefix=/usr
   - make install
   - cd -
 
 script:
   - echo $SQLITEVERSION
-  - mvn -Djava.library.path=$PWD/sqlite-autoconf-$SQLITEVERSION/lib test
+  - mvn test
