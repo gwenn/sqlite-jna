@@ -15,4 +15,4 @@ before_script:
 
 script:
   - echo $SQLITEVERSION
-  - mvn -Djna.library.path=$PWD/sqlite-autoconf-$SQLITEVERSION/lib test
+  - mvn -Djava.library.path=$PWD/sqlite-autoconf-$SQLITEVERSION/lib test
