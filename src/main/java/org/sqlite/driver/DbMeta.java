@@ -1033,7 +1033,7 @@ class DbMeta implements DatabaseMetaData {
 				append("pc as PSEUDO_COLUMN from (");
 
 		// Pragma cannot be used as subquery...
-		int count = 0;
+		int count = -1;
 		String colName = null;
 		String colType = null;
 		try (PreparedStatement table_info = c.prepareStatement(
@@ -1042,6 +1042,9 @@ class DbMeta implements DatabaseMetaData {
 		) {
 			// 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
 			while (count < 2 && rs.next()) {
+				if (count < 0) {
+					count = 0; // table exists
+				}
 				if (rs.getBoolean(6) && (nullable || rs.getBoolean(4))) {
 					colName = rs.getString(2);
 					colType = getSQLiteType(rs.getString(3));
