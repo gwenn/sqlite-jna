@@ -7,7 +7,7 @@ addons:
     sources:
       - travis-ci/sqlite3
     packages:
-      - libsqlite3
+      - libsqlite3-0
       - libsqlite3-dev
 
 script:
