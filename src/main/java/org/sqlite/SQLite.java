@@ -12,6 +12,7 @@ import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
+import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
 import com.sun.jna.ptr.IntByReference;
@@ -19,6 +20,7 @@ import com.sun.jna.ptr.PointerByReference;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.Collections;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
 public final class SQLite implements Library {
@@ -26,7 +28,7 @@ public final class SQLite implements Library {
 
 	// public static final NativeLibrary JNA_NATIVE_LIB = NativeLibrary.getInstance(SQLite.JNA_LIBRARY_NAME);
 	static {
-		Native.register(JNA_LIBRARY_NAME);
+		Native.register(NativeLibrary.getInstance(JNA_LIBRARY_NAME, Collections.singletonMap(OPTION_STRING_ENCODING, "UTF-8")));
 	}
 
 	public static final int SQLITE_OK = 0;
