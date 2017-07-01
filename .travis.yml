@@ -5,7 +5,7 @@ jdk:
 before_script:
   - echo $PWD
   - export SQLITEVERSION=3190300
-  - curl -O http://sqlite.org/2016/sqlite-autoconf-$SQLITEVERSION.tar.gz
+  - curl -O http://sqlite.org/2017/sqlite-autoconf-$SQLITEVERSION.tar.gz
   - tar xzvf sqlite-autoconf-$SQLITEVERSION.tar.gz
   - cd sqlite-autoconf-$SQLITEVERSION
   - export CFLAGS="-DSQLITE_ENABLE_COLUMN_METADATA=1"
