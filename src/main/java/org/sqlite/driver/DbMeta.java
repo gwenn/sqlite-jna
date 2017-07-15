@@ -854,7 +854,7 @@ class DbMeta implements DatabaseMetaData {
 				append("null as SCOPE_SCHEMA, ").
 				append("null as SCOPE_TABLE, ").
 				append("null as SOURCE_DATA_TYPE, ").
-				append("'' as IS_AUTOINCREMENT, "). // TODO
+				append("'' as IS_AUTOINCREMENT, "). // TODO http://sqlite.org/autoinc.html
 				append("'' as IS_GENERATEDCOLUMN from (");
 
 		boolean colFound = false;

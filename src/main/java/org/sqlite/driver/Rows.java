@@ -815,6 +815,9 @@ class Rows implements ResultSet {
 
 	@Override
 	public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
+		if (map == null || map.isEmpty()) {
+			return getObject(columnIndex);
+		}
 		throw Util.unsupported("ResultSet.getObject(int,Map)");
 	}
 
