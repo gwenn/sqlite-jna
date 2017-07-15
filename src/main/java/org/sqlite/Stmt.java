@@ -21,6 +21,8 @@ import static org.sqlite.SQLite.*;
 
 public class Stmt implements AutoCloseable, Row {
 	final Conn c;
+	// Whole SQL (including tail)...
+	final String sql;
 	private SQLite3Stmt pStmt;
 	private final String tail;
 	// cached parameter count
@@ -33,9 +35,10 @@ public class Stmt implements AutoCloseable, Row {
 	private int[] columnAffinities;
 	private boolean cacheable;
 
-	Stmt(Conn c, SQLite3Stmt pStmt, Pointer tail, boolean cacheable) {
+	Stmt(Conn c, String sql, SQLite3Stmt pStmt, Pointer tail, boolean cacheable) {
 		assert c != null;
 		this.c = c;
+		this.sql = sql;
 		this.pStmt = pStmt;
 		this.tail = blankToNull(tail.getString(0L, UTF_8_ECONDING));
 		this.cacheable = cacheable;

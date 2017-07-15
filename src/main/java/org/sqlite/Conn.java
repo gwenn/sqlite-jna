@@ -14,6 +14,7 @@ import com.sun.jna.ptr.PointerByReference;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -33,7 +34,24 @@ public final class Conn implements AutoCloseable {
 	private final boolean sharedCacheMode;
 	private TimeoutProgressCallback timeoutProgressCallback;
 
-	private final LinkedList<Stmt> cache = new LinkedList<>();
+	private final Map<String, Stmt> cache = new LinkedHashMap<String, Stmt>() {
+		@Override
+		protected boolean removeEldestEntry(Map.Entry eldest) {
+			if (size() <= maxCacheSize) {
+				return false;
+			}
+
+			Iterator<Stmt> it = values().iterator();
+			while (it.hasNext()) {
+				if (size() <= maxCacheSize) {
+					return false;
+				}
+				it.next().close(true);
+				it.remove();
+			}
+			return false;
+		}
+	};
 	private int maxCacheSize = 100; // TODO parameterize
 
 	// Make sure a stmt is not finalized while current conn is being closed
@@ -112,7 +130,7 @@ public final class Conn implements AutoCloseable {
 		}
 	}
 	/**
-	 * Close a database connection and throw an exception if an error occured.
+	 * Close a database connection and throw an exception if an error occurred.
 	 */
 	public void close() throws ConnException {
 		final int res = closeNoCheck();
@@ -164,7 +182,7 @@ public final class Conn implements AutoCloseable {
 	}
 
 	/**
-	 * Determine if a cannection is in shared-cache mode.
+	 * Determine if a connection is in shared-cache mode.
 	 * <b>not reliable (and may depend on sqlite3_enable_shared_cache global status)</b>
 	 * @return <code>true</code> if shared-cache mode is active.
 	 * @see <a href="https://www.sqlite.org/sharedcache.html">SQLite Shared-Cache Mode</a>
@@ -207,7 +225,7 @@ public final class Conn implements AutoCloseable {
 	 * Compile an SQL statement.
 	 * @param sql query
 	 * @return Prepared Statement
-	 * @throws ConnException if current connection is closed or an error occured during statement compilation.
+	 * @throws ConnException if current connection is closed or an error occurred during statement compilation.
 	 * @see <a href="https://www.sqlite.org/c3ref/prepare.html">sqlite3_prepare_v2</a>
 	 */
 	public Stmt prepare(String sql, boolean cacheable) throws ConnException {
@@ -225,7 +243,7 @@ public final class Conn implements AutoCloseable {
 		check(res, "error while preparing statement '%s'", sql);
 		final Pointer pStmt = ppStmt.getValue();
 		final SQLite3Stmt stmt = pStmt == null ? null: new SQLite3Stmt(pStmt);
-		return new Stmt(this, stmt, ppTail.getValue(), cacheable);
+		return new Stmt(this, sql, stmt, ppTail.getValue(), cacheable);
 	}
 
 	/**
@@ -298,7 +316,7 @@ public final class Conn implements AutoCloseable {
 	/**
 	 * Run multiple statements of SQL.
 	 * @param sql statements
-	 * @throws SQLiteException if current connection is closed or an error occured during SQL execution.
+	 * @throws SQLiteException if current connection is closed or an error occurred during SQL execution.
 	 */
 	public void exec(String sql) throws SQLiteException {
 		while (sql != null && !sql.isEmpty()) {
@@ -313,7 +331,7 @@ public final class Conn implements AutoCloseable {
 	/**
 	 * Executes one or many non-parameterized statement(s) (separated by semi-colon) with no control and no stmt cache.
 	 * @param sql statements
-	 * @throws ConnException if current connection is closed or an error occured during SQL execution.
+	 * @throws ConnException if current connection is closed or an error occurred during SQL execution.
 	 * @see <a href="https://www.sqlite.org/c3ref/exec.html">sqlite3_exec</a>
 	 */
 	public void fastExec(String sql) throws ConnException {
@@ -329,7 +347,7 @@ public final class Conn implements AutoCloseable {
 	 * @param iRow row id
 	 * @param rw <code>true</code> for read-write mode, <code>false</code> for read-only mode.
 	 * @return BLOB
-	 * @throws SQLiteException if current connection is closed or an error occured during BLOB open.
+	 * @throws SQLiteException if current connection is closed or an error occurred during BLOB open.
 	 * @see <a href="https://www.sqlite.org/c3ref/blob_open.html">sqlite3_blob_open</a>
 	 */
 	public Blob open(String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
@@ -718,16 +736,8 @@ public final class Conn implements AutoCloseable {
 			return null;
 		}
 		synchronized (cache) {
-			final Iterator<Stmt> it = cache.iterator();
-			while (it.hasNext()) {
-				final Stmt stmt = it.next();
-				if (stmt.getSql().equals(sql)) { // TODO s.SQL() may have been trimmed by SQLite
-					it.remove();
-					return stmt;
-				}
-			}
+			return cache.remove(sql);
 		}
-		return null;
 	}
 
 	// To be called in Stmt.close
@@ -736,10 +746,7 @@ public final class Conn implements AutoCloseable {
 			return false;
 		}
 		synchronized (cache) {
-			cache.push(stmt);
-			while (cache.size() > maxCacheSize) {
-				cache.removeLast().close(true);
-			}
+			cache.put(stmt.sql,stmt);
 		}
 		return true;
 	}
@@ -776,7 +783,7 @@ public final class Conn implements AutoCloseable {
 			return;
 		}
 		synchronized (cache) {
-			final Iterator<Stmt> it = cache.iterator();
+			final Iterator<Stmt> it = cache.values().iterator();
 			while (it.hasNext()) {
 				final Stmt stmt = it.next();
 				stmt.close(true);
