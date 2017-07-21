@@ -47,9 +47,22 @@
       <version>4.4.0</version>
     </dependency>
     <dependency>
+      <groupId>com.github.gwenn</groupId>
+      <!--artifactId>sqlite-parser</artifactId>
+      <version>0.1.0</version-->
+      <artifactId>jlemon</artifactId>
+      <version>master-SNAPSHOT</version>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.25</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -116,4 +129,11 @@
       </plugin>
     </plugins>
   </reporting>
+
+  <repositories>
+    <repository>
+				<id>jitpack.io</id>
+				<url>https://jitpack.io</url>
+		</repository>
+  </repositories>
 </project>

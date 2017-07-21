@@ -227,20 +227,20 @@ public class DBMetaDataTest {
 		//child1: 1st fk (simple)
 		assertTrue(importedKeys.next());
 		assertEquals("parent", importedKeys.getString("PKTABLE_NAME"));
-		assertEquals("id2", importedKeys.getString("PKCOLUMN_NAME"));
-		// assertNotNull(importedKeys.getString("PK_NAME")); FIXME
-		assertNotNull(importedKeys.getString("FK_NAME"));
-		assertEquals("child1", importedKeys.getString("FKTABLE_NAME"));
-		assertEquals("id2", importedKeys.getString("FKCOLUMN_NAME"));
-
-		//child1: 2nd fk (simple)
-		assertTrue(importedKeys.next());
-		assertEquals("parent", importedKeys.getString("PKTABLE_NAME"));
 		assertEquals("id1", importedKeys.getString("PKCOLUMN_NAME"));
 		// assertNotNull(importedKeys.getString("PK_NAME")); FIXME
 		assertNotNull(importedKeys.getString("FK_NAME"));
 		assertEquals("child1", importedKeys.getString("FKTABLE_NAME"));
 		assertEquals("id1", importedKeys.getString("FKCOLUMN_NAME"));
+
+		//child1: 2nd fk (simple)
+		assertTrue(importedKeys.next());
+		assertEquals("parent", importedKeys.getString("PKTABLE_NAME"));
+		assertEquals("id2", importedKeys.getString("PKCOLUMN_NAME"));
+		// assertNotNull(importedKeys.getString("PK_NAME")); FIXME
+		assertNotNull(importedKeys.getString("FK_NAME"));
+		assertEquals("child1", importedKeys.getString("FKTABLE_NAME"));
+		assertEquals("id2", importedKeys.getString("FKCOLUMN_NAME"));
 
 		assertFalse(importedKeys.next());
 		importedKeys.close();
@@ -861,7 +861,7 @@ public class DBMetaDataTest {
 
 	@Test
 	public void crossReference() throws SQLException {
-		ResultSet rs = meta.getCrossReference(null, null, null, null, null, null);
+		ResultSet rs = meta.getCrossReference(null, null, null, null, null, "test");
 		assertFalse(rs.next());
 		ResultSetMetaData rsmeta = rs.getMetaData();
 		assertEquals(14, rsmeta.getColumnCount());
@@ -879,9 +879,6 @@ public class DBMetaDataTest {
 		assertEquals("FK_NAME", rsmeta.getColumnName(12));
 		assertEquals("PK_NAME", rsmeta.getColumnName(13));
 		assertEquals("DEFERRABILITY", rsmeta.getColumnName(14));
-		rs.close();
-		rs = meta.getCrossReference(null, null, null, null, null, "test");
-		assertFalse(rs.next());
 		rs.close();
 	}
 

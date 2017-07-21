@@ -447,6 +447,9 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 					"DEFERRABILITY|";
 
 	private static final String[] IMPORTED_KEY_DUMP = {
+			"|main|null|artist|artistid|main|null|track|trackartist|1|3|3|track_artist_1|null|7|",
+	};
+	private static final String[] EXPORTED_KEY_DUMP = {
 			"|main|null|artist|artistid|main|null|track|trackartist|1|3|3|track_artist_0|null|7|",
 	};
 
@@ -487,7 +490,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 			ResultSetMetaData rsm = rs.getMetaData();
 
 			assertEquals(IMPORTED_KEY_HEADER, formatResultSetHeader(rsm));
-			assertArrayEquals(IMPORTED_KEY_DUMP, formatResultSet(rs));
+			assertArrayEquals(EXPORTED_KEY_DUMP, formatResultSet(rs));
 		}
 	}
 

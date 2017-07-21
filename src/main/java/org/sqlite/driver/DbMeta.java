@@ -9,7 +9,12 @@
 package org.sqlite.driver;
 
 import org.sqlite.ColAffinities;
+import org.sqlite.ErrCodes;
 import org.sqlite.SQLite;
+import org.sqlite.StmtException;
+import org.sqlite.parser.EnhancedPragma;
+import org.sqlite.parser.SchemaProvider;
+import org.sqlite.parser.ast.Select;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -31,9 +36,42 @@ import static org.sqlite.SQLite.escapeIdentifier;
 
 class DbMeta implements DatabaseMetaData {
 	private final Conn c;
+	private final SchemaProvider schemaProvider;
 
 	DbMeta(Conn c) {
 		this.c = c;
+		this.schemaProvider = new SchemaProvider() {
+			@Override
+			public String getDbName(String dbName, String tableName) throws SQLException {
+				return getCatalog(dbName, tableName);
+			}
+
+			@Override
+			public String getSchema(String dbName, String tableName) throws SQLException {
+				String sql;
+				if ("main".equalsIgnoreCase(dbName)) {
+					sql = "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?"; // TODO Validate: no view
+				} else if ("temp".equalsIgnoreCase(dbName)) {
+					sql = "SELECT sql FROM sqlite_temp_master WHERE type = 'table' AND name = ?";
+				} else {
+					sql = "SELECT sql FROM \"" + escapeIdentifier(dbName) + "\".sqlite_master WHERE type = 'table' AND name = ?";
+				}
+				try (PreparedStatement ps = c.prepareStatement(sql)) {
+					ps.setString(1, tableName);
+					try (ResultSet rs = ps.executeQuery()) {
+						if (rs.next()) {
+							return rs.getString(1);
+						}
+					}
+				}
+				throw new SQLException("No such table: " + dbName + "." + tableName);
+			}
+
+			@Override
+			public Iterable<String> getTables(String dbName) {
+				throw new UnsupportedOperationException("TBD");
+			}
+		};
 	}
 
 	private void checkOpen() throws SQLException {
@@ -802,7 +840,8 @@ class DbMeta implements DatabaseMetaData {
 						cats.add(dbName);
 					}
 				}
-			} catch (SQLException e) { // query does not return ResultSet
+			} catch (StmtException e) { // query does not return ResultSet
+				assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
 			}
 			catalogs = cats.toArray(new String[cats.size()]);
 		} else if (catalog.isEmpty()) {
@@ -885,7 +924,8 @@ class DbMeta implements DatabaseMetaData {
 						sql.append(" WHERE cn LIKE ").append(quote(columnNamePattern));
 					}
 				}
-			} catch (SQLException e) { // query does not return ResultSet
+			} catch (StmtException e) { // query does not return ResultSet
+				assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
 			}
 		}
 
@@ -1051,7 +1091,8 @@ class DbMeta implements DatabaseMetaData {
 					count++;
 				}
 			}
-		} catch (SQLException e) { // query does not return ResultSet
+		} catch (StmtException e) { // query does not return ResultSet
+			assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
 			count = -1;
 		}
 
@@ -1126,7 +1167,8 @@ class DbMeta implements DatabaseMetaData {
 					nColNames++;
 				}
 			}
-		} catch (SQLException e) { // query does not return ResultSet
+		} catch (StmtException e) { // query does not return ResultSet
+			assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
 		}
 
 		if (nColNames == 0) {
@@ -1154,66 +1196,9 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
-		return getForeignKeys(catalog, null, table, false);
-	}
-
-	private ResultSet getForeignKeys(String foreignCatalog, String primaryTable, String foreignTable, boolean cross) throws SQLException {
 		checkOpen();
-		final StringBuilder sql = new StringBuilder();
-
-		foreignCatalog = getCatalog(foreignCatalog, foreignTable);
-		sql.append("select ").
-				append(quote(foreignCatalog)).append(" as PKTABLE_CAT, ").
-				append("null as PKTABLE_SCHEM, ").
-				append("pt as PKTABLE_NAME, ").
-				append("pc as PKCOLUMN_NAME, ").
-				append(quote(foreignCatalog)).append(" as FKTABLE_CAT, ").
-				append("null as FKTABLE_SCHEM, ").
-				append(quote(foreignTable)).append(" as FKTABLE_NAME, ").
-				append("fc as FKCOLUMN_NAME, ").
-				append("seq as KEY_SEQ, ").
-				append(importedKeyNoAction).append(" as UPDATE_RULE, "). // FIXME on_update (6) SET NULL (importedKeySetNull), SET DEFAULT (importedKeySetDefault), CASCADE (importedKeyCascade), RESTRICT (importedKeyRestrict), NO ACTION (importedKeyNoAction)
-				append(importedKeyNoAction).append(" as DELETE_RULE, "). // FIXME on_delete (7)
-				append("id as FK_NAME, ").
-				append("null as PK_NAME, ").
-				append(importedKeyNotDeferrable).append(" as DEFERRABILITY "). // FIXME
-				append("from (");
-
-		// Pragma cannot be used as subquery...
-		int count = 0;
-
-		try (PreparedStatement foreign_key_list = c.prepareStatement(
-				"PRAGMA " + doubleQuote(foreignCatalog) + ".foreign_key_list(\"" + escapeIdentifier(foreignTable) + "\");");
-				 ResultSet rs = foreign_key_list.executeQuery()) {
-			// 1:id|2:seq|3:table|4:from|5:to|6:on_update|7:on_delete|8:match
-			while (rs.next()) {
-				if (cross && !primaryTable.equalsIgnoreCase(rs.getString(3))) {
-					continue;
-				}
-				if (count > 0) {
-					sql.append(" UNION ALL ");
-				}
-				sql.append("SELECT ").
-						append(quote(foreignTable + '_' + rs.getString(3) + '_' + rs.getString(1))).append(" AS id, "). // to be kept in sync with getExportedKeys
-						append(quote(rs.getString(3))).append(" AS pt, ").
-						append(quote(rs.getString(5))).append(" AS pc, ").
-						append(quote(rs.getString(4))).append(" AS fc, ").
-						append(rs.getShort(2) + 1).append(" AS seq");
-				count++;
-			}
-		} catch (SQLException e) { // query does not return ResultSet
-		}
-
-		if (count == 0) {
-			sql.append("SELECT NULL AS id, NULL AS pt, NULL AS pc, NULL AS fc, NULL AS seq) limit 0");
-		} else {
-			if (cross) {
-				sql.append(") order by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, KEY_SEQ");
-			} else {
-				sql.append(") order by PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, KEY_SEQ");
-			}
-		}
-		final PreparedStatement fks = c.prepareStatement(sql.toString());
+		Select select = EnhancedPragma.getImportedKeys(catalog, table, schemaProvider);
+		final PreparedStatement fks = c.prepareStatement(select.toSql());
 		fks.closeOnCompletion();
 		return fks.executeQuery();
 	}
@@ -1284,7 +1269,8 @@ class DbMeta implements DatabaseMetaData {
 								append(rs.getShort(2) + 1).append(" AS seq");
 						count++;
 					}
-				} catch (SQLException e) { // query does not return ResultSet
+				} catch (StmtException e) { // query does not return ResultSet
+					assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
 				}
 			}
 		}
@@ -1335,10 +1321,11 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog, String foreignSchema, String foreignTable) throws SQLException {
-		if (foreignCatalog == null ? parentCatalog != null : !foreignCatalog.equals(parentCatalog)) {
-			// TODO SQLite does not support this case...
-		}
-		return getForeignKeys(foreignCatalog, parentTable, foreignTable, true);
+		checkOpen();
+		Select select = EnhancedPragma.getCrossReference(parentCatalog, parentTable, foreignCatalog, foreignTable, schemaProvider);
+		final PreparedStatement fks = c.prepareStatement(select.toSql());
+		fks.closeOnCompletion();
+		return fks.executeQuery();
 	}
 
 	@Override
@@ -1375,7 +1362,8 @@ class DbMeta implements DatabaseMetaData {
 				}
 				indexes.put(rs.getString(2), notuniq);
 			}
-		} catch (SQLException e) { // query does not return ResultSet
+		} catch (StmtException e) { // query does not return ResultSet
+			assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
 		}
 
 		if (indexes.isEmpty()) {
@@ -1398,7 +1386,7 @@ class DbMeta implements DatabaseMetaData {
 								append(quote(rs.getString(3))).append(" AS cn");
 						found = true;
 					}
-				//} catch(SQLException e) { // query does not return ResultSet
+				//} catch(StmtException e) { // query does not return ResultSet
 				}
 			}
 			if (found) {
