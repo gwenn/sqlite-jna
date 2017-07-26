@@ -563,6 +563,18 @@ public class DBMetaDataTest {
 	}
 
 	@Test
+	public void viewIngetPrimaryKeys() throws SQLException {
+		ResultSet rs;
+
+		stat.executeUpdate("create table t1 (c1, c2, c3);");
+		stat.executeUpdate("create view view_nopk (v1, v2) as select c1, c3 from t1;");
+
+		rs = meta.getPrimaryKeys(null, null, "view_nopk");
+		assertFalse(rs.next());
+		rs.close();
+	}
+
+	@Test
 	public void columnOrderOfgetPrimaryKeys() throws SQLException {
 		if (org.sqlite.Conn.libversionNumber() < 3007016) {
 			return;
