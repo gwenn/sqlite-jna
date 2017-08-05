@@ -12,8 +12,10 @@ import org.sqlite.ColAffinities;
 import org.sqlite.ErrCodes;
 import org.sqlite.SQLite;
 import org.sqlite.StmtException;
+import org.sqlite.parser.DefaultSchemaProvider;
 import org.sqlite.parser.EnhancedPragma;
 import org.sqlite.parser.SchemaProvider;
+import org.sqlite.parser.ast.QualifiedName;
 import org.sqlite.parser.ast.Select;
 
 import java.sql.Connection;
@@ -40,38 +42,7 @@ class DbMeta implements DatabaseMetaData {
 
 	DbMeta(Conn c) {
 		this.c = c;
-		this.schemaProvider = new SchemaProvider() {
-			@Override
-			public String getDbName(String dbName, String tableName) throws SQLException {
-				return getCatalog(dbName, tableName);
-			}
-
-			@Override
-			public String getSchema(String dbName, String tableName) throws SQLException {
-				String sql;
-				if ("main".equalsIgnoreCase(dbName)) {
-					sql = "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?"; // TODO Validate: no view
-				} else if ("temp".equalsIgnoreCase(dbName)) {
-					sql = "SELECT sql FROM sqlite_temp_master WHERE type = 'table' AND name = ?";
-				} else {
-					sql = "SELECT sql FROM \"" + escapeIdentifier(dbName) + "\".sqlite_master WHERE type = 'table' AND name = ?";
-				}
-				try (PreparedStatement ps = c.prepareStatement(sql)) {
-					ps.setString(1, tableName);
-					try (ResultSet rs = ps.executeQuery()) {
-						if (rs.next()) {
-							return rs.getString(1);
-						}
-					}
-				}
-				throw new SQLException("No such table: " + dbName + "." + tableName);
-			}
-
-			@Override
-			public Iterable<String> getTables(String dbName) {
-				throw new UnsupportedOperationException("TBD");
-			}
-		};
+		this.schemaProvider = new DefaultSchemaProvider(c);
 	}
 
 	private void checkOpen() throws SQLException {
@@ -757,7 +728,7 @@ class DbMeta implements DatabaseMetaData {
 				append(" null as REF_GENERATION").
 				append(" from (");
 
-		final String[] catalogs = getCatalogs(catalog);
+		final List<String> catalogs = schemaProvider.getDbNames(catalog);
 		boolean match = false;
 		final String typeExpr = "CASE WHEN like('sqlite_%', name) THEN 'system ' || type ELSE type END as type";
 		for (String s : catalogs) {
@@ -813,43 +784,17 @@ class DbMeta implements DatabaseMetaData {
 		checkOpen();
 		final StringBuilder sql = new StringBuilder("select dbName as TABLE_CAT from (");
 		// Pragma cannot be used as subquery...
-		final String[] catalogs = getCatalogs(null);
-		for (int i = 0; i < catalogs.length; i++) {
+		final List<String> catalogs = schemaProvider.getDbNames(null);
+		for (int i = 0; i < catalogs.size(); i++) {
 			if (i > 0) {
 				sql.append(" UNION ");
 			}
-			sql.append("SELECT ").append(quote(catalogs[i])).append(" AS dbName");
+			sql.append("SELECT ").append(quote(catalogs.get(i))).append(" AS dbName");
 		}
 		sql.append(") order by TABLE_CAT");
 		final PreparedStatement stmt = c.prepareStatement(sql.toString());
 		stmt.closeOnCompletion();
 		return stmt.executeQuery();
-	}
-	private String[] getCatalogs(String catalog) throws SQLException {
-		final String[] catalogs;
-		if (catalog == null) {
-			final List<String> cats = new ArrayList<>(2);
-			try (PreparedStatement database_list = c.prepareStatement("PRAGMA database_list");
-					 ResultSet rs = database_list.executeQuery()) {
-				// 1:seq|2:name|3:file
-				while (rs.next()) {
-					final String dbName = rs.getString(2);
-					if ("temp".equalsIgnoreCase(dbName)) {
-						cats.add(0, dbName); // "temp" first
-					} else {
-						cats.add(dbName);
-					}
-				}
-			} catch (StmtException e) { // query does not return ResultSet
-				assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
-			}
-			catalogs = cats.toArray(new String[cats.size()]);
-		} else if (catalog.isEmpty()) {
-			catalogs = new String[]{"temp", "main"}; // "temp" first
-		} else {
-			catalogs = new String[]{catalog};
-		}
-		return catalogs;
 	}
 
 	@Override
@@ -866,8 +811,7 @@ class DbMeta implements DatabaseMetaData {
 		checkOpen();
 		final StringBuilder sql = new StringBuilder();
 
-		final String[] catalogs = getCatalogs(catalog);
-		final List<String[]> tbls = getExactTableNames(catalogs, tableNamePattern);
+		final List<QualifiedName> tbls = schemaProvider.getExactTableNames(catalog, tableNamePattern);
 
 		sql.append("select ").
 				append("cat as TABLE_CAT, ").
@@ -897,10 +841,10 @@ class DbMeta implements DatabaseMetaData {
 				append("'' as IS_GENERATEDCOLUMN from (");
 
 		boolean colFound = false;
-		for (String[] tbl : tbls) {
+		for (QualifiedName tbl : tbls) {
 			// Pragma cannot be used as subquery...
 			try (PreparedStatement table_info = c.prepareStatement(
-					"PRAGMA " + doubleQuote(tbl[0]) + ".table_info(\"" + escapeIdentifier(tbl[1]) + "\")");
+					"PRAGMA " + doubleQuote(tbl.dbName) + ".table_info(\"" + escapeIdentifier(tbl.name) + "\")");
 					 ResultSet rs = table_info.executeQuery()) {
 				// 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
 				while (rs.next()) {
@@ -911,8 +855,8 @@ class DbMeta implements DatabaseMetaData {
 					final int colJavaType = getJavaType(colType);
 
 					sql.append("SELECT ").
-							append(quote(tbl[0])).append(" AS cat, ").
-							append(quote(tbl[1])).append(" AS tbl, ").
+							append(quote(tbl.dbName)).append(" AS cat, ").
+							append(quote(tbl.name)).append(" AS tbl, ").
 							append(rs.getInt(1) + 1).append(" AS ordpos, ").
 							append(rs.getBoolean(4) ? columnNoNulls : columnNullable).append(" AS colnullable, ").
 							append(colJavaType).append(" AS ct, ").
@@ -961,41 +905,6 @@ class DbMeta implements DatabaseMetaData {
 			}
 		}
 		return tbls;
-	}
-	private String getCatalog(String catalog, String table) throws SQLException {
-		if ("sqlite_temp_master".equals(table)) {
-			return "temp";
-		} else if ("sqlite_master".equals(table)) {
-			if (catalog == null || catalog.isEmpty()) {
-				return "main";
-			} else {
-				return catalog;
-			}
-		}
-		final String[] catalogs = getCatalogs(catalog);
-		if (catalogs.length == 1) {
-			return catalogs[0];
-		}
-		for (String cat : catalogs) {
-			final String sql;
-			if ("main".equalsIgnoreCase(cat)) {
-				sql = "SELECT name FROM sqlite_master WHERE type = 'table' AND name like ?"; // TODO Validate: no view
-			} else if ("temp".equalsIgnoreCase(cat)) {
-				sql = "SELECT name FROM sqlite_temp_master WHERE type = 'table' AND name like ?";
-			} else {
-				sql = "SELECT name FROM \"" + escapeIdentifier(cat) + "\".sqlite_master WHERE type = 'table' AND name like ?";
-			}
-			try (PreparedStatement ps = c.prepareStatement(sql)) {
-				// determine exact table name
-				ps.setString(1, table);
-				try (ResultSet rs = ps.executeQuery()) {
-					if (rs.next()) {
-						return cat;
-					}
-				}
-			}
-		}
-		return "temp"; // to avoid invalid qualified table name "".tbl
 	}
 
 	private static String getSQLiteType(String colType) {
@@ -1061,7 +970,7 @@ class DbMeta implements DatabaseMetaData {
 		checkOpen();
 		final StringBuilder sql = new StringBuilder();
 
-		catalog = getCatalog(catalog, table);
+		catalog = schemaProvider.getDbName(catalog, table);
 		sql.append("select ").
 				append(scope).append(" as SCOPE, ").
 				append("cn as COLUMN_NAME, ").
@@ -1140,7 +1049,7 @@ class DbMeta implements DatabaseMetaData {
 		checkOpen();
 		final StringBuilder sql = new StringBuilder();
 
-		catalog = getCatalog(catalog, table);
+		catalog = schemaProvider.getDbName(catalog, table);
 		sql.append("select ").
 				append(quote(catalog)).append(" as TABLE_CAT, ").
 				append("null as TABLE_SCHEM, ").
@@ -1208,7 +1117,7 @@ class DbMeta implements DatabaseMetaData {
 		checkOpen();
 		final StringBuilder sql = new StringBuilder();
 
-		catalog = getCatalog(catalog, table);
+		catalog = schemaProvider.getDbName(catalog, table);
 		sql.append("select ").
 				append(quote(catalog)).append(" as PKTABLE_CAT, ").
 				append("null as PKTABLE_SCHEM, ").
@@ -1331,7 +1240,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException {
 		checkOpen();
-		catalog = getCatalog(catalog, table);
+		catalog = schemaProvider.getDbName(catalog, table);
 		final StringBuilder sql = new StringBuilder();
 		sql.append("select ").
 				append(quote(catalog)).append(" as TABLE_CAT, ").
