@@ -147,9 +147,9 @@ public class DBMetaDataTest {
 		assertTrue(rs.next());
 		assertEquals("test", rs.getString("TABLE_NAME"));
 		assertEquals("id", rs.getString("COLUMN_NAME"));
-		assertEquals("YES", rs.getString("IS_NULLABLE"));
+		assertEquals("NO", rs.getString("IS_NULLABLE"));
 		assertEquals(null, rs.getString("COLUMN_DEF"));
-		assertEquals(Types.INTEGER, rs.getInt("DATA_TYPE"));
+		assertEquals(Types.ROWID, rs.getInt("DATA_TYPE"));
 		assertFalse(rs.next());
 		rs.close();
 
