@@ -239,12 +239,47 @@ public final class Conn implements AutoCloseable {
 		final Pointer pSql = nativeString(sql);
 		final PointerByReference ppStmt = new PointerByReference();
 		final PointerByReference ppTail = new PointerByReference();
-		final int res = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail);
+		final int res = blockingPrepare(null, pSql, ppStmt, ppTail);
 		check(res, "error while preparing statement '%s'", sql);
 		final Pointer pStmt = ppStmt.getValue();
 		final SQLite3Stmt stmt = pStmt == null ? null: new SQLite3Stmt(pStmt);
 		return new Stmt(this, sql, stmt, ppTail.getValue(), cacheable);
 	}
+
+	// http://sqlite.org/unlock_notify.html
+	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
+	private int blockingPrepare(Conn _, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
+		int rc;
+		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail))) {
+			rc = waitForUnlockNotify(null);
+			if (rc != SQLITE_OK) {
+				break;
+			}
+		}
+		return rc;
+	}
+	//#else
+	private int blockingPrepare(Object _, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
+		return sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail); // FIXME nbytes + 1
+	}
+	//#endif
+
+	// http://sqlite.org/unlock_notify.html
+	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
+	int waitForUnlockNotify(Conn _) throws ConnException {
+		UnlockNotification notif = new UnlockNotification();
+		int rc = sqlite3_unlock_notify(pDb, new UnlockNotificationCallback(), null/*FIXME notif*/);
+		assert rc == ErrCodes.SQLITE_LOCKED || rc == ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE || rc == SQLITE_OK;
+		if (rc == SQLITE_OK) {
+			notif.await(this);
+		}
+		return rc;
+	}
+	//#else
+	int waitForUnlockNotify(Object _) throws ConnException {
+		return ErrCodes.SQLITE_LOCKED;
+	}
+	//#endif
 
 	/**
 	 * @return Run-time library version number

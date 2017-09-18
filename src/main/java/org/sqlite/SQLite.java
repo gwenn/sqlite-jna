@@ -198,6 +198,10 @@ public final class SQLite implements Library {
 	static native Pointer sqlite3_update_hook(SQLite3 pDb, UpdateHook xUpdate, Pointer pArg);
 	static native int sqlite3_set_authorizer(SQLite3 pDb, Authorizer authorizer, Pointer pUserData);
 
+	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
+	static native int sqlite3_unlock_notify(SQLite3 pBlocked, UnlockNotifyCallback xNotify, Pointer pNotifyArg);
+	//#endif
+
 	/*
 	void (*)(sqlite3_context*,int,sqlite3_value**),
 	void (*)(sqlite3_context*,int,sqlite3_value**),
