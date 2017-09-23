@@ -15,7 +15,6 @@ import com.sun.jna.ptr.PointerByReference;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 import static org.sqlite.SQLite.*;
@@ -267,8 +266,8 @@ public final class Conn implements AutoCloseable {
 	// http://sqlite.org/unlock_notify.html
 	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
 	int waitForUnlockNotify(Conn _) throws ConnException {
-		UnlockNotification notif = new UnlockNotification();
-		int rc = sqlite3_unlock_notify(pDb, new UnlockNotificationCallback(), null/*FIXME notif*/);
+		UnlockNotification notif = UnlockNotificationCallback.INSTANCE.add(pDb);
+		int rc = sqlite3_unlock_notify(pDb, UnlockNotificationCallback.INSTANCE, pDb.getPointer());
 		assert rc == ErrCodes.SQLITE_LOCKED || rc == ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE || rc == SQLITE_OK;
 		if (rc == SQLITE_OK) {
 			notif.await(this);
