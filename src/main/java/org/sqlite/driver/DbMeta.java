@@ -809,9 +809,74 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
 		checkOpen();
-		Select tableInfo = EnhancedPragma.tableInfo(catalog, tableNamePattern, columnNamePattern, schemaProvider);
+		final StringBuilder sql = new StringBuilder();
 
-		final PreparedStatement columns = c.prepareStatement(tableInfo.toSql());
+		final List<QualifiedName> tbls = schemaProvider.getExactTableNames(catalog, tableNamePattern);
+
+		sql.append("select ").
+				append("cat as TABLE_CAT, ").
+				append("null as TABLE_SCHEM, ").
+				append("tbl as TABLE_NAME, ").
+				append("cn as COLUMN_NAME, ").
+				append("ct as DATA_TYPE, ").
+				append("tn as TYPE_NAME, ").
+				append("10 as COLUMN_SIZE, "). // FIXME precision or display size
+				append("null as BUFFER_LENGTH, "). // not used
+				append("10 as DECIMAL_DIGITS, "). // FIXME scale or null
+				append("10 as NUM_PREC_RADIX, ").
+				append("colnullable as NULLABLE, ").
+				append("null as REMARKS, ").
+				append("cdflt as COLUMN_DEF, ").
+				append("null as SQL_DATA_TYPE, "). // unused
+				append("null as SQL_DATETIME_SUB, "). // unused
+				append("10 as CHAR_OCTET_LENGTH, "). // FIXME same as COLUMN_SIZE
+				append("ordpos as ORDINAL_POSITION, ").
+				append("(case colnullable when 0 then 'NO' when 1 then 'YES' else '' end)").
+				append(" as IS_NULLABLE, ").
+				append("null as SCOPE_CATLOG, ").
+				append("null as SCOPE_SCHEMA, ").
+				append("null as SCOPE_TABLE, ").
+				append("null as SOURCE_DATA_TYPE, ").
+				append("'' as IS_AUTOINCREMENT, "). // TODO http://sqlite.org/autoinc.html
+				append("'' as IS_GENERATEDCOLUMN from (");
+
+		boolean colFound = false;
+		for (QualifiedName tbl : tbls) {
+			// Pragma cannot be used as subquery...
+			try (PreparedStatement table_info = c.prepareStatement(
+					"PRAGMA " + doubleQuote(tbl.dbName) + ".table_info(\"" + escapeIdentifier(tbl.name) + "\")");
+					 ResultSet rs = table_info.executeQuery()) {
+				// 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
+				while (rs.next()) {
+					if (colFound) sql.append(" UNION ALL ");
+					colFound = true;
+
+					final String colType = getSQLiteType(rs.getString(3));
+					final int colJavaType = getJavaType(colType);
+
+					sql.append("SELECT ").
+							append(quote(tbl.dbName)).append(" AS cat, ").
+							append(quote(tbl.name)).append(" AS tbl, ").
+							append(rs.getInt(1) + 1).append(" AS ordpos, ").
+							append(rs.getBoolean(4) ? columnNoNulls : columnNullable).append(" AS colnullable, ").
+							append(colJavaType).append(" AS ct, ").
+							append(quote(rs.getString(2))).append(" AS cn, ").
+							append(quote(colType)).append(" AS tn, ").
+							append(quote(rs.getString(5))).append(" AS cdflt");
+
+					if (columnNamePattern != null && !"%".equals(columnNamePattern)) {
+						sql.append(" WHERE cn LIKE ").append(quote(columnNamePattern));
+					}
+				}
+			} catch (StmtException e) { // query does not return ResultSet
+				assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
+			}
+		}
+
+		sql.append(colFound ? ") order by TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION" :
+				"SELECT NULL AS cat, NULL AS tbl, NULL AS ordpos, NULL AS colnullable, NULL AS ct, "
+						+ "NULL AS cn, NULL AS tn, NULL AS cdflt) limit 0");
+		final PreparedStatement columns = c.prepareStatement(sql.toString());
 		columns.closeOnCompletion();
 		return columns.executeQuery();
 	}
