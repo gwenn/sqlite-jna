@@ -811,7 +811,7 @@ class DbMeta implements DatabaseMetaData {
 		checkOpen();
 		final StringBuilder sql = new StringBuilder();
 
-		final List<QualifiedName> tbls = schemaProvider.getExactTableNames(catalog, tableNamePattern);
+		final List<QualifiedName> tbls = schemaProvider.findTables(catalog, tableNamePattern);
 
 		sql.append("select ").
 				append("cat as TABLE_CAT, ").
