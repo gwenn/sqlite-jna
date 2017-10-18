@@ -1047,58 +1047,8 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
 		checkOpen();
-		final StringBuilder sql = new StringBuilder();
-
-		catalog = schemaProvider.getDbName(catalog, table);
-		sql.append("select ").
-				append(quote(catalog)).append(" as TABLE_CAT, ").
-				append("null as TABLE_SCHEM, ").
-				append(quote(table)).append(" as TABLE_NAME, ").
-				append("cn as COLUMN_NAME, ").
-				append("seqno as KEY_SEQ, ").
-				append("pk as PK_NAME from (");
-
-		// Pragma cannot be used as subquery...
-		String[] colNames = new String[5];
-		int nColNames = 0;
-
-		try (PreparedStatement table_info = c.prepareStatement(
-				"PRAGMA " + doubleQuote(catalog) + ".table_info(\"" + escapeIdentifier(table) + "\")");
-				 ResultSet rs = table_info.executeQuery()) {
-			// 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
-			while (rs.next()) {
-				final int seqno = rs.getInt(6) - 1;
-				if (seqno >= 0) {
-					if (seqno >= colNames.length) {
-						colNames = Arrays.copyOf(colNames, colNames.length * 2);
-					}
-					colNames[seqno] = rs.getString(2);
-					nColNames++;
-				}
-			}
-		} catch (StmtException e) { // query does not return ResultSet
-			assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
-		}
-
-		if (nColNames == 0) {
-			sql.append("SELECT NULL as pk, NULL AS cn, NULL AS seqno) limit 0");
-		} else {
-			final String pkName; // FIXME may be null
-			if (nColNames == 1) {
-				pkName = colNames[0];
-			} else {
-				pkName = "PK";
-			}
-			for (int i = 0; i < nColNames; i++) {
-				if (i > 0) sql.append(" UNION ALL ");
-				sql.append("SELECT ").
-						append(quote(pkName)).append(" AS pk, ").
-						append(quote(colNames[i])).append(" AS cn, ").
-						append(i + 1).append(" AS seqno");
-			}
-			sql.append(") order by COLUMN_NAME");
-		}
-		final PreparedStatement columns = c.prepareStatement(sql.toString());
+		Select select = EnhancedPragma.getPrimaryKeys(catalog, table, schemaProvider);
+		final PreparedStatement columns = c.prepareStatement(select.toSql());
 		columns.closeOnCompletion();
 		return columns.executeQuery();
 	}

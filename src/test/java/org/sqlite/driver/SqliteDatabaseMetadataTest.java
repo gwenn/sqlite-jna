@@ -351,7 +351,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 			"|TABLE_CAT|TABLE_SCHEM|TABLE_NAME|COLUMN_NAME|KEY_SEQ|PK_NAME|";
 
 	private static final String[] PK_DUMP = {
-			"|main|null|test_table|id|1|id|",
+			"|main|null|test_table|id|1|null|",
 	};
 
 	@Test

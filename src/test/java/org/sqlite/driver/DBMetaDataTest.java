@@ -576,9 +576,6 @@ public class DBMetaDataTest {
 
 	@Test
 	public void columnOrderOfgetPrimaryKeys() throws SQLException {
-		if (org.sqlite.Conn.libversionNumber() < 3007016) {
-			return;
-		}
 		ResultSet rs;
 		ResultSetMetaData rsmeta;
 
@@ -604,14 +601,14 @@ public class DBMetaDataTest {
 
 		rs = meta.getPrimaryKeys(null, null, "pk1");
 		assertTrue(rs.next());
-		assertEquals("col1", rs.getString("PK_NAME"));
+		assertNull(rs.getString("PK_NAME"));
 		assertEquals("col1", rs.getString("COLUMN_NAME"));
 		assertFalse(rs.next());
 		rs.close();
 
 		rs = meta.getPrimaryKeys(null, null, "pk2");
 		assertTrue(rs.next());
-		assertEquals("col2", rs.getString("PK_NAME"));
+		assertNull(rs.getString("PK_NAME"));
 		assertEquals("col2", rs.getString("COLUMN_NAME"));
 		assertFalse(rs.next());
 		rs.close();
@@ -619,11 +616,11 @@ public class DBMetaDataTest {
 		rs = meta.getPrimaryKeys(null, null, "pk3");
 		assertTrue(rs.next());
 		assertEquals("col2", rs.getString("COLUMN_NAME"));
-		assertEquals("PK", rs.getString("PK_NAME"));
+		assertNull(rs.getString("PK_NAME"));
 		assertEquals(2, rs.getInt("KEY_SEQ"));
 		assertTrue(rs.next());
 		assertEquals("col3", rs.getString("COLUMN_NAME"));
-		assertEquals("PK", rs.getString("PK_NAME"));
+		assertNull(rs.getString("PK_NAME"));
 		assertEquals(1, rs.getInt("KEY_SEQ"));
 		assertFalse(rs.next());
 		rs.close();
@@ -631,11 +628,11 @@ public class DBMetaDataTest {
 		rs = meta.getPrimaryKeys(null, null, "pk4");
 		assertTrue(rs.next());
 		assertEquals("col2", rs.getString("COLUMN_NAME"));
-		assertEquals("PK", rs.getString("PK_NAME"));
+		assertEquals("named", rs.getString("PK_NAME"));
 		assertEquals(2, rs.getInt("KEY_SEQ"));
 		assertTrue(rs.next());
 		assertEquals("col3", rs.getString("COLUMN_NAME"));
-		assertEquals("PK", rs.getString("PK_NAME"));
+		assertEquals("named", rs.getString("PK_NAME"));
 		assertEquals(1, rs.getInt("KEY_SEQ"));
 		assertFalse(rs.next());
 		rs.close();
@@ -850,8 +847,7 @@ public class DBMetaDataTest {
 
 	@Test
 	public void primaryKeys() throws SQLException {
-		ResultSet rs = meta.getPrimaryKeys(null, null, null);
-		assertFalse(rs.next());
+		ResultSet rs = meta.getPrimaryKeys(null, null, "test");
 		ResultSetMetaData rsmeta = rs.getMetaData();
 		assertEquals(6, rsmeta.getColumnCount());
 		assertEquals("TABLE_CAT", rsmeta.getColumnName(1));
@@ -860,14 +856,12 @@ public class DBMetaDataTest {
 		assertEquals("COLUMN_NAME", rsmeta.getColumnName(4));
 		assertEquals("KEY_SEQ", rsmeta.getColumnName(5));
 		assertEquals("PK_NAME", rsmeta.getColumnName(6));
-		rs.close();
 
-		rs = meta.getPrimaryKeys(null, null, "test");
 		assertTrue(rs.next());
 		assertEquals("test", rs.getString(3));
 		assertEquals("id", rs.getString(4));
 		assertEquals(1, rs.getInt(5));
-		assertEquals("id", rs.getString(6));
+		assertNull(rs.getString(6));
 		rs.close();
 	}
 
