@@ -11,6 +11,9 @@ package org.sqlite;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
+import org.sqlite.parser.ast.LiteralExpr;
+import org.sqlite.parser.ast.Pragma;
+import org.sqlite.parser.ast.QualifiedName;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -722,7 +725,8 @@ public final class Conn implements AutoCloseable {
 	 * @see <a href="http://sqlite.org/pragma.html#pragma_encoding">pragma encoding</a>
 	 */
 	public String encoding(String dbName) throws SQLiteException {
-		try (Stmt s = prepare("PRAGMA " + qualify(dbName) + "encoding", false)) {
+		Pragma pragma = new Pragma(new QualifiedName(dbName, "encoding"), null);
+		try (Stmt s = prepare(pragma.toSql(), false)) {
 			if (!s.step(0)) {
 				throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
 			}
@@ -753,7 +757,8 @@ public final class Conn implements AutoCloseable {
 	}
 
 	boolean pragma(String dbName, String name) throws SQLiteException {
-		try (Stmt s = prepare("PRAGMA " + qualify(dbName) + name, false)) {
+		Pragma pragma = new Pragma(new QualifiedName(dbName, name), null);
+		try (Stmt s = prepare(pragma.toSql(), false)) {
 			if (!s.step(0)) {
 				throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
 			}
@@ -761,7 +766,8 @@ public final class Conn implements AutoCloseable {
 		}
 	}
 	void pragma(String dbName, String name, boolean value) throws ConnException {
-		fastExec("PRAGMA " + qualify(dbName) + name + '=' + (value ? 1 : 0));
+		Pragma pragma = new Pragma(new QualifiedName(dbName, name), LiteralExpr.integer(value ? 1 : 0));
+		fastExec(pragma.toSql());
 	}
 
 	// To be called in Conn.prepare

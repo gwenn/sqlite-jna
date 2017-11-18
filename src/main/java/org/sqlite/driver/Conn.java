@@ -10,6 +10,8 @@ package org.sqlite.driver;
 
 import org.sqlite.ConnException;
 import org.sqlite.ErrCodes;
+import org.sqlite.parser.ast.Release;
+import org.sqlite.parser.ast.Rollback;
 
 import java.nio.charset.Charset;
 import java.sql.Array;
@@ -316,18 +318,21 @@ class Conn implements Connection {
 				return name;
 			}
 		};
-		getConn().fastExec("SAVEPOINT \"" + escapeIdentifier(name) + '"');
+		org.sqlite.parser.ast.Savepoint sp = new org.sqlite.parser.ast.Savepoint(name);
+		getConn().fastExec(sp.toSql());
 		return savepoint;
 	}
 
 	@Override
 	public void rollback(Savepoint savepoint) throws SQLException {
-		getConn().fastExec("ROLLBACK TO SAVEPOINT \"" + escapeIdentifier(savepoint.toString()) + '"');
+		Rollback rollback = new Rollback(null, savepoint.toString());
+		getConn().fastExec(rollback.toSql());
 	}
 
 	@Override
 	public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-		getConn().fastExec("RELEASE SAVEPOINT \"" + escapeIdentifier(savepoint.toString()) + '"');
+		Release release = new Release(savepoint.toString());
+		getConn().fastExec(release.toSql());
 	}
 
 	@Override

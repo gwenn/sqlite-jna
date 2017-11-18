@@ -285,25 +285,6 @@ public final class SQLite implements Library {
 		return identifier;
 	}
 
-	public static String doubleQuote(String dbName) {
-		if (dbName == null) {
-			return "";
-		}
-		if ("main".equals(dbName) || "temp".equals(dbName)) {
-			return dbName;
-		}
-		return '"' + escapeIdentifier(dbName) + '"'; // surround identifier with quote
-	}
-	public static String qualify(String dbName) {
-		if (dbName == null) {
-			return "";
-		}
-		if ("main".equals(dbName) || "temp".equals(dbName)) {
-			return dbName + '.';
-		}
-		return '"' + escapeIdentifier(dbName) + '"' + '.'; // surround identifier with quote
-	}
-
 	public interface LogCallback extends Callback {
 		@SuppressWarnings("unused")
 		default void callback(Pointer udp, int err, String msg) {

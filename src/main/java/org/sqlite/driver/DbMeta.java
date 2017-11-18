@@ -15,6 +15,8 @@ import org.sqlite.StmtException;
 import org.sqlite.parser.DefaultSchemaProvider;
 import org.sqlite.parser.EnhancedPragma;
 import org.sqlite.parser.SchemaProvider;
+import org.sqlite.parser.ast.IdExpr;
+import org.sqlite.parser.ast.Pragma;
 import org.sqlite.parser.ast.QualifiedName;
 import org.sqlite.parser.ast.Select;
 
@@ -26,14 +28,12 @@ import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import static org.sqlite.SQLite.doubleQuote;
 import static org.sqlite.SQLite.escapeIdentifier;
 
 class DbMeta implements DatabaseMetaData {
@@ -842,9 +842,9 @@ class DbMeta implements DatabaseMetaData {
 
 		boolean colFound = false;
 		for (QualifiedName tbl : tbls) {
+			Pragma pragma = new Pragma(new QualifiedName(tbl.dbName, "table_info"), new IdExpr(tbl.name));
 			// Pragma cannot be used as subquery...
-			try (PreparedStatement table_info = c.prepareStatement(
-					"PRAGMA " + doubleQuote(tbl.dbName) + ".table_info(\"" + escapeIdentifier(tbl.name) + "\")");
+			try (PreparedStatement table_info = c.prepareStatement(pragma.toSql());
 					 ResultSet rs = table_info.executeQuery()) {
 				// 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
 				while (rs.next()) {
@@ -985,8 +985,8 @@ class DbMeta implements DatabaseMetaData {
 		int count = -1;
 		String colName = null;
 		String colType = null;
-		try (PreparedStatement table_info = c.prepareStatement(
-				"PRAGMA " + doubleQuote(catalog) + ".table_info(\"" + escapeIdentifier(table) + "\")");
+		Pragma pragma = new Pragma(new QualifiedName(catalog, "table_info"), new IdExpr(table));
+		try (PreparedStatement table_info = c.prepareStatement(pragma.toSql());
 				 ResultSet rs = table_info.executeQuery()
 		) {
 			// 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
@@ -1108,9 +1108,9 @@ class DbMeta implements DatabaseMetaData {
 		int count = 0;
 		if (!fkTables.isEmpty()) {
 			for (String fkTable : fkTables) {
+				Pragma pragma = new Pragma(new QualifiedName(catalog, "foreign_key_list"), new IdExpr(fkTable));
 				// Pragma cannot be used as subquery...
-				try (PreparedStatement foreign_key_list = c.prepareStatement(
-						"PRAGMA " + doubleQuote(catalog) + ".foreign_key_list(\"" + escapeIdentifier(fkTable) + "\");");
+				try (PreparedStatement foreign_key_list = c.prepareStatement(pragma.toSql());
 						 ResultSet rs = foreign_key_list.executeQuery()) {
 					// 1:id|2:seq|3:table|4:from|5:to|6:on_update|7:on_delete|8:match
 					while (rs.next()) {
@@ -1209,9 +1209,8 @@ class DbMeta implements DatabaseMetaData {
 				append("from (");
 
 		final Map<String, Boolean> indexes = new HashMap<>();
-
-		try (PreparedStatement index_list = c.prepareStatement(
-				"PRAGMA " + doubleQuote(catalog) + ".index_list(\"" + escapeIdentifier(table) + "\")");
+		Pragma pragma = new Pragma(new QualifiedName(catalog, "index_list"), new IdExpr(table));
+		try (PreparedStatement index_list = c.prepareStatement(pragma.toSql());
 				 ResultSet rs = index_list.executeQuery()) {
 			// 1:seq|2:name|3:unique
 			while (rs.next()) {
@@ -1230,8 +1229,8 @@ class DbMeta implements DatabaseMetaData {
 		} else {
 			boolean found = false;
 			for (final Entry<String, Boolean> index : indexes.entrySet()) {
-				try (PreparedStatement index_info = c.prepareStatement(
-						"PRAGMA index_info(\"" + escapeIdentifier(index.getKey()) + "\")");
+				Pragma _pragma = new Pragma(new QualifiedName(null, "index_info"), new IdExpr(index.getKey()));
+				try (PreparedStatement index_info = c.prepareStatement(_pragma.toSql());
 						 ResultSet rs = index_info.executeQuery()) {
 					// 1:seqno|2:cid|3:name
 					while (rs.next()) {

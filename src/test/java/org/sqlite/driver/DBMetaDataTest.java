@@ -519,7 +519,7 @@ public class DBMetaDataTest {
 
 	@Test
 	public void columnOrderOfgetBestRowIdentifier() throws SQLException {
-		ResultSet rs = meta.getBestRowIdentifier(null, null, null, 0, false);
+		ResultSet rs = meta.getBestRowIdentifier(null, null, "", 0, false);
 		assertFalse(rs.next());
 		ResultSetMetaData rsmeta = rs.getMetaData();
 		assertEquals(8, rsmeta.getColumnCount());
@@ -821,7 +821,7 @@ public class DBMetaDataTest {
 
 	@Test
 	public void indexInfo() throws SQLException {
-		ResultSet rs = meta.getIndexInfo(null, null, null, false, false);
+		ResultSet rs = meta.getIndexInfo(null, null, "", false, false);
 		assertFalse(rs.next());
 		ResultSetMetaData rsmeta = rs.getMetaData();
 		assertEquals(13, rsmeta.getColumnCount());

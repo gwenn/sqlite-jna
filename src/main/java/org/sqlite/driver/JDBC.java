@@ -12,6 +12,9 @@ import org.sqlite.ConnException;
 import org.sqlite.ErrCodes;
 import org.sqlite.OpenFlags;
 import org.sqlite.SQLite;
+import org.sqlite.parser.ast.LiteralExpr;
+import org.sqlite.parser.ast.Pragma;
+import org.sqlite.parser.ast.QualifiedName;
 
 import java.sql.Connection;
 import java.sql.Driver;
@@ -131,7 +134,8 @@ public class JDBC implements Driver {
 		}
 		final String encoding = info.getProperty(ENCODING.name);
 		if (encoding != null && !encoding.isEmpty()) {
-			conn.fastExec("PRAGMA encoding=" + SQLite.doubleQuote(encoding));
+			Pragma pragma = new Pragma(new QualifiedName(null, "encoding"), LiteralExpr.string(encoding));
+			conn.fastExec(pragma.toSql());
 		}
 		final String fks = info.getProperty(FOREIGN_KEYS.name);
 		SQLWarning warnings = null;
