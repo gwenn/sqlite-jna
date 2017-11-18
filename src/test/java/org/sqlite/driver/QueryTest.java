@@ -31,6 +31,7 @@ package org.sqlite.driver;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.sqlite.ConnException;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -60,7 +61,7 @@ public class QueryTest {
 	public void nullQuery() throws Exception {
 		try (Statement stmt = conn.createStatement()) {
 			stmt.execute(null);
-		} catch (NullPointerException e) {
+		} catch (ConnException e) {
 		}
 	}
 

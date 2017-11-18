@@ -243,6 +243,9 @@ public final class SQLite implements Library {
 	public static final Charset UTF_8 = Charset.forName("UTF-8");
 	public static final String UTF_8_ECONDING = UTF_8.name();
 	static Pointer nativeString(String sql) {
+		if (sql == null) {
+			return Pointer.NULL;
+		}
 		final byte[] data = sql.getBytes(UTF_8);
 		final Pointer pointer = new Memory(data.length + 1);
 		pointer.write(0L, data, 0, data.length);
