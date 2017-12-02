@@ -285,6 +285,7 @@ public final class SQLite implements Library {
 		return identifier;
 	}
 
+	@FunctionalInterface
 	public interface LogCallback extends Callback {
 		@SuppressWarnings("unused")
 		default void callback(Pointer udp, int err, String msg) {
@@ -293,12 +294,7 @@ public final class SQLite implements Library {
 		void log(int err, String msg);
 	}
 
-	private static final LogCallback LOG_CALLBACK = new LogCallback() {
-		@Override
-		public void log(int err, String msg) {
-			System.out.printf("%d: %s%n", err, msg);
-		}
-	};
+	private static final LogCallback LOG_CALLBACK = (err, msg) -> System.out.printf("%d: %s%n", err, msg);
 
 	static {
 		if (!System.getProperty("sqlite.config.log", "").isEmpty()) {
@@ -314,6 +310,7 @@ public final class SQLite implements Library {
 	 * Query Progress Callback.
 	 * @see <a href="http://sqlite.org/c3ref/progress_handler.html">sqlite3_progress_handler</a>
 	 */
+	@FunctionalInterface
 	public interface ProgressCallback extends Callback {
 		/**
 		 * @param arg

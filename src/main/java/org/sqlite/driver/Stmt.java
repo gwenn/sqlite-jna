@@ -216,7 +216,7 @@ class Stmt implements Statement {
 	}
 
 	@Override
-	public void clearWarnings() throws SQLException {
+	public void clearWarnings() {
 		//checkOpen();
 	}
 
@@ -463,7 +463,7 @@ class Stmt implements Statement {
 	}
 
 	@Override
-	public boolean isClosed() throws SQLException {
+	public boolean isClosed() {
 		return c == null;
 	}
 
@@ -506,7 +506,7 @@ class Stmt implements Statement {
 	}
 
 	@Override
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) {
 		return iface.isAssignableFrom(getClass());
 	}
 }

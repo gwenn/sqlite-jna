@@ -35,8 +35,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import static org.sqlite.SQLite.escapeIdentifier;
-
 class Conn implements Connection {
 	private org.sqlite.Conn c;
 	final String[] dateTimeConfig;
@@ -96,7 +94,7 @@ class Conn implements Connection {
 	}
 
 	@Override
-	public String nativeSQL(String sql) throws SQLException {
+	public String nativeSQL(String sql) {
 		Util.trace("Connection.nativeSQL");
 		return sql;
 	}
@@ -139,7 +137,7 @@ class Conn implements Connection {
 	}
 
 	@Override
-	public boolean isClosed() throws SQLException {
+	public boolean isClosed() {
 		return c == null;
 	}
 
@@ -410,7 +408,7 @@ class Conn implements Connection {
 	}
 
 	@Override
-	public void setClientInfo(String name, String value) throws SQLClientInfoException {
+	public void setClientInfo(String name, String value) {
 		Util.trace("Connection.setClientInfo(String,String)");
 		//checkOpen();
 		if (clientInfo == null) return;
@@ -418,7 +416,7 @@ class Conn implements Connection {
 	}
 
 	@Override
-	public void setClientInfo(Properties properties) throws SQLClientInfoException {
+	public void setClientInfo(Properties properties) {
 		Util.trace("Connection.setClientInfo(Properties)");
 		//checkOpen();
 		clientInfo = new Properties(properties);
@@ -492,7 +490,7 @@ class Conn implements Connection {
 	}
 
 	@Override
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) {
 		return iface.isAssignableFrom(getClass());
 	}
 

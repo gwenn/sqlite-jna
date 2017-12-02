@@ -15,6 +15,7 @@ import com.sun.jna.Pointer;
  * Tracing callback.
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
  */
+@FunctionalInterface
 public interface TraceCallback extends Callback {
 	/**
 	 * @param sql SQL statement text.

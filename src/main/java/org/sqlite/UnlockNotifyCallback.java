@@ -3,6 +3,7 @@ package org.sqlite;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
 
+@FunctionalInterface
 public interface UnlockNotifyCallback extends Callback {
 	default void callback(Pointer args, int nArg) {
 		if (nArg == 0) {

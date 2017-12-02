@@ -15,6 +15,7 @@ import com.sun.jna.Pointer;
  * Profiling callback.
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
  */
+@FunctionalInterface
 public interface ProfileCallback extends Callback {
 	/**
 	 * @param sql SQL statement text.

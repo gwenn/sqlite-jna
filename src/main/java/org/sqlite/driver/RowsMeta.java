@@ -28,7 +28,7 @@ class RowsMeta implements ResultSetMetaData {
 	}
 
 	@Override
-	public int getColumnCount() throws SQLException { // Used by Hibernate
+	public int getColumnCount() { // Used by Hibernate
 		return stmt.getColumnCount();
 	}
 
@@ -102,7 +102,7 @@ class RowsMeta implements ResultSetMetaData {
 	}
 
 	@Override
-	public String getSchemaName(int column) throws SQLException {
+	public String getSchemaName(int column) {
 		return "";
 	}
 
@@ -164,7 +164,7 @@ class RowsMeta implements ResultSetMetaData {
 	}
 
 	@Override
-	public boolean isDefinitelyWritable(int column) throws SQLException {
+	public boolean isDefinitelyWritable(int column) {
 		return true;
 	}
 
@@ -194,7 +194,7 @@ class RowsMeta implements ResultSetMetaData {
 	}
 
 	@Override
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) {
 		return iface.isAssignableFrom(getClass());
 	}
 

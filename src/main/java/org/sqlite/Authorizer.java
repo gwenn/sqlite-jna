@@ -9,6 +9,7 @@ import com.sun.jna.Pointer;
  * @see Conn#setAuhtorizer(Authorizer)
  * @see <a href="http://sqlite.org/c3ref/set_authorizer.html">sqlite3_set_authorizer</a>
  */
+@FunctionalInterface
 public interface Authorizer extends Callback {
 	/**
 	 * @param pArg       User data (<code>null</code>)

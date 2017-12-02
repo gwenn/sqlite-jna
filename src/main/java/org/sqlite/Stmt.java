@@ -132,7 +132,7 @@ public class Stmt implements AutoCloseable, Row {
 	 */
 	public <T> Iterator<T> queryMap(RowMapper<T> mapper, Object... params) throws SQLiteException {
 		bind(params);
-		return new Iterator<T>() {
+		return new Iterator<>() {
 			private State state = State.NOT_READY;
 			@Override
 			public boolean hasNext() {
@@ -236,7 +236,7 @@ public class Stmt implements AutoCloseable, Row {
 
 	// http://sqlite.org/unlock_notify.html
 	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
-	private int blockingStep(Conn _) throws SQLiteException {
+	private int blockingStep(Conn unused) throws SQLiteException {
 		int rc;
 		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_step(pStmt)) || ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE == rc) { // ok if pStmt is null => SQLITE_MISUSE
 			if (ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE != rc && ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE != c.getExtendedErrcode()) {
@@ -251,7 +251,7 @@ public class Stmt implements AutoCloseable, Row {
 		return rc;
 	}
 	//#else
-	private int blockingStep(Object _) throws SQLiteException {
+	private int blockingStep(Object unused) throws SQLiteException {
 		return sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
 	}
 	//#endif

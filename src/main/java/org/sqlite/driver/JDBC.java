@@ -82,12 +82,12 @@ public class JDBC implements Driver {
 	}
 
 	@Override
-	public boolean acceptsURL(String url) throws SQLException {
+	public boolean acceptsURL(String url) {
 		return url.startsWith(PREFIX);
 	}
 
 	@Override
-	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
+	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) {
 		// TODO parse url
 		final DriverPropertyInfo vfs = new DriverPropertyInfo(VFS, info == null ? null : info.getProperty(VFS));
 		vfs.description = "Specify the name of a VFS object that provides the operating system interface that should be used to access the database file on disk.";

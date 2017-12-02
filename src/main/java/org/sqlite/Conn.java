@@ -36,7 +36,7 @@ public final class Conn implements AutoCloseable {
 	private final boolean sharedCacheMode;
 	private TimeoutProgressCallback timeoutProgressCallback;
 
-	private final Map<String, Stmt> cache = new LinkedHashMap<String, Stmt>() {
+	private final Map<String, Stmt> cache = new LinkedHashMap<>() {
 		@Override
 		protected boolean removeEldestEntry(Map.Entry eldest) {
 			if (size() <= maxCacheSize) {
@@ -261,14 +261,14 @@ public final class Conn implements AutoCloseable {
 		return rc;
 	}
 	//#else
-	private int blockingPrepare(Object _, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
+	private int blockingPrepare(Object unused, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
 		return sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail); // FIXME nbytes + 1
 	}
 	//#endif
 
 	// http://sqlite.org/unlock_notify.html
 	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
-	int waitForUnlockNotify(Conn _) throws ConnException {
+	int waitForUnlockNotify(Conn unused) throws ConnException {
 		UnlockNotification notif = UnlockNotificationCallback.INSTANCE.add(pDb);
 		int rc = sqlite3_unlock_notify(pDb, UnlockNotificationCallback.INSTANCE, pDb.getPointer());
 		assert rc == ErrCodes.SQLITE_LOCKED || rc == ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE || rc == SQLITE_OK;
@@ -278,7 +278,7 @@ public final class Conn implements AutoCloseable {
 		return rc;
 	}
 	//#else
-	int waitForUnlockNotify(Object _) throws ConnException {
+	int waitForUnlockNotify(Object unused) throws ConnException {
 		return ErrCodes.SQLITE_LOCKED;
 	}
 	//#endif
