@@ -34,7 +34,8 @@ LINKS
 * https://github.com/lyubo/jdbc-lite (JNA)
 * https://code.google.com/p/nativelibs4java/issues/detail?id=47 (Bridj)
 * https://github.com/tstack/SqliteJdbcNG (Bridj)
-* https://github.com/jnr/jnr-ffi
+* https://github.com/twall/jna
+* https://github.com/bytedeco/javacpp
 
 LICENSE
 -------
