@@ -36,7 +36,7 @@ public final class Conn implements AutoCloseable {
 	private final boolean sharedCacheMode;
 	private TimeoutProgressCallback timeoutProgressCallback;
 
-	private final Map<String, Stmt> cache = new LinkedHashMap<>() {
+	private final Map<String, Stmt> cache = new LinkedHashMap<String, Stmt>() {
 		@Override
 		protected boolean removeEldestEntry(Map.Entry eldest) {
 			if (size() <= maxCacheSize) {
@@ -250,7 +250,7 @@ public final class Conn implements AutoCloseable {
 
 	// http://sqlite.org/unlock_notify.html
 	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
-	private int blockingPrepare(Conn _, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
+	private int blockingPrepare(Conn unused, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
 		int rc;
 		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail))) {
 			rc = waitForUnlockNotify(null);

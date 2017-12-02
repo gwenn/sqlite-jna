@@ -132,7 +132,7 @@ public class Stmt implements AutoCloseable, Row {
 	 */
 	public <T> Iterator<T> queryMap(RowMapper<T> mapper, Object... params) throws SQLiteException {
 		bind(params);
-		return new Iterator<>() {
+		return new Iterator<T>() {
 			private State state = State.NOT_READY;
 			@Override
 			public boolean hasNext() {
