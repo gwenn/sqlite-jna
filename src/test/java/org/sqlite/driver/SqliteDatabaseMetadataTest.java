@@ -327,7 +327,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 			"|main|null|sqlite_master|type|12|TEXT|10|null|10|10|1|null|null|null|null|10|1|YES|null|null|null|null|||",
 			"|main|null|sqlite_master|name|12|TEXT|10|null|10|10|1|null|null|null|null|10|2|YES|null|null|null|null|||",
 			"|main|null|sqlite_master|tbl_name|12|TEXT|10|null|10|10|1|null|null|null|null|10|3|YES|null|null|null|null|||",
-			"|main|null|sqlite_master|rootpage|4|INTEGER|10|null|10|10|1|null|null|null|null|10|4|YES|null|null|null|null|||",
+			"|main|null|sqlite_master|rootpage|4|INT|10|null|10|10|1|null|null|null|null|10|4|YES|null|null|null|null|||",
 			"|main|null|sqlite_master|sql|12|TEXT|10|null|10|10|1|null|null|null|null|10|5|YES|null|null|null|null|||",
 			"|main|null|test_table|id|4|INTEGER|10|null|10|10|1|null|null|null|null|10|1|YES|null|null|null|null|||",
 			"|main|null|test_table|name|12|VARCHAR|10|null|10|10|0|null|null|null|null|10|2|NO|null|null|null|null|||",
