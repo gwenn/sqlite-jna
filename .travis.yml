@@ -4,7 +4,7 @@ jdk:
 
 before_script:
   - echo $PWD
-  - export SQLITEVERSION=3021000
+  - export SQLITEVERSION=3210000
   - curl -O http://sqlite.org/2017/sqlite-autoconf-$SQLITEVERSION.tar.gz
   - tar xzvf sqlite-autoconf-$SQLITEVERSION.tar.gz
   - cd sqlite-autoconf-$SQLITEVERSION
