@@ -53,7 +53,7 @@ public class SQLXMLImpl implements SQLXML {
 	}
 
 	@Override
-	public void free() throws SQLException {
+	public void free() {
 		freed = true;
 		src = null;
 	}

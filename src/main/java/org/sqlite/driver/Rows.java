@@ -342,13 +342,13 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public SQLWarning getWarnings() throws SQLException {
+	public SQLWarning getWarnings() {
 		// checkOpen();
 		return null;
 	}
 
 	@Override
-	public void clearWarnings() throws SQLException {
+	public void clearWarnings() {
 		// checkOpen();
 	}
 
@@ -815,6 +815,9 @@ class Rows implements ResultSet {
 
 	@Override
 	public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
+		if (map == null || map.isEmpty()) {
+			return getObject(columnIndex);
+		}
 		throw Util.unsupported("ResultSet.getObject(int,Map)");
 	}
 
@@ -1040,7 +1043,7 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public int getHoldability() throws SQLException {
+	public int getHoldability() {
 		return CLOSE_CURSORS_AT_COMMIT;
 	}
 
@@ -1285,7 +1288,7 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) {
 		return iface.isAssignableFrom(getClass());
 	}
 

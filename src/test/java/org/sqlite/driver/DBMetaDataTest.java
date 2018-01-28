@@ -227,20 +227,20 @@ public class DBMetaDataTest {
 		//child1: 1st fk (simple)
 		assertTrue(importedKeys.next());
 		assertEquals("parent", importedKeys.getString("PKTABLE_NAME"));
-		assertEquals("id2", importedKeys.getString("PKCOLUMN_NAME"));
-		// assertNotNull(importedKeys.getString("PK_NAME")); FIXME
-		assertNotNull(importedKeys.getString("FK_NAME"));
-		assertEquals("child1", importedKeys.getString("FKTABLE_NAME"));
-		assertEquals("id2", importedKeys.getString("FKCOLUMN_NAME"));
-
-		//child1: 2nd fk (simple)
-		assertTrue(importedKeys.next());
-		assertEquals("parent", importedKeys.getString("PKTABLE_NAME"));
 		assertEquals("id1", importedKeys.getString("PKCOLUMN_NAME"));
 		// assertNotNull(importedKeys.getString("PK_NAME")); FIXME
 		assertNotNull(importedKeys.getString("FK_NAME"));
 		assertEquals("child1", importedKeys.getString("FKTABLE_NAME"));
 		assertEquals("id1", importedKeys.getString("FKCOLUMN_NAME"));
+
+		//child1: 2nd fk (simple)
+		assertTrue(importedKeys.next());
+		assertEquals("parent", importedKeys.getString("PKTABLE_NAME"));
+		assertEquals("id2", importedKeys.getString("PKCOLUMN_NAME"));
+		// assertNotNull(importedKeys.getString("PK_NAME")); FIXME
+		assertNotNull(importedKeys.getString("FK_NAME"));
+		assertEquals("child1", importedKeys.getString("FKTABLE_NAME"));
+		assertEquals("id2", importedKeys.getString("FKCOLUMN_NAME"));
 
 		assertFalse(importedKeys.next());
 		importedKeys.close();
@@ -519,7 +519,7 @@ public class DBMetaDataTest {
 
 	@Test
 	public void columnOrderOfgetBestRowIdentifier() throws SQLException {
-		ResultSet rs = meta.getBestRowIdentifier(null, null, null, 0, false);
+		ResultSet rs = meta.getBestRowIdentifier(null, null, "", 0, false);
 		assertFalse(rs.next());
 		ResultSetMetaData rsmeta = rs.getMetaData();
 		assertEquals(8, rsmeta.getColumnCount());
@@ -563,10 +563,19 @@ public class DBMetaDataTest {
 	}
 
 	@Test
+	public void viewIngetPrimaryKeys() throws SQLException {
+		ResultSet rs;
+
+		stat.executeUpdate("create table t1 (c1, c2, c3);");
+		stat.executeUpdate("create view view_nopk (v1, v2) as select c1, c3 from t1;");
+
+		rs = meta.getPrimaryKeys(null, null, "view_nopk");
+		assertFalse(rs.next());
+		rs.close();
+	}
+
+	@Test
 	public void columnOrderOfgetPrimaryKeys() throws SQLException {
-		if (org.sqlite.Conn.libversionNumber() < 3007016) {
-			return;
-		}
 		ResultSet rs;
 		ResultSetMetaData rsmeta;
 
@@ -592,14 +601,14 @@ public class DBMetaDataTest {
 
 		rs = meta.getPrimaryKeys(null, null, "pk1");
 		assertTrue(rs.next());
-		assertEquals("col1", rs.getString("PK_NAME"));
+		assertNull(rs.getString("PK_NAME"));
 		assertEquals("col1", rs.getString("COLUMN_NAME"));
 		assertFalse(rs.next());
 		rs.close();
 
 		rs = meta.getPrimaryKeys(null, null, "pk2");
 		assertTrue(rs.next());
-		assertEquals("col2", rs.getString("PK_NAME"));
+		assertNull(rs.getString("PK_NAME"));
 		assertEquals("col2", rs.getString("COLUMN_NAME"));
 		assertFalse(rs.next());
 		rs.close();
@@ -607,11 +616,11 @@ public class DBMetaDataTest {
 		rs = meta.getPrimaryKeys(null, null, "pk3");
 		assertTrue(rs.next());
 		assertEquals("col2", rs.getString("COLUMN_NAME"));
-		assertEquals("PK", rs.getString("PK_NAME"));
+		assertNull(rs.getString("PK_NAME"));
 		assertEquals(2, rs.getInt("KEY_SEQ"));
 		assertTrue(rs.next());
 		assertEquals("col3", rs.getString("COLUMN_NAME"));
-		assertEquals("PK", rs.getString("PK_NAME"));
+		assertNull(rs.getString("PK_NAME"));
 		assertEquals(1, rs.getInt("KEY_SEQ"));
 		assertFalse(rs.next());
 		rs.close();
@@ -619,11 +628,11 @@ public class DBMetaDataTest {
 		rs = meta.getPrimaryKeys(null, null, "pk4");
 		assertTrue(rs.next());
 		assertEquals("col2", rs.getString("COLUMN_NAME"));
-		assertEquals("PK", rs.getString("PK_NAME"));
+		assertEquals("named", rs.getString("PK_NAME"));
 		assertEquals(2, rs.getInt("KEY_SEQ"));
 		assertTrue(rs.next());
 		assertEquals("col3", rs.getString("COLUMN_NAME"));
-		assertEquals("PK", rs.getString("PK_NAME"));
+		assertEquals("named", rs.getString("PK_NAME"));
 		assertEquals(1, rs.getInt("KEY_SEQ"));
 		assertFalse(rs.next());
 		rs.close();
@@ -812,7 +821,7 @@ public class DBMetaDataTest {
 
 	@Test
 	public void indexInfo() throws SQLException {
-		ResultSet rs = meta.getIndexInfo(null, null, null, false, false);
+		ResultSet rs = meta.getIndexInfo(null, null, "", false, false);
 		assertFalse(rs.next());
 		ResultSetMetaData rsmeta = rs.getMetaData();
 		assertEquals(13, rsmeta.getColumnCount());
@@ -838,8 +847,7 @@ public class DBMetaDataTest {
 
 	@Test
 	public void primaryKeys() throws SQLException {
-		ResultSet rs = meta.getPrimaryKeys(null, null, null);
-		assertFalse(rs.next());
+		ResultSet rs = meta.getPrimaryKeys(null, null, "test");
 		ResultSetMetaData rsmeta = rs.getMetaData();
 		assertEquals(6, rsmeta.getColumnCount());
 		assertEquals("TABLE_CAT", rsmeta.getColumnName(1));
@@ -848,20 +856,18 @@ public class DBMetaDataTest {
 		assertEquals("COLUMN_NAME", rsmeta.getColumnName(4));
 		assertEquals("KEY_SEQ", rsmeta.getColumnName(5));
 		assertEquals("PK_NAME", rsmeta.getColumnName(6));
-		rs.close();
 
-		rs = meta.getPrimaryKeys(null, null, "test");
 		assertTrue(rs.next());
 		assertEquals("test", rs.getString(3));
 		assertEquals("id", rs.getString(4));
 		assertEquals(1, rs.getInt(5));
-		assertEquals("id", rs.getString(6));
+		assertNull(rs.getString(6));
 		rs.close();
 	}
 
 	@Test
 	public void crossReference() throws SQLException {
-		ResultSet rs = meta.getCrossReference(null, null, null, null, null, null);
+		ResultSet rs = meta.getCrossReference(null, null, null, null, null, "test");
 		assertFalse(rs.next());
 		ResultSetMetaData rsmeta = rs.getMetaData();
 		assertEquals(14, rsmeta.getColumnCount());
@@ -879,9 +885,6 @@ public class DBMetaDataTest {
 		assertEquals("FK_NAME", rsmeta.getColumnName(12));
 		assertEquals("PK_NAME", rsmeta.getColumnName(13));
 		assertEquals("DEFERRABILITY", rsmeta.getColumnName(14));
-		rs.close();
-		rs = meta.getCrossReference(null, null, null, null, null, "test");
-		assertFalse(rs.next());
 		rs.close();
 	}
 

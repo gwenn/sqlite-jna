@@ -9,7 +9,16 @@
 package org.sqlite.driver;
 
 import org.sqlite.ColAffinities;
+import org.sqlite.ErrCodes;
 import org.sqlite.SQLite;
+import org.sqlite.StmtException;
+import org.sqlite.parser.DefaultSchemaProvider;
+import org.sqlite.parser.EnhancedPragma;
+import org.sqlite.parser.SchemaProvider;
+import org.sqlite.parser.ast.IdExpr;
+import org.sqlite.parser.ast.Pragma;
+import org.sqlite.parser.ast.QualifiedName;
+import org.sqlite.parser.ast.Select;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -19,21 +28,21 @@ import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import static org.sqlite.SQLite.doubleQuote;
 import static org.sqlite.SQLite.escapeIdentifier;
 
 class DbMeta implements DatabaseMetaData {
 	private final Conn c;
+	private final SchemaProvider schemaProvider;
 
 	DbMeta(Conn c) {
 		this.c = c;
+		this.schemaProvider = new DefaultSchemaProvider(c);
 	}
 
 	private void checkOpen() throws SQLException {
@@ -46,12 +55,12 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public boolean allProceduresAreCallable() throws SQLException {
+	public boolean allProceduresAreCallable() {
 		return false;
 	}
 
 	@Override
-	public boolean allTablesAreSelectable() throws SQLException {
+	public boolean allTablesAreSelectable() {
 		return true;
 	}
 
@@ -61,7 +70,7 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public String getUserName() throws SQLException {
+	public String getUserName() {
 		return null;
 	}
 
@@ -71,42 +80,42 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public boolean nullsAreSortedHigh() throws SQLException {
+	public boolean nullsAreSortedHigh() {
 		return false;
 	}
 
 	@Override
-	public boolean nullsAreSortedLow() throws SQLException {
+	public boolean nullsAreSortedLow() {
 		return true;
 	}
 
 	@Override
-	public boolean nullsAreSortedAtStart() throws SQLException {
+	public boolean nullsAreSortedAtStart() {
 		return false;
 	}
 
 	@Override
-	public boolean nullsAreSortedAtEnd() throws SQLException {
+	public boolean nullsAreSortedAtEnd() {
 		return false;
 	}
 
 	@Override
-	public String getDatabaseProductName() throws SQLException {
+	public String getDatabaseProductName() {
 		return "SQLite 3";
 	}
 
 	@Override
-	public String getDatabaseProductVersion() throws SQLException {
+	public String getDatabaseProductVersion() {
 		return org.sqlite.Conn.libversion();
 	}
 
 	@Override
-	public String getDriverName() throws SQLException {
+	public String getDriverName() {
 		return "SQLiteJNA";
 	}
 
 	@Override
-	public String getDriverVersion() throws SQLException {
+	public String getDriverVersion() {
 		return "1.0"; // FIXME
 	}
 
@@ -123,389 +132,389 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public boolean usesLocalFiles() throws SQLException {
+	public boolean usesLocalFiles() {
 		return true;
 	}
 
 	@Override
-	public boolean usesLocalFilePerTable() throws SQLException {
+	public boolean usesLocalFilePerTable() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsMixedCaseIdentifiers() throws SQLException {
+	public boolean supportsMixedCaseIdentifiers() {
 		return false;
 	}
 
 	@Override
-	public boolean storesUpperCaseIdentifiers() throws SQLException {
+	public boolean storesUpperCaseIdentifiers() {
 		return false;
 	}
 
 	@Override
-	public boolean storesLowerCaseIdentifiers() throws SQLException {
+	public boolean storesLowerCaseIdentifiers() {
 		return false;
 	}
 
 	@Override
-	public boolean storesMixedCaseIdentifiers() throws SQLException {
+	public boolean storesMixedCaseIdentifiers() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException {
+	public boolean supportsMixedCaseQuotedIdentifiers() {
 		return false;
 	}
 
 	@Override
-	public boolean storesUpperCaseQuotedIdentifiers() throws SQLException {
+	public boolean storesUpperCaseQuotedIdentifiers() {
 		return false;
 	}
 
 	@Override
-	public boolean storesLowerCaseQuotedIdentifiers() throws SQLException {
+	public boolean storesLowerCaseQuotedIdentifiers() {
 		return false;
 	}
 
 	@Override
-	public boolean storesMixedCaseQuotedIdentifiers() throws SQLException {
+	public boolean storesMixedCaseQuotedIdentifiers() {
 		return true;
 	}
 
 	@Override
-	public String getIdentifierQuoteString() throws SQLException {
+	public String getIdentifierQuoteString() {
 		return "\""; // http://sqlite.org/lang_keywords.html
 	}
 
 	@Override
-	public String getSQLKeywords() throws SQLException {
+	public String getSQLKeywords() {
 		return "ABORT,ANALYZE,ATTACH,AUTOINCREMENT,CONFLICT,DATABASE,DETACH,EXCLUSIVE,EXPLAIN,FAIL,GLOB,IF,IGNORE,INDEX,INDEXED,INSTEAD,ISNULL,LIMIT,NOTNULL,OFFSET,PLAN,PRAGMA,QUERY,RAISE,REGEXP,REINDEX,RENAME,REPLACE,RESTRICT,TEMP,VACUUM,VIRTUAL";
 	}
 
 	@Override
-	public String getNumericFunctions() throws SQLException {
+	public String getNumericFunctions() {
 		return "abs,max,min,round,random";
 	}
 
 	@Override
-	public String getStringFunctions() throws SQLException {
+	public String getStringFunctions() {
 		return "glob,length,like,lower,ltrim,replace,rtrim,soundex,substr,trim,upper";
 	}
 
 	@Override
-	public String getSystemFunctions() throws SQLException {
+	public String getSystemFunctions() {
 		return "last_insert_rowid,load_extension,sqlite_version";
 	}
 
 	@Override
-	public String getTimeDateFunctions() throws SQLException {
+	public String getTimeDateFunctions() {
 		return "date,time,datetime,julianday,strftime";
 	}
 
 	@Override
-	public String getSearchStringEscape() throws SQLException {
+	public String getSearchStringEscape() {
 		Util.trace("DatabaseMetaData.getSearchStringEscape");
 		return null; // TODO Validate (Y LIKE X [ESCAPE Z])
 	}
 
 	@Override
-	public String getExtraNameCharacters() throws SQLException {
+	public String getExtraNameCharacters() {
 		return "";
 	}
 
 	@Override
-	public boolean supportsAlterTableWithAddColumn() throws SQLException {
+	public boolean supportsAlterTableWithAddColumn() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsAlterTableWithDropColumn() throws SQLException {
+	public boolean supportsAlterTableWithDropColumn() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsColumnAliasing() throws SQLException {
+	public boolean supportsColumnAliasing() {
 		return true;
 	}
 
 	@Override
-	public boolean nullPlusNonNullIsNull() throws SQLException {
+	public boolean nullPlusNonNullIsNull() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsConvert() throws SQLException {
+	public boolean supportsConvert() {
 		Util.trace("DatabaseMetaData.supportsConvert");
 		return false; // TODO Validate
 	}
 
 	@Override
-	public boolean supportsConvert(int fromType, int toType) throws SQLException {
+	public boolean supportsConvert(int fromType, int toType) {
 		Util.trace("DatabaseMetaData.supportsConvert");
 		return false; // TODO Validate
 	}
 
 	@Override
-	public boolean supportsTableCorrelationNames() throws SQLException {
+	public boolean supportsTableCorrelationNames() {
 		return true; // table alias
 	}
 
 	@Override
-	public boolean supportsDifferentTableCorrelationNames() throws SQLException {
+	public boolean supportsDifferentTableCorrelationNames() {
 		return false; // table alias can be the same
 	}
 
 	@Override
-	public boolean supportsExpressionsInOrderBy() throws SQLException {
+	public boolean supportsExpressionsInOrderBy() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsOrderByUnrelated() throws SQLException {
+	public boolean supportsOrderByUnrelated() {
 		return true; // select name from sqlite_master order by type;
 	}
 
 	@Override
-	public boolean supportsGroupBy() throws SQLException {
+	public boolean supportsGroupBy() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsGroupByUnrelated() throws SQLException {
+	public boolean supportsGroupByUnrelated() {
 		return true; // select name from sqlite_master group by type;
 	}
 
 	@Override
-	public boolean supportsGroupByBeyondSelect() throws SQLException {
+	public boolean supportsGroupByBeyondSelect() {
 		return true; // TODO Validate
 	}
 
 	@Override
-	public boolean supportsLikeEscapeClause() throws SQLException {
+	public boolean supportsLikeEscapeClause() {
 		return true;
 	}
 
 	/** @see Stmt#getMoreResults() */
 	@Override
-	public boolean supportsMultipleResultSets() throws SQLException {
+	public boolean supportsMultipleResultSets() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsMultipleTransactions() throws SQLException {
+	public boolean supportsMultipleTransactions() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsNonNullableColumns() throws SQLException {
+	public boolean supportsNonNullableColumns() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsMinimumSQLGrammar() throws SQLException {
+	public boolean supportsMinimumSQLGrammar() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsCoreSQLGrammar() throws SQLException {
+	public boolean supportsCoreSQLGrammar() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsExtendedSQLGrammar() throws SQLException {
+	public boolean supportsExtendedSQLGrammar() {
 		Util.trace("DatabaseMetaData.supportsExtendedSQLGrammar");
 		return false;
 	}
 
 	@Override
-	public boolean supportsANSI92EntryLevelSQL() throws SQLException {
+	public boolean supportsANSI92EntryLevelSQL() {
 		Util.trace("DatabaseMetaData.supportsANSI92EntryLevelSQL");
 		return false;
 	}
 
 	@Override
-	public boolean supportsANSI92IntermediateSQL() throws SQLException {
+	public boolean supportsANSI92IntermediateSQL() {
 		Util.trace("DatabaseMetaData.supportsANSI92IntermediateSQL");
 		return false;
 	}
 
 	@Override
-	public boolean supportsANSI92FullSQL() throws SQLException {
+	public boolean supportsANSI92FullSQL() {
 		Util.trace("DatabaseMetaData.supportsANSI92FullSQL");
 		return false;
 	}
 
 	@Override
-	public boolean supportsIntegrityEnhancementFacility() throws SQLException {
+	public boolean supportsIntegrityEnhancementFacility() {
 		return false; // TODO Validate
 	}
 
 	@Override
-	public boolean supportsOuterJoins() throws SQLException {
+	public boolean supportsOuterJoins() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsFullOuterJoins() throws SQLException {
+	public boolean supportsFullOuterJoins() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsLimitedOuterJoins() throws SQLException {
+	public boolean supportsLimitedOuterJoins() {
 		return true;
 	}
 
 	@Override
-	public String getSchemaTerm() throws SQLException {
+	public String getSchemaTerm() {
 		return "";
 	}
 
 	@Override
-	public String getProcedureTerm() throws SQLException {
+	public String getProcedureTerm() {
 		return null;
 	}
 
 	@Override
-	public String getCatalogTerm() throws SQLException {
+	public String getCatalogTerm() {
 		return "dbName";
 	}
 
 	@Override
-	public boolean isCatalogAtStart() throws SQLException {
+	public boolean isCatalogAtStart() {
 		return true;
 	}
 
 	@Override
-	public String getCatalogSeparator() throws SQLException {
+	public String getCatalogSeparator() {
 		return ".";
 	}
 
 	@Override
-	public boolean supportsSchemasInDataManipulation() throws SQLException {
+	public boolean supportsSchemasInDataManipulation() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsSchemasInProcedureCalls() throws SQLException {
+	public boolean supportsSchemasInProcedureCalls() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsSchemasInTableDefinitions() throws SQLException {
+	public boolean supportsSchemasInTableDefinitions() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsSchemasInIndexDefinitions() throws SQLException {
+	public boolean supportsSchemasInIndexDefinitions() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
+	public boolean supportsSchemasInPrivilegeDefinitions() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsCatalogsInDataManipulation() throws SQLException { // http://sqlite.org/syntaxdiagrams.html#qualified-table-name
+	public boolean supportsCatalogsInDataManipulation() { // http://sqlite.org/syntaxdiagrams.html#qualified-table-name
 		return true;
 	}
 
 	@Override
-	public boolean supportsCatalogsInProcedureCalls() throws SQLException {
+	public boolean supportsCatalogsInProcedureCalls() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsCatalogsInTableDefinitions() throws SQLException { // http://sqlite.org/lang_createtable.html
+	public boolean supportsCatalogsInTableDefinitions() { // http://sqlite.org/lang_createtable.html
 		return true; // ~ temporary table name must be unqualified
 	}
 
 	@Override
-	public boolean supportsCatalogsInIndexDefinitions() throws SQLException { // http://sqlite.org/lang_createindex.html
+	public boolean supportsCatalogsInIndexDefinitions() { // http://sqlite.org/lang_createindex.html
 		return true;
 	}
 
 	@Override
-	public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException {
+	public boolean supportsCatalogsInPrivilegeDefinitions() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsPositionedDelete() throws SQLException {
+	public boolean supportsPositionedDelete() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsPositionedUpdate() throws SQLException {
+	public boolean supportsPositionedUpdate() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsSelectForUpdate() throws SQLException {
+	public boolean supportsSelectForUpdate() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsStoredProcedures() throws SQLException {
+	public boolean supportsStoredProcedures() {
 		return false;
 	}
 
 	@Override
-	public boolean supportsSubqueriesInComparisons() throws SQLException {
+	public boolean supportsSubqueriesInComparisons() {
 		return true; // select name from sqlite_master where rootpage > (select 3);
 	}
 
 	@Override
-	public boolean supportsSubqueriesInExists() throws SQLException {
+	public boolean supportsSubqueriesInExists() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsSubqueriesInIns() throws SQLException {
+	public boolean supportsSubqueriesInIns() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsSubqueriesInQuantifieds() throws SQLException {
+	public boolean supportsSubqueriesInQuantifieds() {
 		Util.trace("DatabaseMetaData.supportsSubqueriesInQuantifieds");
 		return false; // TODO Validate
 	}
 
 	@Override
-	public boolean supportsCorrelatedSubqueries() throws SQLException {
+	public boolean supportsCorrelatedSubqueries() {
 		return true; // select * from sqlite_master sm where not exists (select 1 from sqlite_temp_master stm where stm.name = sm.name);
 	}
 
 	@Override
-	public boolean supportsUnion() throws SQLException {
+	public boolean supportsUnion() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsUnionAll() throws SQLException {
+	public boolean supportsUnionAll() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsOpenCursorsAcrossCommit() throws SQLException {
+	public boolean supportsOpenCursorsAcrossCommit() {
 		Util.trace("DatabaseMetaData.supportsOpenCursorsAcrossCommit");
 		return false;
 	}
 
 	@Override
-	public boolean supportsOpenCursorsAcrossRollback() throws SQLException {
+	public boolean supportsOpenCursorsAcrossRollback() {
 		Util.trace("DatabaseMetaData.supportsOpenCursorsAcrossRollback");
 		return false;
 	}
 
 	@Override
-	public boolean supportsOpenStatementsAcrossCommit() throws SQLException {
+	public boolean supportsOpenStatementsAcrossCommit() {
 		Util.trace("DatabaseMetaData.supportsOpenStatementsAcrossCommit");
 		return false; // TODO Validate
 	}
 
 	@Override
-	public boolean supportsOpenStatementsAcrossRollback() throws SQLException {
+	public boolean supportsOpenStatementsAcrossRollback() {
 		Util.trace("DatabaseMetaData.supportsOpenStatementsAcrossRollback");
 		return false; // TODO Validate
 	}
@@ -521,7 +530,7 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public int getMaxColumnNameLength() throws SQLException {
+	public int getMaxColumnNameLength() {
 		return 0;
 	}
 
@@ -551,32 +560,32 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public int getMaxConnections() throws SQLException {
+	public int getMaxConnections() {
 		return 0;
 	}
 
 	@Override
-	public int getMaxCursorNameLength() throws SQLException {
+	public int getMaxCursorNameLength() {
 		return 0;
 	}
 
 	@Override
-	public int getMaxIndexLength() throws SQLException {
+	public int getMaxIndexLength() {
 		return 0;
 	}
 
 	@Override
-	public int getMaxSchemaNameLength() throws SQLException {
+	public int getMaxSchemaNameLength() {
 		return 0;
 	}
 
 	@Override
-	public int getMaxProcedureNameLength() throws SQLException {
+	public int getMaxProcedureNameLength() {
 		return 0;
 	}
 
 	@Override
-	public int getMaxCatalogNameLength() throws SQLException {
+	public int getMaxCatalogNameLength() {
 		return 0;
 	}
 
@@ -586,7 +595,7 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public boolean doesMaxRowSizeIncludeBlobs() throws SQLException {
+	public boolean doesMaxRowSizeIncludeBlobs() {
 		return true;
 	}
 
@@ -596,59 +605,59 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public int getMaxStatements() throws SQLException {
+	public int getMaxStatements() {
 		return 0;
 	}
 
 	@Override
-	public int getMaxTableNameLength() throws SQLException {
+	public int getMaxTableNameLength() {
 		return 0;
 	}
 
 	@Override
-	public int getMaxTablesInSelect() throws SQLException {
+	public int getMaxTablesInSelect() {
 		return 64; // ~ http://www.sqlite.org/limits.html: Maximum Number Of Tables In A Join
 	}
 
 	@Override
-	public int getMaxUserNameLength() throws SQLException {
+	public int getMaxUserNameLength() {
 		return 0;
 	}
 
 	/** @see Conn#transactionIsolation */
 	@Override
-	public int getDefaultTransactionIsolation() throws SQLException {
+	public int getDefaultTransactionIsolation() {
 		return Connection.TRANSACTION_SERIALIZABLE;
 	}
 
 	@Override
-	public boolean supportsTransactions() throws SQLException {
+	public boolean supportsTransactions() {
 		return true;
 	}
 
 	/** @see Conn#setTransactionIsolation(int) */
 	@Override
-	public boolean supportsTransactionIsolationLevel(int level) throws SQLException {
+	public boolean supportsTransactionIsolationLevel(int level) {
 		return level == Connection.TRANSACTION_SERIALIZABLE || level == Connection.TRANSACTION_READ_UNCOMMITTED;
 	}
 
 	@Override
-	public boolean supportsDataDefinitionAndDataManipulationTransactions() throws SQLException {
+	public boolean supportsDataDefinitionAndDataManipulationTransactions() {
 		return true; // tested
 	}
 
 	@Override
-	public boolean supportsDataManipulationTransactionsOnly() throws SQLException {
+	public boolean supportsDataManipulationTransactionsOnly() {
 		return false;
 	}
 
 	@Override
-	public boolean dataDefinitionCausesTransactionCommit() throws SQLException {
+	public boolean dataDefinitionCausesTransactionCommit() {
 		return false; // tested
 	}
 
 	@Override
-	public boolean dataDefinitionIgnoredInTransactions() throws SQLException {
+	public boolean dataDefinitionIgnoredInTransactions() {
 		return false; // tested
 	}
 
@@ -719,7 +728,7 @@ class DbMeta implements DatabaseMetaData {
 				append(" null as REF_GENERATION").
 				append(" from (");
 
-		final String[] catalogs = getCatalogs(catalog);
+		final List<String> catalogs = schemaProvider.getDbNames(catalog);
 		boolean match = false;
 		final String typeExpr = "CASE WHEN like('sqlite_%', name) THEN 'system ' || type ELSE type END as type";
 		for (String s : catalogs) {
@@ -775,42 +784,17 @@ class DbMeta implements DatabaseMetaData {
 		checkOpen();
 		final StringBuilder sql = new StringBuilder("select dbName as TABLE_CAT from (");
 		// Pragma cannot be used as subquery...
-		final String[] catalogs = getCatalogs(null);
-		for (int i = 0; i < catalogs.length; i++) {
+		final List<String> catalogs = schemaProvider.getDbNames(null);
+		for (int i = 0; i < catalogs.size(); i++) {
 			if (i > 0) {
 				sql.append(" UNION ");
 			}
-			sql.append("SELECT ").append(quote(catalogs[i])).append(" AS dbName");
+			sql.append("SELECT ").append(quote(catalogs.get(i))).append(" AS dbName");
 		}
 		sql.append(") order by TABLE_CAT");
 		final PreparedStatement stmt = c.prepareStatement(sql.toString());
 		stmt.closeOnCompletion();
 		return stmt.executeQuery();
-	}
-	private String[] getCatalogs(String catalog) throws SQLException {
-		final String[] catalogs;
-		if (catalog == null) {
-			final List<String> cats = new ArrayList<>(2);
-			try (PreparedStatement database_list = c.prepareStatement("PRAGMA database_list");
-					 ResultSet rs = database_list.executeQuery()) {
-				// 1:seq|2:name|3:file
-				while (rs.next()) {
-					final String dbName = rs.getString(2);
-					if ("temp".equalsIgnoreCase(dbName)) {
-						cats.add(0, dbName); // "temp" first
-					} else {
-						cats.add(dbName);
-					}
-				}
-			} catch (SQLException e) { // query does not return ResultSet
-			}
-			catalogs = cats.toArray(new String[cats.size()]);
-		} else if (catalog.isEmpty()) {
-			catalogs = new String[]{"temp", "main"}; // "temp" first
-		} else {
-			catalogs = new String[]{catalog};
-		}
-		return catalogs;
 	}
 
 	@Override
@@ -827,8 +811,7 @@ class DbMeta implements DatabaseMetaData {
 		checkOpen();
 		final StringBuilder sql = new StringBuilder();
 
-		final String[] catalogs = getCatalogs(catalog);
-		final List<String[]> tbls = getExactTableNames(catalogs, tableNamePattern);
+		final List<QualifiedName> tbls = schemaProvider.findTables(catalog, tableNamePattern);
 
 		sql.append("select ").
 				append("cat as TABLE_CAT, ").
@@ -854,14 +837,14 @@ class DbMeta implements DatabaseMetaData {
 				append("null as SCOPE_SCHEMA, ").
 				append("null as SCOPE_TABLE, ").
 				append("null as SOURCE_DATA_TYPE, ").
-				append("'' as IS_AUTOINCREMENT, "). // TODO
+				append("'' as IS_AUTOINCREMENT, "). // TODO http://sqlite.org/autoinc.html
 				append("'' as IS_GENERATEDCOLUMN from (");
 
 		boolean colFound = false;
-		for (String[] tbl : tbls) {
+		for (QualifiedName tbl : tbls) {
+			Pragma pragma = new Pragma(new QualifiedName(tbl.dbName, "table_info"), new IdExpr(tbl.name));
 			// Pragma cannot be used as subquery...
-			try (PreparedStatement table_info = c.prepareStatement(
-					"PRAGMA " + doubleQuote(tbl[0]) + ".table_info(\"" + escapeIdentifier(tbl[1]) + "\")");
+			try (PreparedStatement table_info = c.prepareStatement(pragma.toSql());
 					 ResultSet rs = table_info.executeQuery()) {
 				// 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
 				while (rs.next()) {
@@ -872,8 +855,8 @@ class DbMeta implements DatabaseMetaData {
 					final int colJavaType = getJavaType(colType);
 
 					sql.append("SELECT ").
-							append(quote(tbl[0])).append(" AS cat, ").
-							append(quote(tbl[1])).append(" AS tbl, ").
+							append(quote(tbl.dbName)).append(" AS cat, ").
+							append(quote(tbl.name)).append(" AS tbl, ").
 							append(rs.getInt(1) + 1).append(" AS ordpos, ").
 							append(rs.getBoolean(4) ? columnNoNulls : columnNullable).append(" AS colnullable, ").
 							append(colJavaType).append(" AS ct, ").
@@ -885,7 +868,8 @@ class DbMeta implements DatabaseMetaData {
 						sql.append(" WHERE cn LIKE ").append(quote(columnNamePattern));
 					}
 				}
-			} catch (SQLException e) { // query does not return ResultSet
+			} catch (StmtException e) { // query does not return ResultSet
+				assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
 			}
 		}
 
@@ -921,41 +905,6 @@ class DbMeta implements DatabaseMetaData {
 			}
 		}
 		return tbls;
-	}
-	private String getCatalog(String catalog, String table) throws SQLException {
-		if ("sqlite_temp_master".equals(table)) {
-			return "temp";
-		} else if ("sqlite_master".equals(table)) {
-			if (catalog == null || catalog.isEmpty()) {
-				return "main";
-			} else {
-				return catalog;
-			}
-		}
-		final String[] catalogs = getCatalogs(catalog);
-		if (catalogs.length == 1) {
-			return catalogs[0];
-		}
-		for (String cat : catalogs) {
-			final String sql;
-			if ("main".equalsIgnoreCase(cat)) {
-				sql = "SELECT name FROM sqlite_master WHERE type = 'table' AND name like ?"; // TODO Validate: no view
-			} else if ("temp".equalsIgnoreCase(cat)) {
-				sql = "SELECT name FROM sqlite_temp_master WHERE type = 'table' AND name like ?";
-			} else {
-				sql = "SELECT name FROM \"" + escapeIdentifier(cat) + "\".sqlite_master WHERE type = 'table' AND name like ?";
-			}
-			try (PreparedStatement ps = c.prepareStatement(sql)) {
-				// determine exact table name
-				ps.setString(1, table);
-				try (ResultSet rs = ps.executeQuery()) {
-					if (rs.next()) {
-						return cat;
-					}
-				}
-			}
-		}
-		return "temp"; // to avoid invalid qualified table name "".tbl
 	}
 
 	private static String getSQLiteType(String colType) {
@@ -1021,7 +970,7 @@ class DbMeta implements DatabaseMetaData {
 		checkOpen();
 		final StringBuilder sql = new StringBuilder();
 
-		catalog = getCatalog(catalog, table);
+		catalog = schemaProvider.getDbName(catalog, table);
 		sql.append("select ").
 				append(scope).append(" as SCOPE, ").
 				append("cn as COLUMN_NAME, ").
@@ -1036,8 +985,8 @@ class DbMeta implements DatabaseMetaData {
 		int count = -1;
 		String colName = null;
 		String colType = null;
-		try (PreparedStatement table_info = c.prepareStatement(
-				"PRAGMA " + doubleQuote(catalog) + ".table_info(\"" + escapeIdentifier(table) + "\")");
+		Pragma pragma = new Pragma(new QualifiedName(catalog, "table_info"), new IdExpr(table));
+		try (PreparedStatement table_info = c.prepareStatement(pragma.toSql());
 				 ResultSet rs = table_info.executeQuery()
 		) {
 			// 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
@@ -1051,7 +1000,8 @@ class DbMeta implements DatabaseMetaData {
 					count++;
 				}
 			}
-		} catch (SQLException e) { // query does not return ResultSet
+		} catch (StmtException e) { // query does not return ResultSet
+			assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
 			count = -1;
 		}
 
@@ -1097,123 +1047,17 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
 		checkOpen();
-		final StringBuilder sql = new StringBuilder();
-
-		catalog = getCatalog(catalog, table);
-		sql.append("select ").
-				append(quote(catalog)).append(" as TABLE_CAT, ").
-				append("null as TABLE_SCHEM, ").
-				append(quote(table)).append(" as TABLE_NAME, ").
-				append("cn as COLUMN_NAME, ").
-				append("seqno as KEY_SEQ, ").
-				append("pk as PK_NAME from (");
-
-		// Pragma cannot be used as subquery...
-		String[] colNames = new String[5];
-		int nColNames = 0;
-
-		try (PreparedStatement table_info = c.prepareStatement(
-				"PRAGMA " + doubleQuote(catalog) + ".table_info(\"" + escapeIdentifier(table) + "\")");
-				 ResultSet rs = table_info.executeQuery()) {
-			// 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
-			while (rs.next()) {
-				final int seqno = rs.getInt(6) - 1;
-				if (seqno >= 0) {
-					if (seqno >= colNames.length) {
-						colNames = Arrays.copyOf(colNames, colNames.length * 2);
-					}
-					colNames[seqno] = rs.getString(2);
-					nColNames++;
-				}
-			}
-		} catch (SQLException e) { // query does not return ResultSet
-		}
-
-		if (nColNames == 0) {
-			sql.append("SELECT NULL as pk, NULL AS cn, NULL AS seqno) limit 0");
-		} else {
-			final String pkName; // FIXME may be null
-			if (nColNames == 1) {
-				pkName = colNames[0];
-			} else {
-				pkName = "PK";
-			}
-			for (int i = 0; i < nColNames; i++) {
-				if (i > 0) sql.append(" UNION ALL ");
-				sql.append("SELECT ").
-						append(quote(pkName)).append(" AS pk, ").
-						append(quote(colNames[i])).append(" AS cn, ").
-						append(i + 1).append(" AS seqno");
-			}
-			sql.append(") order by COLUMN_NAME");
-		}
-		final PreparedStatement columns = c.prepareStatement(sql.toString());
+		Select select = EnhancedPragma.getPrimaryKeys(catalog, table, schemaProvider);
+		final PreparedStatement columns = c.prepareStatement(select.toSql());
 		columns.closeOnCompletion();
 		return columns.executeQuery();
 	}
 
 	@Override
 	public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
-		return getForeignKeys(catalog, null, table, false);
-	}
-
-	private ResultSet getForeignKeys(String foreignCatalog, String primaryTable, String foreignTable, boolean cross) throws SQLException {
 		checkOpen();
-		final StringBuilder sql = new StringBuilder();
-
-		foreignCatalog = getCatalog(foreignCatalog, foreignTable);
-		sql.append("select ").
-				append(quote(foreignCatalog)).append(" as PKTABLE_CAT, ").
-				append("null as PKTABLE_SCHEM, ").
-				append("pt as PKTABLE_NAME, ").
-				append("pc as PKCOLUMN_NAME, ").
-				append(quote(foreignCatalog)).append(" as FKTABLE_CAT, ").
-				append("null as FKTABLE_SCHEM, ").
-				append(quote(foreignTable)).append(" as FKTABLE_NAME, ").
-				append("fc as FKCOLUMN_NAME, ").
-				append("seq as KEY_SEQ, ").
-				append(importedKeyNoAction).append(" as UPDATE_RULE, "). // FIXME on_update (6) SET NULL (importedKeySetNull), SET DEFAULT (importedKeySetDefault), CASCADE (importedKeyCascade), RESTRICT (importedKeyRestrict), NO ACTION (importedKeyNoAction)
-				append(importedKeyNoAction).append(" as DELETE_RULE, "). // FIXME on_delete (7)
-				append("id as FK_NAME, ").
-				append("null as PK_NAME, ").
-				append(importedKeyNotDeferrable).append(" as DEFERRABILITY "). // FIXME
-				append("from (");
-
-		// Pragma cannot be used as subquery...
-		int count = 0;
-
-		try (PreparedStatement foreign_key_list = c.prepareStatement(
-				"PRAGMA " + doubleQuote(foreignCatalog) + ".foreign_key_list(\"" + escapeIdentifier(foreignTable) + "\");");
-				 ResultSet rs = foreign_key_list.executeQuery()) {
-			// 1:id|2:seq|3:table|4:from|5:to|6:on_update|7:on_delete|8:match
-			while (rs.next()) {
-				if (cross && !primaryTable.equalsIgnoreCase(rs.getString(3))) {
-					continue;
-				}
-				if (count > 0) {
-					sql.append(" UNION ALL ");
-				}
-				sql.append("SELECT ").
-						append(quote(foreignTable + '_' + rs.getString(3) + '_' + rs.getString(1))).append(" AS id, "). // to be kept in sync with getExportedKeys
-						append(quote(rs.getString(3))).append(" AS pt, ").
-						append(quote(rs.getString(5))).append(" AS pc, ").
-						append(quote(rs.getString(4))).append(" AS fc, ").
-						append(rs.getShort(2) + 1).append(" AS seq");
-				count++;
-			}
-		} catch (SQLException e) { // query does not return ResultSet
-		}
-
-		if (count == 0) {
-			sql.append("SELECT NULL AS id, NULL AS pt, NULL AS pc, NULL AS fc, NULL AS seq) limit 0");
-		} else {
-			if (cross) {
-				sql.append(") order by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, KEY_SEQ");
-			} else {
-				sql.append(") order by PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, KEY_SEQ");
-			}
-		}
-		final PreparedStatement fks = c.prepareStatement(sql.toString());
+		Select select = EnhancedPragma.getImportedKeys(catalog, table, schemaProvider);
+		final PreparedStatement fks = c.prepareStatement(select.toSql());
 		fks.closeOnCompletion();
 		return fks.executeQuery();
 	}
@@ -1223,7 +1067,7 @@ class DbMeta implements DatabaseMetaData {
 		checkOpen();
 		final StringBuilder sql = new StringBuilder();
 
-		catalog = getCatalog(catalog, table);
+		catalog = schemaProvider.getDbName(catalog, table);
 		sql.append("select ").
 				append(quote(catalog)).append(" as PKTABLE_CAT, ").
 				append("null as PKTABLE_SCHEM, ").
@@ -1264,9 +1108,9 @@ class DbMeta implements DatabaseMetaData {
 		int count = 0;
 		if (!fkTables.isEmpty()) {
 			for (String fkTable : fkTables) {
+				Pragma pragma = new Pragma(new QualifiedName(catalog, "foreign_key_list"), new IdExpr(fkTable));
 				// Pragma cannot be used as subquery...
-				try (PreparedStatement foreign_key_list = c.prepareStatement(
-						"PRAGMA " + doubleQuote(catalog) + ".foreign_key_list(\"" + escapeIdentifier(fkTable) + "\");");
+				try (PreparedStatement foreign_key_list = c.prepareStatement(pragma.toSql());
 						 ResultSet rs = foreign_key_list.executeQuery()) {
 					// 1:id|2:seq|3:table|4:from|5:to|6:on_update|7:on_delete|8:match
 					while (rs.next()) {
@@ -1284,7 +1128,8 @@ class DbMeta implements DatabaseMetaData {
 								append(rs.getShort(2) + 1).append(" AS seq");
 						count++;
 					}
-				} catch (SQLException e) { // query does not return ResultSet
+				} catch (StmtException e) { // query does not return ResultSet
+					assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
 				}
 			}
 		}
@@ -1335,16 +1180,17 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog, String foreignSchema, String foreignTable) throws SQLException {
-		if (foreignCatalog == null ? parentCatalog != null : !foreignCatalog.equals(parentCatalog)) {
-			// TODO SQLite does not support this case...
-		}
-		return getForeignKeys(foreignCatalog, parentTable, foreignTable, true);
+		checkOpen();
+		Select select = EnhancedPragma.getCrossReference(parentCatalog, parentTable, foreignCatalog, foreignTable, schemaProvider);
+		final PreparedStatement fks = c.prepareStatement(select.toSql());
+		fks.closeOnCompletion();
+		return fks.executeQuery();
 	}
 
 	@Override
 	public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException {
 		checkOpen();
-		catalog = getCatalog(catalog, table);
+		catalog = schemaProvider.getDbName(catalog, table);
 		final StringBuilder sql = new StringBuilder();
 		sql.append("select ").
 				append(quote(catalog)).append(" as TABLE_CAT, ").
@@ -1363,9 +1209,8 @@ class DbMeta implements DatabaseMetaData {
 				append("from (");
 
 		final Map<String, Boolean> indexes = new HashMap<>();
-
-		try (PreparedStatement index_list = c.prepareStatement(
-				"PRAGMA " + doubleQuote(catalog) + ".index_list(\"" + escapeIdentifier(table) + "\")");
+		Pragma pragma = new Pragma(new QualifiedName(catalog, "index_list"), new IdExpr(table));
+		try (PreparedStatement index_list = c.prepareStatement(pragma.toSql());
 				 ResultSet rs = index_list.executeQuery()) {
 			// 1:seq|2:name|3:unique
 			while (rs.next()) {
@@ -1375,7 +1220,8 @@ class DbMeta implements DatabaseMetaData {
 				}
 				indexes.put(rs.getString(2), notuniq);
 			}
-		} catch (SQLException e) { // query does not return ResultSet
+		} catch (StmtException e) { // query does not return ResultSet
+			assert e.getErrorCode() == ErrCodes.WRAPPER_SPECIFIC;
 		}
 
 		if (indexes.isEmpty()) {
@@ -1383,8 +1229,8 @@ class DbMeta implements DatabaseMetaData {
 		} else {
 			boolean found = false;
 			for (final Entry<String, Boolean> index : indexes.entrySet()) {
-				try (PreparedStatement index_info = c.prepareStatement(
-						"PRAGMA index_info(\"" + escapeIdentifier(index.getKey()) + "\")");
+				Pragma _pragma = new Pragma(new QualifiedName(null, "index_info"), new IdExpr(index.getKey()));
+				try (PreparedStatement index_info = c.prepareStatement(_pragma.toSql());
 						 ResultSet rs = index_info.executeQuery()) {
 					// 1:seqno|2:cid|3:name
 					while (rs.next()) {
@@ -1398,7 +1244,7 @@ class DbMeta implements DatabaseMetaData {
 								append(quote(rs.getString(3))).append(" AS cn");
 						found = true;
 					}
-				//} catch(SQLException e) { // query does not return ResultSet
+				//} catch(StmtException e) { // query does not return ResultSet
 				}
 			}
 			if (found) {
@@ -1416,65 +1262,65 @@ class DbMeta implements DatabaseMetaData {
 	/** @see Stmt#getResultSetType()
 	 * @see Rows#getType() */
 	@Override
-	public boolean supportsResultSetType(int type) throws SQLException {
+	public boolean supportsResultSetType(int type) {
 		return type == ResultSet.TYPE_FORWARD_ONLY;
 	}
 
 	/** @see Stmt#getResultSetConcurrency()
 	 * @see Rows#getConcurrency() */
 	@Override
-	public boolean supportsResultSetConcurrency(int type, int concurrency) throws SQLException {
+	public boolean supportsResultSetConcurrency(int type, int concurrency) {
 		return type == ResultSet.TYPE_FORWARD_ONLY && concurrency == ResultSet.CONCUR_READ_ONLY;
 	}
 
 	@Override
-	public boolean ownUpdatesAreVisible(int type) throws SQLException {
+	public boolean ownUpdatesAreVisible(int type) {
 		return false;
 	}
 
 	@Override
-	public boolean ownDeletesAreVisible(int type) throws SQLException {
+	public boolean ownDeletesAreVisible(int type) {
 		return false;
 	}
 
 	@Override
-	public boolean ownInsertsAreVisible(int type) throws SQLException {
+	public boolean ownInsertsAreVisible(int type) {
 		return false;
 	}
 
 	@Override
-	public boolean othersUpdatesAreVisible(int type) throws SQLException {
+	public boolean othersUpdatesAreVisible(int type) {
 		return false;
 	}
 
 	@Override
-	public boolean othersDeletesAreVisible(int type) throws SQLException {
+	public boolean othersDeletesAreVisible(int type) {
 		return false;
 	}
 
 	@Override
-	public boolean othersInsertsAreVisible(int type) throws SQLException {
+	public boolean othersInsertsAreVisible(int type) {
 		return false;
 	}
 
 	@Override
-	public boolean updatesAreDetected(int type) throws SQLException {
+	public boolean updatesAreDetected(int type) {
 		return false;
 	}
 
 	@Override
-	public boolean deletesAreDetected(int type) throws SQLException {
+	public boolean deletesAreDetected(int type) {
 		return false;
 	}
 
 	@Override
-	public boolean insertsAreDetected(int type) throws SQLException {
+	public boolean insertsAreDetected(int type) {
 		return false;
 	}
 
 	/** @see Stmt#executeBatch() */
 	@Override
-	public boolean supportsBatchUpdates() throws SQLException {
+	public boolean supportsBatchUpdates() {
 		return true;
 	}
 
@@ -1497,29 +1343,29 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public Connection getConnection() throws SQLException {
+	public Connection getConnection() {
 		return c;
 	}
 
 	/** @see Conn#setSavepoint() */
 	@Override
-	public boolean supportsSavepoints() throws SQLException {
+	public boolean supportsSavepoints() {
 		return true;
 	}
 
 	@Override
-	public boolean supportsNamedParameters() throws SQLException { // but no callable statement...
+	public boolean supportsNamedParameters() { // but no callable statement...
 		return true;
 	}
 
 	@Override
-	public boolean supportsMultipleOpenResults() throws SQLException {
+	public boolean supportsMultipleOpenResults() {
 		return false;
 	}
 
 	/** @see Stmt#getGeneratedKeys() */
 	@Override
-	public boolean supportsGetGeneratedKeys() throws SQLException { // Used by Hibernate
+	public boolean supportsGetGeneratedKeys() { // Used by Hibernate
 		return true; // partial support only
 	}
 
@@ -1589,53 +1435,53 @@ class DbMeta implements DatabaseMetaData {
 	 * @see #getResultSetHoldability()
 	 * @see Conn#getHoldability() */
 	@Override
-	public boolean supportsResultSetHoldability(int holdability) throws SQLException {
+	public boolean supportsResultSetHoldability(int holdability) {
 		return holdability == ResultSet.CLOSE_CURSORS_AT_COMMIT; // TODO Validate sqlite3_reset & lock
 	}
 
 	@Override
-	public int getResultSetHoldability() throws SQLException {
+	public int getResultSetHoldability() {
 		return ResultSet.CLOSE_CURSORS_AT_COMMIT; // TODO Validate sqlite3_reset & lock
 	}
 
 	@Override
-	public int getDatabaseMajorVersion() throws SQLException {
+	public int getDatabaseMajorVersion() {
 		return 3; // FIXME
 	}
 
 	@Override
-	public int getDatabaseMinorVersion() throws SQLException {
+	public int getDatabaseMinorVersion() {
 		return 0; // FIXME
 	}
 
 	@Override
-	public int getJDBCMajorVersion() throws SQLException {
+	public int getJDBCMajorVersion() {
 		return 4;
 	}
 
 	@Override
-	public int getJDBCMinorVersion() throws SQLException {
+	public int getJDBCMinorVersion() {
 		return 1;
 	}
 
 	@Override
-	public int getSQLStateType() throws SQLException {
+	public int getSQLStateType() {
 		return sqlStateSQL99;
 	}
 
 	@Override
-	public boolean locatorsUpdateCopy() throws SQLException {
+	public boolean locatorsUpdateCopy() {
 		return false;
 	}
 
 	/** @see Stmt#setPoolable(boolean) */
 	@Override
-	public boolean supportsStatementPooling() throws SQLException {
+	public boolean supportsStatementPooling() {
 		return true; // Statement cache
 	}
 
 	@Override
-	public RowIdLifetime getRowIdLifetime() throws SQLException {
+	public RowIdLifetime getRowIdLifetime() {
 		Util.trace("DatabaseMetaData.getRowIdLifetime");
 		return RowIdLifetime.ROWID_VALID_FOREVER; // TODO http://www.sqlite.org/autoinc.html
 	}
@@ -1646,12 +1492,12 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
+	public boolean supportsStoredFunctionsUsingCallSyntax() {
 		return false;
 	}
 
 	@Override
-	public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
+	public boolean autoCommitFailureClosesAllResultSets() {
 		return false;
 	}
 
@@ -1674,13 +1520,13 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
+	public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) {
 		Util.trace("DatabaseMetaData.getFunctions");
 		return null;
 	}
 
 	@Override
-	public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) throws SQLException {
+	public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) {
 		Util.trace("DatabaseMetaData.getFunctionColumns");
 		return null;
 	}
@@ -1709,7 +1555,7 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public boolean generatedKeyAlwaysReturned() throws SQLException {
+	public boolean generatedKeyAlwaysReturned() {
 		return false;
 	}
 	//#endif
@@ -1723,13 +1569,13 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) {
 		return iface.isAssignableFrom(getClass());
 	}
 
 	//#if mvn.project.property.jdbc.specification.version >= "4.2"
 	@Override
-	public long getMaxLogicalLobSize() throws SQLException {
+	public long getMaxLogicalLobSize() {
 		return Integer.MAX_VALUE;
 	}
 	//#endif

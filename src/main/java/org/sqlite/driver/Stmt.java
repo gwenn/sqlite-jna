@@ -216,7 +216,7 @@ class Stmt implements Statement {
 	}
 
 	@Override
-	public void clearWarnings() throws SQLException {
+	public void clearWarnings() {
 		//checkOpen();
 	}
 
@@ -245,7 +245,7 @@ class Stmt implements Statement {
 			return true;
 		} else if (res == SQLite.SQLITE_DONE) {
 			return false;
-		} else if (res == ErrCodes.SQLITE_CONSTRAINT) {
+		} else if ((res&0xFF) == ErrCodes.SQLITE_CONSTRAINT) {
 			throw new SQLIntegrityConstraintViolationException(stmt.getErrMsg(), null, res);
 		} else if (res == ErrCodes.SQLITE_INTERRUPT) {
 			throw new SQLTimeoutException(stmt.getErrMsg(), null, res);
@@ -463,7 +463,7 @@ class Stmt implements Statement {
 	}
 
 	@Override
-	public boolean isClosed() throws SQLException {
+	public boolean isClosed() {
 		return c == null;
 	}
 
@@ -506,7 +506,7 @@ class Stmt implements Statement {
 	}
 
 	@Override
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) {
 		return iface.isAssignableFrom(getClass());
 	}
 }

@@ -10,6 +10,8 @@ package org.sqlite.driver;
 
 import org.sqlite.ConnException;
 import org.sqlite.ErrCodes;
+import org.sqlite.parser.ast.Release;
+import org.sqlite.parser.ast.Rollback;
 
 import java.nio.charset.Charset;
 import java.sql.Array;
@@ -32,8 +34,6 @@ import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
-
-import static org.sqlite.SQLite.escapeIdentifier;
 
 class Conn implements Connection {
 	private org.sqlite.Conn c;
@@ -94,7 +94,7 @@ class Conn implements Connection {
 	}
 
 	@Override
-	public String nativeSQL(String sql) throws SQLException {
+	public String nativeSQL(String sql) {
 		Util.trace("Connection.nativeSQL");
 		return sql;
 	}
@@ -137,7 +137,7 @@ class Conn implements Connection {
 	}
 
 	@Override
-	public boolean isClosed() throws SQLException {
+	public boolean isClosed() {
 		return c == null;
 	}
 
@@ -316,18 +316,21 @@ class Conn implements Connection {
 				return name;
 			}
 		};
-		getConn().fastExec("SAVEPOINT \"" + escapeIdentifier(name) + '"');
+		org.sqlite.parser.ast.Savepoint sp = new org.sqlite.parser.ast.Savepoint(name);
+		getConn().fastExec(sp.toSql());
 		return savepoint;
 	}
 
 	@Override
 	public void rollback(Savepoint savepoint) throws SQLException {
-		getConn().fastExec("ROLLBACK TO SAVEPOINT \"" + escapeIdentifier(savepoint.toString()) + '"');
+		Rollback rollback = new Rollback(null, savepoint.toString());
+		getConn().fastExec(rollback.toSql());
 	}
 
 	@Override
 	public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-		getConn().fastExec("RELEASE SAVEPOINT \"" + escapeIdentifier(savepoint.toString()) + '"');
+		Release release = new Release(savepoint.toString());
+		getConn().fastExec(release.toSql());
 	}
 
 	@Override
@@ -405,7 +408,7 @@ class Conn implements Connection {
 	}
 
 	@Override
-	public void setClientInfo(String name, String value) throws SQLClientInfoException {
+	public void setClientInfo(String name, String value) {
 		Util.trace("Connection.setClientInfo(String,String)");
 		//checkOpen();
 		if (clientInfo == null) return;
@@ -413,7 +416,7 @@ class Conn implements Connection {
 	}
 
 	@Override
-	public void setClientInfo(Properties properties) throws SQLClientInfoException {
+	public void setClientInfo(Properties properties) {
 		Util.trace("Connection.setClientInfo(Properties)");
 		//checkOpen();
 		clientInfo = new Properties(properties);
@@ -487,7 +490,7 @@ class Conn implements Connection {
 	}
 
 	@Override
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
+	public boolean isWrapperFor(Class<?> iface) {
 		return iface.isAssignableFrom(getClass());
 	}
 

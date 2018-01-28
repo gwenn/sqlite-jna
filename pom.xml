@@ -38,6 +38,7 @@
     <sqlite.enable.column.metadata>true</sqlite.enable.column.metadata>
     <sqlite.omit.load.extension>false</sqlite.omit.load.extension>
     <sqlite.enable.stmt.scanstatus>false</sqlite.enable.stmt.scanstatus>
+    <sqlite.enable.unlock.notify>false</sqlite.enable.unlock.notify>
     <javacpp.parser.skip>true</javacpp.parser.skip>
     <javacpp.compiler.skip>false</javacpp.compiler.skip>
     <!-- -Djavacpp.platform=windows-x86_64-mingw -->
@@ -53,9 +54,22 @@
       <version>1.4</version>
     </dependency>
     <dependency>
+      <groupId>com.github.gwenn</groupId>
+      <!--artifactId>sqlite-parser</artifactId>
+      <version>0.1.0</version-->
+      <artifactId>jlemon</artifactId>
+      <version>master-SNAPSHOT</version>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.25</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -271,4 +285,11 @@
       </properties>
     </profile>
   </profiles>
+
+  <repositories>
+    <repository>
+				<id>jitpack.io</id>
+				<url>https://jitpack.io</url>
+		</repository>
+  </repositories>
 </project>

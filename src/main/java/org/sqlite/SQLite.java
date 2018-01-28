@@ -22,6 +22,7 @@ import org.bytedeco.javacpp.annotation.Platform;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.Collections;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
 @Platform(cinclude = "sqlite3.h", link = "sqlite3")
@@ -195,6 +196,10 @@ public final class SQLite {
 	static native Pointer sqlite3_update_hook(sqlite3 pDb, UpdateHook xUpdate, Pointer pArg);
 	static native int sqlite3_set_authorizer(sqlite3 pDb, Authorizer authorizer, Pointer pUserData);
 
+	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
+	static native int sqlite3_unlock_notify(SQLite3 pBlocked, UnlockNotifyCallback xNotify, Pointer pNotifyArg);
+	//#endif
+
 	/*
 	void (*)(sqlite3_context*,int,sqlite3_value**),
 	void (*)(sqlite3_context*,int,sqlite3_value**),
@@ -283,25 +288,6 @@ public final class SQLite {
 			identifier = identifier.replaceAll("\"", "\"\"");
 		}
 		return identifier;
-	}
-
-	public static String doubleQuote(String dbName) {
-		if (dbName == null) {
-			return "";
-		}
-		if ("main".equals(dbName) || "temp".equals(dbName)) {
-			return dbName;
-		}
-		return '"' + escapeIdentifier(dbName) + '"'; // surround identifier with quote
-	}
-	public static String qualify(String dbName) {
-		if (dbName == null) {
-			return "";
-		}
-		if ("main".equals(dbName) || "temp".equals(dbName)) {
-			return dbName + '.';
-		}
-		return '"' + escapeIdentifier(dbName) + '"' + '.'; // surround identifier with quote
 	}
 
 	public static abstract class LogCallback extends FunctionPointer {
