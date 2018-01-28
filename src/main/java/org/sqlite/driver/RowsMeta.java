@@ -8,13 +8,13 @@
  */
 package org.sqlite.driver;
 
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+
 import org.sqlite.ColAffinities;
 import org.sqlite.ErrCodes;
 import org.sqlite.Stmt;
 import org.sqlite.StmtException;
-
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 
 class RowsMeta implements ResultSetMetaData {
 	private final Stmt stmt;

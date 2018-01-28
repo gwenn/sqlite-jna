@@ -1,10 +1,12 @@
 package org.sqlite.driver;
 
-import org.sqlite.ErrCodes;
-import org.sqlite.SQLiteException;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
+import java.sql.SQLException;
+import java.sql.SQLXML;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -17,13 +19,11 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stax.StAXSource;
 import javax.xml.transform.stream.StreamSource;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.Writer;
-import java.sql.SQLException;
-import java.sql.SQLXML;
+
+import org.sqlite.ErrCodes;
+import org.sqlite.SQLiteException;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 public class SQLXMLFromRows implements SQLXML {
 	private /*final*/ Rows rs;

@@ -8,10 +8,6 @@
  */
 package org.sqlite.driver;
 
-import org.sqlite.ErrCodes;
-import org.sqlite.SQLite;
-import org.sqlite.StmtException;
-
 import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -24,6 +20,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.sqlite.ErrCodes;
+import org.sqlite.SQLite;
+import org.sqlite.StmtException;
 
 // There is no "not prepared" statement in SQLite!
 class Stmt implements Statement {

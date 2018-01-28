@@ -1,10 +1,17 @@
 package org.sqlite.driver;
 
-import org.sqlite.ErrCodes;
-import org.sqlite.SQLiteException;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.sql.SQLException;
+import java.sql.SQLXML;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -28,18 +35,11 @@ import javax.xml.transform.stax.StAXResult;
 import javax.xml.transform.stax.StAXSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.sql.SQLException;
-import java.sql.SQLXML;
+
+import org.sqlite.ErrCodes;
+import org.sqlite.SQLiteException;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 public class SQLXMLImpl implements SQLXML {
 	private final Charset charset;

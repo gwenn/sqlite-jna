@@ -8,15 +8,13 @@
  */
 package org.sqlite;
 
-import org.bytedeco.javacpp.BytePointer;
-import org.bytedeco.javacpp.Pointer;
-
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+
+import org.bytedeco.javacpp.BytePointer;
 
 import static org.sqlite.ColTypes.SQLITE_NULL;
 import static org.sqlite.SQLite.*;

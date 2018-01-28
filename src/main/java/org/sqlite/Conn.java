@@ -8,17 +8,17 @@
  */
 package org.sqlite;
 
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.IntPointer;
 import org.bytedeco.javacpp.Pointer;
 import org.sqlite.parser.ast.LiteralExpr;
 import org.sqlite.parser.ast.Pragma;
 import org.sqlite.parser.ast.QualifiedName;
-
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import static org.sqlite.SQLite.*;
 
@@ -240,7 +240,7 @@ public final class Conn implements AutoCloseable {
 		final BytePointer pSql = nativeString(sql);
 		sqlite3_stmt stmt = new sqlite3_stmt();
 		final BytePointer tail = new BytePointer();
-		final int res = blockingPrepare(null, pSql, -1, stmt, tail);
+		final int res = blockingPrepare(null, pSql, stmt, tail);
 		check(res, "error while preparing statement '%s'", sql);
 		stmt = stmt.isNull() ? null: stmt;
 		return new Stmt(this, sql, stmt, tail, cacheable);
@@ -268,7 +268,7 @@ public final class Conn implements AutoCloseable {
 	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
 	int waitForUnlockNotify(Conn unused) throws ConnException {
 		UnlockNotification notif = UnlockNotificationCallback.INSTANCE.add(pDb);
-		int rc = sqlite3_unlock_notify(pDb, UnlockNotificationCallback.INSTANCE, pDb.getPointer());
+		int rc = sqlite3_unlock_notify(pDb, UnlockNotificationCallback.INSTANCE, pDb);
 		assert rc == ErrCodes.SQLITE_LOCKED || rc == ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE || rc == SQLITE_OK;
 		if (rc == SQLITE_OK) {
 			notif.await(this);

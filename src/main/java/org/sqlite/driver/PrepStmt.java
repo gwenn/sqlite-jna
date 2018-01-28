@@ -8,10 +8,6 @@
  */
 package org.sqlite.driver;
 
-import org.sqlite.ErrCodes;
-import org.sqlite.StmtException;
-import org.sqlite.ZeroBlob;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,9 +26,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
 import java.sql.SQLException;
-//#if mvn.project.property.jdbc.specification.version >= "4.2"
 import java.sql.SQLType;
-//#endif
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -44,6 +38,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.sqlite.ErrCodes;
+import org.sqlite.StmtException;
+import org.sqlite.ZeroBlob;
+
+//#if mvn.project.property.jdbc.specification.version >= "4.2"
+//#endif
 
 /*
 Blob Incremental I/O:

@@ -1,14 +1,13 @@
 package org.sqlite.driver;
 
-import javax.naming.NamingException;
-import javax.naming.Reference;
-import javax.naming.Referenceable;
-import javax.naming.StringRefAddr;
-import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
+import javax.naming.Reference;
+import javax.naming.Referenceable;
+import javax.naming.StringRefAddr;
+import javax.sql.DataSource;
 
 /**
  * Simple DataSource which does not perform connection pooling. In order to use the DataSource, you

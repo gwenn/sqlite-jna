@@ -8,14 +8,6 @@
  */
 package org.sqlite.driver;
 
-import org.sqlite.ConnException;
-import org.sqlite.ErrCodes;
-import org.sqlite.OpenFlags;
-import org.sqlite.SQLite;
-import org.sqlite.parser.ast.LiteralExpr;
-import org.sqlite.parser.ast.Pragma;
-import org.sqlite.parser.ast.QualifiedName;
-
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -26,7 +18,18 @@ import java.sql.SQLWarning;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import static org.sqlite.OpenQueryParameter.*;
+import org.sqlite.ConnException;
+import org.sqlite.ErrCodes;
+import org.sqlite.OpenFlags;
+import org.sqlite.SQLite;
+import org.sqlite.parser.ast.LiteralExpr;
+import org.sqlite.parser.ast.Pragma;
+import org.sqlite.parser.ast.QualifiedName;
+
+import static org.sqlite.OpenQueryParameter.ENABLE_LOAD_EXTENSION;
+import static org.sqlite.OpenQueryParameter.ENABLE_TRIGGERS;
+import static org.sqlite.OpenQueryParameter.ENCODING;
+import static org.sqlite.OpenQueryParameter.FOREIGN_KEYS;
 import static org.sqlite.SQLite.nativeString;
 
 /**

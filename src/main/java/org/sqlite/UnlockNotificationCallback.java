@@ -1,12 +1,13 @@
 package org.sqlite;
 
-import com.sun.jna.Pointer;
-import org.sqlite.SQLite.SQLite3;
-
 import java.util.Map;
 import java.util.WeakHashMap;
 
-class UnlockNotificationCallback implements UnlockNotifyCallback {
+import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.PointerPointer;
+import org.sqlite.SQLite.sqlite3;
+
+class UnlockNotificationCallback extends UnlockNotifyCallback {
 	static final UnlockNotificationCallback INSTANCE = new UnlockNotificationCallback();
 
 	private final Map<Pointer, UnlockNotification> unlockNotifications = new WeakHashMap<>();
@@ -14,14 +15,14 @@ class UnlockNotificationCallback implements UnlockNotifyCallback {
 	private UnlockNotificationCallback() {
 	}
 
-	synchronized UnlockNotification add(SQLite3 db) {
-		return unlockNotifications.computeIfAbsent(db.getPointer(), k -> new UnlockNotification());
+	synchronized UnlockNotification add(sqlite3 db) {
+		return unlockNotifications.computeIfAbsent(db, k -> new UnlockNotification());
 	}
 
 	@Override
-	public void notify(Pointer[] args) {
-		for (Pointer arg : args) {
-			UnlockNotification notif = unlockNotifications.get(arg);
+	public void notify(PointerPointer args, int nArg) {
+		for (int i = 0; i < nArg; i++) {
+			UnlockNotification notif = unlockNotifications.get(args.get(i));
 			notif.fire();
 		}
 	}

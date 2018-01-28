@@ -1,16 +1,21 @@
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import org.bytedeco.javacpp.FunctionPointer;
+import org.bytedeco.javacpp.PointerPointer;
 
-@FunctionalInterface
-public interface UnlockNotifyCallback extends Callback {
-	default void callback(Pointer args, int nArg) {
+public abstract class UnlockNotifyCallback extends FunctionPointer {
+	protected UnlockNotifyCallback() {
+		allocate();
+	}
+	private native void allocate();
+
+	@SuppressWarnings("unused")
+	public void call(PointerPointer args, int nArg) {
 		if (nArg == 0) {
-			notify(new Pointer[0]);
+			return;
 		}
-		notify(args.getPointerArray(0, nArg));
+		notify(args, nArg);
 	}
 
-	void notify(Pointer[] args);
+	protected abstract void notify(PointerPointer args, int nArg);
 }

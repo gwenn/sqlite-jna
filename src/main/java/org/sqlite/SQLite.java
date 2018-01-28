@@ -8,6 +8,9 @@
  */
 package org.sqlite;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.FunctionPointer;
 import org.bytedeco.javacpp.IntPointer;
@@ -19,10 +22,6 @@ import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Const;
 import org.bytedeco.javacpp.annotation.Opaque;
 import org.bytedeco.javacpp.annotation.Platform;
-
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.Collections;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
 @Platform(cinclude = "sqlite3.h", link = "sqlite3")
@@ -197,7 +196,7 @@ public final class SQLite {
 	static native int sqlite3_set_authorizer(sqlite3 pDb, Authorizer authorizer, Pointer pUserData);
 
 	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
-	static native int sqlite3_unlock_notify(SQLite3 pBlocked, UnlockNotifyCallback xNotify, Pointer pNotifyArg);
+	static native int sqlite3_unlock_notify(sqlite3 pBlocked, UnlockNotifyCallback xNotify, Pointer pNotifyArg);
 	//#endif
 
 	/*

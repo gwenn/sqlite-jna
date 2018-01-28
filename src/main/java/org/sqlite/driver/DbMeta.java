@@ -8,18 +8,6 @@
  */
 package org.sqlite.driver;
 
-import org.sqlite.ColAffinities;
-import org.sqlite.ErrCodes;
-import org.sqlite.SQLite;
-import org.sqlite.StmtException;
-import org.sqlite.parser.DefaultSchemaProvider;
-import org.sqlite.parser.EnhancedPragma;
-import org.sqlite.parser.SchemaProvider;
-import org.sqlite.parser.ast.IdExpr;
-import org.sqlite.parser.ast.Pragma;
-import org.sqlite.parser.ast.QualifiedName;
-import org.sqlite.parser.ast.Select;
-
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -33,6 +21,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.sqlite.ColAffinities;
+import org.sqlite.ErrCodes;
+import org.sqlite.SQLite;
+import org.sqlite.StmtException;
+import org.sqlite.parser.DefaultSchemaProvider;
+import org.sqlite.parser.EnhancedPragma;
+import org.sqlite.parser.SchemaProvider;
+import org.sqlite.parser.ast.IdExpr;
+import org.sqlite.parser.ast.Pragma;
+import org.sqlite.parser.ast.QualifiedName;
+import org.sqlite.parser.ast.Select;
 
 import static org.sqlite.SQLite.escapeIdentifier;
 

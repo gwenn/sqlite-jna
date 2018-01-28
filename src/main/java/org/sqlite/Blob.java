@@ -13,7 +13,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-import static org.sqlite.SQLite.*;
+import static org.sqlite.SQLite.SQLITE_OK;
+import static org.sqlite.SQLite.nativeString;
+import static org.sqlite.SQLite.sqlite3_blob;
+import static org.sqlite.SQLite.sqlite3_blob_bytes;
+import static org.sqlite.SQLite.sqlite3_blob_close;
+import static org.sqlite.SQLite.sqlite3_blob_read;
+import static org.sqlite.SQLite.sqlite3_blob_reopen;
+import static org.sqlite.SQLite.sqlite3_blob_write;
+import static org.sqlite.SQLite.sqlite3_log;
 
 /**
  * A Handle To An Open BLOB

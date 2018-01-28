@@ -26,10 +26,6 @@ SUCH DAMAGE.
 
 package org.sqlite.driver;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -39,7 +35,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class DBMetaDataTest {
 	private Connection conn;

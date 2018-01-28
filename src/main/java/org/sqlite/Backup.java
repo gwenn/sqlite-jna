@@ -8,7 +8,15 @@
  */
 package org.sqlite;
 
-import static org.sqlite.SQLite.*;
+import static org.sqlite.SQLite.SQLITE_DONE;
+import static org.sqlite.SQLite.SQLITE_OK;
+import static org.sqlite.SQLite.nativeString;
+import static org.sqlite.SQLite.sqlite3_backup;
+import static org.sqlite.SQLite.sqlite3_backup_finish;
+import static org.sqlite.SQLite.sqlite3_backup_pagecount;
+import static org.sqlite.SQLite.sqlite3_backup_remaining;
+import static org.sqlite.SQLite.sqlite3_backup_step;
+import static org.sqlite.SQLite.sqlite3_log;
 
 /**
  * Online Backup Object

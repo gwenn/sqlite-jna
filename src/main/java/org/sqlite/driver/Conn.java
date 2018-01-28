@@ -8,11 +8,6 @@
  */
 package org.sqlite.driver;
 
-import org.sqlite.ConnException;
-import org.sqlite.ErrCodes;
-import org.sqlite.parser.ast.Release;
-import org.sqlite.parser.ast.Rollback;
-
 import java.nio.charset.Charset;
 import java.sql.Array;
 import java.sql.Blob;
@@ -23,7 +18,6 @@ import java.sql.DatabaseMetaData;
 import java.sql.NClob;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
@@ -34,6 +28,11 @@ import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+
+import org.sqlite.ConnException;
+import org.sqlite.ErrCodes;
+import org.sqlite.parser.ast.Release;
+import org.sqlite.parser.ast.Rollback;
 
 class Conn implements Connection {
 	private org.sqlite.Conn c;

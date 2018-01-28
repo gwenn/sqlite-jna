@@ -8,10 +8,6 @@
  */
 package org.sqlite.driver;
 
-import org.sqlite.ColTypes;
-import org.sqlite.ErrCodes;
-import org.sqlite.StmtException;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -39,6 +35,10 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.sqlite.ColTypes;
+import org.sqlite.ErrCodes;
+import org.sqlite.StmtException;
 
 class Rows implements ResultSet {
 	private Stmt s;
