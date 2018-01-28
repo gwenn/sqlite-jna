@@ -102,8 +102,8 @@ public final class Conn implements AutoCloseable {
 					sqlite3_log(ErrCodes.SQLITE_MISUSE, nativeString("Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\""));
 				} else {
 					sqlite3_log(ErrCodes.SQLITE_MISUSE, nativeString("Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\""));
-					stmt = sqlite3_next_stmt(pDb, stmt);
 				}
+				stmt = sqlite3_next_stmt(pDb, stmt);
 			}
 			final int res = sqlite3_close_v2(pDb); // must be called only once...
 			pDb = null;
