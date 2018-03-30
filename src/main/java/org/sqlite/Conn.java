@@ -67,7 +67,6 @@ public final class Conn implements AutoCloseable {
 	 * @param flags {@link org.sqlite.OpenFlags}.* (TODO EnumSet or BitSet, default flags)
 	 * @param vfs may be null
 	 * @return Opened Connection
-	 * @throws SQLiteException
 	 */
 	public static Conn open(String filename, int flags, String vfs) throws SQLiteException {
 		if (!sqlite3_threadsafe()) {
@@ -261,7 +260,7 @@ public final class Conn implements AutoCloseable {
 		return rc;
 	}
 	//#else
-	private int blockingPrepare(Object unused, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
+	private int blockingPrepare(Object unused, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) {
 		return sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail); // FIXME nbytes + 1
 	}
 	//#endif
@@ -575,7 +574,6 @@ public final class Conn implements AutoCloseable {
 	 * Find the current value of a limit.
 	 * @param id one of the limit categories
 	 * @return current limit value
-	 * @throws ConnException
 	 * @see <a href="https://www.sqlite.org/c3ref/limit.html">sqlite3_limit</a>
 	 */
 	public int getLimit(int id) throws ConnException {
@@ -587,7 +585,6 @@ public final class Conn implements AutoCloseable {
 	 * @param id one of the limit categories
 	 * @param newVal new limit value
 	 * @return previous limit value
-	 * @throws ConnException
 	 * @see <a href="https://www.sqlite.org/c3ref/limit.html">sqlite3_limit</a>
 	 */
 	public int setLimit(int id, int newVal) throws ConnException {

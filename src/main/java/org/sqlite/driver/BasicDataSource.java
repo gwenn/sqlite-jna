@@ -1,6 +1,5 @@
 package org.sqlite.driver;
 
-import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.naming.Referenceable;
 import javax.naming.StringRefAddr;

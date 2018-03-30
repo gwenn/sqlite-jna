@@ -328,6 +328,7 @@ class Stmt implements Statement {
 		if (rows == 0) {
 			return;
 		}
+		//noinspection StatementWithEmptyBody
 		if (rows != 1) {
 			//Util.trace(String.format("SQLite does not support setting fetch size to %d", rows));
 		}

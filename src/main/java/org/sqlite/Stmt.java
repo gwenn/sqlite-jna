@@ -192,7 +192,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param timeout in seconds
 	 * @return true until finished.
-	 * @throws StmtException
 	 */
 	public boolean step(int timeout) throws SQLiteException {
 		c.setQueryTimeout(timeout);
@@ -251,7 +250,7 @@ public class Stmt implements AutoCloseable, Row {
 		return rc;
 	}
 	//#else
-	private int blockingStep(Object unused) throws SQLiteException {
+	private int blockingStep(Object unused) {
 		return sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
 	}
 	//#endif
@@ -494,7 +493,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
-	 * @throws StmtException
 	 */
 	public void bindBlob(int i, byte[] value) throws StmtException {
 		if (value == null) {
@@ -507,7 +505,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
-	 * @throws StmtException
 	 */
 	public void bindDouble(int i, double value) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
@@ -516,7 +513,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
-	 * @throws StmtException
 	 */
 	public void bindInt(int i, int value) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
@@ -525,7 +521,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
-	 * @throws StmtException
 	 */
 	public void bindLong(int i, long value) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
@@ -533,7 +528,6 @@ public class Stmt implements AutoCloseable, Row {
 	}
 	/**
 	 * @param i The leftmost SQL parameter has an index of 1
-	 * @throws StmtException
 	 */
 	public void bindNull(int i) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
@@ -542,7 +536,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
-	 * @throws StmtException
 	 */
 	public void bindText(int i, String value) throws StmtException {
 		if (value == null) {
@@ -555,7 +548,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param i The leftmost SQL parameter has an index of 1
 	 * @param n length of BLOB
-	 * @throws StmtException
 	 */
 	public void bindZeroblob(int i, int n) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
