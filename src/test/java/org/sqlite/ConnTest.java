@@ -119,7 +119,9 @@ public class ConnTest {
 	@Test
 	public void enableLoadExtension() throws SQLiteException {
 		final Conn c = open();
-		c.enableLoadExtension(true);
+		if (!sqlite3_compileoption_used("OMIT_LOAD_EXTENSION")) {
+			c.enableLoadExtension(true);
+		}
 		checkResult(c.closeNoCheck());
 	}
 
