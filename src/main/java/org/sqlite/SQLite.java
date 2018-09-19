@@ -25,6 +25,7 @@ import jnr.ffi.byref.PointerByReference;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 
 public final class SQLite {
 	private static final String LIBRARY_NAME = "sqlite3";
@@ -369,6 +370,10 @@ public final class SQLite {
 		return library.sqlite3_set_authorizer(pDb, authorizer, pUserData);
 	}
 
+	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
+	static native int sqlite3_unlock_notify(Pointer pBlocked, UnlockNotifyCallback xNotify, Pointer pNotifyArg);
+	//#endif
+
 	/*
 	void (*)(sqlite3_context*,int,sqlite3_value**),
 	void (*)(sqlite3_context*,int,sqlite3_value**),
@@ -461,6 +466,9 @@ public final class SQLite {
 	public static final Charset UTF_8 = StandardCharsets.UTF_8;
 	public static final String UTF_8_ECONDING = UTF_8.name();
 	static Pointer nativeString(String sql) {
+		if (sql == null) {
+			return null;
+		}
 		final byte[] data = sql.getBytes(UTF_8);
 		jnr.ffi.Runtime runtime = jnr.ffi.Runtime.getRuntime(library);
 		final Pointer pointer = Memory.allocateDirect(runtime, data.length + 1);
@@ -501,25 +509,7 @@ public final class SQLite {
 		return identifier;
 	}
 
-	public static String doubleQuote(String dbName) {
-		if (dbName == null) {
-			return "";
-		}
-		if ("main".equals(dbName) || "temp".equals(dbName)) {
-			return dbName;
-		}
-		return '"' + escapeIdentifier(dbName) + '"'; // surround identifier with quote
-	}
-	public static String qualify(String dbName) {
-		if (dbName == null) {
-			return "";
-		}
-		if ("main".equals(dbName) || "temp".equals(dbName)) {
-			return dbName + '.';
-		}
-		return '"' + escapeIdentifier(dbName) + '"' + '.'; // surround identifier with quote
-	}
-
+	@FunctionalInterface
 	public interface LogCallback {
 		@SuppressWarnings("unused")
 		@Delegate
@@ -529,12 +519,7 @@ public final class SQLite {
 		void log(int err, String msg);
 	}
 
-	private static final LogCallback LOG_CALLBACK = new LogCallback() {
-		@Override
-		public void log(int err, String msg) {
-			System.out.printf("%d: %s%n", err, msg);
-		}
-	};
+	private static final LogCallback LOG_CALLBACK = (err, msg) -> System.out.printf("%d: %s%n", err, msg);
 
 	static {
 		if (!System.getProperty("sqlite.config.log", "").isEmpty()) {
@@ -554,6 +539,7 @@ public final class SQLite {
 	 * Query Progress Callback.
 	 * @see <a href="http://sqlite.org/c3ref/progress_handler.html">sqlite3_progress_handler</a>
 	 */
+	@FunctionalInterface
 	public interface ProgressCallback {
 		/**
 		 * @param arg

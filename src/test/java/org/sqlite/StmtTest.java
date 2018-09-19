@@ -1,5 +1,6 @@
 package org.sqlite;
 
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -125,6 +126,19 @@ public class StmtTest {
 		assertTrue(sel.step(0));
 		final byte[] bytes = sel.getColumnBlob(0);
 		assertArrayEquals(text.getBytes(StandardCharsets.UTF_8), bytes);
+		sel.close();
+		c.close();
+	}
+
+	@Test
+	public void pragma_func() throws Exception {
+		Assume.assumeTrue(org.sqlite.Conn.libversionNumber() >= 3020000);
+		final Conn c = ConnTest.open();
+
+		final Stmt sel = c.prepare("SELECT * FROM pragma_table_info(?)", false);
+		sel.bindText(1, "sqlite_master");
+		assertTrue(sel.step(0));
+		assertEquals("type", sel.getColumnText(1));
 		sel.close();
 		c.close();
 	}

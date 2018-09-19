@@ -21,6 +21,8 @@ import static org.sqlite.SQLite.*;
 
 public class Stmt implements AutoCloseable, Row {
 	final Conn c;
+	// Whole SQL (including tail)...
+	final String sql;
 	private Pointer pStmt;
 	private final String tail;
 	// cached parameter count
@@ -33,9 +35,10 @@ public class Stmt implements AutoCloseable, Row {
 	private int[] columnAffinities;
 	private boolean cacheable;
 
-	Stmt(Conn c, Pointer pStmt, Pointer tail, boolean cacheable) {
+	Stmt(Conn c, String sql, Pointer pStmt, Pointer tail, boolean cacheable) {
 		assert c != null;
 		this.c = c;
+		this.sql = sql;
 		this.pStmt = pStmt;
 		this.tail = blankToNull(tail.getString(0L, Integer.MAX_VALUE, UTF_8));
 		this.cacheable = cacheable;
@@ -189,11 +192,10 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param timeout in seconds
 	 * @return true until finished.
-	 * @throws StmtException
 	 */
 	public boolean step(int timeout) throws SQLiteException {
 		c.setQueryTimeout(timeout);
-		final int res = sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
+		final int res = blockingStep(c);
 		if (res == SQLITE_ROW) {
 			return true;
 		}
@@ -210,7 +212,7 @@ public class Stmt implements AutoCloseable, Row {
 	 */
 	public int stepNoCheck(int timeout) throws SQLiteException {
 		c.setQueryTimeout(timeout);
-		final int res = sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
+		final int res = blockingStep(c);
 		if (res == SQLITE_ROW) {
 			return res;
 		}
@@ -220,7 +222,7 @@ public class Stmt implements AutoCloseable, Row {
 	}
 	public void exec() throws SQLiteException {
 		c.setQueryTimeout(0);
-		final int res = sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
+		final int res = blockingStep(c);
 		// Release implicit lock as soon as possible
 		sqlite3_reset(pStmt); // ok if pStmt is null
 		if (res == SQLITE_ROW) {
@@ -230,6 +232,28 @@ public class Stmt implements AutoCloseable, Row {
 			throw new StmtException(this, String.format("error while executing '%s'", getSql()), res);
 		}
 	}
+
+	// http://sqlite.org/unlock_notify.html
+	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
+	private int blockingStep(Conn unused) throws SQLiteException {
+		int rc;
+		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_step(pStmt)) || ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE == rc) { // ok if pStmt is null => SQLITE_MISUSE
+			if (ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE != rc && ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE != c.getExtendedErrcode()) {
+				break;
+			}
+			rc = c.waitForUnlockNotify(null);
+			if (rc != SQLITE_OK) {
+				break;
+			}
+			sqlite3_reset(pStmt); // ok if pStmt is null
+		}
+		return rc;
+	}
+	//#else
+	private int blockingStep(Object unused) {
+		return sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
+	}
+	//#endif
 
 	public void reset() throws StmtException {
 		check(sqlite3_reset(pStmt), "Error while resetting '%s'"); // ok if pStmt is null
@@ -471,7 +495,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
-	 * @throws StmtException
 	 */
 	public void bindBlob(int i, byte[] value) throws StmtException {
 		if (value == null) {
@@ -484,7 +507,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
-	 * @throws StmtException
 	 */
 	public void bindDouble(int i, double value) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
@@ -493,7 +515,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
-	 * @throws StmtException
 	 */
 	public void bindInt(int i, int value) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
@@ -502,7 +523,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
-	 * @throws StmtException
 	 */
 	public void bindLong(int i, long value) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
@@ -510,7 +530,6 @@ public class Stmt implements AutoCloseable, Row {
 	}
 	/**
 	 * @param i The leftmost SQL parameter has an index of 1
-	 * @throws StmtException
 	 */
 	public void bindNull(int i) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
@@ -519,7 +538,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
-	 * @throws StmtException
 	 */
 	public void bindText(int i, String value) throws StmtException {
 		if (value == null) {
@@ -532,7 +550,6 @@ public class Stmt implements AutoCloseable, Row {
 	/**
 	 * @param i The leftmost SQL parameter has an index of 1
 	 * @param n length of BLOB
-	 * @throws StmtException
 	 */
 	public void bindZeroblob(int i, int n) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE

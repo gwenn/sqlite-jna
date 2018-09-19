@@ -16,6 +16,7 @@ import jnr.ffi.annotations.Encoding;
  * Profiling callback.
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
  */
+@FunctionalInterface
 public interface ProfileCallback {
 	/**
 	 * @param sql SQL statement text.

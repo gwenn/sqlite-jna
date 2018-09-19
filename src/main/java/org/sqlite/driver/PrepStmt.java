@@ -599,7 +599,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 	}
 
 	@Override
-	public ParameterMetaData getParameterMetaData() throws SQLException {
+	public ParameterMetaData getParameterMetaData() {
 		return this;
 	}
 
@@ -835,7 +835,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 	}
 
 	@Override
-	public int isNullable(int param) throws SQLException {
+	public int isNullable(int param) {
 		return parameterNullableUnknown;
 	}
 
@@ -870,7 +870,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 	}
 
 	@Override
-	public int getParameterMode(int param) throws SQLException {
+	public int getParameterMode(int param) {
 		return parameterModeIn;
 	}
 

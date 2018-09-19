@@ -8,9 +8,13 @@
  */
 package org.sqlite;
 
+import org.sqlite.parser.ast.LiteralExpr;
+import org.sqlite.parser.ast.Pragma;
+import org.sqlite.parser.ast.QualifiedName;
+
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import jnr.ffi.Pointer;
@@ -33,7 +37,24 @@ public final class Conn implements AutoCloseable {
 	private final boolean sharedCacheMode;
 	private TimeoutProgressCallback timeoutProgressCallback;
 
-	private final LinkedList<Stmt> cache = new LinkedList<>();
+	private final Map<String, Stmt> cache = new LinkedHashMap<String, Stmt>() {
+		@Override
+		protected boolean removeEldestEntry(Map.Entry eldest) {
+			if (size() <= maxCacheSize) {
+				return false;
+			}
+
+			Iterator<Stmt> it = values().iterator();
+			while (it.hasNext()) {
+				if (size() <= maxCacheSize) {
+					return false;
+				}
+				it.next().close(true);
+				it.remove();
+			}
+			return false;
+		}
+	};
 	private int maxCacheSize = 100; // TODO parameterize
 
 	// Make sure a stmt is not finalized while current conn is being closed
@@ -47,7 +68,6 @@ public final class Conn implements AutoCloseable {
 	 * @param flags {@link org.sqlite.OpenFlags}.* (TODO EnumSet or BitSet, default flags)
 	 * @param vfs may be null
 	 * @return Opened Connection
-	 * @throws SQLiteException
 	 */
 	public static Conn open(String filename, int flags, String vfs) throws SQLiteException {
 		if (!sqlite3_threadsafe()) {
@@ -111,7 +131,7 @@ public final class Conn implements AutoCloseable {
 		}
 	}
 	/**
-	 * Close a database connection and throw an exception if an error occured.
+	 * Close a database connection and throw an exception if an error occurred.
 	 */
 	public void close() throws ConnException {
 		final int res = closeNoCheck();
@@ -163,7 +183,7 @@ public final class Conn implements AutoCloseable {
 	}
 
 	/**
-	 * Determine if a cannection is in shared-cache mode.
+	 * Determine if a connection is in shared-cache mode.
 	 * <b>not reliable (and may depend on sqlite3_enable_shared_cache global status)</b>
 	 * @return <code>true</code> if shared-cache mode is active.
 	 * @see <a href="https://www.sqlite.org/sharedcache.html">SQLite Shared-Cache Mode</a>
@@ -206,7 +226,7 @@ public final class Conn implements AutoCloseable {
 	 * Compile an SQL statement.
 	 * @param sql query
 	 * @return Prepared Statement
-	 * @throws ConnException if current connection is closed or an error occured during statement compilation.
+	 * @throws ConnException if current connection is closed or an error occurred during statement compilation.
 	 * @see <a href="https://www.sqlite.org/c3ref/prepare.html">sqlite3_prepare_v2</a>
 	 */
 	public Stmt prepare(String sql, boolean cacheable) throws ConnException {
@@ -220,10 +240,45 @@ public final class Conn implements AutoCloseable {
 		final Pointer pSql = nativeString(sql);
 		final PointerByReference ppStmt = new PointerByReference();
 		final PointerByReference ppTail = new PointerByReference();
-		final int res = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail);
+		final int res = blockingPrepare(null, pSql, ppStmt, ppTail);
 		check(res, "error while preparing statement '%s'", sql);
-		return new Stmt(this, ppStmt.getValue(), ppTail.getValue(), cacheable);
+		return new Stmt(this, sql, ppStmt.getValue(), ppTail.getValue(), cacheable);
 	}
+
+	// http://sqlite.org/unlock_notify.html
+	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
+	private int blockingPrepare(Conn unused, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
+		int rc;
+		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail))) {
+			rc = waitForUnlockNotify(null);
+			if (rc != SQLITE_OK) {
+				break;
+			}
+		}
+		return rc;
+	}
+	//#else
+	private int blockingPrepare(Object unused, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) {
+		return sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail); // FIXME nbytes + 1
+	}
+	//#endif
+
+	// http://sqlite.org/unlock_notify.html
+	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
+	int waitForUnlockNotify(Conn unused) throws ConnException {
+		UnlockNotification notif = UnlockNotificationCallback.INSTANCE.add(pDb);
+		int rc = sqlite3_unlock_notify(pDb, UnlockNotificationCallback.INSTANCE, pDb);
+		assert rc == ErrCodes.SQLITE_LOCKED || rc == ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE || rc == SQLITE_OK;
+		if (rc == SQLITE_OK) {
+			notif.await(this);
+		}
+		return rc;
+	}
+	//#else
+	int waitForUnlockNotify(Object unused) throws ConnException {
+		return ErrCodes.SQLITE_LOCKED;
+	}
+	//#endif
 
 	/**
 	 * @return Run-time library version number
@@ -295,7 +350,7 @@ public final class Conn implements AutoCloseable {
 	/**
 	 * Run multiple statements of SQL.
 	 * @param sql statements
-	 * @throws SQLiteException if current connection is closed or an error occured during SQL execution.
+	 * @throws SQLiteException if current connection is closed or an error occurred during SQL execution.
 	 */
 	public void exec(String sql) throws SQLiteException {
 		while (sql != null && !sql.isEmpty()) {
@@ -310,7 +365,7 @@ public final class Conn implements AutoCloseable {
 	/**
 	 * Executes one or many non-parameterized statement(s) (separated by semi-colon) with no control and no stmt cache.
 	 * @param sql statements
-	 * @throws ConnException if current connection is closed or an error occured during SQL execution.
+	 * @throws ConnException if current connection is closed or an error occurred during SQL execution.
 	 * @see <a href="https://www.sqlite.org/c3ref/exec.html">sqlite3_exec</a>
 	 */
 	public void fastExec(String sql) throws ConnException {
@@ -326,7 +381,7 @@ public final class Conn implements AutoCloseable {
 	 * @param iRow row id
 	 * @param rw <code>true</code> for read-write mode, <code>false</code> for read-only mode.
 	 * @return BLOB
-	 * @throws SQLiteException if current connection is closed or an error occured during BLOB open.
+	 * @throws SQLiteException if current connection is closed or an error occurred during BLOB open.
 	 * @see <a href="https://www.sqlite.org/c3ref/blob_open.html">sqlite3_blob_open</a>
 	 */
 	public Blob open(String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
@@ -516,7 +571,6 @@ public final class Conn implements AutoCloseable {
 	 * Find the current value of a limit.
 	 * @param id one of the limit categories
 	 * @return current limit value
-	 * @throws ConnException
 	 * @see <a href="https://www.sqlite.org/c3ref/limit.html">sqlite3_limit</a>
 	 */
 	public int getLimit(int id) throws ConnException {
@@ -528,7 +582,6 @@ public final class Conn implements AutoCloseable {
 	 * @param id one of the limit categories
 	 * @param newVal new limit value
 	 * @return previous limit value
-	 * @throws ConnException
 	 * @see <a href="https://www.sqlite.org/c3ref/limit.html">sqlite3_limit</a>
 	 */
 	public int setLimit(int id, int newVal) throws ConnException {
@@ -666,7 +719,8 @@ public final class Conn implements AutoCloseable {
 	 * @see <a href="http://sqlite.org/pragma.html#pragma_encoding">pragma encoding</a>
 	 */
 	public String encoding(String dbName) throws SQLiteException {
-		try (Stmt s = prepare("PRAGMA " + qualify(dbName) + "encoding", false)) {
+		Pragma pragma = new Pragma(new QualifiedName(dbName, "encoding"), null);
+		try (Stmt s = prepare(pragma.toSql(), false)) {
 			if (!s.step(0)) {
 				throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
 			}
@@ -697,7 +751,8 @@ public final class Conn implements AutoCloseable {
 	}
 
 	boolean pragma(String dbName, String name) throws SQLiteException {
-		try (Stmt s = prepare("PRAGMA " + qualify(dbName) + name, false)) {
+		Pragma pragma = new Pragma(new QualifiedName(dbName, name), null);
+		try (Stmt s = prepare(pragma.toSql(), false)) {
 			if (!s.step(0)) {
 				throw new StmtException(s, "No result", ErrCodes.WRAPPER_SPECIFIC);
 			}
@@ -705,7 +760,8 @@ public final class Conn implements AutoCloseable {
 		}
 	}
 	void pragma(String dbName, String name, boolean value) throws ConnException {
-		fastExec("PRAGMA " + qualify(dbName) + name + '=' + (value ? 1 : 0));
+		Pragma pragma = new Pragma(new QualifiedName(dbName, name), LiteralExpr.integer(value ? 1 : 0));
+		fastExec(pragma.toSql());
 	}
 
 	// To be called in Conn.prepare
@@ -714,16 +770,8 @@ public final class Conn implements AutoCloseable {
 			return null;
 		}
 		synchronized (cache) {
-			final Iterator<Stmt> it = cache.iterator();
-			while (it.hasNext()) {
-				final Stmt stmt = it.next();
-				if (stmt.getSql().equals(sql)) { // TODO s.SQL() may have been trimmed by SQLite
-					it.remove();
-					return stmt;
-				}
-			}
+			return cache.remove(sql);
 		}
-		return null;
 	}
 
 	// To be called in Stmt.close
@@ -732,10 +780,7 @@ public final class Conn implements AutoCloseable {
 			return false;
 		}
 		synchronized (cache) {
-			cache.push(stmt);
-			while (cache.size() > maxCacheSize) {
-				cache.removeLast().close(true);
-			}
+			cache.put(stmt.sql,stmt);
 		}
 		return true;
 	}
@@ -772,7 +817,7 @@ public final class Conn implements AutoCloseable {
 			return;
 		}
 		synchronized (cache) {
-			final Iterator<Stmt> it = cache.iterator();
+			final Iterator<Stmt> it = cache.values().iterator();
 			while (it.hasNext()) {
 				final Stmt stmt = it.next();
 				stmt.close(true);

@@ -267,12 +267,12 @@ public class Blob implements AutoCloseable {
 		}
 
 		@Override
-		public synchronized void mark(int _) {
+		public synchronized void mark(int unused) {
 			mark = readOffset;
 		}
 
 		@Override
-		public synchronized void reset() throws IOException {
+		public synchronized void reset() {
 			readOffset = mark;
 		}
 	}

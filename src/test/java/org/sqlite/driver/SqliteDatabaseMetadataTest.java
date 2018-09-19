@@ -26,13 +26,14 @@
 
 package org.sqlite.driver;
 
+import org.junit.Assume;
+import org.junit.Test;
+
 import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
-
-import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -331,7 +332,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 			"|main|null|sqlite_master|type|12|TEXT|10|null|10|10|1|null|null|null|null|10|1|YES|null|null|null|null|||",
 			"|main|null|sqlite_master|name|12|TEXT|10|null|10|10|1|null|null|null|null|10|2|YES|null|null|null|null|||",
 			"|main|null|sqlite_master|tbl_name|12|TEXT|10|null|10|10|1|null|null|null|null|10|3|YES|null|null|null|null|||",
-			"|main|null|sqlite_master|rootpage|4|INTEGER|10|null|10|10|1|null|null|null|null|10|4|YES|null|null|null|null|||",
+			"|main|null|sqlite_master|rootpage|4|INT|10|null|10|10|1|null|null|null|null|10|4|YES|null|null|null|null|||",
 			"|main|null|sqlite_master|sql|12|TEXT|10|null|10|10|1|null|null|null|null|10|5|YES|null|null|null|null|||",
 			"|main|null|test_table|id|4|INTEGER|10|null|10|10|1|null|null|null|null|10|1|YES|null|null|null|null|||",
 			"|main|null|test_table|name|12|VARCHAR|10|null|10|10|0|null|null|null|null|10|2|NO|null|null|null|null|||",
@@ -343,6 +344,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 	};
 	@Test
 	public void testGetColumns() throws Exception {
+		Assume.assumeTrue(org.sqlite.Conn.libversionNumber() >= 3021000);
 		try (ResultSet rs = dbMetadata.getColumns(null, null, null, null)) {
 			ResultSetMetaData rsm = rs.getMetaData();
 
@@ -355,7 +357,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 			"|TABLE_CAT|TABLE_SCHEM|TABLE_NAME|COLUMN_NAME|KEY_SEQ|PK_NAME|";
 
 	private static final String[] PK_DUMP = {
-			"|main|null|test_table|id|1|id|",
+			"|main|null|test_table|id|1|null|",
 	};
 
 	@Test
@@ -451,6 +453,9 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 					"DEFERRABILITY|";
 
 	private static final String[] IMPORTED_KEY_DUMP = {
+			"|main|null|artist|artistid|main|null|track|trackartist|1|3|3|track_artist_1|null|7|",
+	};
+	private static final String[] EXPORTED_KEY_DUMP = {
 			"|main|null|artist|artistid|main|null|track|trackartist|1|3|3|track_artist_0|null|7|",
 	};
 
@@ -491,7 +496,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 			ResultSetMetaData rsm = rs.getMetaData();
 
 			assertEquals(IMPORTED_KEY_HEADER, formatResultSetHeader(rsm));
-			assertArrayEquals(IMPORTED_KEY_DUMP, formatResultSet(rs));
+			assertArrayEquals(EXPORTED_KEY_DUMP, formatResultSet(rs));
 		}
 	}
 

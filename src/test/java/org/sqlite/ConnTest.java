@@ -14,6 +14,7 @@ import static org.junit.Assert.assertTrue;
 import static org.sqlite.SQLite.SQLite3Values;
 import static org.sqlite.SQLite.UTF_8_ECONDING;
 import static org.sqlite.SQLite.getRuntime;
+import static org.sqlite.SQLite.sqlite3_compileoption_used;
 
 public class ConnTest {
 	@Test
@@ -126,7 +127,9 @@ public class ConnTest {
 	@Test
 	public void enableLoadExtension() throws SQLiteException {
 		final Conn c = open();
-		c.enableLoadExtension(true);
+		if (!sqlite3_compileoption_used("OMIT_LOAD_EXTENSION")) {
+			c.enableLoadExtension(true);
+		}
 		checkResult(c.closeNoCheck());
 	}
 

@@ -1,11 +1,12 @@
+sudo: false
 language: java
 jdk:
   - oraclejdk8
 
 before_script:
   - echo $PWD
-  - export SQLITEVERSION=3150000
-  - curl -O http://sqlite.org/2016/sqlite-autoconf-$SQLITEVERSION.tar.gz
+  - export SQLITEVERSION=3210000
+  - curl -O http://sqlite.org/2017/sqlite-autoconf-$SQLITEVERSION.tar.gz
   - tar xzvf sqlite-autoconf-$SQLITEVERSION.tar.gz
   - cd sqlite-autoconf-$SQLITEVERSION
   - export CFLAGS="-DSQLITE_ENABLE_COLUMN_METADATA=1"

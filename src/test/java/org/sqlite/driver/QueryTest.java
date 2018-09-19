@@ -28,6 +28,11 @@ See License FAQ <http://www.apache.org/foundation/licence-FAQ.html> for more det
 
 package org.sqlite.driver;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.sqlite.ConnException;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -36,10 +41,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -64,7 +65,7 @@ public class QueryTest {
 	public void nullQuery() throws Exception {
 		try (Statement stmt = conn.createStatement()) {
 			stmt.execute(null);
-		} catch (NullPointerException e) {
+		} catch (ConnException e) {
 		}
 	}
 

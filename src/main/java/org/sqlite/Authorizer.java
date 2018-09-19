@@ -10,6 +10,7 @@ import jnr.ffi.annotations.Encoding;
  * @see Conn#setAuhtorizer(Authorizer)
  * @see <a href="http://sqlite.org/c3ref/set_authorizer.html">sqlite3_set_authorizer</a>
  */
+@FunctionalInterface
 public interface Authorizer {
 	/**
 	 * @param pArg       User data (<code>null</code>)

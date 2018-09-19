@@ -9,6 +9,7 @@ import jnr.ffi.annotations.Delegate;
  * @see Conn#setBusyHandler(BusyHandler)
  * @see <a href="http://sqlite.org/c3ref/busy_handler.html">sqlite3_busy_handler</a>
  */
+@FunctionalInterface
 public interface BusyHandler {
 	/**
 	 * @param pArg  User data (<code>null</code>)

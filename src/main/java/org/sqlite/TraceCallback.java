@@ -16,6 +16,7 @@ import jnr.ffi.annotations.Encoding;
  * Tracing callback.
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
  */
+@FunctionalInterface
 public interface TraceCallback {
 	/**
 	 * @param sql SQL statement text.

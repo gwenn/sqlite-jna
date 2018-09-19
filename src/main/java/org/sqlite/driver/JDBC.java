@@ -8,6 +8,14 @@
  */
 package org.sqlite.driver;
 
+import org.sqlite.ConnException;
+import org.sqlite.ErrCodes;
+import org.sqlite.OpenFlags;
+import org.sqlite.SQLite;
+import org.sqlite.parser.ast.LiteralExpr;
+import org.sqlite.parser.ast.Pragma;
+import org.sqlite.parser.ast.QualifiedName;
+
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -17,11 +25,6 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.util.Properties;
 import java.util.logging.Logger;
-
-import org.sqlite.ConnException;
-import org.sqlite.ErrCodes;
-import org.sqlite.OpenFlags;
-import org.sqlite.SQLite;
 
 import static org.sqlite.OpenQueryParameter.ENABLE_LOAD_EXTENSION;
 import static org.sqlite.OpenQueryParameter.ENABLE_TRIGGERS;
@@ -82,12 +85,12 @@ public class JDBC implements Driver {
 	}
 
 	@Override
-	public boolean acceptsURL(String url) throws SQLException {
+	public boolean acceptsURL(String url) {
 		return url.startsWith(PREFIX);
 	}
 
 	@Override
-	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
+	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) {
 		// TODO parse url
 		final DriverPropertyInfo vfs = new DriverPropertyInfo(VFS, info == null ? null : info.getProperty(VFS));
 		vfs.description = "Specify the name of a VFS object that provides the operating system interface that should be used to access the database file on disk.";
@@ -134,7 +137,8 @@ public class JDBC implements Driver {
 		}
 		final String encoding = info.getProperty(ENCODING.name);
 		if (encoding != null && !encoding.isEmpty()) {
-			conn.fastExec("PRAGMA encoding=" + SQLite.doubleQuote(encoding));
+			Pragma pragma = new Pragma(new QualifiedName(null, "encoding"), LiteralExpr.string(encoding));
+			conn.fastExec(pragma.toSql());
 		}
 		final String fks = info.getProperty(FOREIGN_KEYS.name);
 		SQLWarning warnings = null;

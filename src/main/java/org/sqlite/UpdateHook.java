@@ -15,6 +15,7 @@ import jnr.ffi.annotations.Encoding;
  * @see Conn#updateHook(UpdateHook)
  * @see <a href="http://sqlite.org/c3ref/update_hook.html">sqlite3_update_hook</a>
  */
+@FunctionalInterface
 public interface UpdateHook {
 	/**
 	 * Data Change Notification Callback
