@@ -8,6 +8,8 @@ There are two layers:
 
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/gwenn/sqlite-jna?branch=master&svg=true)](https://ci.appveyor.com/project/gwenn/sqlite-jna)
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.gwenn/sqlite-jna/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.gwenn/sqlite-jna/)
+
 
 INSTALL
 -------
