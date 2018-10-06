@@ -181,7 +181,7 @@
       <plugin>
         <groupId>com.igormaznitsa</groupId>
         <artifactId>jcp</artifactId>
-        <version>6.1.2</version>
+        <version>6.1.4</version>
         <configuration>
           <verbose>false</verbose>
         </configuration>
@@ -195,6 +195,7 @@
           </execution>
           <execution>
             <id>clearGeneratedFolders</id>
+            <phase>verify</phase>
             <goals>
               <goal>clear</goal>
             </goals>
