@@ -5,9 +5,8 @@ There are two layers:
  - a bloated one matching the JDBC API (package org.sqlite.driver)
 
 [![Build Status](https://secure.travis-ci.org/gwenn/sqlite-jna.png?branch=jnr)](http://www.travis-ci.org/gwenn/sqlite-jna)
-
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/gwenn/sqlite-jna?branch=jnr&svg=true)](https://ci.appveyor.com/project/gwenn/sqlite-jna)
-
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.gwenn/sqlite-jnr.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.gwenn%22%20AND%20a:%22sqlite-jnr%22)
 
 INSTALL
 -------
