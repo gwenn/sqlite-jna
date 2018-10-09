@@ -7,6 +7,7 @@ There are two layers:
 [![Build Status](https://secure.travis-ci.org/gwenn/sqlite-jna.png)](http://www.travis-ci.org/gwenn/sqlite-jna)
 [![Build Status](https://ci.appveyor.com/api/projects/status/github/gwenn/sqlite-jna?branch=master&svg=true)](https://ci.appveyor.com/project/gwenn/sqlite-jna)
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.gwenn/sqlite-jna.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.gwenn%22%20AND%20a:%22sqlite-jna%22)
+[![Javadocs](https://www.javadoc.io/badge/com.github.gwenn/sqlite-jna.svg)](https://www.javadoc.io/doc/com.github.gwenn/sqlite-jna)
 
 INSTALL
 -------
