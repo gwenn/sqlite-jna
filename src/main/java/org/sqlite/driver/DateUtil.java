@@ -32,7 +32,7 @@ final class DateUtil {
 	public static final String HH_MM_SS = "HH:mm:ss"; // See java.sql.Time.toString()
 	public static final String DEFAULT_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"; // ISO-8601
 
-	private static final ThreadLocal<Map<String, DateFormat>> DATE_FORMATS = ThreadLocal.withInitial(() -> new HashMap<>());
+	private static final ThreadLocal<Map<String, DateFormat>> DATE_FORMATS = ThreadLocal.withInitial(HashMap::new);
 	private static final Calendar UTC = GregorianCalendar.getInstance(TimeZone.getTimeZone("GMT"));
 
 	private DateUtil() {

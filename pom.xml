@@ -2,10 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.sqlite</groupId>
+  <groupId>com.github.gwenn</groupId>
   <artifactId>sqlite-javacpp</artifactId>
   <packaging>jar</packaging>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <name>SQLite JavaCPP binding</name>
   <description>JDBC Driver for SQLite using JavaCPP</description>
   <url>https://github.com/gwenn/sqlite-jna</url>
@@ -29,6 +29,11 @@
     <tag>HEAD</tag>
     <url>https://github.com/gwenn/sqlite-jna</url>
   </scm>
+
+  <ciManagement>
+    <system>travis</system>
+    <url>https://www.travis-ci.org/gwenn/sqlite-jna</url>
+  </ciManagement>
 
   <properties>
     <java.version>1.8</java.version>
@@ -71,118 +76,110 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>com.igormaznitsa</groupId>
-        <artifactId>jcp</artifactId>
-        <version>6.1.2</version>
-        <configuration>
-          <verbose>false</verbose>
-        </configuration>
-        <executions>
-          <execution>
-            <id>preprocessSources</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>preprocess</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>clearGeneratedFolders</id>
-            <goals>
-              <goal>clear</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.bytedeco</groupId>
-        <artifactId>javacpp</artifactId>
-        <version>1.4.2</version>
-        <configuration>
-          <properties>${javacpp.platform}</properties>
-          <propertyKeysAndValues>
-            <property>
-              <name>platform.root</name>
-              <value>${javacpp.platform.root}</value>
-            </property>
-            <property>
-              <name>platform.compiler</name>
-              <value>${javacpp.platform.compiler}</value>
-            </property>
-          </propertyKeysAndValues>
-          <classPath>${project.build.outputDirectory}</classPath>
-          <includePath>/usr/include/</includePath>
-          <linkPath>/usr/lib/</linkPath>
-          <!--preloadPath>${basedir}/cppbuild/${javacpp.platform}/bin/</preloadPath-->
-        </configuration>
-        <executions>
-          <execution>
-            <id>generate-sources</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>build</goal>
-            </goals>
-            <configuration>
-              <skip>${javacpp.parser.skip}</skip>
-              <outputDirectory>${project.build.sourceDirectory}</outputDirectory>
-              <!--classOrPackageName>org.bytedeco.javacpp.presets.*</classOrPackageName-->
-            </configuration>
-          </execution>
-          <execution>
-            <id>process-classes</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>build</goal>
-            </goals>
-            <configuration>
-              <skip>${javacpp.compiler.skip}</skip>
-              <classOrPackageName>org.sqlite.SQLite</classOrPackageName>
-              <copyLibs>true</copyLibs>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.1</version>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-          <encoding>${project.build.sourceEncoding}</encoding>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.16</version>
-        <configuration>
-          <disableXmlReport>true</disableXmlReport>
-          <redirectTestOutputToFile>true</redirectTestOutputToFile>
-          <!--argLine>-Xcheck:jni</argLine-->
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-
-  <reporting>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>2.8.1</version>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.10.3</version>
-      </plugin>
-    </plugins>
-  </reporting>
 
   <profiles>
+    <profile>
+      <!-- Prevent JavaDoc warnings from failing the build under Java 8... -->
+      <id>doclint-java8-disable</id>
+      <activation>
+        <jdk>[1.8,)</jdk>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.0.1</version>
+            <configuration>
+              <doclint>none</doclint>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- https://central.sonatype.org/pages/apache-maven.html#distribution-management-and-authentication -->
+      <id>ossrh</id>
+
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
+
+      <distributionManagement>
+        <snapshotRepository>
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+      </distributionManagement>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.0.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.0.1</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <version>3.0.0-M1</version>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>1.6.8</version>
+            <extensions>true</extensions>
+            <configuration>
+              <serverId>ossrh</serverId>
+              <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+              <autoReleaseAfterClose>true</autoReleaseAfterClose>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <profile>
       <id>linux</id>
       <activation>
@@ -284,10 +281,126 @@
     </profile>
   </profiles>
 
-  <repositories>
-    <repository>
-				<id>jitpack.io</id>
-				<url>https://jitpack.io</url>
-		</repository>
-  </repositories>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.igormaznitsa</groupId>
+        <artifactId>jcp</artifactId>
+        <version>6.1.4</version>
+        <configuration>
+          <verbose>false</verbose>
+        </configuration>
+        <executions>
+          <execution>
+            <id>preprocessSources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>preprocess</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>clearGeneratedFolders</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>clear</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.bytedeco</groupId>
+        <artifactId>javacpp</artifactId>
+        <version>1.4.2</version>
+        <configuration>
+          <properties>${javacpp.platform}</properties>
+          <propertyKeysAndValues>
+            <property>
+              <name>platform.root</name>
+              <value>${javacpp.platform.root}</value>
+            </property>
+            <property>
+              <name>platform.compiler</name>
+              <value>${javacpp.platform.compiler}</value>
+            </property>
+          </propertyKeysAndValues>
+          <classPath>${project.build.outputDirectory}</classPath>
+          <includePath>/usr/include/</includePath>
+          <linkPath>/usr/lib/</linkPath>
+          <!--preloadPath>${basedir}/cppbuild/${javacpp.platform}/bin/</preloadPath-->
+        </configuration>
+        <executions>
+          <execution>
+            <id>generate-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+            <configuration>
+              <skip>${javacpp.parser.skip}</skip>
+              <outputDirectory>${project.build.sourceDirectory}</outputDirectory>
+              <!--classOrPackageName>org.bytedeco.javacpp.presets.*</classOrPackageName-->
+            </configuration>
+          </execution>
+          <execution>
+            <id>process-classes</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+            <configuration>
+              <skip>${javacpp.compiler.skip}</skip>
+              <classOrPackageName>org.sqlite.SQLite</classOrPackageName>
+              <copyLibs>true</copyLibs>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.0</version>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+          <encoding>${project.build.sourceEncoding}</encoding>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.0</version>
+        <configuration>
+          <enableAssertions>true</enableAssertions>
+          <disableXmlReport>true</disableXmlReport>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <!--argLine>-Xcheck:jni</argLine-->
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>3.0.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.0.1</version>
+      </plugin>
+    </plugins>
+  </reporting>
+
+  <developers>
+    <developer>
+      <id>gwenn</id>
+      <url>https://github.com/gwenn</url>
+      <roles>
+        <role>owner</role>
+      </roles>
+    </developer>
+  </developers>
 </project>

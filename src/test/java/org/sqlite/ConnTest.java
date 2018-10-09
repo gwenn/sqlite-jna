@@ -12,7 +12,12 @@ import org.sqlite.SQLite.ScalarCallback;
 import org.sqlite.SQLite.TraceCallback;
 import org.sqlite.SQLite.sqlite3_context;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.sqlite.SQLite.SQLite3Values;
 import static org.sqlite.SQLite.UTF_8_ECONDING;
 import static org.sqlite.SQLite.nativeString;
