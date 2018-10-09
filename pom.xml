@@ -49,10 +49,8 @@
     </dependency>
     <dependency>
       <groupId>com.github.gwenn</groupId>
-      <!--artifactId>sqlite-parser</artifactId>
-      <version>0.1.0</version-->
-      <artifactId>jlemon</artifactId>
-      <version>master-SNAPSHOT</version>
+      <artifactId>sqlite-parser</artifactId>
+      <version>0.1.0</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
