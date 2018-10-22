@@ -1,5 +1,6 @@
 package org.sqlite;
 
+import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -223,7 +224,7 @@ public class ConnTest {
 		c.createAggregateFunction("my_sum", 1, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new AggregateStepCallback() {
 			@Override
 			protected int numberOfBytes() {
-				return Pointer.SIZE;
+				return Native.POINTER_SIZE;
 			}
 			@Override
 			protected void step(SQLite3Context pCtx, Pointer aggrCtx, SQLite3Values args) {
