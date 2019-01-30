@@ -374,6 +374,9 @@
           <disableXmlReport>true</disableXmlReport>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <!--argLine>-Xcheck:jni</argLine-->
+          <additionalClasspathElements>
+            <additionalClasspathElement>${project.basedir}</additionalClasspathElement>
+          </additionalClasspathElements>
         </configuration>
       </plugin>
     </plugins>
