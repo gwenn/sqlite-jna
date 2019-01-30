@@ -18,6 +18,7 @@ import jnr.ffi.annotations.Delegate;
 import jnr.ffi.annotations.Encoding;
 import jnr.ffi.annotations.IgnoreError;
 import jnr.ffi.annotations.In;
+import jnr.ffi.annotations.LongLong;
 import jnr.ffi.annotations.Out;
 import jnr.ffi.byref.IntByReference;
 import jnr.ffi.byref.PointerByReference;
@@ -617,7 +618,7 @@ public final class SQLite {
 		@IgnoreError
 		int sqlite3_total_changes(@In Pointer pDb);
 		@IgnoreError
-		long sqlite3_last_insert_rowid(@In Pointer pDb);
+		@LongLong long sqlite3_last_insert_rowid(@In Pointer pDb);
 
 		@IgnoreError
 		@Encoding("UTF-8")String sqlite3_db_filename(@In Pointer pDb, @In @Encoding("UTF-8")String dbName); // no copy needed
@@ -678,7 +679,7 @@ public final class SQLite {
 		@IgnoreError
 		int sqlite3_column_int(@In Pointer pStmt, int iCol);
 		@IgnoreError
-		long sqlite3_column_int64(@In Pointer pStmt, int iCol);
+		@LongLong long sqlite3_column_int64(@In Pointer pStmt, int iCol);
 		@IgnoreError
 		@Encoding("UTF-8")String sqlite3_column_text(@In Pointer pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
 		//const void *sqlite3_column_text16(Pointer pStmt, int iCol);
@@ -698,7 +699,7 @@ public final class SQLite {
 		@IgnoreError
 		int sqlite3_bind_int(@In Pointer pStmt, int i, int value);
 		@IgnoreError
-		int sqlite3_bind_int64(@In Pointer pStmt, int i, long value);
+		int sqlite3_bind_int64(@In Pointer pStmt, int i, @LongLong long value);
 		@IgnoreError
 		int sqlite3_bind_null(@In Pointer pStmt, int i);
 		@IgnoreError
@@ -720,9 +721,9 @@ public final class SQLite {
 
 		@IgnoreError
 		int sqlite3_blob_open(@In Pointer pDb, @In @Encoding("UTF-8")String dbName, @In @Encoding("UTF-8")String tableName, @In @Encoding("UTF-8")String columnName,
-													long iRow, boolean flags, @Out PointerByReference ppBlob); // no copy needed
+				@LongLong long iRow, boolean flags, @Out PointerByReference ppBlob); // no copy needed
 		@IgnoreError
-		int sqlite3_blob_reopen(@In Pointer pBlob, long iRow);
+		int sqlite3_blob_reopen(@In Pointer pBlob, @LongLong long iRow);
 		@IgnoreError
 		int sqlite3_blob_bytes(@In Pointer pBlob);
 		@IgnoreError
@@ -773,7 +774,7 @@ public final class SQLite {
 		@IgnoreError
 		void sqlite3_result_blob(@In Pointer pCtx, @In byte[] blob, int n, long xDel);
 		@IgnoreError
-		void sqlite3_result_int64(@In Pointer pCtx, long l);
+		void sqlite3_result_int64(@In Pointer pCtx, @LongLong long l);
 		@IgnoreError
 		void sqlite3_result_zeroblob(@In Pointer pCtx, int n);
 		@IgnoreError
@@ -794,7 +795,7 @@ public final class SQLite {
 		@IgnoreError
 		int sqlite3_value_int(@In Pointer pValue);
 		@IgnoreError
-		long sqlite3_value_int64(@In Pointer pValue);
+		@LongLong long sqlite3_value_int64(@In Pointer pValue);
 		@IgnoreError
 		@Encoding("UTF-8")String sqlite3_value_text(@In Pointer pValue);
 		@IgnoreError
