@@ -17,3 +17,6 @@ before_script:
 script:
   - echo $SQLITEVERSION
   - mvn -Djna.library.path=$PWD/sqlite-autoconf-$SQLITEVERSION/lib test
+
+after_failure:
+  - cat target/surefire-reports/*.txt
