@@ -57,10 +57,16 @@ public class JDBC implements Driver {
 		final int flags = getOpenFlags(info == null ? null : info.getProperty(MODE),
 				info == null ? null : info.getProperty(CACHE));
 		final org.sqlite.Conn conn = org.sqlite.Conn.open(url.substring(PREFIX.length()), flags, vfs);
-		conn.setBusyTimeout(3000);
-		final SQLWarning warnings = setup(conn, info);
-		// check database format (the pragma fails if the file header is not valid):
-		conn.fastExec("PRAGMA schema_version");
+		final SQLWarning warnings;
+		try {
+			conn.setBusyTimeout(3000);
+			warnings = setup(conn, info);
+			// check database format (the pragma fails if the file header is not valid):
+			conn.fastExec("PRAGMA schema_version");
+		} catch (Throwable t) {
+			conn.closeNoCheck();
+			throw t;
+		}
 		return new Conn(conn, DateUtil.config(info), warnings);
 	}
 

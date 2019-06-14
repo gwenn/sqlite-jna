@@ -97,8 +97,13 @@ public final class Conn implements AutoCloseable {
 		final SQLite3 sqlite3 = pDb == null ? null: new SQLite3(pDb);
 		final Conn conn = new Conn(sqlite3, sharedCacheMode);
 		if (uri && !queryParams.isEmpty()) {
-			for (OpenQueryParameter parameter : OpenQueryParameter.values()) {
-				parameter.config(queryParams, conn);
+			try {
+				for (OpenQueryParameter parameter : OpenQueryParameter.values()) {
+					parameter.config(queryParams, conn);
+				}
+			} catch (Throwable t) {
+				conn.closeNoCheck();
+				throw t;
 			}
 		}
 		return conn;
