@@ -2,8 +2,14 @@ package org.sqlite;
 
 import jnr.ffi.Pointer;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.sqlite.SQLite.SQLite3Context;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -11,12 +17,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.sqlite.SQLite.SQLite3Values;
 import static org.sqlite.SQLite.UTF_8_ECONDING;
 import static org.sqlite.SQLite.getRuntime;
 import static org.sqlite.SQLite.sqlite3_compileoption_used;
 
 public class ConnTest {
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 	@Test
 	public void checkLibversion() throws SQLiteException {
 		assertTrue(Conn.libversion().startsWith("3"));
@@ -28,6 +38,16 @@ public class ConnTest {
 		assertNotNull(c);
 		assertEquals(Conn.TEMP_FILE, c.getFilename());
 		checkResult(c.closeNoCheck());
+	}
+
+	@Test
+	public void checkOpenDir() throws SQLiteException, IOException {
+		File folder = this.folder.newFolder();
+		try(Conn c = Conn.open(folder.getPath(), OpenFlags.SQLITE_OPEN_READWRITE, null)) {
+			fail("SQLiteException expected");
+		} catch (SQLException e) {
+			assertEquals(ErrCodes.SQLITE_CANTOPEN, e.getErrorCode() & 0xFF);
+		}
 	}
 
 	@Test

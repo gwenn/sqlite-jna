@@ -78,7 +78,15 @@ public final class Conn implements AutoCloseable {
 		final Pointer pDb = ppDb.getValue();
 		if (res != SQLITE_OK) {
 			if (pDb != null) {
+				final int extRes;
+				if (sqlite3_extended_result_codes(pDb, true) == SQLITE_OK) {
+					extRes = sqlite3_extended_errcode(pDb);
+				} else {
+					extRes = res;
+				}
+				String errmsg = sqlite3_errmsg(pDb);
 				sqlite3_close(pDb);
+				throw new SQLiteException(String.format("error while opening a database connection to '%s': %s", filename, errmsg), extRes);
 			}
 			throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
 		}
