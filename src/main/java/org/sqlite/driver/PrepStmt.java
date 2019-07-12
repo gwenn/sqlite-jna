@@ -37,6 +37,8 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -694,6 +696,9 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 			if (x instanceof java.util.Date) {
 				setString(parameterIndex, DateUtil.formatDate((java.util.Date) x, scaleOrLength, null));
 				return;
+			} else if (x instanceof LocalDate) {
+				setString(parameterIndex, x.toString());
+				return;
 			}
 		} else if (Types.INTEGER == targetSqlType) {
 			if (x instanceof Number) {
@@ -702,6 +707,12 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 			} else if (x instanceof java.util.Date) {
 				final long unixepoch = ((java.util.Date) x).getTime();
 				setLong(parameterIndex, x instanceof Date ? DateUtil.normalizeDate(unixepoch, null) : unixepoch);
+				return;
+			} else if (x instanceof LocalDate) {
+				setLong(parameterIndex, ((LocalDate) x).toEpochDay());
+				return;
+			} else if (x instanceof OffsetDateTime) {
+				setLong(parameterIndex, ((OffsetDateTime) x).toEpochSecond());
 				return;
 			}
 		} else if (Types.REAL == targetSqlType) {
