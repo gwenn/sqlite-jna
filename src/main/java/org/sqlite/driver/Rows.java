@@ -545,8 +545,9 @@ class Rows implements ResultSet {
 		if (rows == 0) {
 			return;
 		}
+		//noinspection StatementWithEmptyBody
 		if (rows != 1) {
-			throw Util.caseUnsupported("SQLite does not support setting fetch size");
+			//throw Util.caseUnsupported("SQLite does not support setting fetch size");
 		}
 	}
 

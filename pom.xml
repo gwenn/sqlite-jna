@@ -41,7 +41,7 @@
     <!-- 4.0 (Java 6), 4.1 (Java 7), 4.2 (Java 8) -->
     <jdbc.specification.version>4.2</jdbc.specification.version>
     <sqlite.enable.column.metadata>true</sqlite.enable.column.metadata>
-    <sqlite.omit.load.extension>false</sqlite.omit.load.extension>
+    <sqlite.omit.load.extension>true</sqlite.omit.load.extension>
     <sqlite.enable.stmt.scanstatus>false</sqlite.enable.stmt.scanstatus>
     <sqlite.enable.unlock.notify>false</sqlite.enable.unlock.notify>
   </properties>
@@ -223,6 +223,12 @@
           <!--argLine>-Djna.library.path=/usr/local/opt/sqlite/lib</argLine-->
           <!--argLine>-Xcheck:jni</argLine-->
         </configuration>
+      </plugin>
+      <!--  mvn package shade:shade -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.1</version>
       </plugin>
     </plugins>
   </build>
