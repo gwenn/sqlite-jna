@@ -41,7 +41,7 @@
     <!-- 4.0 (Java 6), 4.1 (Java 7), 4.2 (Java 8) -->
     <jdbc.specification.version>4.2</jdbc.specification.version>
     <sqlite.enable.column.metadata>true</sqlite.enable.column.metadata>
-    <sqlite.omit.load.extension>true</sqlite.omit.load.extension>
+    <sqlite.omit.load.extension>false</sqlite.omit.load.extension>
     <sqlite.enable.stmt.scanstatus>false</sqlite.enable.stmt.scanstatus>
     <sqlite.enable.unlock.notify>false</sqlite.enable.unlock.notify>
   </properties>
@@ -50,7 +50,7 @@
     <dependency>
       <groupId>net.java.dev.jna</groupId>
       <artifactId>jna</artifactId>
-      <version>5.4.0</version>
+      <version>5.5.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.gwenn</groupId>
