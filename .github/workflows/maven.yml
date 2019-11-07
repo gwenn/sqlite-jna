@@ -24,7 +24,6 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           choco install sqlite --params "/NoTools" --no-progress
-          REM add a link to sqlite3.dll in a directory that is in PATH:
           mklink "C:\ProgramData\Chocolatey\bin\sqlite3.dll" "C:\ProgramData\chocolatey\lib\SQLite\tools\sqlite3.dll"
       - uses: actions/checkout@v1
       - name: Build with Maven
