@@ -17,9 +17,14 @@ jobs:
           java-version: 1.8
 
       - name: Install libsqlite3-dev
-        if: runner.os == 'Linux'
+        if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get install libsqlite3-dev
 
+      - name: Install libsqlite3 dll
+        if: matrix.os == 'windows-latest'
+        run: |
+          vcpkg integrate install
+          vcpkg install sqlite3:x64-windows
       - uses: actions/checkout@v1
       - name: Build with Maven
         run: mvn -q -B test --file pom.xml
