@@ -18,14 +18,20 @@ jobs:
 
       - name: Install libsqlite3-dev
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get install libsqlite3-dev
+        run: sudo apt-get -qq install libsqlite3-dev
 
       - name: Install libsqlite3 dll
         if: matrix.os == 'windows-latest'
-        shell: cmd
-        run: |
-          choco install sqlite --params "/NoTools" --no-progress
-          mklink "C:\ProgramData\Chocolatey\bin\sqlite3.dll" "C:\ProgramData\chocolatey\lib\SQLite\tools\sqlite3.dll"
+        run: vcpkg install sqlite3:x64-windows
+
       - uses: actions/checkout@v1
+
       - name: Build with Maven
+        if: matrix.os == 'ubuntu-latest'
         run: mvn -q -B test --file pom.xml
+
+      - name: Build with Maven
+        if: matrix.os == 'windows-latest'
+        run: |
+          vcpkg integrate install
+          mvn -q -B test --file pom.xml
