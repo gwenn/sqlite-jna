@@ -27,6 +27,7 @@ SUCH DAMAGE.
 package org.sqlite.driver;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -890,6 +891,8 @@ public class DBMetaDataTest {
 
 	@Test
 	public void virtualTable() throws SQLException {
+		// sqlite3 lib provided by vcpkg is not compiled with fst4 extension
+		Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
 		stat.execute("CREATE VIRTUAL TABLE vt USING fts4(name, tokenize=porter, matchinfo=fts3)");
 		ResultSet rs = meta.getTables("main", null, "vt", new String[]{"table"});
 		while (rs.next()) {
