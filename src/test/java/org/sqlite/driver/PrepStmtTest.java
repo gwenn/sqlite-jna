@@ -46,6 +46,10 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
@@ -819,6 +823,25 @@ public class PrepStmtTest {
 			fail("expected exception");
 		} catch (SQLException e) {
 			assertEquals(ErrCodes.SQLITE_CONSTRAINT, e.getErrorCode());
+		}
+	}
+
+	@Test
+	public void temporal() throws SQLException {
+		try (PreparedStatement stmt = conn.prepareStatement("SELECT ?;")) {
+			check(stmt, LocalDate.class, LocalDate.now());
+			check(stmt, LocalDateTime.class, LocalDateTime.now());
+			check(stmt, OffsetDateTime.class, OffsetDateTime.now());
+			check(stmt, LocalTime.class, LocalTime.now());
+		}
+	}
+
+	private static <T> void check(PreparedStatement stmt, Class<T> clazz, T expected) throws SQLException {
+		stmt.setObject(1, expected);
+		try (ResultSet rs = stmt.executeQuery()) {
+			assertTrue(rs.next());
+			T actual = rs.getObject(1, clazz);
+			assertEquals(expected, actual);
 		}
 	}
 }

@@ -75,8 +75,17 @@ public final class Conn implements AutoCloseable {
 		final sqlite3 pDb = new sqlite3();
 		final int res = sqlite3_open_v2(nativeString(filename), pDb, flags, nativeString(vfs));
 		if (res != SQLITE_OK) {
-			if (pDb.isNull()) {
-				sqlite3_close(new sqlite3(pDb));
+			if (!pDb.isNull()) {
+				final sqlite3 sqlite3 = pDb;
+				final int extRes;
+				if (sqlite3_extended_result_codes(sqlite3, true) == SQLITE_OK) {
+					extRes = sqlite3_extended_errcode(sqlite3);
+				} else {
+					extRes = res;
+				}
+				String errmsg = getString(sqlite3_errmsg(sqlite3));
+				sqlite3_close(sqlite3);
+				throw new SQLiteException(String.format("error while opening a database connection to '%s': %s", filename, errmsg), extRes);
 			}
 			throw new SQLiteException(String.format("error while opening a database connection to '%s'", filename), res);
 		}
@@ -87,8 +96,13 @@ public final class Conn implements AutoCloseable {
 		final sqlite3 sqlite3 = pDb.isNull() ? null: pDb;
 		final Conn conn = new Conn(sqlite3, sharedCacheMode);
 		if (uri && !queryParams.isEmpty()) {
-			for (OpenQueryParameter parameter : OpenQueryParameter.values()) {
-				parameter.config(queryParams, conn);
+			try {
+				for (OpenQueryParameter parameter : OpenQueryParameter.values()) {
+					parameter.config(queryParams, conn);
+				}
+			} catch (Throwable t) {
+				conn.closeNoCheck();
+				throw t;
 			}
 		}
 		return conn;

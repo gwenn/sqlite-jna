@@ -484,13 +484,15 @@ class Conn implements Connection {
 	public <T> T unwrap(Class<T> iface) throws SQLException {
 		if (iface.isAssignableFrom(getClass())) {
 			return iface.cast(this);
+		} else if (org.sqlite.Conn.class.equals(iface)) {
+			return iface.cast(c);
 		}
 		throw new SQLException("Cannot unwrap to " + iface.getName());
 	}
 
 	@Override
 	public boolean isWrapperFor(Class<?> iface) {
-		return iface.isAssignableFrom(getClass());
+		return iface.isAssignableFrom(getClass()) || org.sqlite.Conn.class.equals(iface);
 	}
 
 	private static void checkCursor(int resultSetType, int resultSetConcurrency, int resultSetHoldability)

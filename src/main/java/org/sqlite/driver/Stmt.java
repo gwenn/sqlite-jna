@@ -502,12 +502,14 @@ class Stmt implements Statement {
 	public <T> T unwrap(Class<T> iface) throws SQLException {
 		if (iface.isAssignableFrom(getClass())) {
 			return iface.cast(this);
+		} else if (org.sqlite.Stmt.class.equals(iface)) {
+			return iface.cast(stmt);
 		}
 		throw new SQLException("Cannot unwrap to " + iface.getName());
 	}
 
 	@Override
 	public boolean isWrapperFor(Class<?> iface) {
-		return iface.isAssignableFrom(getClass());
+		return iface.isAssignableFrom(getClass()) || org.sqlite.Stmt.class.equals(iface);
 	}
 }

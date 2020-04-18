@@ -31,6 +31,10 @@ import java.sql.SQLXML;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
@@ -541,8 +545,9 @@ class Rows implements ResultSet {
 		if (rows == 0) {
 			return;
 		}
+		//noinspection StatementWithEmptyBody
 		if (rows != 1) {
-			throw Util.caseUnsupported("SQLite does not support setting fetch size");
+			//throw Util.caseUnsupported("SQLite does not support setting fetch size");
 		}
 	}
 
@@ -1270,7 +1275,50 @@ class Rows implements ResultSet {
 	//#if mvn.project.property.jdbc.specification.version >= "4.1"
 	@Override
 	public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
-		throw Util.unsupported("ResultSet.getObject(int, Class)");
+		if (type == null) {
+			throw Util.error("Null type specified");
+		}
+		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+		wasNull = sourceType == ColTypes.SQLITE_NULL;
+		switch (sourceType) {
+			case ColTypes.SQLITE_NULL:
+				return null;
+			case ColTypes.SQLITE_TEXT:
+				final String txt = stmt.getColumnText(fixCol(columnIndex));
+				return convert(txt, type);
+			case ColTypes.SQLITE_INTEGER:
+				final long l = stmt.getColumnLong(fixCol(columnIndex));
+				return convert(l, type);
+			case ColTypes.SQLITE_FLOAT:
+				final double d = stmt.getColumnDouble(fixCol(columnIndex));
+				return convert(d, type);
+			default:
+				throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
+		}
+	}
+
+	private <T> T convert(String txt, Class<T> type) throws SQLException {
+		if (LocalDate.class.equals(type)) {
+			return (T)LocalDate.parse(txt); // TODO wrap DateTimeParseException into SQLException
+		} else if (LocalDateTime.class.equals(type)) {
+			return (T)LocalDateTime.parse(txt);
+		} else if (OffsetDateTime.class.equals(type)) {
+			return (T)OffsetDateTime.parse(txt);
+		} else if (LocalTime.class.equals(type)) {
+			return (T)LocalTime.parse(txt);
+		}
+		throw new SQLException("Conversion from text to " + type + "is not supported");
+	}
+
+	private <T> T convert(long l, Class<T> type) throws SQLException {
+		if (LocalDate.class.equals(type)) {
+			return (T)LocalDate.ofEpochDay(l);
+		}
+		throw new SQLException("Conversion from long to " + type + "is not supported");
+	}
+
+	private <T> T convert(double d, Class<T> type) throws SQLException {
+		throw new SQLException("Conversion from double to " + type + "is not supported");
 	}
 
 	@Override
