@@ -31,8 +31,8 @@
   </scm>
 
   <ciManagement>
-    <system>travis</system>
-    <url>https://www.travis-ci.org/gwenn/sqlite-jna</url>
+    <system>github</system>
+    <url>https://github.com/gwenn/sqlite-jna/actions</url>
   </ciManagement>
 
   <properties>
@@ -61,12 +61,6 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.11</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>1.7.25</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -181,7 +175,7 @@
       <plugin>
         <groupId>com.igormaznitsa</groupId>
         <artifactId>jcp</artifactId>
-        <version>6.1.4</version>
+        <version>7.0.2</version>
         <configuration>
           <verbose>false</verbose>
         </configuration>
@@ -191,13 +185,6 @@
             <phase>generate-sources</phase>
             <goals>
               <goal>preprocess</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>clearGeneratedFolders</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>clear</goal>
             </goals>
           </execution>
         </executions>
@@ -222,6 +209,12 @@
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <!--argLine>-Djnr.ffi.library.path=/usr/local/opt/sqlite/lib</argLine-->
         </configuration>
+      </plugin>
+      <!--  mvn package shade:shade -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.1</version>
       </plugin>
     </plugins>
   </build>

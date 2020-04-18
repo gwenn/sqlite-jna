@@ -1,6 +1,7 @@
 package org.sqlite;
 
 import jnr.ffi.Pointer;
+import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -302,6 +303,8 @@ public class ConnTest {
 
 	@Test
 	public void virtualTable() throws SQLiteException {
+		// sqlite3 lib provided by vcpkg is not compiled with fst4 extension
+		Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
 		final Conn c = open();
 		c.fastExec("CREATE VIRTUAL TABLE names USING fts4(name, desc, tokenize=porter)");
 		c.close();

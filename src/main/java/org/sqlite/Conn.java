@@ -96,8 +96,13 @@ public final class Conn implements AutoCloseable {
 		final boolean sharedCacheMode = "shared".equals(queryParams.get("cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
 		final Conn conn = new Conn(pDb, sharedCacheMode);
 		if (uri && !queryParams.isEmpty()) {
-			for (OpenQueryParameter parameter : OpenQueryParameter.values()) {
-				parameter.config(queryParams, conn);
+			try {
+				for (OpenQueryParameter parameter : OpenQueryParameter.values()) {
+					parameter.config(queryParams, conn);
+				}
+			} catch (Throwable t) {
+				conn.closeNoCheck();
+				throw t;
 			}
 		}
 		return conn;

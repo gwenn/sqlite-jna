@@ -37,6 +37,8 @@ import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.LocalDate;
+import java.time.temporal.Temporal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -411,6 +413,8 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 			setClob(parameterIndex, (Clob) x);
 		} else if (x instanceof Array) {
 			setArray(parameterIndex, (Array) x);
+		} else if (x instanceof Temporal) {
+			setString(parameterIndex, x.toString());
 		} else {
 			throw new StmtException(getStmt(), String.format("Unsupported type: %s", x.getClass().getName()), ErrCodes.WRAPPER_SPECIFIC);
 		}
@@ -694,6 +698,9 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 			if (x instanceof java.util.Date) {
 				setString(parameterIndex, DateUtil.formatDate((java.util.Date) x, scaleOrLength, null));
 				return;
+			} else if (x instanceof Temporal) {
+				setString(parameterIndex, x.toString());
+				return;
 			}
 		} else if (Types.INTEGER == targetSqlType) {
 			if (x instanceof Number) {
@@ -702,6 +709,9 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 			} else if (x instanceof java.util.Date) {
 				final long unixepoch = ((java.util.Date) x).getTime();
 				setLong(parameterIndex, x instanceof Date ? DateUtil.normalizeDate(unixepoch, null) : unixepoch);
+				return;
+			} else if (x instanceof LocalDate) {
+				setLong(parameterIndex, ((LocalDate) x).toEpochDay());
 				return;
 			}
 		} else if (Types.REAL == targetSqlType) {
