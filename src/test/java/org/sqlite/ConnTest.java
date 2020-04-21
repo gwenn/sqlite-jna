@@ -201,6 +201,19 @@ public class ConnTest {
 	}
 
 	@Test
+	public void setBusyHandler() throws SQLiteException {
+		final Conn c = open();
+		c.setBusyHandler(new BusyHandler() {
+			@Override
+			public boolean busy(int count) {
+				return false;
+			}
+		});
+		final String sql = "SELECT 1";
+		c.fastExec(sql);
+	}
+
+	@Test
 	public void createScalarFunction() throws SQLiteException {
 		final Conn c = open();
 		c.createScalarFunction("test", 0, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
