@@ -12,5 +12,8 @@ public interface FunctionFlags {
 	int SQLITE_UTF16BE = 3;
 	int SQLITE_UTF16 = 4;
 	/** @see <a href="http://sqlite.org/c3ref/c_deterministic.html">deterministic</a> */
-	int SQLITE_DETERMINISTIC = 0x800;
+	int SQLITE_DETERMINISTIC = 0x000000800;
+	int SQLITE_DIRECTONLY = 0x000080000;
+	int SQLITE_SUBTYPE = 0x000100000;
+	int SQLITE_INNOCUOUS = 0x000200000;
 }
