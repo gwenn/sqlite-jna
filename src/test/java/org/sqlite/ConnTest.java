@@ -18,6 +18,7 @@ import org.sqlite.SQLite.sqlite3_context;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -216,6 +217,19 @@ public class ConnTest {
 	}
 
 	@Test
+	public void setBusyHandler() throws SQLiteException {
+		final Conn c = open();
+		c.setBusyHandler(new BusyHandler() {
+			@Override
+			public boolean busy(int count) {
+				return false;
+			}
+		});
+		final String sql = "SELECT 1";
+		c.fastExec(sql);
+	}
+
+	@Test
 	public void createScalarFunction() throws SQLiteException {
 		final Conn c = open();
 		c.createScalarFunction("test", 0, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
@@ -317,6 +331,21 @@ public class ConnTest {
 		final Conn c = open();
 		c.fastExec("CREATE VIRTUAL TABLE names USING fts4(name, desc, tokenize=porter)");
 		c.close();
+	}
+
+	@Test
+	public void updateHook() throws SQLiteException {
+		final Conn c = open();
+		AtomicInteger count = new AtomicInteger();
+		c.updateHook(new UpdateHook() {
+			@Override
+			public void update(int actionCode, String dbName, String tblName, long rowId) {
+				count.incrementAndGet();
+			}
+		});
+		c.fastExec("CREATE TABLE test AS SELECT 0 as x;");
+		assertEquals(1, c.execDml("UPDATE test SET x = 1;", false));
+		assertEquals(1, count.get());
 	}
 
 	private static class ConnState {

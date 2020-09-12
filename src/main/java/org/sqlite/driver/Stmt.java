@@ -239,7 +239,8 @@ class Stmt implements Statement {
 
 	protected boolean step(boolean updateOnly) throws SQLException {
 		final int res = stmt.stepNoCheck(queryTimeout);
-		if (updateOnly && (res == SQLite.SQLITE_ROW || stmt.getColumnCount() != 0)) {
+		// stmt.getColumnCount() > 0 for ALTER
+		if (updateOnly && (res == SQLite.SQLITE_ROW || stmt.getColumnCount() != 0 && stmt.isReadOnly())) {
 			throw new StmtException(stmt, "statement returns a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
 		} else if (res == SQLite.SQLITE_ROW) {
 			return true;
