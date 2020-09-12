@@ -10,9 +10,11 @@ import org.junit.rules.TemporaryFolder;
 import org.sqlite.SQLite.AggregateFinalCallback;
 import org.sqlite.SQLite.AggregateStepCallback;
 import org.sqlite.SQLite.Authorizer;
+import org.sqlite.SQLite.BusyHandler;
 import org.sqlite.SQLite.ProfileCallback;
 import org.sqlite.SQLite.ScalarCallback;
 import org.sqlite.SQLite.TraceCallback;
+import org.sqlite.SQLite.UpdateHook;
 import org.sqlite.SQLite.sqlite3_context;
 
 import java.io.File;
