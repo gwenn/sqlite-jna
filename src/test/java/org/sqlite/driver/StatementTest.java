@@ -86,6 +86,9 @@ public class StatementTest {
 		assertEquals(2, tuc); // c1 = 23 does not exist
 
 		assertEquals(stat.executeUpdate("drop table s1;"), 0);
+
+		assertEquals(stat.executeUpdate("CREATE TABLE t (t TEXT);"), 0);
+		assertEquals(stat.executeUpdate("ALTER TABLE t RENAME TO t2;"), 0);
 	}
 
 	@Test
