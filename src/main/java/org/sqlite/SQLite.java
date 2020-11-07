@@ -113,6 +113,7 @@ public final class SQLite implements Library {
 	static native int sqlite3_prepare_v2(SQLite3 pDb, Pointer sql, int nByte, PointerByReference ppStmt,
 			PointerByReference pTail);
 	static native String sqlite3_sql(SQLite3Stmt pStmt); // no copy needed
+	static native Pointer sqlite3_expanded_sql(SQLite3Stmt pStmt); // sqlite3_free
 	static native int sqlite3_finalize(SQLite3Stmt pStmt);
 	static native int sqlite3_step(SQLite3Stmt pStmt);
 	static native int sqlite3_reset(SQLite3Stmt pStmt);
