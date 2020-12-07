@@ -127,6 +127,14 @@ public interface ErrCodes {
 	 * File opened that is not a database file
 	 */
 	int SQLITE_NOTADB = 26;
+	/**
+	 * Notifications from sqlite3_log()
+	 */
+	int SQLITE_NOTICE = 27;
+	/**
+	 * Warnings from sqlite3_log()
+	 */
+	int SQLITE_WARNING = 28;
 
 	/** sqlite_step() has another row ready */
 	//int SQLITE_ROW        =  100;

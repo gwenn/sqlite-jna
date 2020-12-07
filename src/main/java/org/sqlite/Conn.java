@@ -254,7 +254,7 @@ public final class Conn implements AutoCloseable {
 		final Pointer pSql = nativeString(sql);
 		final PointerByReference ppStmt = new PointerByReference();
 		final PointerByReference ppTail = new PointerByReference();
-		final int res = blockingPrepare(null, pSql, ppStmt, ppTail);
+		final int res = blockingPrepare(null, pSql, cacheable ? SQLITE_PREPARE_PERSISTENT : 0, ppStmt, ppTail);
 		check(res, "error while preparing statement '%s'", sql);
 		final Pointer pStmt = ppStmt.getValue();
 		final SQLite3Stmt stmt = pStmt == null ? null: new SQLite3Stmt(pStmt);
@@ -263,9 +263,9 @@ public final class Conn implements AutoCloseable {
 
 	// http://sqlite.org/unlock_notify.html
 	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
-	private int blockingPrepare(Conn unused, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
+	private int blockingPrepare(Conn unused, Pointer pSql, int flags, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
 		int rc;
-		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail))) {
+		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail))) {
 			rc = waitForUnlockNotify(null);
 			if (rc != SQLITE_OK) {
 				break;
@@ -274,8 +274,8 @@ public final class Conn implements AutoCloseable {
 		return rc;
 	}
 	//#else
-	private int blockingPrepare(Object unused, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) {
-		return sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail); // FIXME nbytes + 1
+	private int blockingPrepare(Object unused, Pointer pSql, int flags, PointerByReference ppStmt, PointerByReference ppTail) {
+		return sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail); // FIXME nbytes + 1
 	}
 	//#endif
 

@@ -177,7 +177,7 @@
       <plugin>
         <groupId>com.igormaznitsa</groupId>
         <artifactId>jcp</artifactId>
-        <version>7.0.2</version>
+        <version>7.0.4</version>
         <configuration>
           <verbose>false</verbose>
         </configuration>

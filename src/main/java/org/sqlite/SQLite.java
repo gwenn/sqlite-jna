@@ -44,6 +44,7 @@ public final class SQLite implements Library {
 	static native boolean sqlite3_compileoption_used(String optName);
 	static native String sqlite3_compileoption_get(int n);
 
+	// https://sqlite.org/c3ref/c_config_covering_index_scan.html
 	public static final int SQLITE_CONFIG_SINGLETHREAD = 1,
 			SQLITE_CONFIG_MULTITHREAD = 2, SQLITE_CONFIG_SERIALIZED = 3,
 			SQLITE_CONFIG_MEMSTATUS = 9,
@@ -76,6 +77,7 @@ public final class SQLite implements Library {
 	static native int sqlite3_busy_handler(SQLite3 pDb, BusyHandler bh, Pointer pArg);
 	static native int sqlite3_busy_timeout(SQLite3 pDb, int ms);
 	static native int sqlite3_db_status(SQLite3 pDb, int op, IntByReference pCur, IntByReference pHiwtr, boolean resetFlg);
+	// TODO https://sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfiglookaside constants
 	static native int sqlite3_db_config(SQLite3 pDb, int op, int v, IntByReference pOk);
 	//#if mvn.project.property.sqlite.omit.load.extension == "true"
 	static int sqlite3_enable_load_extension(Object pDb, boolean onoff) {
@@ -88,6 +90,7 @@ public final class SQLite implements Library {
 	static native int sqlite3_enable_load_extension(SQLite3 pDb, boolean onoff);
 	static native int sqlite3_load_extension(SQLite3 pDb, String file, String proc, PointerByReference errMsg);
 	//#endif
+	// https://sqlite.org/c3ref/c_limit_attached.html
 	public static final int SQLITE_LIMIT_LENGTH = 0, SQLITE_LIMIT_SQL_LENGTH = 1, SQLITE_LIMIT_COLUMN = 2,
 			SQLITE_LIMIT_EXPR_DEPTH = 3, SQLITE_LIMIT_COMPOUND_SELECT = 4, SQLITE_LIMIT_VDBE_OP = 5,
 			SQLITE_LIMIT_FUNCTION_ARG = 6, SQLITE_LIMIT_ATTACHED = 7, SQLITE_LIMIT_LIKE_PATTERN_LENGTH = 8,
@@ -109,8 +112,9 @@ public final class SQLite implements Library {
 			IntByReference pNotNull, IntByReference pPrimaryKey, IntByReference pAutoinc); // no copy needed
 
 	static native int sqlite3_exec(SQLite3 pDb, String cmd, Callback c, Pointer udp, PointerByReference errMsg);
-
-	static native int sqlite3_prepare_v2(SQLite3 pDb, Pointer sql, int nByte, PointerByReference ppStmt,
+	// https://sqlite.org/c3ref/c_prepare_normalize.html
+	public static final int SQLITE_PREPARE_PERSISTENT = 0x01/*, SQLITE_PREPARE_NORMALIZE = 0x02*/, SQLITE_PREPARE_NO_VTAB = 0x04;
+	static native int sqlite3_prepare_v3(SQLite3 pDb, Pointer sql, int nByte, int prepFlags, PointerByReference ppStmt,
 			PointerByReference pTail);
 	static native String sqlite3_sql(SQLite3Stmt pStmt); // no copy needed
 	static native Pointer sqlite3_expanded_sql(SQLite3Stmt pStmt); // sqlite3_free
@@ -169,6 +173,7 @@ public final class SQLite implements Library {
 	static native int sqlite3_bind_zeroblob(SQLite3Stmt pStmt, int i, int n);
 	static native int sqlite3_stmt_status(SQLite3Stmt pStmt, int op, boolean reset);
 	//#if mvn.project.property.sqlite.enable.stmt.scanstatus == "true"
+	// TODO https://sqlite.org/c3ref/c_scanstat_est.html constants
 	static native int sqlite3_stmt_scanstatus(SQLite3Stmt pStmt, int idx, int iScanStatusOp, PointerByReference pOut);
 	static native void sqlite3_stmt_scanstatus_reset(SQLite3Stmt pStmt);
 	//#endif
