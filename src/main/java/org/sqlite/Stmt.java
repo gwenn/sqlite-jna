@@ -55,6 +55,16 @@ public class Stmt implements AutoCloseable, Row {
 		return tail;
 	}
 
+	public String getExpandedSql() {
+		final BytePointer ptr = sqlite3_expanded_sql(pStmt);
+		if (ptr != null) {
+			final String sql = getString(ptr);
+			sqlite3_free(ptr);
+			return sql;
+		}
+		return null;
+	}
+
 	public String getErrMsg() {
 		return c.getErrMsg();
 	}

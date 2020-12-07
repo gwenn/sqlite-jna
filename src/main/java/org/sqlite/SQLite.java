@@ -41,6 +41,7 @@ public final class SQLite {
 	static native boolean sqlite3_compileoption_used(@Cast("const char*") BytePointer optName);
 	static native @Cast("const char*") BytePointer sqlite3_compileoption_get(int n);
 
+	// https://sqlite.org/c3ref/c_config_covering_index_scan.html
 	public static final int SQLITE_CONFIG_SINGLETHREAD = 1,
 			SQLITE_CONFIG_MULTITHREAD = 2, SQLITE_CONFIG_SERIALIZED = 3,
 			SQLITE_CONFIG_MEMSTATUS = 9,
@@ -73,6 +74,7 @@ public final class SQLite {
 	static native int sqlite3_busy_handler(sqlite3 pDb, BusyHandler bh, Pointer pArg);
 	static native int sqlite3_busy_timeout(sqlite3 pDb, int ms);
 	static native int sqlite3_db_status(sqlite3 pDb, int op, IntPointer pCur, IntPointer pHiwtr, boolean resetFlg);
+	// TODO https://sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfiglookaside constants
 	static native int sqlite3_db_config(sqlite3 pDb, int op, int v, IntPointer pOk);
 	//#if mvn.project.property.sqlite.omit.load.extension == "true"
 	static int sqlite3_enable_load_extension(Object pDb, boolean onoff) {
@@ -85,6 +87,7 @@ public final class SQLite {
 	static native int sqlite3_enable_load_extension(sqlite3 pDb, boolean onoff);
 	static native int sqlite3_load_extension(sqlite3 pDb,@Cast("const char*") BytePointer file,@Cast("const char*") BytePointer proc, @Cast("char**") @ByPtrPtr BytePointer errMsg);
 	//#endif
+	// https://sqlite.org/c3ref/c_limit_attached.html
 	public static final int SQLITE_LIMIT_LENGTH = 0, SQLITE_LIMIT_SQL_LENGTH = 1, SQLITE_LIMIT_COLUMN = 2,
 			SQLITE_LIMIT_EXPR_DEPTH = 3, SQLITE_LIMIT_COMPOUND_SELECT = 4, SQLITE_LIMIT_VDBE_OP = 5,
 			SQLITE_LIMIT_FUNCTION_ARG = 6, SQLITE_LIMIT_ATTACHED = 7, SQLITE_LIMIT_LIKE_PATTERN_LENGTH = 8,
@@ -106,10 +109,12 @@ public final class SQLite {
 																									IntPointer pNotNull, IntPointer pPrimaryKey, IntPointer pAutoinc); // no copy needed
 
 	static native int sqlite3_exec(sqlite3 pDb,@Cast("const char*") BytePointer cmd, @Cast("int (*)(void*,int,char**,char**)") Pointer c, Pointer udp, @Cast("char**") @ByPtrPtr BytePointer errMsg);
-
-	static native int sqlite3_prepare_v2(sqlite3 pDb, @Cast("const char*") BytePointer sql, int nByte, @ByPtrPtr sqlite3_stmt ppStmt,
+	// https://sqlite.org/c3ref/c_prepare_normalize.html
+	public static final int SQLITE_PREPARE_PERSISTENT = 0x01/*, SQLITE_PREPARE_NORMALIZE = 0x02*/, SQLITE_PREPARE_NO_VTAB = 0x04;
+	static native int sqlite3_prepare_v3(sqlite3 pDb, @Cast("const char*") BytePointer sql, int nByte, int prepFlags, @ByPtrPtr sqlite3_stmt ppStmt,
 																			 @Cast("const char**") @ByPtrPtr BytePointer pTail);
 	static native @Cast("const char*") BytePointer sqlite3_sql(sqlite3_stmt pStmt); // no copy needed
+	static native @Cast("const char*") BytePointer sqlite3_expanded_sql(sqlite3_stmt pStmt); // sqlite3_free
 	static native int sqlite3_finalize(sqlite3_stmt pStmt);
 	static native int sqlite3_step(sqlite3_stmt pStmt);
 	static native int sqlite3_reset(sqlite3_stmt pStmt);
@@ -165,6 +170,7 @@ public final class SQLite {
 	static native int sqlite3_bind_zeroblob(sqlite3_stmt pStmt, int i, int n);
 	static native int sqlite3_stmt_status(sqlite3_stmt pStmt, int op, boolean reset);
 	//#if mvn.project.property.sqlite.enable.stmt.scanstatus == "true"
+	// TODO https://sqlite.org/c3ref/c_scanstat_est.html constants
 	static native int sqlite3_stmt_scanstatus(sqlite3_stmt pStmt, int idx, int iScanStatusOp, Pointer pOut);
 	static native void sqlite3_stmt_scanstatus_reset(sqlite3_stmt pStmt);
 	//#endif

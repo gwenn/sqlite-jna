@@ -21,6 +21,8 @@ import org.sqlite.parser.ast.Pragma;
 import org.sqlite.parser.ast.QualifiedName;
 
 import static org.sqlite.SQLite.*;
+import static org.sqlite.SQLite.SQLITE_PREPARE_PERSISTENT;
+import static org.sqlite.SQLite.sqlite3_prepare_v3;
 
 /**
  * Database Connection Handle
@@ -253,7 +255,7 @@ public final class Conn implements AutoCloseable {
 		final BytePointer pSql = nativeString(sql);
 		sqlite3_stmt stmt = new sqlite3_stmt();
 		final BytePointer tail = new BytePointer();
-		final int res = blockingPrepare(null, pSql, stmt, tail);
+		final int res = blockingPrepare(null, pSql, cacheable ? SQLITE_PREPARE_PERSISTENT : 0, stmt, tail);
 		check(res, "error while preparing statement '%s'", sql);
 		stmt = stmt.isNull() ? null: stmt;
 		return new Stmt(this, sql, stmt, tail, cacheable);
@@ -261,9 +263,9 @@ public final class Conn implements AutoCloseable {
 
 	// http://sqlite.org/unlock_notify.html
 	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
-	private int blockingPrepare(Conn unused, BytePointer pSql, sqlite3_stmt ppStmt, BytePointer ppTail) throws ConnException {
+	private int blockingPrepare(Conn unused, BytePointer pSql, int flags, sqlite3_stmt ppStmt, BytePointer ppTail) throws ConnException {
 		int rc;
-		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail))) {
+		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail))) {
 			rc = waitForUnlockNotify(null);
 			if (rc != SQLITE_OK) {
 				break;
@@ -272,8 +274,8 @@ public final class Conn implements AutoCloseable {
 		return rc;
 	}
 	//#else
-	private int blockingPrepare(Object unused, BytePointer pSql, sqlite3_stmt ppStmt, BytePointer ppTail) {
-		return sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail); // FIXME nbytes + 1
+	private int blockingPrepare(Object unused, BytePointer pSql, int flags, sqlite3_stmt ppStmt, BytePointer ppTail) {
+		return sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail); // FIXME nbytes + 1
 	}
 	//#endif
 
