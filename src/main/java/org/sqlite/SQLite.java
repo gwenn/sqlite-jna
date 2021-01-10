@@ -21,6 +21,7 @@ import com.sun.jna.ptr.PointerByReference;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.function.LongFunction;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
 public final class SQLite implements Library {
@@ -179,6 +180,7 @@ public final class SQLite implements Library {
 	//#endif
 
 	static native void sqlite3_free(Pointer p);
+	static native Pointer sqlite3_malloc(long size);
 
 	static native int sqlite3_blob_open(SQLite3 pDb, String dbName, String tableName, String columnName,
 			long iRow, boolean flags, PointerByReference ppBlob); // no copy needed
@@ -246,14 +248,32 @@ public final class SQLite implements Library {
 	static native Pointer sqlite3_aggregate_context(SQLite3Context pCtx, int nBytes);
 	static native SQLite3 sqlite3_context_db_handle(SQLite3Context pCtx);
 
+	// https://sqlite.org/c3ref/create_module.html
+	/**
+	 * @param pDb SQLite connection to register module with
+	 * @param name Name of the module
+	 * @param p Methods for the module
+	 * @param clientData Client data for {@link Module.CreateOrConnect} (aux).
+	 * @param free {@code clientData} destructor
+	 * @return success or error code
+	 */
+	static native int sqlite3_create_module_v2(SQLite3 pDb, String name, Module<?, ?> p, Pointer clientData, Destructor free);
+	/**
+	 * Used by {@link Module.CreateOrConnect} implementations.
+	 */
+	static native int sqlite3_declare_vtab(SQLite3 pDb, String sql);
+
 	public static final Charset UTF_8 = Charset.forName("UTF-8");
 	public static final String UTF_8_ECONDING = UTF_8.name();
 	static Pointer nativeString(String sql) {
+		return nativeString(sql, Memory::new);
+	}
+	static Pointer nativeString(String sql, LongFunction<Pointer> malloc) {
 		if (sql == null) {
 			return Pointer.NULL;
 		}
 		final byte[] data = sql.getBytes(UTF_8);
-		final Pointer pointer = new Memory(data.length + 1);
+		final Pointer pointer = malloc.apply(data.length + 1);
 		pointer.write(0L, data, 0, data.length);
 		pointer.setByte(data.length, (byte) 0);
 		return pointer;

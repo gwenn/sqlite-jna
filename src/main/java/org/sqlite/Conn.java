@@ -731,6 +731,20 @@ public final class Conn implements AutoCloseable {
 	}
 
 	/**
+	 * Register A Virtual Table Implementation
+	 * @param name Name of the module
+	 * @param module Methods for the module
+	 * @param clientData Client data for xCreate/xConnect
+	 * @param free Client data destructor
+	 * @see <a href="https://sqlite.org/c3ref/create_module.html">sqlite3_create_module_v2</a>
+	 */
+	public void createModule(String name, Module<? ,?> module, Pointer clientData, Destructor free) throws ConnException {
+		checkOpen();
+		check(sqlite3_create_module_v2(pDb, name, module, clientData, free),
+				"error while registering module %s", name);
+	}
+
+	/**
 	 * @param dbName "main" or "temp" or attached database name
 	 * @return the text encoding used by the <code>dbName</code> database
 	 * @see <a href="http://sqlite.org/pragma.html#pragma_encoding">pragma encoding</a>
