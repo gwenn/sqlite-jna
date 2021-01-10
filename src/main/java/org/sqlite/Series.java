@@ -113,7 +113,7 @@ public class Series {
 			if ((idxNum & BOTH) == BOTH) {
 				/* Both start= and stop= boundaries are available.  This is the
 				 ** the preferred case */
-				info.estimatedCost = 2 - (idxNum & STEP) != 0 ? 1 : 0;
+				info.estimatedCost = 2 - ((idxNum & STEP) != 0 ? 1 : 0);
 				info.estimatedRows = 1000;
 				IndexOrderBy[] orderBys = info.orderBys();
 				if (orderBys.length == 1) {

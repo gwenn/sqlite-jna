@@ -30,111 +30,87 @@ public abstract class Module<T extends VTab<T,C>, C extends VTabCursor<T>> exten
 	public Connect<T, C> xCreate;
 	public Connect<T, C> xConnect;
 	@SuppressWarnings("unused")
-	public BestIndex<T, C> xBestIndex = new BestIndex<T, C>() {
-		@Override
-		public int invoke(Pointer pVTab, IndexInfo info) {
-			T tab = vtab(pVTab);
-			return tab.bestIndex(info);
-		}
+	public BestIndex<T, C> xBestIndex = (pVTab, info) -> {
+		T tab = vtab(pVTab);
+		return tab.bestIndex(info);
 	};
 
 	public Disconnect<T, C> xDisconnect;
 	public Disconnect<T, C> xDestroy;
 	@SuppressWarnings("unused")
-	public Open<T, C> xOpen = new Open<T, C>() {
-		@Override
-		public int invoke(Pointer pVTab, PointerByReference ppCursor) {
-			T tab = vtab(pVTab);
-			try {
-				C cursor = tab.open();
-				if (cursor == null) {
-					tab.setErrMsg(String.format("%s.open returned null", tab));
-					return SQLITE_ERROR;
-				}
-				ppCursor.setValue(cursor.getPointer());
-				return SQLITE_OK;
-			} catch (SQLiteException e) {
-				tab.setErrMsg(e.getErrMsg());
-				return e.getErrorCode();
+	public Open<T, C> xOpen = (pVTab, ppCursor) -> {
+		T tab = vtab(pVTab);
+		try {
+			C cursor = tab.open();
+			if (cursor == null) {
+				tab.setErrMsg(String.format("%s.open returned null", tab));
+				return SQLITE_ERROR;
 			}
+			ppCursor.setValue(cursor.getPointer());
+			return SQLITE_OK;
+		} catch (SQLiteException e) {
+			tab.setErrMsg(e.getErrMsg());
+			return e.getErrorCode();
 		}
 	};
 	@SuppressWarnings("unused")
-	public Close<C> xClose = new Close<C>() {
-		@Override
-		public int invoke(Pointer cursor) {
-			C c = cursor(cursor);
-			try {
-				c.close();
-				return SQLITE_OK;
-			} catch (SQLiteException e) {
-				c.pVtab().setErrMsg(e.getErrMsg());
-				return e.getErrorCode();
-			}
+	public Close<C> xClose = cursor -> {
+		C c = cursor(cursor);
+		try {
+			c.close();
+			return SQLITE_OK;
+		} catch (SQLiteException e) {
+			c.pVtab().setErrMsg(e.getErrMsg());
+			return e.getErrorCode();
 		}
 	};
 	@SuppressWarnings("unused")
-	public Filter<C> xFilter = new Filter<C>() {
-		@Override
-		public int invoke(Pointer cursor, int idxNum, String idxStr, int argc, Pointer argv) {
-			C c = cursor(cursor);
-			try {
-				c.filter(idxNum, idxStr, SQLite3Values.build(argc, argv));
-				return SQLITE_OK;
-			} catch (SQLiteException e) {
-				c.pVtab().setErrMsg(e.getErrMsg());
-				return e.getErrorCode();
-			}
+	public Filter<C> xFilter = (cursor, idxNum, idxStr, argc, argv) -> {
+		C c = cursor(cursor);
+		try {
+			c.filter(idxNum, idxStr, SQLite3Values.build(argc, argv));
+			return SQLITE_OK;
+		} catch (SQLiteException e) {
+			c.pVtab().setErrMsg(e.getErrMsg());
+			return e.getErrorCode();
 		}
 	};
 	@SuppressWarnings("unused")
-	public Next<C> xNext = new Next<C>() {
-		@Override
-		public int invoke(Pointer cursor) {
-			C c = cursor(cursor);
-			try {
-				c.next();
-				return SQLITE_OK;
-			} catch (SQLiteException e) {
-				c.pVtab().setErrMsg(e.getErrMsg());
-				return e.getErrorCode();
-			}
+	public Next<C> xNext = cursor -> {
+		C c = cursor(cursor);
+		try {
+			c.next();
+			return SQLITE_OK;
+		} catch (SQLiteException e) {
+			c.pVtab().setErrMsg(e.getErrMsg());
+			return e.getErrorCode();
 		}
 	};
 	@SuppressWarnings("unused")
-	public Eof<C> xEof = new Eof<C>() {
-		@Override
-		public boolean invoke(Pointer cursor) {
-			C c = cursor(cursor);
-			return c.eof();
+	public Eof<C> xEof = cursor -> {
+		C c = cursor(cursor);
+		return c.eof();
+	};
+	@SuppressWarnings("unused")
+	public Column<C> xColumn = (cursor, ctx, i) -> {
+		C c = cursor(cursor);
+		try {
+			c.column(ctx, i);
+			return SQLITE_OK;
+		} catch (SQLiteException e) {
+			c.pVtab().setErrMsg(e.getErrMsg());
+			return e.getErrorCode();
 		}
 	};
 	@SuppressWarnings("unused")
-	public Column<C> xColumn = new Column<C>() {
-		@Override
-		public int invoke(Pointer cursor, SQLite3Context ctx, int i) {
-			C c = cursor(cursor);
-			try {
-				c.column(ctx, i);
-				return SQLITE_OK;
-			} catch (SQLiteException e) {
-				c.pVtab().setErrMsg(e.getErrMsg());
-				return e.getErrorCode();
-			}
-		}
-	};
-	@SuppressWarnings("unused")
-	public Rowid<C> xRowid = new Rowid<C>() {
-		@Override
-		public int invoke(Pointer cursor, LongByReference pRowid) {
-			C c = cursor(cursor);
-			try {
-				pRowid.setValue(c.rowId());
-				return SQLITE_OK;
-			} catch (SQLiteException e) {
-				c.pVtab().setErrMsg(e.getErrMsg());
-				return e.getErrorCode();
-			}
+	public Rowid<C> xRowid = (cursor, pRowid) -> {
+		C c = cursor(cursor);
+		try {
+			pRowid.setValue(c.rowId());
+			return SQLITE_OK;
+		} catch (SQLiteException e) {
+			c.pVtab().setErrMsg(e.getErrMsg());
+			return e.getErrorCode();
 		}
 	};
 	// TODO
@@ -196,32 +172,26 @@ public abstract class Module<T extends VTab<T,C>, C extends VTabCursor<T>> exten
 	}
 
 	private Disconnect<T, C> xDisconnect() {
-		return new Disconnect<T, C>() {
-			@Override
-			public int invoke(Pointer pVTab) {
-				T tab = vtab(pVTab);
-				try {
-					tab.disconnect();
-					return SQLITE_OK;
-				} catch (SQLiteException e) {
-					tab.setErrMsg(e.getErrMsg());
-					return e.getErrorCode();
-				}
+		return pVTab -> {
+			T tab = vtab(pVTab);
+			try {
+				tab.disconnect();
+				return SQLITE_OK;
+			} catch (SQLiteException e) {
+				tab.setErrMsg(e.getErrMsg());
+				return e.getErrorCode();
 			}
 		};
 	}
 	private Disconnect<T, C> xDestroy() {
-		return new Disconnect<T, C>() {
-			@Override
-			public int invoke(Pointer pVTab) {
-				T tab = vtab(pVTab);
-				try {
-					tab.destroy();
-					return SQLITE_OK;
-				} catch (SQLiteException e) {
-					tab.setErrMsg(e.getErrMsg());
-					return e.getErrorCode();
-				}
+		return pVTab -> {
+			T tab = vtab(pVTab);
+			try {
+				tab.destroy();
+				return SQLITE_OK;
+			} catch (SQLiteException e) {
+				tab.setErrMsg(e.getErrMsg());
+				return e.getErrorCode();
 			}
 		};
 	}
@@ -250,25 +220,22 @@ public abstract class Module<T extends VTab<T,C>, C extends VTabCursor<T>> exten
 	}
 
 	private static <T extends VTab<T, C>, C extends VTabCursor<T>> Connect<T, C> xConnect(CreateOrConnect<T, C> connect) {
-		return new Connect<T, C>() {
-			@Override
-			public int invoke(SQLite3 db, Pointer aux, int argc, Pointer argv, PointerByReference ppVTab, PointerByReference err_msg) {
-				String[] args;
-				if (argc == 0 || argv == NULL) {
-					args = new String[0];
-				} else {
-					args = argv.getStringArray(0, argc, UTF_8_ECONDING);
+		return (db, aux, argc, argv, ppVTab, err_msg) -> {
+			String[] args;
+			if (argc == 0 || argv == NULL) {
+				args = new String[0];
+			} else {
+				args = argv.getStringArray(0, argc, UTF_8_ECONDING);
+			}
+			try {
+				T vTab = connect.invoke(db, aux, args);
+				if (vTab != null) {
+					ppVTab.setValue(vTab.getPointer());
 				}
-				try {
-					T vTab = connect.invoke(db, aux, args);
-					if (vTab != null) {
-						ppVTab.setValue(vTab.getPointer());
-					}
-					return SQLITE_OK;
-				} catch (SQLiteException e) {
-					setErrMsg(err_msg, e.getErrMsg());
-					return e.getErrorCode();
-				}
+				return SQLITE_OK;
+			} catch (SQLiteException e) {
+				setErrMsg(err_msg, e.getErrMsg());
+				return e.getErrorCode();
 			}
 		};
 	}
