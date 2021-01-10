@@ -15,6 +15,7 @@ import org.sqlite.SQLite.SQLite3Values;
 import static com.sun.jna.Pointer.NULL;
 import static java.util.Objects.requireNonNull;
 import static org.sqlite.ErrCodes.SQLITE_ERROR;
+import static org.sqlite.ErrCodes.SQLITE_NOMEM;
 import static org.sqlite.SQLite.SQLITE_OK;
 import static org.sqlite.SQLite.UTF_8_ECONDING;
 import static org.sqlite.SQLite.nativeString;
@@ -33,13 +34,7 @@ public abstract class Module<T extends VTab<T,C>, C extends VTabCursor<T>> exten
 		@Override
 		public int invoke(Pointer pVTab, IndexInfo info) {
 			T tab = vtab(pVTab);
-			try {
-				tab.bestIndex(info);
-				return SQLITE_OK;
-			} catch (SQLiteException e) {
-				tab.setErrMsg(e.getErrMsg());
-				return e.getErrorCode();
-			}
+			return tab.bestIndex(info);
 		}
 	};
 
@@ -235,11 +230,11 @@ public abstract class Module<T extends VTab<T,C>, C extends VTabCursor<T>> exten
 	protected abstract C cursor(Pointer cursor);
 
 	// size is correct only if ByValue
-	public static <S extends Structure & Structure.ByValue> Pointer alloc(Class<S> cls) {
+	public static <S extends Structure & Structure.ByValue> Pointer alloc(Class<S> cls) throws SQLiteException {
 		int size = Native.getNativeSize(cls);
 		Pointer init = requireNonNull(SQLite.sqlite3_malloc(size));
 		if (init == NULL) {
-			throw new OutOfMemoryError("Cannot allocate " + size + " bytes");
+			throw new SQLiteException("Cannot allocate " + size + " bytes", SQLITE_NOMEM);
 		}
 		return init;
 	}

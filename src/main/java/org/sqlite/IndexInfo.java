@@ -41,11 +41,11 @@ public class IndexInfo extends Structure {
 	/**
 	 * Free idxStr using sqlite3_free() if true
 	 */
-	public int needToFreeIdxStr;
+	public boolean needToFreeIdxStr; // int
 	/**
 	 * True if output is already ordered
 	 */
-	public int orderByConsumed;
+	public boolean orderByConsumed; // int
 	/**
 	 * Estimated cost of using this index
 	 */
@@ -86,6 +86,10 @@ public class IndexInfo extends Structure {
 		 */
 		public int iTermOffset;
 
+		public IndexConstraint(Pointer p) {
+			super(p);
+			read();
+		}
 		public boolean isUsable() {
 			return usable != 0;
 		}
@@ -102,13 +106,17 @@ public class IndexInfo extends Structure {
 		 */
 		public byte desc; // unsigned char
 
+		public IndexOrderBy(Pointer p) {
+			super(p);
+			read();
+		}
 		public boolean is_desc() {
 			return desc != 0;
 		}
 	}
 
 	@FieldOrder({"argvIndex", "omit"})
-	public static final class IndexConstraintUsage extends Structure implements ByReference {
+	public static final class IndexConstraintUsage extends Structure {
 		/**
 		 * if >0, constraint is part of argv to xFilter
 		 */
@@ -116,6 +124,10 @@ public class IndexInfo extends Structure {
 		/** Do not code a test for this constraint */
 		public byte omit; // unsigned char
 
+		public IndexConstraintUsage(Pointer p) {
+			super(p);
+			//read();
+		}
 		public void omit(boolean omit) {
 			this.omit = omit ? (byte)1 : (byte)0;
 		}
@@ -125,7 +137,7 @@ public class IndexInfo extends Structure {
 		if (nConstraint == 0 || aConstraint == NULL) {
 			return new IndexConstraint[0];
 		}
-		IndexConstraint first = Structure.newInstance(IndexConstraint.class, aConstraint);
+		IndexConstraint first = new IndexConstraint(aConstraint);
 		IndexConstraint[] constraints = (IndexConstraint[])first.toArray(nConstraint);
 		return constraints;
 	}
@@ -133,7 +145,7 @@ public class IndexInfo extends Structure {
 		if (nOrderBy == 0 || aOrderBy == NULL) {
 			return new IndexOrderBy[0];
 		}
-		IndexOrderBy first = Structure.newInstance(IndexOrderBy.class, aOrderBy);
+		IndexOrderBy first = new IndexOrderBy(aOrderBy);
 		IndexOrderBy[] orderBys = (IndexOrderBy[])first.toArray(nOrderBy);
 		return orderBys;
 	}
@@ -141,7 +153,7 @@ public class IndexInfo extends Structure {
 		if (nConstraint == 0 || aConstraintUsage == NULL) {
 			return new IndexConstraintUsage[0];
 		}
-		IndexConstraintUsage first = Structure.newInstance(IndexConstraintUsage.class, aConstraintUsage);
+		IndexConstraintUsage first = new IndexConstraintUsage(aConstraintUsage);
 		IndexConstraintUsage[] constraintUsages = (IndexConstraintUsage[])first.toArray(nConstraint);
 		return constraintUsages;
 	}

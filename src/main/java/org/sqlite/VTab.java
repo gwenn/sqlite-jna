@@ -20,7 +20,7 @@ public abstract class VTab<T extends VTab<T, C>, C extends VTabCursor<T>> extend
 	/**
 	 * The module for this virtual table
 	 */
-	public Module<T, C> pModule; // const sqlite3_module *
+	public Pointer pModule; // const sqlite3_module *
 	/**
 	 * Number of open cursors
 	 */
@@ -42,7 +42,10 @@ public abstract class VTab<T extends VTab<T, C>, C extends VTabCursor<T>> extend
 		super(p);
 	}
 
-	protected abstract void bestIndex(IndexInfo info) throws SQLiteException;
+	/**
+	 * @return {@link ErrCodes}
+	 */
+	protected abstract int bestIndex(IndexInfo info);
 	protected abstract C open() throws SQLiteException;
 	/**
 	 * Overriding method must call the super implementation of the method.

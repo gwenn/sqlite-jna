@@ -16,6 +16,7 @@ public class SeriesTest {
 					assertEquals(expected, value);
 					expected += 5;
 				}
+				assertEquals(25, expected);
 			}
 		}
 	}

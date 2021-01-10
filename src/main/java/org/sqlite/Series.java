@@ -8,17 +8,24 @@ import org.sqlite.IndexInfo.IndexOrderBy;
 import org.sqlite.SQLite.SQLite3;
 
 import static com.sun.jna.Pointer.NULL;
+import static java.util.Arrays.fill;
+import static org.sqlite.ErrCodes.SQLITE_CONSTRAINT;
+import static org.sqlite.IndexConstraintOp.SQLITE_INDEX_CONSTRAINT_EQ;
 import static org.sqlite.SQLite.SQLITE_OK;
 
 public class Series {
 	private static final Module<SeriesTab, SeriesTabCursor> MODULE = new Module<SeriesTab, SeriesTabCursor>(Series::connect, true) {
 		@Override
 		protected SeriesTab vtab(Pointer pVTab) {
-			return new SeriesTab(pVTab);
+			final SeriesTab seriesTab = new SeriesTab(pVTab);
+			seriesTab.read();
+			return seriesTab;
 		}
 		@Override
 		protected SeriesTabCursor cursor(Pointer cursor) {
-			return new SeriesTabCursor(cursor);
+			final SeriesTabCursor c = new SeriesTabCursor(cursor);
+			c.read();
+			return c;
 		}
 	};
 	// Column numbers
@@ -47,6 +54,7 @@ public class Series {
 			throw new SQLiteException("SeriesTab.connect", rc);
 		}
 		Pointer init = Module.alloc(SeriesTab.ByValue.class);
+		//sqlite3_vtab_config(db, SQLITE_VTAB_INNOCUOUS);
 		return new SeriesTab(init);
 	}
 
@@ -62,96 +70,97 @@ public class Series {
 		}
 
 		@Override
-		protected void bestIndex(IndexInfo info) {
-			// The query plan bitmask
-			int idxNum = 0;
-			// Index of the start= constraint
-			int start_idx = 0;
-			// Index of the stop= constraint
-			int stop_idx = 0;
-			// Index of the step= constraint
-			int step_idx = 0;
+		protected int bestIndex(IndexInfo info) {
+			int idxNum = 0;           /* The query plan bitmask */
+			int unusableMask = 0;     /* Mask of unusable constraints */
+			int[] aIdx = new int[3]; /* Constraints on start, stop, and step */
+			fill(aIdx, -1);
 			IndexConstraint[] constraints = info.constraints();
 			for (int i = 0; i < constraints.length; i++) {
 				IndexConstraint constraint = constraints[i];
+				if (constraint.iColumn < SERIES_COLUMN_START) {
+					continue;
+				}
+				/* 0 for start, 1 for stop, 2 for step */
+				int iCol = constraint.iColumn - SERIES_COLUMN_START;
+				assert( iCol>=0 && iCol<=2 );
+				/* bitmask for those column */
+				int iMask = 1 << iCol;
 				if (!constraint.isUsable()) {
-					continue;
-				}
-				if (constraint.op != IndexConstraintOp.SQLITE_INDEX_CONSTRAINT_EQ) {
-					continue;
-				}
-				switch (constraint.iColumn) {
-					case SERIES_COLUMN_START:
-						idxNum |= START;
-						break;
-					case SERIES_COLUMN_STOP:
-						idxNum |= STOP;
-						break;
-					case SERIES_COLUMN_STEP:
-						idxNum |= STEP;
-						break;
+					unusableMask |=  iMask;
+				} else if (constraint.op == SQLITE_INDEX_CONSTRAINT_EQ) {
+					idxNum |= iMask;
+					aIdx[iCol] = i;
 				}
 			}
-			IndexConstraintUsage[] constraint_usages = info.constraintUsages();
-			int num_of_arg = 0;
-			if (start_idx > 0) {
-				num_of_arg += 1;
-				IndexConstraintUsage constraint_usage = constraint_usages[start_idx];
-				constraint_usage.argvIndex = num_of_arg;
-				constraint_usage.omit(true);
+			IndexConstraintUsage[] usages = info.constraintUsages();
+			int nArg = 0;
+			for (int i = 0; i < aIdx.length; i++) {
+				int j = aIdx[i];
+				if (j >= 0) {
+					final IndexConstraintUsage usage = usages[i];
+					usage.argvIndex = ++nArg;
+					usage.omit(false);
+					usage.write();
+				}
 			}
-			if (stop_idx > 0) {
-				num_of_arg += 1;
-				IndexConstraintUsage constraint_usage = constraint_usages[stop_idx];
-				constraint_usage.argvIndex = num_of_arg;
-				constraint_usage.omit(true);
+			if ((unusableMask & ~idxNum) != 0) {
+				/* The start, stop, and step columns are inputs.  Therefore if there
+				 ** are unusable constraints on any of start, stop, or step then
+				 ** this plan is unusable */
+				return SQLITE_CONSTRAINT;
 			}
-			if (step_idx > 0) {
-				num_of_arg += 1;
-				IndexConstraintUsage constraint_usage = constraint_usages[step_idx];
-				constraint_usage.argvIndex = num_of_arg;
-				constraint_usage.omit(true);
-			}
-			if ((idxNum & BOTH) != 0) {
-				// Both start= and stop= boundaries are available.
+			if ((idxNum & BOTH) == BOTH) {
+				/* Both start= and stop= boundaries are available.  This is the
+				 ** the preferred case */
 				info.estimatedCost = 2 - (idxNum & STEP) != 0 ? 1 : 0;
 				info.estimatedRows = 1000;
-				boolean order_by_consumed;
-				{
-					IndexOrderBy[] orderBys = info.orderBys();
-					if (orderBys.length > 0) {
-						IndexOrderBy orderBy = orderBys[0];
-						if (orderBy.is_desc()) {
-							idxNum |= DESC;
-						}
-						order_by_consumed = true;
+				IndexOrderBy[] orderBys = info.orderBys();
+				if (orderBys.length == 1) {
+					if (orderBys[0].is_desc()) {
+						idxNum |= DESC;
 					} else {
-						order_by_consumed = false;
+						idxNum |= 16;
 					}
-				}
-				if (order_by_consumed) {
-					info.orderByConsumed = 1;
+					info.orderByConsumed = true;
+					info.write();
 				}
 			} else {
-				info.estimatedCost = 2_147_483_647d;
+				/* If either boundary is missing, we have to generate a huge span
+				 ** of numbers.  Make this case very expensive so that the query
+				 ** planner will work hard to avoid it. */
 				info.estimatedRows = 2_147_483_647;
 			}
 			info.idxNum = idxNum;
+			return SQLITE_OK;
 		}
 
 		@Override
-		protected SeriesTabCursor open() {
+		protected SeriesTabCursor open() throws SQLiteException {
 			Pointer init = Module.alloc(SeriesTabCursor.ByValue.class);
 			return new SeriesTabCursor(init);
 		}
 	}
 
-	@Structure.FieldOrder({"pVtab"})
+	@Structure.FieldOrder({"pVtab", "isDesc", "iRowid", "iValue", "mnValue", "mxValue", "iStep"})
 	public static class SeriesTabCursor extends VTabCursor<SeriesTab> {
 		/**
 		 * Virtual table of this cursor
 		 */
 		public SeriesTab pVtab; // sqlite3_vtab *
+		/* True to count down rather than up */
+		public boolean isDesc; // int
+		/* The rowid */
+		public long iRowid;
+		/* Current value ("value") */
+		public long iValue;
+		/* Mimimum value ("start") */
+		public long mnValue;
+		/* Maximum value ("stop") */
+		public long mxValue;
+		/* Increment ("step") */
+		public long iStep;
+
 		// Used only to compute its size !!!
 		public static class ByValue extends SeriesTabCursor implements com.sun.jna.Structure.ByValue {
 			public ByValue(Pointer p) {
@@ -169,29 +178,88 @@ public class Series {
 
 		@Override
 		protected void filter(int idxNum, String idxStr, SQLite.SQLite3Values args) {
-			// TODO
+			int i = 0;
+			if ((idxNum & START) != 0) {
+				mnValue = args.getLong(i++);
+			} else {
+				mnValue = 0;
+			}
+			if ((idxNum & STOP) != 0) {
+				mxValue = args.getLong(i++);
+			} else {
+				mxValue = 0xffffffff;
+			}
+			if ((idxNum & STEP) != 0) {
+				iStep = args.getLong(i);
+				if (iStep == 0) {
+					iStep = 1;
+				} else if (iStep < 0) {
+					iStep = -iStep;
+					if ((idxNum & 16) == 0) {
+						idxNum |= DESC;
+					}
+				}
+			} else {
+				iStep = 1;
+			}
+			for (i = 0; i < args.getCount(); i++) {
+				if (args.getType(i) == ColTypes.SQLITE_NULL) {
+					mnValue = 1;
+					mxValue = 0;
+					break;
+				}
+			}
+			isDesc = (idxNum & DESC) != 0;
+			if (isDesc) {
+				iValue = mxValue;
+				if (iStep > 0) {
+					iValue -= (mxValue - mnValue) % iStep;
+				}
+			} else {
+				iValue = mnValue;
+			}
+			iRowid = 1;
+			write();
 		}
 
 		@Override
 		protected void next() {
-			// TODO
+			if (isDesc) {
+				iValue -= iStep;
+			} else {
+				iValue += iStep;
+			}
+			iRowid++;
+			write();
 		}
 
 		@Override
 		protected boolean eof() {
-			// TODO
-			return true;
+			if (isDesc) {
+				return iValue < mnValue;
+			} else {
+				return iValue > mxValue;
+			}
 		}
 
 		@Override
 		protected void column(SQLite.SQLite3Context ctx, int i) {
-			// TODO
+			long x;
+			if (i == SERIES_COLUMN_START) {
+				x = mnValue;
+			} else if (i == SERIES_COLUMN_STOP) {
+				x = mxValue;
+			} else if (i == SERIES_COLUMN_STEP) {
+				x = iStep;
+			} else {
+				x = iValue;
+			}
+			ctx.setResultLong(x);
 		}
 
 		@Override
 		protected long rowId() {
-			// TODO
-			return 0;
+			return iRowid;
 		}
 	}
 }
