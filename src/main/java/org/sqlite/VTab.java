@@ -1,16 +1,9 @@
 package org.sqlite;
 
-import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.jna.PointerType;
 import com.sun.jna.Structure;
 import com.sun.jna.Structure.ByReference;
 import com.sun.jna.Structure.FieldOrder;
-import com.sun.jna.ptr.PointerByReference;
-import org.sqlite.SQLite.SQLite3;
-
-import java.util.HashSet;
-import java.util.Set;
 
 import static com.sun.jna.Pointer.NULL;
 import static org.sqlite.SQLite.nativeString;
@@ -23,11 +16,11 @@ import static org.sqlite.SQLite.sqlite3_free;
  * @see <a href="https://sqlite.org/c3ref/vtab.html">sqlite3_vtab</a>
  */
 @FieldOrder({"pModule", "nRef", "zErrMsg"})
-public abstract class VTab<C extends VTabCursor> extends Structure implements ByReference { // ByReference (see VTabCursor.pVtab)
+public abstract class VTab<T extends VTab<T, C>, C extends VTabCursor<T>> extends Structure implements ByReference { // ByReference (see VTabCursor.pVtab)
 	/**
 	 * The module for this virtual table
 	 */
-	public Module<?, C> pModule; // const sqlite3_module *
+	public Module<T, C> pModule; // const sqlite3_module *
 	/**
 	 * Number of open cursors
 	 */

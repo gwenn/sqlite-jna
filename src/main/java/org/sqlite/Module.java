@@ -24,7 +24,7 @@ import static org.sqlite.SQLite.sqlite3_free;
  * @see <a href="https://sqlite.org/c3ref/module.html">sqlite3_module</a>
  */
 @FieldOrder({"iVersion", "xCreate", "xConnect", "xBestIndex", "xDisconnect", "xDestroy", "xOpen", "xClose", "xFilter", "xNext", "xEof", "xColumn", "xRowid", "xUpdate", "xBegin", "xSync", "xCommit", "xRollback", "xFindFunction", "xRename"})
-public abstract class Module<T extends VTab<C>, C extends VTabCursor> extends Structure implements ByReference { // TODO generic over Aux
+public abstract class Module<T extends VTab<T,C>, C extends VTabCursor<T>> extends Structure implements ByReference { // TODO generic over Aux
 	public final int iVersion = 1;
 	public Connect<T, C> xCreate;
 	public Connect<T, C> xConnect;
@@ -238,20 +238,23 @@ public abstract class Module<T extends VTab<C>, C extends VTabCursor> extends St
 	public static <S extends Structure & Structure.ByValue> Pointer alloc(Class<S> cls) {
 		int size = Native.getNativeSize(cls);
 		Pointer init = requireNonNull(SQLite.sqlite3_malloc(size));
+		if (init == NULL) {
+			throw new OutOfMemoryError("Cannot allocate " + size + " bytes");
+		}
 		return init;
 	}
 
 	@FunctionalInterface
-	public interface CreateOrConnect<T extends VTab<C>, C extends VTabCursor> {
-		public T invoke(SQLite3 db, Pointer aux, String[] args) throws SQLiteException;
+	public interface CreateOrConnect<T extends VTab<T, C>, C extends VTabCursor<T>> {
+		T invoke(SQLite3 db, Pointer aux, String[] args) throws SQLiteException;
 	}
 
 	@FunctionalInterface
-	public interface DestroyOrDisconnect<T extends VTab<C>, C extends VTabCursor> {
-		public void invoke(T pVTab) throws SQLiteException;
+	public interface DestroyOrDisconnect<T extends VTab<T, C>, C extends VTabCursor<T>> {
+		void invoke(T pVTab) throws SQLiteException;
 	}
 
-	private static <T extends VTab<C>, C extends VTabCursor> Connect<T, C> xConnect(CreateOrConnect<T, C> connect) {
+	private static <T extends VTab<T, C>, C extends VTabCursor<T>> Connect<T, C> xConnect(CreateOrConnect<T, C> connect) {
 		return new Connect<T, C>() {
 			@Override
 			public int invoke(SQLite3 db, Pointer aux, int argc, Pointer argv, PointerByReference ppVTab, PointerByReference err_msg) {
@@ -282,43 +285,43 @@ public abstract class Module<T extends VTab<C>, C extends VTabCursor> extends St
 		err_msg.setValue(nativeString(msg, SQLite::sqlite3_malloc));
 	}
 
-	public static interface Connect<T extends VTab<C>, C extends VTabCursor> extends Callback {
+	public interface Connect<T extends VTab<T, C>, C extends VTabCursor<T>> extends Callback {
 		int invoke(SQLite3 db, Pointer aux, int argc, Pointer argv, PointerByReference ppVTab, PointerByReference err_msg);
 	}
 
-	public static interface Disconnect<T extends VTab<C>, C extends VTabCursor> extends Callback {
+	public interface Disconnect<T extends VTab<T, C>, C extends VTabCursor<T>> extends Callback {
 		int invoke(Pointer pVTab);
 	}
 
-	public static interface BestIndex<T extends VTab<C>, C extends VTabCursor> extends Callback {
+	public interface BestIndex<T extends VTab<T, C>, C extends VTabCursor<T>> extends Callback {
 		int invoke(Pointer pVTab, IndexInfo info);
 	}
 
-	public static interface Open<T extends VTab<C>, C extends VTabCursor> extends Callback {
+	public interface Open<T extends VTab<T, C>, C extends VTabCursor<T>> extends Callback {
 		int invoke(Pointer pVTab, PointerByReference ppCursor);
 	}
 
-	public static interface Close<C extends VTabCursor> extends Callback {
+	public interface Close<C extends VTabCursor<?>> extends Callback {
 		int invoke(Pointer cursor);
 	}
 
-	public static interface Filter<C extends VTabCursor> extends Callback {
+	public interface Filter<C extends VTabCursor<?>> extends Callback {
 		int invoke(Pointer cursor, int idxNum, String idxStr, int argc, Pointer argv);
 	}
 
-	public static interface Next<C extends VTabCursor> extends Callback {
+	public interface Next<C extends VTabCursor<?>> extends Callback {
 		int invoke(Pointer cursor);
 	}
 
-	public static interface Eof<C extends VTabCursor> extends Callback {
+	public interface Eof<C extends VTabCursor<?>> extends Callback {
 		boolean invoke(Pointer cursor);
 	}
 
-	public static interface Column<C extends VTabCursor> extends Callback {
+	public interface Column<C extends VTabCursor<?>> extends Callback {
 		int invoke(Pointer cursor, SQLite3Context ctx, int i);
 	}
 
-	public static interface Rowid<C extends VTabCursor> extends Callback {
+	public interface Rowid<C extends VTabCursor<?>> extends Callback {
 		int invoke(Pointer cursor, LongByReference pRowid);
 	}
 }

@@ -4,10 +4,6 @@ import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import static com.sun.jna.Pointer.NULL;
 
 /**

@@ -1,9 +1,7 @@
 package org.sqlite;
 
-import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
-import com.sun.jna.Structure.FieldOrder;
 import org.sqlite.SQLite.SQLite3Context;
 import org.sqlite.SQLite.SQLite3Values;
 
@@ -15,11 +13,11 @@ import org.sqlite.SQLite.SQLite3Values;
  * </ul>
  * @see <a href="https://sqlite.org/c3ref/vtab_cursor.html">sqlite3_vtab_cursor</a>
  */
-public abstract class VTabCursor extends Structure {
+public abstract class VTabCursor<T extends VTab<T,?>> extends Structure {
 	/**
 	 * Virtual table of this cursor
 	 */
-	public abstract VTab pVtab(); // sqlite3_vtab *
+	public abstract T pVtab(); // sqlite3_vtab *
 	/* Virtual table implementations will typically add additional fields */
 
 	protected VTabCursor(Pointer p) {

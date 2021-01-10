@@ -1,6 +1,5 @@
 package org.sqlite;
 
-import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import org.sqlite.IndexInfo.IndexConstraint;
@@ -9,7 +8,7 @@ import org.sqlite.IndexInfo.IndexOrderBy;
 import org.sqlite.SQLite.SQLite3;
 
 import static com.sun.jna.Pointer.NULL;
-import static java.util.Objects.requireNonNull;
+import static org.sqlite.SQLite.SQLITE_OK;
 
 public class Series {
 	private static final Module<SeriesTab, SeriesTabCursor> MODULE = new Module<SeriesTab, SeriesTabCursor>(Series::connect, true) {
@@ -43,12 +42,15 @@ public class Series {
 	}
 
 	private static SeriesTab connect(SQLite3 db, Pointer aux, String[] args) throws SQLiteException {
-		SQLite.sqlite3_declare_vtab(db, "CREATE TABLE x(value,start hidden,stop hidden,step hidden)");
+		final int rc = SQLite.sqlite3_declare_vtab(db, "CREATE TABLE x(value,start hidden,stop hidden,step hidden)");
+		if (rc != SQLITE_OK) {
+			throw new SQLiteException("SeriesTab.connect", rc);
+		}
 		Pointer init = Module.alloc(SeriesTab.ByValue.class);
 		return new SeriesTab(init);
 	}
 
-	public static class SeriesTab extends VTab<SeriesTabCursor> {
+	public static class SeriesTab extends VTab<SeriesTab, SeriesTabCursor> {
 		// Used only to compute its size !!!
 		public static class ByValue extends SeriesTab implements com.sun.jna.Structure.ByValue {
 			public ByValue(Pointer pVTab) {
@@ -60,7 +62,7 @@ public class Series {
 		}
 
 		@Override
-		protected void bestIndex(IndexInfo info) throws SQLiteException {
+		protected void bestIndex(IndexInfo info) {
 			// The query plan bitmask
 			int idxNum = 0;
 			// Index of the start= constraint
@@ -138,14 +140,14 @@ public class Series {
 		}
 
 		@Override
-		protected SeriesTabCursor open() throws SQLiteException {
+		protected SeriesTabCursor open() {
 			Pointer init = Module.alloc(SeriesTabCursor.ByValue.class);
 			return new SeriesTabCursor(init);
 		}
 	}
 
 	@Structure.FieldOrder({"pVtab"})
-	public static class SeriesTabCursor extends VTabCursor {
+	public static class SeriesTabCursor extends VTabCursor<SeriesTab> {
 		/**
 		 * Virtual table of this cursor
 		 */
@@ -161,17 +163,17 @@ public class Series {
 		}
 
 		@Override
-		public VTab pVtab() {
+		public SeriesTab pVtab() {
 			return pVtab;
 		}
 
 		@Override
-		protected void filter(int idxNum, String idxStr, SQLite.SQLite3Values args) throws SQLiteException {
+		protected void filter(int idxNum, String idxStr, SQLite.SQLite3Values args) {
 			// TODO
 		}
 
 		@Override
-		protected void next() throws SQLiteException {
+		protected void next() {
 			// TODO
 		}
 
@@ -182,12 +184,12 @@ public class Series {
 		}
 
 		@Override
-		protected void column(SQLite.SQLite3Context ctx, int i) throws SQLiteException {
+		protected void column(SQLite.SQLite3Context ctx, int i) {
 			// TODO
 		}
 
 		@Override
-		protected long rowId() throws SQLiteException {
+		protected long rowId() {
 			// TODO
 			return 0;
 		}
