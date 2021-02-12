@@ -170,6 +170,22 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>winsqlite3</id>
+
+      <activation>
+        <os>
+          <name>windows 10</name>
+          <family>Windows</family>
+          <!--version>10.0</version-->
+        </os>
+      </activation>
+
+      <properties>
+        <sqlite3.library.name>-Dsqlite3.library.name=winsqlite3</sqlite3.library.name>
+      </properties>
+    </profile>
   </profiles>
 
   <build>
@@ -206,6 +222,7 @@
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <!--argLine>-Djna.library.path=/usr/local/opt/sqlite/lib</argLine-->
           <!--argLine>-Xcheck:jni</argLine-->
+          <argLine>${sqlite3.library.name}</argLine>
         </configuration>
       </plugin>
       <!--  mvn package shade:shade -->
