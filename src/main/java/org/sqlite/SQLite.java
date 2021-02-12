@@ -319,7 +319,6 @@ public final class SQLite implements Library {
 	@FunctionalInterface
 	public interface ProgressCallback extends Callback {
 		/**
-		 * @param arg
 		 * @return <code>true</code> to interrupt
 		 */
 		@SuppressWarnings("unused")
