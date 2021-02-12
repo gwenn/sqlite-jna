@@ -184,6 +184,7 @@
 
       <properties>
         <sqlite3.library.name>-Dsqlite3.library.name=winsqlite3</sqlite3.library.name>
+        <sqlite.enable.column.metadata>false</sqlite.enable.column.metadata>
       </properties>
     </profile>
   </profiles>
