@@ -197,11 +197,21 @@
         </configuration>
         <executions>
           <execution>
-            <id>preprocessSources</id>
+            <id>preprocess-sources</id>
             <phase>generate-sources</phase>
             <goals>
               <goal>preprocess</goal>
             </goals>
+          </execution>
+          <execution>
+            <id>preprocess-test-sources</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>preprocess</goal>
+            </goals>
+            <configuration>
+              <useTestSources>true</useTestSources>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -218,6 +228,7 @@
           <enableAssertions>true</enableAssertions>
           <disableXmlReport>true</disableXmlReport>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <trimStackTrace>true</trimStackTrace>
           <!--argLine>-Djna.library.path=/usr/local/opt/sqlite/lib</argLine-->
           <!--argLine>-Xcheck:jni</argLine-->
         </configuration>

@@ -15,6 +15,7 @@ import java.sql.Statement;
 import static org.junit.Assert.*;
 
 public class BlobTest {
+	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void getBlob() throws SQLException {
 		Connection c = null;
@@ -49,6 +50,7 @@ public class BlobTest {
 			if (null != c) c.close();
 		}
 	}
+	//#endif
 
 	@Test
 	public void getNullBlob() throws SQLException {
