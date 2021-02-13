@@ -34,4 +34,4 @@ jobs:
       shell: cmd
       run: |
         set PATH=%PATH%;C:\vcpkg\installed\x64-windows\bin\
-        mvn -Dsqlite.enable.column.metadata=false -q -B test --file pom.xml
+        mvn -q -B test --file pom.xml

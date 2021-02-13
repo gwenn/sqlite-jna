@@ -170,6 +170,20 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>windows</id>
+
+      <activation>
+        <os>
+          <family>windows</family>
+        </os>
+      </activation>
+
+      <properties>
+        <sqlite.enable.column.metadata>false</sqlite.enable.column.metadata>
+      </properties>
+    </profile>
   </profiles>
 
   <build>
