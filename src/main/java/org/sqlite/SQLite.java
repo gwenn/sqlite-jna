@@ -172,6 +172,9 @@ public final class SQLite implements Library {
 	//static native int sqlite3_bind_text16(SQLite3Stmt pStmt, int i, const void*, int, void(*)(void*));
 	//static native int sqlite3_bind_value(SQLite3Stmt pStmt, int i, const sqlite3_value*);
 	static native int sqlite3_bind_zeroblob(SQLite3Stmt pStmt, int i, int n);
+	// TODO sqlite3_bind_pointer (https://sqlite.org/c3ref/bind_blob.html) and carray extension
+	// int sqlite3_bind_pointer(sqlite3_stmt*, int, void*, const char*,void(*)(void*));
+
 	static native int sqlite3_stmt_status(SQLite3Stmt pStmt, int op, boolean reset);
 	//#if mvn.project.property.sqlite.enable.stmt.scanstatus == "true"
 	// TODO https://sqlite.org/c3ref/c_scanstat_est.html constants
@@ -227,6 +230,8 @@ public final class SQLite implements Library {
 	static native void sqlite3_result_blob(SQLite3Context pCtx, byte[] blob, int n, long xDel);
 	static native void sqlite3_result_int64(SQLite3Context pCtx, long l);
 	static native void sqlite3_result_zeroblob(SQLite3Context pCtx, int n);
+	// TODO sqlite3_result_pointer (https://sqlite.org/c3ref/result_blob.html) and carray extension
+	// void sqlite3_result_pointer(sqlite3_context*, void*,const char*,void(*)(void*));
 
 	static native void sqlite3_result_error(SQLite3Context pCtx, String err, int length);
 	static native void sqlite3_result_error_code(SQLite3Context pCtx, int errCode);
@@ -242,6 +247,8 @@ public final class SQLite implements Library {
 	static native String sqlite3_value_text(Pointer pValue);
 	static native int sqlite3_value_type(Pointer pValue);
 	static native int sqlite3_value_numeric_type(Pointer pValue);
+	// TODO sqlite3_value_pointer (https://sqlite.org/c3ref/value_blob.html) and carray extension
+	// void *sqlite3_value_pointer(sqlite3_value*, const char*);
 
 	static native Pointer sqlite3_get_auxdata(SQLite3Context pCtx, int n);
 	static native void sqlite3_set_auxdata(SQLite3Context pCtx, int n, Pointer p, Destructor free);

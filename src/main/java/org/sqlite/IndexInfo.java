@@ -19,7 +19,7 @@ public class IndexInfo extends Structure {
 	/**
 	 * Table of WHERE clause constraints
 	 */
-	public Pointer aConstraint; // sqlite3_index_constraint * => IndexConstraint[nConstraint] (org.sqlite.SQLite.SQLite3Values.build ?)
+	public Pointer aConstraint; // sqlite3_index_constraint * => IndexConstraint[nConstraint]
 	/**
 	 * Number of terms in the ORDER BY clause
 	 */
@@ -27,9 +27,9 @@ public class IndexInfo extends Structure {
 	/**
 	 * The ORDER BY clause
 	 */
-	public Pointer aOrderBy; // sqlite3_index_orderby * => IndexOrderBy[nOrderBy] (org.sqlite.SQLite.SQLite3Values.build ?)
+	public Pointer aOrderBy; // sqlite3_index_orderby * => IndexOrderBy[nOrderBy]
 	/* Outputs */
-	public Pointer aConstraintUsage; // sqlite3_index_constraint_usage * => IndexConstraintUsage[nConstraint] (org.sqlite.SQLite.SQLite3Values.build ?)
+	public Pointer aConstraintUsage; // sqlite3_index_constraint_usage * => IndexConstraintUsage[nConstraint]
 	/**
 	 * Number used to identify the index
 	 */
@@ -59,7 +59,7 @@ public class IndexInfo extends Structure {
 	/**
 	 * Mask of SQLITE_INDEX_SCAN_* flags
 	 */
-	public int idxFlags;
+	public int idxFlags; // TODO EnumConverter
 	/* Fields below are only available in SQLite 3.10.0 and later */
 
 	/**
@@ -76,7 +76,7 @@ public class IndexInfo extends Structure {
 		/**
 		 * Constraint operator
 		 */
-		public byte op; // unsigned char
+		public byte op; // unsigned char, TODO EnumConverter IndexConstraintOp
 		/**
 		 * True if this constraint is usable
 		 */

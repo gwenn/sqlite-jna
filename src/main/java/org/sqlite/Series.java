@@ -13,6 +13,9 @@ import static org.sqlite.ErrCodes.SQLITE_CONSTRAINT;
 import static org.sqlite.IndexConstraintOp.SQLITE_INDEX_CONSTRAINT_EQ;
 import static org.sqlite.SQLite.SQLITE_OK;
 
+/**
+ * Java port of <a href="https://www.sqlite.org/cgi/src/file?name=ext/misc/series.c&ci=tip">generate_series()</a> table-valued-function.
+ */
 public class Series {
 	private static final Module<SeriesTab, SeriesTabCursor> MODULE = new Module<SeriesTab, SeriesTabCursor>(Series::connect, true) {
 		@Override
