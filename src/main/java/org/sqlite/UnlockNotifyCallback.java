@@ -2,11 +2,12 @@ package org.sqlite;
 
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
+import jnr.ffi.annotations.In;
 
 @FunctionalInterface
 public interface UnlockNotifyCallback {
 	@Delegate
-	default void callback(Pointer args, int nArg) {
+	default void callback(@In Pointer args, int nArg) {
 		if (nArg == 0) {
 			notify(new Pointer[0]);
 		}

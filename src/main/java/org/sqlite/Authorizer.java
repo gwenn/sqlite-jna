@@ -3,6 +3,7 @@ package org.sqlite;
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
 import jnr.ffi.annotations.Encoding;
+import jnr.ffi.annotations.In;
 
 /**
  * Compile-time authorization callback
@@ -18,8 +19,8 @@ public interface Authorizer {
 	 * @return {@link #SQLITE_OK} or {@link #SQLITE_DENY} or {@link #SQLITE_IGNORE}
 	 */
 	@Delegate
-	default int callback(Pointer pArg, int actionCode,@Encoding("UTF-8")  String arg1,@Encoding("UTF-8")  String arg2,
-			@Encoding("UTF-8")  String dbName,@Encoding("UTF-8")  String triggerName) {
+	default int callback(@In Pointer pArg, int actionCode,@Encoding("UTF-8") String arg1,@Encoding("UTF-8") String arg2,
+			@Encoding("UTF-8") String dbName,@Encoding("UTF-8") String triggerName) {
 		return authorize(actionCode, arg1, arg2, dbName, triggerName);
 	}
 

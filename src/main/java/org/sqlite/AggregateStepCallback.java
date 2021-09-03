@@ -2,6 +2,7 @@ package org.sqlite;
 
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
+import jnr.ffi.annotations.In;
 import org.sqlite.SQLite.SQLite3Context;
 import org.sqlite.SQLite.SQLite3Values;
 
@@ -33,7 +34,7 @@ public abstract class AggregateStepCallback {
 	 */
 	@SuppressWarnings("unused")
 	@Delegate
-	public void callback(Pointer pCtx, int nArg, Pointer args) {
+	public void callback(Pointer pCtx, int nArg,@In Pointer args) {
 		final int nBytes = numberOfBytes();
 		final Pointer p = sqlite3_aggregate_context(pCtx, nBytes);
 		if (p == null && nBytes > 0) {

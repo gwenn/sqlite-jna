@@ -2,6 +2,7 @@ package org.sqlite;
 
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
+import jnr.ffi.annotations.In;
 
 /**
  * Callback to handle SQLITE_BUSY errors
@@ -17,7 +18,7 @@ public interface BusyHandler {
 	 * @return <code>true</code> to try again, <code>false</code> to abort.
 	 */
 	@Delegate
-	default boolean callback(Pointer pArg, int count) {
+	default boolean callback(@In Pointer pArg, int count) {
 		return busy(count);
 	}
 

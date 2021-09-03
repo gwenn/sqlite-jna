@@ -3,6 +3,7 @@ package org.sqlite;
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
 import jnr.ffi.annotations.Encoding;
+import jnr.ffi.annotations.In;
 
 /**
  * Data change notification callback.
@@ -26,7 +27,7 @@ public interface UpdateHook {
 	 * @param rowId id of the affected row.
 	 */
 	@Delegate
-	default void callback(Pointer pArg, int actionCode,@Encoding("UTF-8") String dbName,@Encoding("UTF-8") String tblName, long rowId) {
+	default void callback(@In Pointer pArg, int actionCode,@Encoding("UTF-8") String dbName,@Encoding("UTF-8") String tblName, long rowId) {
 		update(actionCode, dbName, tblName, rowId);
 	}
 	/**

@@ -8,12 +8,15 @@
  */
 package org.sqlite;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
 import jnr.ffi.LibraryLoader;
 import jnr.ffi.LibraryOption;
 import jnr.ffi.Memory;
 import jnr.ffi.Pointer;
 import jnr.ffi.Runtime;
-import jnr.ffi.Struct;
 import jnr.ffi.annotations.Delegate;
 import jnr.ffi.annotations.Encoding;
 import jnr.ffi.annotations.IgnoreError;
@@ -22,11 +25,6 @@ import jnr.ffi.annotations.LongLong;
 import jnr.ffi.annotations.Out;
 import jnr.ffi.byref.IntByReference;
 import jnr.ffi.byref.PointerByReference;
-
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 
 public final class SQLite {
 	private static final String LIBRARY_NAME = "sqlite3";
@@ -372,7 +370,7 @@ public final class SQLite {
 	}
 
 	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
-	static native int sqlite3_unlock_notify(Pointer pBlocked, UnlockNotifyCallback xNotify, Pointer pNotifyArg);
+	static native int sqlite3_unlock_notify(@In Pointer pBlocked, @In UnlockNotifyCallback xNotify,@In Pointer pNotifyArg);
 	//#endif
 
 	/*
@@ -514,7 +512,7 @@ public final class SQLite {
 	public interface LogCallback {
 		@SuppressWarnings("unused")
 		@Delegate
-		default void callback(Pointer udp, int err,@Encoding("UTF-8") String msg) {
+		default void callback(@In Pointer udp, int err,@In @Encoding("UTF-8") String msg) {
 			log(err, msg);
 		}
 		void log(int err, String msg);
@@ -548,7 +546,7 @@ public final class SQLite {
 		 */
 		@SuppressWarnings("unused")
 		@Delegate
-		default boolean callback(Pointer arg) {
+		default boolean callback(@In Pointer arg) {
 			return progress();
 		}
 

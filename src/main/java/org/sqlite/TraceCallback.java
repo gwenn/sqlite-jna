@@ -11,6 +11,7 @@ package org.sqlite;
 import jnr.ffi.Pointer;
 import jnr.ffi.annotations.Delegate;
 import jnr.ffi.annotations.Encoding;
+import jnr.ffi.annotations.In;
 
 /**
  * Tracing callback.
@@ -23,7 +24,7 @@ public interface TraceCallback {
 	 */
 	@SuppressWarnings("unused")
 	@Delegate
-	default void callback(Pointer arg,@Encoding("UTF-8") String sql) {
+	default void callback(@In Pointer arg,@Encoding("UTF-8") String sql) {
 		trace(sql);
 	}
 
