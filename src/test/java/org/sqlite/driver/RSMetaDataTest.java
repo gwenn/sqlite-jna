@@ -79,9 +79,9 @@ public class RSMetaDataTest {
 		assertEquals(Types.INTEGER, meta.getColumnType(1));
 		assertEquals(Types.VARCHAR, meta.getColumnType(2));
 		assertEquals(Types.VARCHAR, meta.getColumnType(3));
-		assertEquals("integer", meta.getColumnTypeName(1));
-		assertEquals("text", meta.getColumnTypeName(2));
-		assertEquals("text", meta.getColumnTypeName(3));
+		assertTrue("integer".equalsIgnoreCase(meta.getColumnTypeName(1)));
+		assertTrue("text".equalsIgnoreCase(meta.getColumnTypeName(2)));
+		assertTrue("text".equalsIgnoreCase(meta.getColumnTypeName(3)));
 		assertTrue(meta.isAutoIncrement(1));
 		assertFalse(meta.isAutoIncrement(2));
 		assertFalse(meta.isAutoIncrement(3));
