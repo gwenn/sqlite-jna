@@ -29,7 +29,11 @@ public final class SQLite implements Library {
 
 	// public static final NativeLibrary JNA_NATIVE_LIB = NativeLibrary.getInstance(SQLite.JNA_LIBRARY_NAME);
 	static {
-		Native.register(NativeLibrary.getInstance(JNA_LIBRARY_NAME, Collections.singletonMap(OPTION_STRING_ENCODING, "UTF-8")));
+		String libraryName = System.getProperty("sqlite3.library.name", JNA_LIBRARY_NAME);
+		if (libraryName.isEmpty()) {
+			libraryName = JNA_LIBRARY_NAME;
+		}
+		Native.register(NativeLibrary.getInstance(libraryName, Collections.singletonMap(OPTION_STRING_ENCODING, "UTF-8")));
 	}
 
 	public static final int SQLITE_OK = 0;
@@ -346,7 +350,6 @@ public final class SQLite implements Library {
 	@FunctionalInterface
 	public interface ProgressCallback extends Callback {
 		/**
-		 * @param arg
 		 * @return <code>true</code> to interrupt
 		 */
 		@SuppressWarnings("unused")

@@ -661,7 +661,7 @@ public final class Conn implements AutoCloseable {
 			timeoutProgressCallback = new TimeoutProgressCallback();
 			sqlite3_progress_handler(pDb, 100, timeoutProgressCallback, null);
 		}
-		timeoutProgressCallback.setTimeout(timeout * 1000);
+		timeoutProgressCallback.setTimeout(timeout * 1000L);
 	}
 
 	/**

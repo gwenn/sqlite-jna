@@ -136,8 +136,8 @@ public interface ErrCodes {
 	 */
 	int SQLITE_WARNING = 28;
 
-	/** sqlite_step() has another row ready */
+	/* sqlite_step() has another row ready */
 	//int SQLITE_ROW        =  100;
-	/** sqlite_step() has finished executing */
+	/* sqlite_step() has finished executing */
 	//int SQLITE_DONE       =  101;
 }
