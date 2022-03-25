@@ -371,9 +371,9 @@ public class StatementTest {
 	public void nullDate() throws SQLException {
 		ResultSet rs = stat.executeQuery("select null;");
 		assertTrue(rs.next());
-		assertEquals(null, rs.getDate(1));
-		assertEquals(null, rs.getTime(1));
-		assertEquals(null, rs.getTimestamp(1));
+		assertNull(rs.getDate(1));
+		assertNull(rs.getTime(1));
+		assertNull(rs.getTimestamp(1));
 		rs.close();
 	}
 

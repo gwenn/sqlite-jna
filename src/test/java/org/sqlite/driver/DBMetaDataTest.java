@@ -149,7 +149,7 @@ public class DBMetaDataTest {
 		assertEquals("test", rs.getString("TABLE_NAME"));
 		assertEquals("id", rs.getString("COLUMN_NAME"));
 		assertEquals("YES", rs.getString("IS_NULLABLE"));
-		assertEquals(null, rs.getString("COLUMN_DEF"));
+		assertNull(rs.getString("COLUMN_DEF"));
 		assertEquals(Types.INTEGER, rs.getInt("DATA_TYPE"));
 		assertFalse(rs.next());
 		rs.close();
@@ -167,7 +167,7 @@ public class DBMetaDataTest {
 		assertTrue(rs.next());
 		assertEquals("sn", rs.getString("COLUMN_NAME"));
 		assertEquals("NO", rs.getString("IS_NULLABLE"));
-		assertEquals(null, rs.getString("COLUMN_DEF"));
+		assertNull(rs.getString("COLUMN_DEF"));
 		assertFalse(rs.next());
 		rs.close();
 
@@ -663,7 +663,7 @@ public class DBMetaDataTest {
 		importedKeys.close();
 
 		importedKeys = meta.getImportedKeys(null, null, "person");
-		assertTrue(!importedKeys.next());
+		assertFalse(importedKeys.next());
 		importedKeys.close();
 	}
 
@@ -823,7 +823,7 @@ public class DBMetaDataTest {
 	@Test
 	public void version() throws SQLException {
 		assertNotNull(meta.getDatabaseProductVersion());
-		assertTrue("1.0".equals(meta.getDriverVersion()));
+		assertEquals("1.0", meta.getDriverVersion());
 	}
 
 	//#if mvn.project.property.sqlite.enable.column.metadata == "true"

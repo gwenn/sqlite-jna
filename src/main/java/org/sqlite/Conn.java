@@ -62,7 +62,7 @@ public final class Conn implements AutoCloseable {
 	/**
 	 * Open a new database connection.
 	 * <p>
-	 * When the `filename` is an URI, extra query parameters can be used ({@link OpenQueryParameter})
+	 * When the `filename` is a URI, extra query parameters can be used ({@link OpenQueryParameter})
 	 * @param filename ":memory:" for memory db, "" for temp file db
 	 * @param flags {@link org.sqlite.OpenFlags}.* (TODO EnumSet or BitSet, default flags)
 	 * @param vfs may be null
@@ -379,7 +379,7 @@ public final class Conn implements AutoCloseable {
 		}
 	}
 	/**
-	 * Executes one or many non-parameterized statement(s) (separated by semi-colon) with no control and no stmt cache.
+	 * Executes one or many non-parameterized statement(s) (separated by semicolon) with no control and no stmt cache.
 	 * @param sql statements
 	 * @throws ConnException if current connection is closed or an error occurred during SQL execution.
 	 * @see <a href="https://www.sqlite.org/c3ref/exec.html">sqlite3_exec</a>

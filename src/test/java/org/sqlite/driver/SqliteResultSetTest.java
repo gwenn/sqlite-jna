@@ -237,7 +237,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
 				assertTrue(rs.next());
 
 				decimal = rs.getBigDecimal("width");
-				assertFalse(large.equals(decimal));
+				assertNotEquals(large, decimal);
 				assertEquals(0, large.compareTo(decimal));
 				assertEquals(elarge, decimal);
 
@@ -303,7 +303,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
 	public void testUpdate() throws Throwable {
 		try (Statement stmt = conn.createStatement()) {
 			try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
-				Class cl = ResultSet.class;
+				Class<ResultSet> cl = ResultSet.class;
 				Method[] methods = cl.getMethods();
 
 				for (Method meth : methods) {
@@ -311,7 +311,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
 						continue;
 					}
 
-					Class[] paramTypes = meth.getParameterTypes();
+					Class<?>[] paramTypes = meth.getParameterTypes();
 					Object[] args = new Object[paramTypes.length];
 
 					for (int lpc = 0; lpc < args.length; lpc++) {

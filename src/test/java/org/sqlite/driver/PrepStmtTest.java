@@ -563,7 +563,7 @@ public class PrepStmtTest {
 		assertEquals(expected, rs.getLong(1));
 		assertEquals(expected, rs.getDate(1).getTime());
 		assertTrue(rs.next());
-		assertEquals(null, rs.getDate(1));
+		assertNull(rs.getDate(1));
 		rs.close();
 	}
 
