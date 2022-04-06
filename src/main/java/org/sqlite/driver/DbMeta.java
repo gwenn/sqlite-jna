@@ -816,7 +816,7 @@ class DbMeta implements DatabaseMetaData {
 				append("10 as DECIMAL_DIGITS, "). // FIXME scale or null
 				append("10 as NUM_PREC_RADIX, ").
 				append("colnullable as NULLABLE, ").
-				append("null as REMARKS, ").
+				append("hidden as REMARKS, ").
 				append("cdflt as COLUMN_DEF, ").
 				append("null as SQL_DATA_TYPE, "). // unused
 				append("null as SQL_DATETIME_SUB, "). // unused
@@ -832,18 +832,30 @@ class DbMeta implements DatabaseMetaData {
 				append("'' as IS_GENERATEDCOLUMN from (");
 
 		boolean colFound = false;
+		boolean xInfo = org.sqlite.Conn.libversionNumber() >= 3026000;
 		for (QualifiedName tbl : tbls) {
-			Pragma pragma = new Pragma(new QualifiedName(tbl.dbName, "table_info"), new IdExpr(tbl.name));
+			Pragma pragma = new Pragma(new QualifiedName(tbl.dbName, xInfo ? "table_xinfo" : "table_info"), new IdExpr(tbl.name));
 			// Pragma cannot be used as subquery...
 			try (PreparedStatement table_info = c.prepareStatement(pragma.toSql());
 					 ResultSet rs = table_info.executeQuery()) {
-				// 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk
+				// 1:cid|2:name|3:type|4:notnull|5:dflt_value|6:pk|7:hidden
 				while (rs.next()) {
 					if (colFound) sql.append(" UNION ALL ");
 					colFound = true;
 
 					final String colType = getSQLiteType(rs.getString(3));
 					final int colJavaType = getJavaType(colType);
+					String hidden = "null";
+					if (xInfo) {
+						final byte b = rs.getByte(7);
+						if (b == 1) {
+							hidden = "'hidden'";
+						} else if (b == 2) {
+							hidden = "'generated virtual'";
+						} else if (b == 3) {
+							hidden = "'generated stored'";
+						}
+					}
 
 					sql.append("SELECT ").
 							append(quote(tbl.dbName)).append(" AS cat, ").
@@ -853,7 +865,8 @@ class DbMeta implements DatabaseMetaData {
 							append(colJavaType).append(" AS ct, ").
 							append(quote(rs.getString(2))).append(" AS cn, ").
 							append(quote(colType)).append(" AS tn, ").
-							append(quote(rs.getString(5))).append(" AS cdflt");
+							append(quote(rs.getString(5))).append(" AS cdflt, ").
+							append(hidden).append(" AS hidden");
 
 					if (columnNamePattern != null && !"%".equals(columnNamePattern)) {
 						sql.append(" WHERE cn LIKE ").append(quote(columnNamePattern));
@@ -866,7 +879,7 @@ class DbMeta implements DatabaseMetaData {
 
 		sql.append(colFound ? ") order by TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION" :
 				"SELECT NULL AS cat, NULL AS tbl, NULL AS ordpos, NULL AS colnullable, NULL AS ct, "
-						+ "NULL AS cn, NULL AS tn, NULL AS cdflt) limit 0");
+						+ "NULL AS cn, NULL AS tn, NULL AS cdflt, NULL AS hidden) limit 0");
 		final PreparedStatement columns = c.prepareStatement(sql.toString());
 		columns.closeOnCompletion();
 		return columns.executeQuery();

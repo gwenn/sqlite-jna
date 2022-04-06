@@ -217,6 +217,27 @@ public class DBMetaDataTest {
 	}
 
 	@Test
+	public void getGeneratedColumns() throws SQLException {
+		stat.executeUpdate("CREATE TABLE t1(\n" +
+				"   a INTEGER PRIMARY KEY,\n" +
+				"   b INT,\n" +
+				"   c TEXT,\n" +
+				"   gd INT AS (a*abs(b)),\n" +
+				"   ge TEXT AS (substr(c,b,b+1)) STORED\n" +
+				");");
+
+		ResultSet rs = meta.getColumns(null, null, "t1", "g%");
+		assertTrue(rs.next());
+		assertEquals("gd", rs.getString("COLUMN_NAME"));
+		assertEquals("generated virtual", rs.getString("REMARKS"));
+		assertTrue(rs.next());
+		assertEquals("ge", rs.getString("COLUMN_NAME"));
+		assertEquals("generated stored", rs.getString("REMARKS"));
+		assertFalse(rs.next());
+		rs.close();
+	}
+
+	@Test
 	public void numberOfgetImportedKeysCols() throws SQLException {
 
 		stat.executeUpdate("create table parent (id1 integer, id2 integer, primary key(id1, id2))");
