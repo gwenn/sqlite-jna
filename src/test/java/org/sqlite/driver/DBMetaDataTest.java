@@ -482,7 +482,7 @@ public class DBMetaDataTest {
 		assertTrue(rs.next());
 		ResultSetMetaData rsmeta = rs.getMetaData();
 		assertEquals(1, rsmeta.getColumnCount());
-		assertEquals("TABLE_CAT", rsmeta.getColumnName(1));
+		assertEquals("TABLE_CAT", rsmeta.getColumnLabel(1));
 		rs.close();
 	}
 

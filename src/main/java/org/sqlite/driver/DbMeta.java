@@ -782,17 +782,8 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getCatalogs() throws SQLException {
 		checkOpen();
-		final StringBuilder sql = new StringBuilder("select dbName as TABLE_CAT from (");
-		// Pragma cannot be used as subquery...
-		final List<String> catalogs = schemaProvider.getDbNames(null);
-		for (int i = 0; i < catalogs.size(); i++) {
-			if (i > 0) {
-				sql.append(" UNION ");
-			}
-			sql.append("SELECT ").append(quote(catalogs.get(i))).append(" AS dbName");
-		}
-		sql.append(") order by TABLE_CAT");
-		final PreparedStatement stmt = c.prepareStatement(sql.toString());
+		final String sql = "select name as TABLE_CAT from pragma_database_list() order by TABLE_CAT";
+		final PreparedStatement stmt = c.prepareStatement(sql);
 		stmt.closeOnCompletion();
 		return stmt.executeQuery();
 	}
