@@ -985,7 +985,7 @@ class DbMeta implements DatabaseMetaData {
 				append("0 as DECIMAL_DIGITS, "). // FIXME scale (0 for LONG, 15 for REAL)
 				append("pc as PSEUDO_COLUMN from (");
 
-		// Pragma cannot be used as subquery...
+		// TODO SELECT name AS COLUMN_NAME, coalesce(type, '') AS DATA_TYPE FROM pragma_table_info('person') WHERE pk = 1 AND ("notnull" = 1 || );
 		int count = -1;
 		String colName = null;
 		String colType = null;
@@ -1112,8 +1112,8 @@ class DbMeta implements DatabaseMetaData {
 		int count = 0;
 		if (!fkTables.isEmpty()) {
 			for (String fkTable : fkTables) {
+				// TODO SELECT ?1 || '_' || "table"  || '_' || id AS fk, "to" AS pc, "from" AS fc, seq + 1 AS seq FROM pragma_foreign_key_list(?1) AS fkl WHERE "table" LIKE ?2;
 				Pragma pragma = new Pragma(new QualifiedName(catalog, "foreign_key_list"), new IdExpr(fkTable));
-				// Pragma cannot be used as subquery...
 				try (PreparedStatement foreign_key_list = c.prepareStatement(pragma.toSql());
 						 ResultSet rs = foreign_key_list.executeQuery()) {
 					// 1:id|2:seq|3:table|4:from|5:to|6:on_update|7:on_delete|8:match
