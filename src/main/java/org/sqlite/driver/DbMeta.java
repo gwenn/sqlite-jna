@@ -229,7 +229,7 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public boolean supportsAlterTableWithDropColumn() {
-		return false;
+		return org.sqlite.Conn.libversionNumber() >= 3035000;
 	}
 
 	@Override
