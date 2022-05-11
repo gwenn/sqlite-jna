@@ -117,6 +117,9 @@ class Stmt implements Statement {
 		} else {
 			_close();
 			stmt = getConn().prepare(sql, false);
+			if (stmt.isClosed()) {
+				return new Rows(this, false);
+			}
 			final boolean hasRow = step(false);
 			if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
 				if (stmt.isReadOnly()) {
@@ -137,6 +140,9 @@ class Stmt implements Statement {
 			_close();
 			final org.sqlite.Conn c = getConn();
 			stmt = c.prepare(sql, false);
+			if (stmt.isClosed()) { // dumb
+				return 0;
+			}
 			final int tc = c.getTotalChanges();
 			step(true);
 			return c.getTotalChanges() - tc;
@@ -233,7 +239,7 @@ class Stmt implements Statement {
 		} else {
 			_close();
 			stmt = getConn().prepare(sql, false);
-			return exec();
+			return stmt.isClosed() ? false : exec();
 		}
 	}
 

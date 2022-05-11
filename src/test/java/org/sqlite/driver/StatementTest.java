@@ -550,4 +550,12 @@ public class StatementTest {
 	public void nullQuery() throws Exception {
 		stat.executeQuery(null);
 	}
+	@Test
+	public void emptyQuery() throws Exception {
+		assertEquals(stat.executeUpdate(";"), 0);
+		assertFalse(stat.execute(";"));
+		try (ResultSet rs = stat.executeQuery(";")) {
+			assertFalse(rs.next());
+		}
+	}
 }
