@@ -425,6 +425,15 @@ public final class Conn implements AutoCloseable {
 		return sqlite3_changes(pDb);
 	}
 	/**
+	 * @return Like {@link #getChanges()} but for large number.
+	 * @throws ConnException if current connection is closed
+	 * @see <a href="https://www.sqlite.org/c3ref/changes.html">sqlite3_changes64</a>
+	 */
+	public long getChanges64() throws ConnException {
+		checkOpen();
+		return sqlite3_changes64(pDb);
+	}
+	/**
 	 * @return Total number of rows modified
 	 * @throws ConnException if current connection is closed
 	 * @see <a href="https://www.sqlite.org/c3ref/total_changes.html">sqlite3_total_changes</a>
@@ -432,6 +441,15 @@ public final class Conn implements AutoCloseable {
 	public int getTotalChanges() throws ConnException {
 		checkOpen();
 		return sqlite3_total_changes(pDb);
+	}
+	/**
+	 * @return Total number of rows modified
+	 * @throws ConnException if current connection is closed
+	 * @see <a href="https://www.sqlite.org/c3ref/total_changes.html">sqlite3_total_changes64</a>
+	 */
+	public long getTotalChanges64() throws ConnException {
+		checkOpen();
+		return sqlite3_total_changes64(pDb);
 	}
 
 	/**

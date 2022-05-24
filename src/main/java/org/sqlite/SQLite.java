@@ -103,7 +103,9 @@ public final class SQLite implements Library {
 	static native boolean sqlite3_get_autocommit(SQLite3 pDb);
 
 	static native int sqlite3_changes(SQLite3 pDb);
+	static native long sqlite3_changes64(SQLite3 pDb); // 3.37.0
 	static native int sqlite3_total_changes(SQLite3 pDb);
+	static native long sqlite3_total_changes64(SQLite3 pDb); // 3.37.0
 	static native long sqlite3_last_insert_rowid(SQLite3 pDb);
 
 	static native String sqlite3_db_filename(SQLite3 pDb, String dbName); // no copy needed
