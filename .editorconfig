@@ -20,7 +20,3 @@ indent_style = tab
 [pom.xml]
 indent_style = space
 indent_size = 2
-
-[{appveyor.yml,.travis.yml}]
-indent_style = space
-indent_size = 2

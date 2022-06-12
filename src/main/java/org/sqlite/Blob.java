@@ -225,7 +225,7 @@ public class Blob implements AutoCloseable {
 			try {
 				long k = getBytes() - readOffset;
 				if (n < k) {
-					k = n < 0L ? 0L : n;
+					k = Math.max(n, 0L);
 				}
 
 				readOffset += k;

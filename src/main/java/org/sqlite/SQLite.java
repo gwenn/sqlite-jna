@@ -96,7 +96,9 @@ public final class SQLite {
 	static native boolean sqlite3_get_autocommit(sqlite3 pDb);
 
 	static native int sqlite3_changes(sqlite3 pDb);
+	static native long sqlite3_changes64(sqlite3 pDb); // 3.37.0
 	static native int sqlite3_total_changes(sqlite3 pDb);
+	static native long sqlite3_total_changes64(sqlite3 pDb); // 3.37.0
 	static native @Cast("sqlite3_int64") long sqlite3_last_insert_rowid(sqlite3 pDb);
 
 	static native @Cast("const char*") BytePointer sqlite3_db_filename(sqlite3 pDb,@Cast("const char*") BytePointer dbName); // no copy needed
@@ -333,7 +335,6 @@ public final class SQLite {
 		}
 		private native void allocate();
 		/**
-		 * @param arg
 		 * @return <code>true</code> to interrupt
 		 */
 		@SuppressWarnings("unused")

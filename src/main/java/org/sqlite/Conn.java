@@ -64,7 +64,7 @@ public final class Conn implements AutoCloseable {
 	/**
 	 * Open a new database connection.
 	 * <p>
-	 * When the `filename` is an URI, extra query parameters can be used ({@link OpenQueryParameter})
+	 * When the `filename` is a URI, extra query parameters can be used ({@link OpenQueryParameter})
 	 * @param filename ":memory:" for memory db, "" for temp file db
 	 * @param flags {@link org.sqlite.OpenFlags}.* (TODO EnumSet or BitSet, default flags)
 	 * @param vfs may be null
@@ -379,7 +379,7 @@ public final class Conn implements AutoCloseable {
 		}
 	}
 	/**
-	 * Executes one or many non-parameterized statement(s) (separated by semi-colon) with no control and no stmt cache.
+	 * Executes one or many non-parameterized statement(s) (separated by semicolon) with no control and no stmt cache.
 	 * @param sql statements
 	 * @throws ConnException if current connection is closed or an error occurred during SQL execution.
 	 * @see <a href="https://www.sqlite.org/c3ref/exec.html">sqlite3_exec</a>
@@ -424,6 +424,15 @@ public final class Conn implements AutoCloseable {
 		return sqlite3_changes(pDb);
 	}
 	/**
+	 * @return Like {@link #getChanges()} but for large number.
+	 * @throws ConnException if current connection is closed
+	 * @see <a href="https://www.sqlite.org/c3ref/changes.html">sqlite3_changes64</a>
+	 */
+	public long getChanges64() throws ConnException {
+		checkOpen();
+		return sqlite3_changes64(pDb);
+	}
+	/**
 	 * @return Total number of rows modified
 	 * @throws ConnException if current connection is closed
 	 * @see <a href="https://www.sqlite.org/c3ref/total_changes.html">sqlite3_total_changes</a>
@@ -431,6 +440,15 @@ public final class Conn implements AutoCloseable {
 	public int getTotalChanges() throws ConnException {
 		checkOpen();
 		return sqlite3_total_changes(pDb);
+	}
+	/**
+	 * @return Total number of rows modified
+	 * @throws ConnException if current connection is closed
+	 * @see <a href="https://www.sqlite.org/c3ref/total_changes.html">sqlite3_total_changes64</a>
+	 */
+	public long getTotalChanges64() throws ConnException {
+		checkOpen();
+		return sqlite3_total_changes64(pDb);
 	}
 
 	/**
@@ -660,7 +678,7 @@ public final class Conn implements AutoCloseable {
 			timeoutProgressCallback = new TimeoutProgressCallback();
 			sqlite3_progress_handler(pDb, 100, timeoutProgressCallback, null);
 		}
-		timeoutProgressCallback.setTimeout(timeout * 1000);
+		timeoutProgressCallback.setTimeout(timeout * 1000L);
 	}
 
 	/**

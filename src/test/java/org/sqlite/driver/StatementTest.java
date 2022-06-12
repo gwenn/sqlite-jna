@@ -367,9 +367,9 @@ public class StatementTest {
 	public void nullDate() throws SQLException {
 		ResultSet rs = stat.executeQuery("select null;");
 		assertTrue(rs.next());
-		assertEquals(null, rs.getDate(1));
-		assertEquals(null, rs.getTime(1));
-		assertEquals(null, rs.getTimestamp(1));
+		assertNull(rs.getDate(1));
+		assertNull(rs.getTime(1));
+		assertNull(rs.getTimestamp(1));
 		rs.close();
 	}
 
@@ -545,5 +545,13 @@ public class StatementTest {
 	@Test(expected = ConnException.class)
 	public void nullQuery() throws Exception {
 		stat.executeQuery(null);
+	}
+	@Test
+	public void emptyQuery() throws Exception {
+		assertEquals(stat.executeUpdate(";"), 0);
+		assertFalse(stat.execute(";"));
+		try (ResultSet rs = stat.executeQuery(";")) {
+			assertFalse(rs.next());
+		}
 	}
 }

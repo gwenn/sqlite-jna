@@ -352,13 +352,13 @@ public class ConnTest {
 
 	private static class ConnState {
 		private boolean triggersEnabled = true;
-		private String encoding = UTF_8_ECONDING;
+		private final String encoding = UTF_8_ECONDING;
 		private boolean foreignKeys = false;
 		private String journalMode = "memory";
-		private String lockingMode = "normal";
+		private final String lockingMode = "normal";
 		private boolean queryOnly = false;
 		private boolean recursiveTriggers = false;
-		private String synchronous = "2";
+		private final String synchronous = "2";
 	}
 	private static abstract class ConnStateTest {
 		private final String uri;

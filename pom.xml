@@ -68,7 +68,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.13.1</version>
+      <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -207,6 +207,7 @@
       </activation>
       <properties>
         <os.name>windows</os.name>
+        <sqlite.enable.column.metadata>false</sqlite.enable.column.metadata>
       </properties>
     </profile>
     <profile>
@@ -288,7 +289,7 @@
         </configuration>
         <executions>
           <execution>
-            <id>preprocessSources</id>
+            <id>preprocess-sources</id>
             <phase>generate-sources</phase>
             <goals>
               <goal>preprocess</goal>
@@ -300,6 +301,16 @@
             <goals>
               <goal>clear</goal>
             </goals>
+          </execution>
+          <execution>
+            <id>preprocess-test-sources</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>preprocess</goal>
+            </goals>
+            <configuration>
+              <useTestSources>true</useTestSources>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -364,6 +375,7 @@
           <enableAssertions>true</enableAssertions>
           <disableXmlReport>true</disableXmlReport>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <trimStackTrace>true</trimStackTrace>
           <!--argLine>-Xcheck:jni</argLine-->
           <additionalClasspathElements>
             <additionalClasspathElement>${project.basedir}/sqlite-autoconf-${env.SQLITEVERSION}/lib</additionalClasspathElement>
