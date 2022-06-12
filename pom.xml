@@ -37,6 +37,8 @@
 
   <properties>
     <java.version>1.8</java.version>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- 4.0 (Java 6), 4.1 (Java 7), 4.2 (Java 8) -->
     <jdbc.specification.version>4.2</jdbc.specification.version>
@@ -168,6 +170,20 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>windows</id>
+
+      <activation>
+        <os>
+          <family>windows</family>
+        </os>
+      </activation>
+
+      <properties>
+        <sqlite.enable.column.metadata>false</sqlite.enable.column.metadata>
+      </properties>
+    </profile>
   </profiles>
 
   <build>
@@ -181,11 +197,21 @@
         </configuration>
         <executions>
           <execution>
-            <id>preprocessSources</id>
+            <id>preprocess-sources</id>
             <phase>generate-sources</phase>
             <goals>
               <goal>preprocess</goal>
             </goals>
+          </execution>
+          <execution>
+            <id>preprocess-test-sources</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>preprocess</goal>
+            </goals>
+            <configuration>
+              <useTestSources>true</useTestSources>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -193,11 +219,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-          <encoding>${project.build.sourceEncoding}</encoding>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -207,6 +228,7 @@
           <enableAssertions>true</enableAssertions>
           <disableXmlReport>true</disableXmlReport>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
+          <trimStackTrace>true</trimStackTrace>
           <!--argLine>-Djnr.ffi.library.path=/usr/local/opt/sqlite/lib</argLine-->
         </configuration>
       </plugin>

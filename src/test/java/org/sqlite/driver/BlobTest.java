@@ -19,6 +19,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class BlobTest {
+	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void getBlob() throws SQLException {
 		Connection c = null;
@@ -53,6 +54,7 @@ public class BlobTest {
 			if (null != c) c.close();
 		}
 	}
+	//#endif
 
 	@Test
 	public void getNullBlob() throws SQLException {

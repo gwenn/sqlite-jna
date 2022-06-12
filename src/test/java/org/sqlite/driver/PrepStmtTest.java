@@ -523,6 +523,7 @@ public class PrepStmtTest {
 		prep.close();
 	}
 
+	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void metaData() throws SQLException {
 		PreparedStatement prep = conn.prepareStatement("select ? as col1, ? as col2, ? as delta;");
@@ -542,6 +543,7 @@ public class PrepStmtTest {
 		assertEquals(3, meta.getColumnCount());
 		prep.close();
 	}
+	//#endif
 
 	@Test
 	public void date1() throws SQLException {
@@ -567,7 +569,7 @@ public class PrepStmtTest {
 		assertEquals(expected, rs.getLong(1));
 		assertEquals(expected, rs.getDate(1).getTime());
 		assertTrue(rs.next());
-		assertEquals(null, rs.getDate(1));
+		assertNull(rs.getDate(1));
 		rs.close();
 	}
 

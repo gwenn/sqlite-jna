@@ -63,7 +63,7 @@ public final class Conn implements AutoCloseable {
 	/**
 	 * Open a new database connection.
 	 * <p>
-	 * When the `filename` is an URI, extra query parameters can be used ({@link OpenQueryParameter})
+	 * When the `filename` is a URI, extra query parameters can be used ({@link OpenQueryParameter})
 	 * @param filename ":memory:" for memory db, "" for temp file db
 	 * @param flags {@link org.sqlite.OpenFlags}.* (TODO EnumSet or BitSet, default flags)
 	 * @param vfs may be null
@@ -253,16 +253,16 @@ public final class Conn implements AutoCloseable {
 		final Pointer pSql = nativeString(sql);
 		final PointerByReference ppStmt = new PointerByReference();
 		final PointerByReference ppTail = new PointerByReference();
-		final int res = blockingPrepare(null, pSql, ppStmt, ppTail);
+		final int res = blockingPrepare(null, pSql, cacheable ? SQLITE_PREPARE_PERSISTENT : 0, ppStmt, ppTail);
 		check(res, "error while preparing statement '%s'", sql);
 		return new Stmt(this, sql, ppStmt.getValue(), ppTail.getValue(), cacheable);
 	}
 
 	// http://sqlite.org/unlock_notify.html
 	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
-	private int blockingPrepare(Conn unused, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
+	private int blockingPrepare(Conn unused, Pointer pSql, int flags, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
 		int rc;
-		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail))) {
+		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail))) {
 			rc = waitForUnlockNotify(null);
 			if (rc != SQLITE_OK) {
 				break;
@@ -271,8 +271,8 @@ public final class Conn implements AutoCloseable {
 		return rc;
 	}
 	//#else
-	private int blockingPrepare(Object unused, Pointer pSql, PointerByReference ppStmt, PointerByReference ppTail) {
-		return sqlite3_prepare_v2(pDb, pSql, -1, ppStmt, ppTail); // FIXME nbytes + 1
+	private int blockingPrepare(Object unused, Pointer pSql, int flags, PointerByReference ppStmt, PointerByReference ppTail) {
+		return sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail); // FIXME nbytes + 1
 	}
 	//#endif
 
@@ -376,7 +376,7 @@ public final class Conn implements AutoCloseable {
 		}
 	}
 	/**
-	 * Executes one or many non-parameterized statement(s) (separated by semi-colon) with no control and no stmt cache.
+	 * Executes one or many non-parameterized statement(s) (separated by semicolon) with no control and no stmt cache.
 	 * @param sql statements
 	 * @throws ConnException if current connection is closed or an error occurred during SQL execution.
 	 * @see <a href="https://www.sqlite.org/c3ref/exec.html">sqlite3_exec</a>
@@ -421,6 +421,15 @@ public final class Conn implements AutoCloseable {
 		return sqlite3_changes(pDb);
 	}
 	/**
+	 * @return Like {@link #getChanges()} but for large number.
+	 * @throws ConnException if current connection is closed
+	 * @see <a href="https://www.sqlite.org/c3ref/changes.html">sqlite3_changes64</a>
+	 */
+	public long getChanges64() throws ConnException {
+		checkOpen();
+		return sqlite3_changes64(pDb);
+	}
+	/**
 	 * @return Total number of rows modified
 	 * @throws ConnException if current connection is closed
 	 * @see <a href="https://www.sqlite.org/c3ref/total_changes.html">sqlite3_total_changes</a>
@@ -428,6 +437,15 @@ public final class Conn implements AutoCloseable {
 	public int getTotalChanges() throws ConnException {
 		checkOpen();
 		return sqlite3_total_changes(pDb);
+	}
+	/**
+	 * @return Total number of rows modified
+	 * @throws ConnException if current connection is closed
+	 * @see <a href="https://www.sqlite.org/c3ref/total_changes.html">sqlite3_total_changes64</a>
+	 */
+	public long getTotalChanges64() throws ConnException {
+		checkOpen();
+		return sqlite3_total_changes64(pDb);
 	}
 
 	/**
@@ -657,7 +675,7 @@ public final class Conn implements AutoCloseable {
 			timeoutProgressCallback = new TimeoutProgressCallback();
 			sqlite3_progress_handler(pDb, 100, timeoutProgressCallback, null);
 		}
-		timeoutProgressCallback.setTimeout(timeout * 1000);
+		timeoutProgressCallback.setTimeout(timeout * 1000L);
 	}
 
 	/**

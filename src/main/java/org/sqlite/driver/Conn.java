@@ -272,7 +272,7 @@ class Conn implements Connection {
 	}
 
 	// A SAVEPOINT can be started either within or outside of a BEGIN...COMMIT.
-	// When a SAVEPOINT is the outer-most savepoint and it is not within a BEGIN...COMMIT
+	// When a SAVEPOINT is the outermost savepoint and it is not within a BEGIN...COMMIT
 	// then the behavior is the same as BEGIN DEFERRED TRANSACTION.
 	@Override
 	public Savepoint setSavepoint() throws SQLException {

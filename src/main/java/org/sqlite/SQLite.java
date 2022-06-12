@@ -31,7 +31,11 @@ public final class SQLite {
 	private static final LibSQLite library;
 
 	static {
-		library = LibraryLoader.create(LibSQLite.class).option(LibraryOption.IgnoreError, true).load(LIBRARY_NAME);
+		String libraryName = System.getProperty("sqlite3.library.name", LIBRARY_NAME);
+		if (libraryName.isEmpty()) {
+			libraryName = LIBRARY_NAME;
+		}
+		library = LibraryLoader.create(LibSQLite.class).option(LibraryOption.IgnoreError, true).load(libraryName);
 	}
 
 	public static final int SQLITE_OK = 0;
@@ -54,6 +58,7 @@ public final class SQLite {
 		return library.sqlite3_compileoption_used(optName);
 	}
 
+	// https://sqlite.org/c3ref/c_config_covering_index_scan.html
 	public static final int SQLITE_CONFIG_SINGLETHREAD = 1,
 			SQLITE_CONFIG_MULTITHREAD = 2, SQLITE_CONFIG_SERIALIZED = 3,
 			SQLITE_CONFIG_MEMSTATUS = 9,
@@ -117,6 +122,10 @@ public final class SQLite {
 	static int sqlite3_busy_timeout(Pointer pDb, int ms) {
 		return library.sqlite3_busy_timeout(pDb, ms);
 	}
+	static int sqlite3_db_status(Pointer pDb, int op, IntByReference pCur, IntByReference pHiwtr, boolean resetFlg) {
+		return library.sqlite3_db_status(pDb, op, pCur, pHiwtr, resetFlg);
+	}
+	// TODO https://sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfiglookaside constants
 	static int sqlite3_db_config(Pointer pDb, int op, int v, IntByReference pOk) {
 		return library.sqlite3_db_config(pDb, op, v, pOk);
 	}
@@ -135,6 +144,7 @@ public final class SQLite {
 		return library.sqlite3_load_extension(pDb, file, proc, errMsg);
 	}
 	//#endif
+	// https://sqlite.org/c3ref/c_limit_attached.html
 	public static final int SQLITE_LIMIT_LENGTH = 0, SQLITE_LIMIT_SQL_LENGTH = 1, SQLITE_LIMIT_COLUMN = 2,
 			SQLITE_LIMIT_EXPR_DEPTH = 3, SQLITE_LIMIT_COMPOUND_SELECT = 4, SQLITE_LIMIT_VDBE_OP = 5,
 			SQLITE_LIMIT_FUNCTION_ARG = 6, SQLITE_LIMIT_ATTACHED = 7, SQLITE_LIMIT_LIKE_PATTERN_LENGTH = 8,
@@ -149,8 +159,14 @@ public final class SQLite {
 	static int sqlite3_changes(Pointer pDb) {
 		return library.sqlite3_changes(pDb);
 	}
+	static long sqlite3_changes64(Pointer pDb) {
+		return library.sqlite3_changes64(pDb);
+	}
 	static int sqlite3_total_changes(Pointer pDb) {
 		return library.sqlite3_total_changes(pDb);
+	}
+	static long sqlite3_total_changes64(Pointer pDb) {
+		return library.sqlite3_total_changes64(pDb);
 	}
 	static long sqlite3_last_insert_rowid(Pointer pDb) {
 		return library.sqlite3_last_insert_rowid(pDb);
@@ -176,13 +192,17 @@ public final class SQLite {
 	static int sqlite3_exec(Pointer pDb, String cmd, Pointer c, Pointer udp, PointerByReference errMsg) {
 		return library.sqlite3_exec(pDb, cmd, c, udp, errMsg);
 	}
-
-	static int sqlite3_prepare_v2(Pointer pDb, Pointer sql, int nByte, PointerByReference ppStmt,
+	// https://sqlite.org/c3ref/c_prepare_normalize.html
+	public static final int SQLITE_PREPARE_PERSISTENT = 0x01/*, SQLITE_PREPARE_NORMALIZE = 0x02*/, SQLITE_PREPARE_NO_VTAB = 0x04;
+	static int sqlite3_prepare_v3(Pointer pDb, Pointer sql, int nByte, int prepFlags, PointerByReference ppStmt,
 			PointerByReference pTail) {
 		return library.sqlite3_prepare_v2(pDb, sql, nByte, ppStmt, pTail);
 	}
 	static String sqlite3_sql(Pointer pStmt) { // no copy needed
 		return library.sqlite3_sql(pStmt);
+	}
+	static Pointer sqlite3_expanded_sql(Pointer pStmt) { // sqlite3_free
+		return library.sqlite3_expanded_sql(pStmt);
 	}
 	static int sqlite3_finalize(Pointer pStmt) {
 		return library.sqlite3_finalize(pStmt);
@@ -301,6 +321,7 @@ public final class SQLite {
 		return library.sqlite3_stmt_status(pStmt, op, reset);
 	}
 	//#if mvn.project.property.sqlite.enable.stmt.scanstatus == "true"
+	// TODO https://sqlite.org/c3ref/c_scanstat_est.html constants
 	static int sqlite3_stmt_scanstatus(Pointer pStmt, int idx, int iScanStatusOp, PointerByReference pOut) {
 		return library.sqlite3_stmt_scanstatus(pStmt, idx, iScanStatusOp, pOut);
 	}
@@ -541,7 +562,6 @@ public final class SQLite {
 	@FunctionalInterface
 	public interface ProgressCallback {
 		/**
-		 * @param arg
 		 * @return <code>true</code> to interrupt
 		 */
 		@SuppressWarnings("unused")
@@ -601,6 +621,8 @@ public final class SQLite {
 		@IgnoreError
 		int sqlite3_busy_timeout(@In Pointer pDb, int ms);
 		@IgnoreError
+		int sqlite3_db_status(@In Pointer pDb, int op, IntByReference pCur, IntByReference pHiwtr, boolean resetFlg);
+		@IgnoreError
 		int sqlite3_db_config(@In Pointer pDb, int op, int v, @Out IntByReference pOk);
 		@IgnoreError
 		int sqlite3_enable_load_extension(@In Pointer pDb, boolean onoff);
@@ -614,7 +636,11 @@ public final class SQLite {
 		@IgnoreError
 		int sqlite3_changes(@In Pointer pDb);
 		@IgnoreError
+		long sqlite3_changes64(@In Pointer pDb);
+		@IgnoreError
 		int sqlite3_total_changes(@In Pointer pDb);
+		@IgnoreError
+		long sqlite3_total_changes64(@In Pointer pDb);
 		@IgnoreError
 		@LongLong long sqlite3_last_insert_rowid(@In Pointer pDb);
 
@@ -638,6 +664,8 @@ public final class SQLite {
 													 @Out PointerByReference pTail);
 		@IgnoreError
 		@Encoding("UTF-8")String sqlite3_sql(@In Pointer pStmt); // no copy needed
+		@IgnoreError
+		Pointer sqlite3_expanded_sql(@In Pointer pStmt);
 		@IgnoreError
 		int sqlite3_finalize(@In Pointer pStmt);
 		@IgnoreError

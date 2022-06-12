@@ -99,7 +99,7 @@ public class SqliteDriverTest {
 
 	@Test
 	public void testEmptyUrl() throws Exception {
-		assertEquals(null, driver.connect("", null));
+		assertNull(driver.connect("", null));
 	}
 
 	@Test(expected = SQLiteException.class)
@@ -114,7 +114,7 @@ public class SqliteDriverTest {
 	@Test
 	public void testWorking() throws Exception {
 		try (Connection conn = driver.connect(JDBC.PREFIX, null)) {
-			assertEquals(null, conn.getWarnings());
+			assertNull(conn.getWarnings());
 		}
 	}
 

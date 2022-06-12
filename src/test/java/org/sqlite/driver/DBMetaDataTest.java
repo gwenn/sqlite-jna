@@ -153,7 +153,7 @@ public class DBMetaDataTest {
 		assertEquals("test", rs.getString("TABLE_NAME"));
 		assertEquals("id", rs.getString("COLUMN_NAME"));
 		assertEquals("YES", rs.getString("IS_NULLABLE"));
-		assertEquals(null, rs.getString("COLUMN_DEF"));
+		assertNull(rs.getString("COLUMN_DEF"));
 		assertEquals(Types.INTEGER, rs.getInt("DATA_TYPE"));
 		assertFalse(rs.next());
 		rs.close();
@@ -171,7 +171,7 @@ public class DBMetaDataTest {
 		assertTrue(rs.next());
 		assertEquals("sn", rs.getString("COLUMN_NAME"));
 		assertEquals("NO", rs.getString("IS_NULLABLE"));
-		assertEquals(null, rs.getString("COLUMN_DEF"));
+		assertNull(rs.getString("COLUMN_DEF"));
 		assertFalse(rs.next());
 		rs.close();
 
@@ -217,6 +217,27 @@ public class DBMetaDataTest {
 		rs = meta.getColumns(null, null, "doesnotexist", "%");
 		assertFalse(rs.next());
 		assertEquals(24, rs.getMetaData().getColumnCount());
+		rs.close();
+	}
+
+	@Test
+	public void getGeneratedColumns() throws SQLException {
+		stat.executeUpdate("CREATE TABLE t1(\n" +
+				"   a INTEGER PRIMARY KEY,\n" +
+				"   b INT,\n" +
+				"   c TEXT,\n" +
+				"   gd INT AS (a*abs(b)),\n" +
+				"   ge TEXT AS (substr(c,b,b+1)) STORED\n" +
+				");");
+
+		ResultSet rs = meta.getColumns(null, null, "t1", "g%");
+		assertTrue(rs.next());
+		assertEquals("gd", rs.getString("COLUMN_NAME"));
+		assertEquals("generated virtual", rs.getString("REMARKS"));
+		assertTrue(rs.next());
+		assertEquals("ge", rs.getString("COLUMN_NAME"));
+		assertEquals("generated stored", rs.getString("REMARKS"));
+		assertFalse(rs.next());
 		rs.close();
 	}
 
@@ -330,6 +351,7 @@ public class DBMetaDataTest {
 		exportedKeys.close();
 	}
 
+	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void columnOrderOfgetTables() throws SQLException {
 		ResultSet rs = meta.getTables(null, null, null, null);
@@ -485,7 +507,7 @@ public class DBMetaDataTest {
 		assertTrue(rs.next());
 		ResultSetMetaData rsmeta = rs.getMetaData();
 		assertEquals(1, rsmeta.getColumnCount());
-		assertEquals("TABLE_CAT", rsmeta.getColumnName(1));
+		assertEquals("TABLE_CAT", rsmeta.getColumnLabel(1));
 		rs.close();
 	}
 
@@ -566,6 +588,7 @@ public class DBMetaDataTest {
 		assertEquals("PSEUDO_COLUMN", rsmeta.getColumnName(8));
 		rs.close();
 	}
+	//#endif
 
 	@Test
 	public void viewIngetPrimaryKeys() throws SQLException {
@@ -579,6 +602,7 @@ public class DBMetaDataTest {
 		rs.close();
 	}
 
+	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void columnOrderOfgetPrimaryKeys() throws SQLException {
 		ResultSet rs;
@@ -642,6 +666,7 @@ public class DBMetaDataTest {
 		assertFalse(rs.next());
 		rs.close();
 	}
+	//#endif
 
 	@Test
 	public void columnOrderOfgetImportedKeys() throws SQLException {
@@ -663,7 +688,7 @@ public class DBMetaDataTest {
 		importedKeys.close();
 
 		importedKeys = meta.getImportedKeys(null, null, "person");
-		assertTrue(!importedKeys.next());
+		assertFalse(importedKeys.next());
 		importedKeys.close();
 	}
 
@@ -720,6 +745,7 @@ public class DBMetaDataTest {
     @Test public void columnOrderOfgetSuperTables() throws SQLException {
     @Test public void columnOrderOfgetAttributes() throws SQLException {*/
 
+	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void columnOrderOfgetUDTs() throws SQLException {
 		ResultSet rs = meta.getUDTs(null, null, null, null);
@@ -735,6 +761,7 @@ public class DBMetaDataTest {
 		assertEquals("BASE_TYPE", rsmeta.getColumnName(7));
 		rs.close();
 	}
+	//#endif
 
 	@Test
 	public void getIndexInfoOnTest() throws SQLException {
@@ -821,9 +848,10 @@ public class DBMetaDataTest {
 	@Test
 	public void version() throws SQLException {
 		assertNotNull(meta.getDatabaseProductVersion());
-		assertTrue("1.0".equals(meta.getDriverVersion()));
+		assertEquals("1.0", meta.getDriverVersion());
 	}
 
+	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void indexInfo() throws SQLException {
 		ResultSet rs = meta.getIndexInfo(null, null, "", false, false);
@@ -892,6 +920,7 @@ public class DBMetaDataTest {
 		assertEquals("DEFERRABILITY", rsmeta.getColumnName(14));
 		rs.close();
 	}
+	//#endif
 
 	@Test
 	public void virtualTable() throws SQLException {
