@@ -10,6 +10,7 @@ package org.sqlite;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.FunctionPointer;
@@ -239,13 +240,15 @@ public final class SQLite {
 	static native @Cast("const unsigned char*") BytePointer sqlite3_value_text(sqlite3_value pValue);
 	static native int sqlite3_value_type(sqlite3_value pValue);
 	static native int sqlite3_value_numeric_type(sqlite3_value pValue);
+	// TODO sqlite3_value_pointer (https://sqlite.org/c3ref/value_blob.html) and carray extension
+ 	static native BytePointer sqlite3_value_pointer(sqlite3_value pValue, @Cast("const char*") BytePointer zPType);
 
 	static native Pointer sqlite3_get_auxdata(sqlite3_context pCtx, int n);
 	static native void sqlite3_set_auxdata(sqlite3_context pCtx, int n, Pointer p, Destructor free);
 	static native Pointer sqlite3_aggregate_context(sqlite3_context pCtx, int nBytes);
 	static native sqlite3 sqlite3_context_db_handle(sqlite3_context pCtx);
 
-	public static final Charset UTF_8 = Charset.forName("UTF-8");
+	public static final Charset UTF_8 = StandardCharsets.UTF_8;
 	public static final String UTF_8_ECONDING = UTF_8.name();
 	public static BytePointer nativeString(String s) {
 		if (s == null) {

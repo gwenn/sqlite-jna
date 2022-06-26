@@ -122,7 +122,7 @@ public class TransactionTest {
 			pstat2.execute();
 		} else {
 			stat2.execute("insert into test values (3);");
-		};
+		}
 		conn2.setAutoCommit(true);
 
 		final ResultSet rs = stat1.executeQuery("select c1 from test");
