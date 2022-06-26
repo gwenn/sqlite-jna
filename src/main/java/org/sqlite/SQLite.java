@@ -56,7 +56,7 @@ public final class SQLite {
 	//sqlite3_config(SQLITE_CONFIG_LOG, void(*)(void *udp, int err, const char *msg), void *udp)
 	public static native int sqlite3_config(int op, LogCallback xLog, Pointer udp);
 	// Applications can use the sqlite3_log(E,F,..) API to send new messages to the log, if desired, but this is discouraged.
-	public static native void sqlite3_log(int iErrCode,@Cast("const char*")  BytePointer msg);
+	public static native void sqlite3_log(int iErrCode,@Cast("const char*") BytePointer msg);
 
 	static native @Cast("const char*") BytePointer sqlite3_errmsg(sqlite3 pDb); // copy needed: the error string might be overwritten or deallocated by subsequent calls to other SQLite interface functions.
 	static native int sqlite3_errcode(sqlite3 pDb);
@@ -428,7 +428,7 @@ public final class SQLite {
 		 * @return a copy of the pointer to the database connection (the 1st parameter) of
 		 * {@link SQLite#sqlite3_create_function_v2(sqlite3, BytePointer, int, int, Pointer, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Destructor)}
 		 * @see <a href="http://sqlite.org/c3ref/context_db_handle.html">sqlite3_context_db_handle</a>
-         */
+		 */
 		public sqlite3 getDbHandle() {
 			return sqlite3_context_db_handle(this);
 		}
@@ -614,128 +614,129 @@ public final class SQLite {
 	}
 
 	public abstract static class Destructor extends FunctionPointer {
-        protected Destructor() {
-            allocate();
-        }
-        private native void allocate();
-        @SuppressWarnings("unused")
-        public abstract void call(Pointer p);
-    }
+		protected Destructor() {
+			allocate();
+		}
+		private native void allocate();
+		@SuppressWarnings("unused")
+		public abstract void call(Pointer p);
+	}
 
 	/**
-     * User defined SQL scalar function.
-     * <pre>{@code
-     * new ScalarCallback() {
-     *   \@Override
-     *   protected void func(SQLite3Context pCtx, SQLite3Values args) {
-     * 	   pCtx.setResultInt(0);
-     *   }
-     * }
-     * }</pre>
-     * @see Conn#createScalarFunction(String, int, int, ScalarCallback)
-     * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
-     */
-    public abstract static class ScalarCallback extends FunctionPointer {
-        protected ScalarCallback() {
-            allocate();
-        }
-        private native void allocate();
-        //void (*)(sqlite3_context*,int,sqlite3_value**)
-        /**
-         * @param pCtx <code>sqlite3_context*</code>
-         * @param nArg number of arguments
-         * @param args function arguments
-         */
-        @SuppressWarnings("unused")
-        public void call(sqlite3_context pCtx, int nArg,@Cast("sqlite3_value**") PointerPointer args) {
-            func(pCtx, SQLite3Values.build(nArg, args));
-        }
+	 * User defined SQL scalar function.
+	 * <pre>{@code
+	 * new ScalarCallback() {
+	 * 	\@Override
+	 * 	protected void func(SQLite3Context pCtx, SQLite3Values args) {
+	 * 		pCtx.setResultInt(0);
+	 * 	}
+	 * }
+	 * }</pre>
+	 *
+	 * @see Conn#createScalarFunction(String, int, int, ScalarCallback)
+	 * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
+	 */
+	public abstract static class ScalarCallback extends FunctionPointer {
+		protected ScalarCallback() {
+			allocate();
+		}
+		private native void allocate();
+		//void (*)(sqlite3_context*,int,sqlite3_value**)
+		/**
+		 * @param pCtx <code>sqlite3_context*</code>
+		 * @param nArg number of arguments
+		 * @param args function arguments
+		 */
+		@SuppressWarnings("unused")
+		public void call(sqlite3_context pCtx, int nArg, @Cast("sqlite3_value**") PointerPointer args) {
+			func(pCtx, SQLite3Values.build(nArg, args));
+		}
 
-        /**
-         * @param pCtx <code>sqlite3_context*</code>
-         * @param args function arguments
-         */
-        protected abstract void func(sqlite3_context pCtx, SQLite3Values args);
+		/**
+		 * @param pCtx <code>sqlite3_context*</code>
+		 * @param args function arguments
+		 */
+		protected abstract void func(sqlite3_context pCtx, SQLite3Values args);
 
-        /**
-         * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_set_auxdata</a>
-         */
-        public void setAuxData(sqlite3_context pCtx, int n, Pointer auxData, Destructor free) {
-            sqlite3_set_auxdata(pCtx, n, auxData, free);
-        }
-        /**
-         * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_get_auxdata</a>
-         */
-        public Pointer getAuxData(sqlite3_context pCtx, int n) {
-            return sqlite3_get_auxdata(pCtx, n);
-        }
-    }
+		/**
+		 * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_set_auxdata</a>
+		 */
+		public void setAuxData(sqlite3_context pCtx, int n, Pointer auxData, Destructor free) {
+			sqlite3_set_auxdata(pCtx, n, auxData, free);
+		}
+		/**
+		 * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_get_auxdata</a>
+		 */
+		public Pointer getAuxData(sqlite3_context pCtx, int n) {
+			return sqlite3_get_auxdata(pCtx, n);
+		}
+	}
 
 	/**
-     * User defined SQL aggregate function.
-     * <pre>{@code
-     * new AggregateStepCallback() {
-     *   \@Override
-     *   public void step(SQLite3Context pCtx, Pointer aggrCtx, SQLite3Values args) {
-     *     args.getX(...);
-     *     ...
-     *     aggrCtx.setX(...);
-     *   }
-     * }
-     * }</pre>
-     *
-     * @see Conn#createAggregateFunction(String, int, int, AggregateStepCallback, AggregateFinalCallback)
-     * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
-     */
-    public abstract static class AggregateStepCallback extends FunctionPointer {
-        protected AggregateStepCallback() {
-            allocate();
-        }
-        private native void allocate();
-        //void (*)(sqlite3_context*,int,sqlite3_value**),
-        /**
-         * @param pCtx <code>sqlite3_context*</code>
-         * @param nArg number of arguments
-         * @param args function arguments
-         */
-        @SuppressWarnings("unused")
-        public void call(sqlite3_context pCtx, int nArg,@Cast("sqlite3_value**") PointerPointer args) {
-            final int nBytes = numberOfBytes();
-            final Pointer p = sqlite3_aggregate_context(pCtx, nBytes);
-            if ((p == null || p.isNull()) && nBytes > 0) {
-                sqlite3_result_error_nomem(pCtx);
-                return;
-            }
-            step(pCtx, p, SQLite3Values.build(nArg, args));
-        }
+	 * User defined SQL aggregate function.
+	 * <pre>{@code
+	 * new AggregateStepCallback() {
+	 * 	\@Override
+	 * 	public void step(SQLite3Context pCtx, Pointer aggrCtx, SQLite3Values args) {
+	 * 		args.getX(...);
+	 * 		...
+	 * 		aggrCtx.setX(...);
+	 * 	}
+	 * }
+	 * }</pre>
+	 *
+	 * @see Conn#createAggregateFunction(String, int, int, AggregateStepCallback, AggregateFinalCallback)
+	 * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
+	 */
+	public abstract static class AggregateStepCallback extends FunctionPointer {
+		protected AggregateStepCallback() {
+			allocate();
+		}
+		private native void allocate();
+		//void (*)(sqlite3_context*,int,sqlite3_value**),
+		/**
+		 * @param pCtx <code>sqlite3_context*</code>
+		 * @param nArg number of arguments
+		 * @param args function arguments
+		 */
+		@SuppressWarnings("unused")
+		public void call(sqlite3_context pCtx, int nArg, @Cast("sqlite3_value**") PointerPointer args) {
+			final int nBytes = numberOfBytes();
+			final Pointer p = sqlite3_aggregate_context(pCtx, nBytes);
+			if ((p == null || p.isNull()) && nBytes > 0) {
+				sqlite3_result_error_nomem(pCtx);
+				return;
+			}
+			step(pCtx, p, SQLite3Values.build(nArg, args));
+		}
 
-        /**
-         * @return number of bytes to allocate.
-         * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_aggregate_context</a>
-         */
-        protected abstract int numberOfBytes();
+		/**
+		 * @return number of bytes to allocate.
+		 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_aggregate_context</a>
+		 */
+		protected abstract int numberOfBytes();
 
-        /**
-         * @param pCtx <code>sqlite3_context*</code>
-         * @param aggrCtx aggregate context
-         * @param args function arguments
-         */
-        protected abstract void step(sqlite3_context pCtx, Pointer aggrCtx, SQLite3Values args);
-    }
+		/**
+		 * @param pCtx <code>sqlite3_context*</code>
+		 * @param aggrCtx aggregate context
+		 * @param args function arguments
+		 */
+		protected abstract void step(sqlite3_context pCtx, Pointer aggrCtx, SQLite3Values args);
+	}
 
 	/**
 	 * User defined SQL aggregate function.
 	 * <pre>{@code
 	 * new AggregateFinalCallback() {
-	 *   \@Override
-	 *   public void finalStep(SQLite3Context pCtx, Pointer aggrCtx) {
-	 *     if (aggrCtx == null) {
-	 *       pCtx.setResultNull();
-	 *       return;
-	 *     }
-	 *     ...
-	 *     pCtx.setResultX(...);
-	 *   }
+	 * 	\@Override
+	 * 	public void finalStep(SQLite3Context pCtx, Pointer aggrCtx) {
+	 * 		if (aggrCtx == null) {
+	 * 			pCtx.setResultNull();
+	 * 			return;
+	 * 		}
+	 * 		...
+	 * 		pCtx.setResultX(...);
+	 * 	}
 	 * }
 	 * }</pre>
 	 *
@@ -772,149 +773,154 @@ public final class SQLite {
 	}
 
 	/**
-     * Callback to handle SQLITE_BUSY errors
-     *
-     * @see Conn#setBusyHandler(BusyHandler)
-     * @see <a href="http://sqlite.org/c3ref/busy_handler.html">sqlite3_busy_handler</a>
-     */
-    public abstract static class BusyHandler extends FunctionPointer {
-        protected BusyHandler() {
-            allocate();
-        }
-        private native void allocate();
-        /**
-         * @param pArg  User data (<code>null</code>)
-         * @param count the number of times that the busy handler has been invoked previously for the same locking event.
-         * @return <code>true</code> to try again, <code>false</code> to abort.
-         */
-        public @Cast("int") boolean call(Pointer pArg, int count) {
-					return busy(count);
-				}
+	 * Callback to handle SQLITE_BUSY errors
+	 *
+	 * @see Conn#setBusyHandler(BusyHandler)
+	 * @see <a href="http://sqlite.org/c3ref/busy_handler.html">sqlite3_busy_handler</a>
+	 */
+	public abstract static class BusyHandler extends FunctionPointer {
+		protected BusyHandler() {
+			allocate();
+		}
+		private native void allocate();
+		/**
+		 * @param pArg User data (<code>null</code>)
+		 * @param count the number of times that the busy handler has been invoked previously for the same locking event.
+		 * @return <code>true</code> to try again, <code>false</code> to abort.
+		 */
+		public @Cast("int") boolean call(Pointer pArg, int count) {
+			return busy(count);
+		}
 
-        /**
-         * @param count the number of times that the busy handler has been invoked previously for the same locking event.
-         * @return <code>true</code> to try again, <code>false</code> to abort.
-         */
-				protected abstract boolean busy(int count);
-    }
-
-	/**
-     * Data change notification callback.
-     * <ul>
-     * <li>The update hook is not invoked when internal system tables are modified (i.e. sqlite_master and sqlite_sequence).</li>
-     * <li>The update hook is not invoked when WITHOUT ROWID tables are modified.</li>
-     * <li>In the current implementation, the update hook is not invoked when duplication rows are deleted because of an ON CONFLICT REPLACE clause.</li>
-     * <li>Nor is the update hook invoked when rows are deleted using the truncate optimization.</li>
-     * </ul>
-     * @see Conn#updateHook(UpdateHook)
-     * @see <a href="http://sqlite.org/c3ref/update_hook.html">sqlite3_update_hook</a>
-     */
-    public abstract static class UpdateHook extends FunctionPointer {
-        protected UpdateHook() {
-            allocate();
-        }
-        private native void allocate();
-        /**
-         * Data Change Notification Callback
-         * @param pArg <code>null</code>.
-         * @param actionCode org.sqlite.ActionCodes.SQLITE_INSERT | SQLITE_UPDATE | SQLITE_DELETE.
-         * @param dbName database name containing the affected row.
-         * @param tblName table name containing the affected row.
-         * @param rowId id of the affected row.
-         */
-        public void call(Pointer pArg, int actionCode,@Cast("const char*") BytePointer dbName,
-                @Cast("const char*") BytePointer tblName, @Cast("sqlite3_int64") long rowId) {
-					update(actionCode, getString(dbName), getString(tblName), rowId);
-				}
-				/**
-				 * Data Change Notification Callback
-				 * @param actionCode org.sqlite.ActionCodes.SQLITE_INSERT | SQLITE_UPDATE | SQLITE_DELETE.
-				 * @param dbName database name containing the affected row.
-				 * @param tblName table name containing the affected row.
-				 * @param rowId id of the affected row.
-				 */
-				protected abstract void update(int actionCode, String dbName, String tblName, long rowId);
-    }
+		/**
+		 * @param count the number of times that the busy handler has been invoked previously for the same locking event.
+		 * @return <code>true</code> to try again, <code>false</code> to abort.
+		 */
+		protected abstract boolean busy(int count);
+	}
 
 	/**
-     * Tracing callback.
-     * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
-     */
-    public abstract static class TraceCallback extends FunctionPointer {
-        protected TraceCallback() {
-            allocate();
-        }
-        private native void allocate();
-        /**
-         * @param sql SQL statement text.
-         */
-        @SuppressWarnings("unused")
-        public void call(Pointer arg,@Cast("const char*") BytePointer sql) {
-            trace(getString(sql));
-        }
-
-        /**
-         * @param sql SQL statement text.
-         */
-        protected abstract void trace(String sql);
-    }
-
-	/**
-     * Profiling callback.
-     * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
-     */
-    public abstract static class ProfileCallback extends FunctionPointer {
-        protected ProfileCallback() {
-            allocate();
-        }
-        private native void allocate();
-        /**
-         * @param sql SQL statement text.
-         * @param ns time in nanoseconds
-         */
-        @SuppressWarnings("unused")
-        public void call(Pointer arg,@Cast("const char*") BytePointer sql,@Cast("sqlite3_uint64") long ns) {
-            profile(getString(sql), ns);
-        }
-
-        /**
-         * @param sql SQL statement text.
-         * @param ns time in nanoseconds
-         */
-        protected abstract void profile(String sql, long ns);
-    }
+	 * Data change notification callback.
+	 * <ul>
+	 * <li>The update hook is not invoked when internal system tables are modified (i.e. sqlite_master and sqlite_sequence).</li>
+	 * <li>The update hook is not invoked when WITHOUT ROWID tables are modified.</li>
+	 * <li>In the current implementation, the update hook is not invoked when duplication rows are deleted because of an ON CONFLICT REPLACE clause.</li>
+	 * <li>Nor is the update hook invoked when rows are deleted using the truncate optimization.</li>
+	 * </ul>
+	 *
+	 * @see Conn#updateHook(UpdateHook)
+	 * @see <a href="http://sqlite.org/c3ref/update_hook.html">sqlite3_update_hook</a>
+	 */
+	public abstract static class UpdateHook extends FunctionPointer {
+		protected UpdateHook() {
+			allocate();
+		}
+		private native void allocate();
+		/**
+		 * Data Change Notification Callback
+		 *
+		 * @param pArg <code>null</code>.
+		 * @param actionCode org.sqlite.ActionCodes.SQLITE_INSERT | SQLITE_UPDATE | SQLITE_DELETE.
+		 * @param dbName database name containing the affected row.
+		 * @param tblName table name containing the affected row.
+		 * @param rowId id of the affected row.
+		 */
+		public void call(Pointer pArg, int actionCode, @Cast("const char*") BytePointer dbName,
+				@Cast("const char*") BytePointer tblName, @Cast("sqlite3_int64") long rowId) {
+			update(actionCode, getString(dbName), getString(tblName), rowId);
+		}
+		/**
+		 * Data Change Notification Callback
+		 *
+		 * @param actionCode org.sqlite.ActionCodes.SQLITE_INSERT | SQLITE_UPDATE | SQLITE_DELETE.
+		 * @param dbName database name containing the affected row.
+		 * @param tblName table name containing the affected row.
+		 * @param rowId id of the affected row.
+		 */
+		protected abstract void update(int actionCode, String dbName, String tblName, long rowId);
+	}
 
 	/**
-     * Compile-time authorization callback
-     *
-     * @see Conn#setAuhtorizer(Authorizer)
-     * @see <a href="http://sqlite.org/c3ref/set_authorizer.html">sqlite3_set_authorizer</a>
-     */
-    public abstract static class Authorizer extends FunctionPointer {
-        protected Authorizer() {
-            allocate();
-        }
-        private native void allocate();
-        /**
-         * @param pArg       User data (<code>null</code>)
-         * @param actionCode {@link ActionCodes}.*
-         * @return {@link #SQLITE_OK} or {@link #SQLITE_DENY} or {@link #SQLITE_IGNORE}
-         */
-        public int call(Pointer pArg, int actionCode,
-                @Cast("const char*") BytePointer arg1,@Cast("const char*") BytePointer arg2,
-                @Cast("const char*") BytePointer dbName,@Cast("const char*") BytePointer triggerName) {
-            return authorize(actionCode, getString(arg1), getString(arg2), getString(dbName), getString(triggerName));
-        }
-        protected abstract int authorize(int actionCode, String arg1, String arg2, String dbName, String triggerName);
+	 * Tracing callback.
+	 *
+	 * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
+	 */
+	public abstract static class TraceCallback extends FunctionPointer {
+		protected TraceCallback() {
+			allocate();
+		}
+		private native void allocate();
+		/**
+		 * @param sql SQL statement text.
+		 */
+		@SuppressWarnings("unused")
+		public void call(Pointer arg, @Cast("const char*") BytePointer sql) {
+			trace(getString(sql));
+		}
 
-        public static final int SQLITE_OK = ErrCodes.SQLITE_OK;
-        /**
-         * @see <a href="http://sqlite.org/c3ref/c_deny.html">Authorizer Return Codes</a>
-         */
-        public static final int SQLITE_DENY = 1;
-        /**
-         * @see <a href="http://sqlite.org/c3ref/c_deny.html">Authorizer Return Codes</a>
-         */
-        public static final int SQLITE_IGNORE = 2;
-    }
+		/**
+		 * @param sql SQL statement text.
+		 */
+		protected abstract void trace(String sql);
+	}
+
+	/**
+	 * Profiling callback.
+	 *
+	 * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
+	 */
+	public abstract static class ProfileCallback extends FunctionPointer {
+		protected ProfileCallback() {
+			allocate();
+		}
+		private native void allocate();
+		/**
+		 * @param sql SQL statement text.
+		 * @param ns time in nanoseconds
+		 */
+		@SuppressWarnings("unused")
+		public void call(Pointer arg, @Cast("const char*") BytePointer sql, @Cast("sqlite3_uint64") long ns) {
+			profile(getString(sql), ns);
+		}
+
+		/**
+		 * @param sql SQL statement text.
+		 * @param ns time in nanoseconds
+		 */
+		protected abstract void profile(String sql, long ns);
+	}
+
+	/**
+	 * Compile-time authorization callback
+	 *
+	 * @see Conn#setAuhtorizer(Authorizer)
+	 * @see <a href="http://sqlite.org/c3ref/set_authorizer.html">sqlite3_set_authorizer</a>
+	 */
+	public abstract static class Authorizer extends FunctionPointer {
+		protected Authorizer() {
+			allocate();
+		}
+		private native void allocate();
+		/**
+		 * @param pArg User data (<code>null</code>)
+		 * @param actionCode {@link ActionCodes}.*
+		 * @return {@link #SQLITE_OK} or {@link #SQLITE_DENY} or {@link #SQLITE_IGNORE}
+		 */
+		public int call(Pointer pArg, int actionCode,
+				@Cast("const char*") BytePointer arg1, @Cast("const char*") BytePointer arg2,
+				@Cast("const char*") BytePointer dbName, @Cast("const char*") BytePointer triggerName) {
+			return authorize(actionCode, getString(arg1), getString(arg2), getString(dbName), getString(triggerName));
+		}
+		protected abstract int authorize(int actionCode, String arg1, String arg2, String dbName, String triggerName);
+
+		public static final int SQLITE_OK = ErrCodes.SQLITE_OK;
+		/**
+		 * @see <a href="http://sqlite.org/c3ref/c_deny.html">Authorizer Return Codes</a>
+		 */
+		public static final int SQLITE_DENY = 1;
+		/**
+		 * @see <a href="http://sqlite.org/c3ref/c_deny.html">Authorizer Return Codes</a>
+		 */
+		public static final int SQLITE_IGNORE = 2;
+	}
 }
