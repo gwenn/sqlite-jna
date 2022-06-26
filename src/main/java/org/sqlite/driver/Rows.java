@@ -1299,20 +1299,20 @@ class Rows implements ResultSet {
 
 	private <T> T convert(String txt, Class<T> type) throws SQLException {
 		if (LocalDate.class.equals(type)) {
-			return (T)LocalDate.parse(txt); // TODO wrap DateTimeParseException into SQLException
+			return (T) LocalDate.parse(txt); // TODO wrap DateTimeParseException into SQLException
 		} else if (LocalDateTime.class.equals(type)) {
-			return (T)LocalDateTime.parse(txt);
+			return (T) LocalDateTime.parse(txt);
 		} else if (OffsetDateTime.class.equals(type)) {
-			return (T)OffsetDateTime.parse(txt);
+			return (T) OffsetDateTime.parse(txt);
 		} else if (LocalTime.class.equals(type)) {
-			return (T)LocalTime.parse(txt);
+			return (T) LocalTime.parse(txt);
 		}
 		throw new SQLException("Conversion from text to " + type + "is not supported");
 	}
 
 	private <T> T convert(long l, Class<T> type) throws SQLException {
 		if (LocalDate.class.equals(type)) {
-			return (T)LocalDate.ofEpochDay(l);
+			return (T) LocalDate.ofEpochDay(l);
 		}
 		throw new SQLException("Conversion from long to " + type + "is not supported");
 	}

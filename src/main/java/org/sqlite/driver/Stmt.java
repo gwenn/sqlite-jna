@@ -270,7 +270,7 @@ class Stmt implements Statement {
 			return true;
 		} else if (res == SQLite.SQLITE_DONE) {
 			return false;
-		} else if ((res&0xFF) == ErrCodes.SQLITE_CONSTRAINT) {
+		} else if ((res & 0xFF) == ErrCodes.SQLITE_CONSTRAINT) {
 			throw new SQLIntegrityConstraintViolationException(stmt.getErrMsg(), null, res);
 		} else if (res == ErrCodes.SQLITE_INTERRUPT) {
 			throw new SQLTimeoutException(stmt.getErrMsg(), null, res);

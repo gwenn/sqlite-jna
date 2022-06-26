@@ -901,7 +901,7 @@ class DbMeta implements DatabaseMetaData {
 				// determine exact table name
 				ps.setString(1, tableNamePattern);
 				ps.setString(2, tableNamePattern);
-				try (ResultSet rs = ps.executeQuery()){
+				try (ResultSet rs = ps.executeQuery()) {
 					while (rs.next()) {
 						tbls.add(new String[]{catalog, rs.getString(1)});
 					}
@@ -1102,7 +1102,7 @@ class DbMeta implements DatabaseMetaData {
 		try (PreparedStatement fks = c.prepareStatement(s)) {
 			fks.setString(1, table);
 			fks.setString(2, "%REFERENCES%" + table + "%(%");
-			try (ResultSet rs = fks.executeQuery()){
+			try (ResultSet rs = fks.executeQuery()) {
 				while (rs.next()) {
 					fkTables.add(rs.getString(1));
 				}
@@ -1248,7 +1248,7 @@ class DbMeta implements DatabaseMetaData {
 								append(quote(rs.getString(3))).append(" AS cn");
 						found = true;
 					}
-				//} catch(StmtException e) { // query does not return ResultSet
+					//} catch(StmtException e) { // query does not return ResultSet
 				}
 			}
 			if (found) {

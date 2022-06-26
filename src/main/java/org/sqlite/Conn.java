@@ -95,7 +95,7 @@ public final class Conn implements AutoCloseable {
 		final Map<String, String> queryParams = uri ? OpenQueryParameter.getQueryParams(filename) : Collections.emptyMap();
 		// TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
 		final boolean sharedCacheMode = "shared".equals(queryParams.get("cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
-		final sqlite3 sqlite3 = pDb.isNull() ? null: pDb;
+		final sqlite3 sqlite3 = pDb.isNull() ? null : pDb;
 		final Conn conn = new Conn(sqlite3, sharedCacheMode);
 		if (uri && !queryParams.isEmpty()) {
 			try {
@@ -257,7 +257,7 @@ public final class Conn implements AutoCloseable {
 		final BytePointer tail = new BytePointer();
 		final int res = blockingPrepare(null, pSql, cacheable ? SQLITE_PREPARE_PERSISTENT : 0, stmt, tail);
 		check(res, "error while preparing statement '%s'", sql);
-		stmt = stmt.isNull() ? null: stmt;
+		stmt = stmt.isNull() ? null : stmt;
 		return new Stmt(this, sql, stmt, tail, cacheable);
 	}
 
@@ -319,7 +319,7 @@ public final class Conn implements AutoCloseable {
 			s.bind(params);
 			return s;
 		} catch (SQLiteException e) {
-			if (s!= null) {
+			if (s != null) {
 				s.closeNoCheck();
 			}
 			throw e;
@@ -814,7 +814,7 @@ public final class Conn implements AutoCloseable {
 			return false;
 		}
 		synchronized (cache) {
-			cache.put(stmt.sql,stmt);
+			cache.put(stmt.sql, stmt);
 		}
 		return true;
 	}
