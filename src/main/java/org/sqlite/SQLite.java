@@ -23,11 +23,16 @@ import org.bytedeco.javacpp.PointerPointer;
 import org.bytedeco.javacpp.annotation.ByPtrPtr;
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Const;
+import org.bytedeco.javacpp.annotation.MemberGetter;
+import org.bytedeco.javacpp.annotation.MemberSetter;
+import org.bytedeco.javacpp.annotation.Name;
+import org.bytedeco.javacpp.annotation.NoException;
 import org.bytedeco.javacpp.annotation.Opaque;
 import org.bytedeco.javacpp.annotation.Platform;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
 @Platform(cinclude = "sqlite3.h", link = "sqlite3")
+@NoException(true)
 public final class SQLite {
 	static {
 		Loader.load();
@@ -185,6 +190,9 @@ public final class SQLite {
 	//static native int sqlite3_bind_text16(SQLite3Stmt pStmt, int i, const void*, int, void(*)(void*));
 	//static native int sqlite3_bind_value(SQLite3Stmt pStmt, int i, const sqlite3_value*);
 	static native int sqlite3_bind_zeroblob(sqlite3_stmt pStmt, int i, int n);
+	// TODO sqlite3_bind_pointer (https://sqlite.org/c3ref/bind_blob.html) and carray extension
+	static native int sqlite3_bind_pointer(sqlite3_stmt pStmt, int i, Pointer pPtr, @Cast("const char*") BytePointer zPTtype, Destructor xDestructor);
+
 	static native int sqlite3_stmt_status(sqlite3_stmt pStmt, int op, boolean reset);
 	//#if mvn.project.property.sqlite.enable.stmt.scanstatus == "true"
 	// TODO https://sqlite.org/c3ref/c_scanstat_est.html constants
@@ -193,6 +201,7 @@ public final class SQLite {
 	//#endif
 
 	static native void sqlite3_free(Pointer p);
+	static native Pointer sqlite3_malloc(int size);
 
 	static native int sqlite3_blob_open(sqlite3 pDb, @Cast("const char*") BytePointer dbName, @Cast("const char*") BytePointer tableName, @Cast("const char*") BytePointer columnName,
 			@Cast("sqlite3_int64") long iRow, boolean flags, @ByPtrPtr sqlite3_blob ppBlob); // no copy needed
@@ -239,6 +248,8 @@ public final class SQLite {
 	static native void sqlite3_result_blob(sqlite3_context pCtx, byte[] blob, int n, @Cast("sqlite3_destructor_type") long xDel);
 	static native void sqlite3_result_int64(sqlite3_context pCtx, @Cast("sqlite3_int64") long l);
 	static native void sqlite3_result_zeroblob(sqlite3_context pCtx, int n);
+	// TODO sqlite3_result_pointer (https://sqlite.org/c3ref/result_blob.html) and carray extension
+	static native void sqlite3_result_pointer(sqlite3_context pCtx, Pointer pPtr, @Cast("const char*") BytePointer zPTtype, Destructor xDestructor);
 
 	static native void sqlite3_result_error(sqlite3_context pCtx, @Cast("const char*") BytePointer err, int length);
 	static native void sqlite3_result_error_code(sqlite3_context pCtx, int errCode);
@@ -261,6 +272,16 @@ public final class SQLite {
 	static native void sqlite3_set_auxdata(sqlite3_context pCtx, int n, Pointer p, Destructor free);
 	static native Pointer sqlite3_aggregate_context(sqlite3_context pCtx, int nBytes);
 	static native sqlite3 sqlite3_context_db_handle(sqlite3_context pCtx);
+
+	static native int sqlite3_create_module_v2(sqlite3 db, @Cast("const char*") BytePointer zName, @Const sqlite3_module p, Pointer pClientData, Destructor xDestroy);
+	static native int sqlite3_declare_vtab(sqlite3 db, @Cast("const char*") BytePointer zSQL);
+	//static native @Cast("const char*") BytePointer sqlite3_vtab_collation(sqlite3_index_info pIdxInfo, int iCons);
+	static native int sqlite3_vtab_config(sqlite3 db, int op);
+	//static native int sqlite3_vtab_distinct(sqlite3_index_info pIdxInfo);
+	//static native int sqlite3_vtab_in(sqlite3_index_info pIdxInfo, int iCons, int bHandle);
+	static native int sqlite3_vtab_nochange(sqlite3_context pCtx);
+	static native int sqlite3_vtab_on_conflict(sqlite3 db);
+	//static native int sqlite3_vtab_rhs_value(sqlite3_index_info pIdxInfo, int iCons, @ByPtrPtr sqlite3_value ppVal);
 
 	public static final Charset UTF_8 = StandardCharsets.UTF_8;
 	public static final String UTF_8_ECONDING = UTF_8.name();
@@ -643,7 +664,7 @@ public final class SQLite {
 	 * 	\@Override
 	 * 	protected void func(SQLite3Context pCtx, SQLite3Values args) {
 	 * 		pCtx.setResultInt(0);
-	 *    }
+	 * 	}
 	 * }
 	 * }</pre>
 	 *
@@ -695,7 +716,7 @@ public final class SQLite {
 	 * 		args.getX(...);
 	 * 		...
 	 * 		aggrCtx.setX(...);
-	 *  }
+	 * 	}
 	 * }
 	 * }</pre>
 	 *
@@ -747,10 +768,10 @@ public final class SQLite {
 	 * 		if (aggrCtx == null) {
 	 * 			pCtx.setResultNull();
 	 * 			return;
-	 *    }
+	 * 		}
 	 * 		...
 	 * 		pCtx.setResultX(...);
-	 *  }
+	 * 	}
 	 * }
 	 * }</pre>
 	 *
@@ -937,4 +958,120 @@ public final class SQLite {
 		 */
 		public static final int SQLITE_IGNORE = 2;
 	}
+
+	@Opaque // not really opaque
+	public static class sqlite3_module extends Pointer {
+		public sqlite3_module() {
+		}
+		public sqlite3_module(Pointer p) {
+			super(p);
+		}
+	}
+
+	public static abstract class sqlite3_vtab extends Pointer {
+		public sqlite3_vtab() {
+			allocate();
+		}
+		public sqlite3_vtab(Pointer p) {
+			super(p);
+		}
+		private native void allocate();
+		/** The module for this virtual table */
+		@MemberGetter
+		public native @Const sqlite3_module pModule();
+		/** Error message from sqlite3_mprintf() */
+		@MemberGetter
+		public native @Cast("char*") BytePointer zErrMsg();
+		@MemberSetter
+		public native sqlite3_vtab zErrMsg(@Cast("char*") BytePointer setter);
+		/* Virtual table implementations will typically add additional fields */
+	}
+
+	public static abstract class sqlite3_vtab_cursor extends Pointer {
+		public sqlite3_vtab_cursor() {
+			allocate();
+		}
+		public sqlite3_vtab_cursor(Pointer p) {
+			super(p);
+		}
+		private native void allocate();
+		@MemberGetter
+		public native sqlite3_vtab pVtab();
+		/* Virtual table implementations will typically add additional fields */
+	}
+
+	/**
+	 * Virtual Table Indexing Information
+	 * @see <a href="https://sqlite.org/c3ref/index_info.html">sqlite3_index_info</a>
+	 */
+	public static class sqlite3_index_info extends Pointer {
+		public sqlite3_index_info() {
+		}
+		public sqlite3_index_info(Pointer p) {
+			super(p);
+		}
+
+		/* Inputs */
+		/** Number of entries in aConstraint */
+		@MemberGetter
+		public native int nConstraint();
+		/** Column constrained. -1 for ROWID */
+		@MemberGetter
+		@Name({"aConstraint", ".iColumn"}) public native int aConstraint_iColumn(int i);
+		/** Constraint operator */
+		@MemberGetter
+		@Name({"aConstraint", ".op"}) public native @Cast("unsigned char") byte aConstraint_op(int i); // TODO enum
+		/** True if this constraint is usable */
+		@MemberGetter
+		@Name({"aConstraint", ".usable"}) public native @Cast("unsigned char") boolean aConstraint_usable(int i);
+		/** Number of terms in the ORDER BY clause */
+		@MemberGetter
+		public native int nOrderBy();
+		/** Column number */
+		@MemberGetter
+		@Name({"aOrderBy", ".iColumn"}) public native int aOrderBy_iColumn(int i);
+		/** True for DESC. False for ASC. */
+		@MemberGetter
+		@Name({"aOrderBy", ".desc"}) public native @Cast("unsigned char") boolean aOrderBy_desc(int i);
+		/* Outputs */
+		/** if >0, constraint is part of argv to xFilter */
+		@MemberSetter
+		@Name({"aConstraintUsage", ".argvIndex"}) public native sqlite3_index_info aConstraintUsage_argvIndex(int i, int argvIndex);
+		/** Do not code a test for this constraint */
+		@MemberSetter
+		@Name({"aConstraintUsage", ".omit"}) public native sqlite3_index_info aConstraintUsage_omit(int i, boolean omit);
+		/** Number used to identify the index */
+		@MemberSetter
+		public native sqlite3_index_info idxNum(int idxNum);
+		/** String, possibly obtained from sqlite3_malloc */
+		@MemberSetter
+		public native sqlite3_index_info idxStr(@Cast("char*") BytePointer idxStr);
+		/** Free idxStr using sqlite3_free() if true */
+		@MemberSetter
+		public native sqlite3_index_info needToFreeIdxStr(boolean needToFreeIdxStr);
+		/** True if output is already ordered */
+		@MemberSetter
+		public native sqlite3_index_info orderByConsumed(int orderByConsumed);
+		/** Estimated cost of using this index */
+		@MemberSetter
+		public native sqlite3_index_info estimatedCost(double setter);
+		/* Fields below are only available in SQLite 3.8.2 and later */
+		/** Estimated number of rows returned */
+		@MemberSetter
+		public native sqlite3_index_info estimatedRows(long estimatedRows);
+		/* Fields below are only available in SQLite 3.9.0 and later */
+		/** Mask of SQLITE_INDEX_SCAN_* flags */
+		@MemberSetter
+		public native sqlite3_index_info idxFlags(int idxFlags);
+		/* Fields below are only available in SQLite 3.10.0 and later */
+		/** Input: Mask of columns used by statement */
+		@MemberGetter
+		public native long colUsed();
+		// TODO
+		// https://sqlite.org/c3ref/vtab_collation.html
+		// https://sqlite.org/c3ref/vtab_distinct.html
+		// https://sqlite.org/c3ref/vtab_in.html
+		// https://sqlite.org/c3ref/vtab_rhs_value.html
+	}
+
 }
