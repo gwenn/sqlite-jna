@@ -377,6 +377,7 @@ public class StatementTest {
 		rs.close();
 	}
 
+	@Test
 	public void ambiguousColumnNaming() throws SQLException {
 		stat.executeUpdate("create table t1 (c1 int);");
 		stat.executeUpdate("create table t2 (c1 int, c2 int);");
