@@ -42,10 +42,8 @@ public class JDBCTest {
 		Properties prop = new Properties();
 		prop.setProperty("enable_load_extension", "true");
 
-		Connection conn = null;
-		try {
-			conn = DriverManager.getConnection(JDBC.MEMORY, prop);
-			Statement stat = conn.createStatement();
+		try (Connection conn = DriverManager.getConnection(JDBC.MEMORY, prop);
+			Statement stat = conn.createStatement()) {
 
 			// How to build shared lib in Windows
 			// # mingw32-gcc -fPIC -c extension-function.c
@@ -55,10 +53,6 @@ public class JDBCTest {
 			//
 			//            ResultSet rs = stat.executeQuery("select sqrt(4)");
 			//            System.out.println(rs.getDouble(1));
-
-		} finally {
-			if (conn != null)
-				conn.close();
 		}
 	}
 

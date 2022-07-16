@@ -215,10 +215,10 @@ public class SqliteConnectionTest extends SqliteTestHelper {
 				}
 			}
 
-			ResultSet rs = stmt.executeQuery("SELECT * FROM test_table");
-
-			while (rs.next()) {
-				rs.getString(2);
+			try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
+				while (rs.next()) {
+					rs.getString(2);
+				}
 			}
 
 			stmt.execute("PRAGMA collation_list");

@@ -200,21 +200,20 @@ public class InsertQueryTest {
 
 	@Test(expected = SQLException.class)
 	public void reproduceDatabaseLocked() throws SQLException {
-		Connection conn = DriverManager.getConnection(JDBC.PREFIX + dbName);
-		Connection conn2 = DriverManager.getConnection(JDBC.PREFIX + dbName);
-		Statement stat = conn.createStatement();
-		Statement stat2 = conn2.createStatement();
+		try (Connection conn = DriverManager.getConnection(JDBC.PREFIX + dbName);
+			Connection conn2 = DriverManager.getConnection(JDBC.PREFIX + dbName);
+			Statement stat = conn.createStatement();
+			Statement stat2 = conn2.createStatement()) {
 
-		conn.setAutoCommit(false);
+			stat.executeUpdate("drop table if exists sample");
+			stat.executeUpdate("create table sample(id, name)");
+			conn.setAutoCommit(false);
+			stat.executeUpdate("insert into sample values(1, 'leo')");
 
-		stat.executeUpdate("drop table if exists sample");
-		stat.executeUpdate("create table sample(id, name)");
-		stat.executeUpdate("insert into sample values(1, 'leo')");
-
-		ResultSet rs = stat2.executeQuery("select count(*) from sample");
-		rs.next();
-
-		conn.commit(); // causes "database is locked" (SQLITE_BUSY)
-
+			try (ResultSet rs = stat2.executeQuery("select count(*) from sample")) {
+				rs.next();
+				conn.commit(); // causes "database is locked" (SQLITE_BUSY)
+			}
+		}
 	}
 }

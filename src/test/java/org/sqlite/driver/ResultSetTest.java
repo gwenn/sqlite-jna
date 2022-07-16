@@ -39,71 +39,81 @@ public class ResultSetTest {
 	@Test
 	public void testTableColumnLowerNowFindLowerCaseColumn()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select * from test");
-		assertEquals(1, resultSet.findColumn("id"));
+		try (ResultSet resultSet = stat.executeQuery("select * from test")) {
+			assertEquals(1, resultSet.findColumn("id"));
+		}
 	}
 
 	@Test
 	public void testTableColumnLowerNowFindUpperCaseColumn()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select * from test");
-		assertEquals(1, resultSet.findColumn("ID"));
+		try (ResultSet resultSet = stat.executeQuery("select * from test")) {
+			assertEquals(1, resultSet.findColumn("ID"));
+		}
 	}
 
 	@Test
 	public void testTableColumnLowerNowFindMixedCaseColumn()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select * from test");
-		assertEquals(1, resultSet.findColumn("Id"));
+		try (ResultSet resultSet = stat.executeQuery("select * from test")) {
+			assertEquals(1, resultSet.findColumn("Id"));
+		}
 	}
 
 	@Test
 	public void testTableColumnUpperNowFindLowerCaseColumn()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select * from test");
-		assertEquals(2, resultSet.findColumn("description"));
+		try (ResultSet resultSet = stat.executeQuery("select * from test")) {
+			assertEquals(2, resultSet.findColumn("description"));
+		}
 	}
 
 	@Test
 	public void testTableColumnUpperNowFindUpperCaseColumn()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select * from test");
-		assertEquals(2, resultSet.findColumn("DESCRIPTION"));
+		try (ResultSet resultSet = stat.executeQuery("select * from test")) {
+			assertEquals(2, resultSet.findColumn("DESCRIPTION"));
+		}
 	}
 
 	@Test
 	public void testTableColumnUpperNowFindMixedCaseColumn()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select * from test");
-		assertEquals(2, resultSet.findColumn("Description"));
+		try (ResultSet resultSet = stat.executeQuery("select * from test")) {
+			assertEquals(2, resultSet.findColumn("Description"));
+		}
 	}
 
 	@Test
 	public void testTableColumnMixedNowFindLowerCaseColumn()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select * from test");
-		assertEquals(3, resultSet.findColumn("foo"));
+		try (ResultSet resultSet = stat.executeQuery("select * from test")) {
+			assertEquals(3, resultSet.findColumn("foo"));
+		}
 	}
 
 	@Test
 	public void testTableColumnMixedNowFindUpperCaseColumn()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select * from test");
-		assertEquals(3, resultSet.findColumn("FOO"));
+		try (ResultSet resultSet = stat.executeQuery("select * from test")) {
+			assertEquals(3, resultSet.findColumn("FOO"));
+		}
 	}
 
 	@Test
 	public void testTableColumnMixedNowFindMixedCaseColumn()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select * from test");
-		assertEquals(3, resultSet.findColumn("fOo"));
+		try (ResultSet resultSet = stat.executeQuery("select * from test")) {
+			assertEquals(3, resultSet.findColumn("fOo"));
+		}
 	}
 
 	@Test
 	public void testSelectWithTableNameAliasNowFindWithoutTableNameAlias()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select t.id from test as t");
-		assertEquals(1, resultSet.findColumn("id"));
+		try (ResultSet resultSet = stat.executeQuery("select t.id from test as t")) {
+			assertEquals(1, resultSet.findColumn("id"));
+		}
 	}
 
 	/**
@@ -114,30 +124,34 @@ public class ResultSetTest {
 	@Test(expected = SQLException.class)
 	public void testSelectWithTableNameAliasNowNotFindWithTableNameAlias()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select t.id from test as t");
-		resultSet.findColumn("t.id");
+		try (ResultSet resultSet = stat.executeQuery("select t.id from test as t")) {
+			resultSet.findColumn("t.id");
+		}
 	}
 
 	@Test
 	public void testSelectWithTableNameNowFindWithoutTableName()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select test.id from test");
-		assertEquals(1, resultSet.findColumn("id"));
+		try (ResultSet resultSet = stat.executeQuery("select test.id from test")) {
+			assertEquals(1, resultSet.findColumn("id"));
+		}
 	}
 
 	@Test(expected = SQLException.class)
 	public void testSelectWithTableNameNowNotFindWithTableName()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select test.id from test");
-		resultSet.findColumn("test.id");
+		try (ResultSet resultSet = stat.executeQuery("select test.id from test")) {
+			resultSet.findColumn("test.id");
+		}
 	}
 
 	@Test
 	public void testSelectIso8601Timestamp()
 			throws SQLException {
-		ResultSet resultSet = stat.executeQuery("select test.some_date from test");
-		assertTrue(resultSet.next());
-		Timestamp expected = Timestamp.valueOf("2016-01-01 00:00:00");
-		assertEquals(expected, resultSet.getTimestamp(1));
+		try (ResultSet resultSet = stat.executeQuery("select test.some_date from test")) {
+			assertTrue(resultSet.next());
+			Timestamp expected = Timestamp.valueOf("2016-01-01 00:00:00");
+			assertEquals(expected, resultSet.getTimestamp(1));
+		}
 	}
 }
