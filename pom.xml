@@ -42,6 +42,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- 4.0 (Java 6), 4.1 (Java 7), 4.2 (Java 8) -->
     <jdbc.specification.version>4.2</jdbc.specification.version>
+    <!-- JDBC 4.2 + SQLite 3.37.0 -->
+    <large.update>false</large.update>
     <sqlite.enable.column.metadata>true</sqlite.enable.column.metadata>
     <sqlite.omit.load.extension>false</sqlite.omit.load.extension>
     <sqlite.enable.stmt.scanstatus>false</sqlite.enable.stmt.scanstatus>

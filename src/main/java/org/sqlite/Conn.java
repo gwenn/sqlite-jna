@@ -424,6 +424,7 @@ public final class Conn implements AutoCloseable {
 		checkOpen();
 		return sqlite3_changes(pDb);
 	}
+	//#if mvn.project.property.large.update == "true"
 	/**
 	 * @return Like {@link #getChanges()} but for large number.
 	 * @throws ConnException if current connection is closed
@@ -433,6 +434,7 @@ public final class Conn implements AutoCloseable {
 		checkOpen();
 		return sqlite3_changes64(pDb);
 	}
+	//#endif
 	/**
 	 * @return Total number of rows modified
 	 * @throws ConnException if current connection is closed
@@ -442,6 +444,7 @@ public final class Conn implements AutoCloseable {
 		checkOpen();
 		return sqlite3_total_changes(pDb);
 	}
+	//#if mvn.project.property.large.update == "true"
 	/**
 	 * @return Total number of rows modified
 	 * @throws ConnException if current connection is closed
@@ -451,6 +454,7 @@ public final class Conn implements AutoCloseable {
 		checkOpen();
 		return sqlite3_total_changes64(pDb);
 	}
+	//#endif
 
 	/**
 	 * @return the rowid of the most recent successful INSERT into the database.
