@@ -340,7 +340,10 @@
             </property>
           </propertyKeysAndValues>
           <classPath>${project.build.outputDirectory}</classPath>
-          <includePath>/usr/include/</includePath>
+          <includePaths>
+            <includePath>/usr/include/</includePath>
+            <includePath>${project.basedir}/src/main/resources/include/</includePath>
+          </includePaths>
           <linkPath>/usr/lib/</linkPath>
           <!--preloadPath>${basedir}/cppbuild/${javacpp.platform}/bin/</preloadPath-->
         </configuration>

@@ -18,6 +18,7 @@ import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.FunctionPointer;
 import org.bytedeco.javacpp.IntPointer;
 import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.LongPointer;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.PointerPointer;
 import org.bytedeco.javacpp.annotation.ByPtrPtr;
@@ -29,9 +30,10 @@ import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.NoException;
 import org.bytedeco.javacpp.annotation.Opaque;
 import org.bytedeco.javacpp.annotation.Platform;
+import org.bytedeco.javacpp.annotation.Virtual;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
-@Platform(cinclude = "sqlite3.h", link = "sqlite3")
+@Platform(cinclude = "sqlite3.h", include = "vtab.h", link = "sqlite3")
 @NoException(true)
 public final class SQLite {
 	static {
@@ -987,6 +989,24 @@ public final class SQLite {
 		/* Virtual table implementations will typically add additional fields */
 	}
 
+	public static abstract class VirtualTable extends sqlite3_vtab {
+		public VirtualTable(Pointer p) {
+			super(p);
+		}
+
+		// int (*xConnect)(sqlite3*, void *pAux, int argc, char *const*argv, /* Outputs */ sqlite3_vtab **ppVTab, char **pzErr);
+		@Virtual(true) public native int Connect(sqlite3 db, Pointer pAux, int argc,
+				@Cast("const char*const*") PointerPointer argv,
+				@Cast("char**") @ByPtrPtr BytePointer pzErr);
+		// int (*xDisconnect)(sqlite3_vtab *pVTab);
+		@Virtual(true) public native int Disconnect();
+		// int (*xBestIndex)(sqlite3_vtab *pVTab, sqlite3_index_info*);
+		@Virtual(true) public native int BestIndex(sqlite3_index_info info);
+		// int (*xOpen)(sqlite3_vtab *pVTab, /* Output * sqlite3_vtab_cursor **ppCursor);
+		@Virtual(true) public native int Open(@Cast("sqlite3_vtab_cursor**") PointerPointer ppCursor);
+		@Virtual(true) public native int Open(@ByPtrPtr sqlite3_vtab_cursor ppCursor);
+	}
+
 	public static abstract class sqlite3_vtab_cursor extends Pointer {
 		public sqlite3_vtab_cursor() {
 			allocate();
@@ -998,6 +1018,25 @@ public final class SQLite {
 		@MemberGetter
 		public native sqlite3_vtab pVtab();
 		/* Virtual table implementations will typically add additional fields */
+	}
+
+	public static abstract class VirtualTableCursor extends sqlite3_vtab_cursor {
+		public VirtualTableCursor(Pointer p) {
+			super(p);
+		}
+
+		// int (*xClose)(sqlite3_vtab_cursor*);
+		@Virtual(true) public native int Close();
+		// int (*xFilter)(sqlite3_vtab_cursor*, int idxNum, const char *idxStr, int argc, sqlite3_value **argv);
+		@Virtual(true) public native int Filter(int idxNum, @Cast("const char*") BytePointer idxStr, int argc, @Cast("sqlite3_value**") PointerPointer argv);
+		// int (*xNext)(sqlite3_vtab_cursor*);
+		@Virtual(true) public native int Next();
+		// int (*xEof)(sqlite3_vtab_cursor*);
+		@Virtual(true) public native @Cast("int") boolean Eof();
+		// int (*xColumn)(sqlite3_vtab_cursor*, sqlite3_context*, int N);
+		@Virtual(true) public native int Column(sqlite3_context ctx, int colno);
+		// int (*xRowid)(sqlite3_vtab_cursor *pCur, /* Output * sqlite_int64 *pRowid);
+		@Virtual(true) public native int RowId(@Cast("sqlite_int64*") LongPointer pRowid);
 	}
 
 	/**
