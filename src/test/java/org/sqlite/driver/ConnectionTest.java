@@ -100,7 +100,7 @@ public class ConnectionTest {
             fail("should not change read only flag after opening connection");
         }
         catch (SQLException e) {
-           assert(e.getMessage().contains("Cannot change read-only flag after establishing a connection.")); 
+           assert(e.getMessage().contains("Cannot change read-only flag after establishing a connection."));
         }
         finally {
             conn.close();
@@ -323,8 +323,9 @@ public class ConnectionTest {
 
 	@Test
 	public void addWarning() throws Exception {
-		Connection conn = DriverManager.getConnection(JDBC.MEMORY);
-		((Conn) conn).addWarning(new SQLWarning("test"));
-		((Conn) conn).addWarning(null);
+		try (Connection conn = DriverManager.getConnection(JDBC.MEMORY)) {
+			((Conn) conn).addWarning(new SQLWarning("test"));
+			((Conn) conn).addWarning(null);
+		}
 	}
 }

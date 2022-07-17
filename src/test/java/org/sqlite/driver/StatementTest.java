@@ -304,10 +304,10 @@ public class StatementTest {
 	@Test
 	public void closeOnFalseNext() throws SQLException {
 		stat.executeUpdate("create table t1 (c1);");
-		final Statement stmt = conn.createStatement();
-		stmt.executeQuery("select * from t1;").next();
-		stat.executeUpdate("drop table t1;");
-		stmt.close();
+		try (Statement stmt = conn.createStatement()) {
+			stmt.executeQuery("select * from t1;").next();
+			stat.executeUpdate("drop table t1;");
+		}
 	}
 
 	@Test
@@ -373,6 +373,7 @@ public class StatementTest {
 		rs.close();
 	}
 
+	@Test
 	public void ambiguousColumnNaming() throws SQLException {
 		stat.executeUpdate("create table t1 (c1 int);");
 		stat.executeUpdate("create table t2 (c1 int, c2 int);");
@@ -431,9 +432,10 @@ public class StatementTest {
 
 	@Test(expected = SQLException.class)
 	public void noSuchColName() throws SQLException {
-		ResultSet rs = stat.executeQuery("select 1;");
-		assertTrue(rs.next());
-		rs.getInt("noSuchColName");
+		try (ResultSet rs = stat.executeQuery("select 1;")) {
+			assertTrue(rs.next());
+			rs.getInt("noSuchColName");
+		}
 	}
 
 	@Test
@@ -443,9 +445,10 @@ public class StatementTest {
 		while (stat.getMoreResults() || stat.getUpdateCount() != -1) {
 		}
 
-		ResultSet rs = stat.executeQuery("select * from person");
-		assertTrue(rs.next());
-		assertTrue(rs.next());
+		try (ResultSet rs = stat.executeQuery("select * from person")) {
+			assertTrue(rs.next());
+			assertTrue(rs.next());
+		}
 	}
 
 	@Test

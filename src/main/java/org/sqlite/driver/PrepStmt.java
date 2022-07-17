@@ -129,6 +129,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 		step(true);
 		return getConn().getChanges();
 	}
+	//#if mvn.project.property.large.update == "true"
 	//#if mvn.project.property.jdbc.specification.version >= "4.2"
 	@Override
 	public long executeLargeUpdate() throws SQLException {
@@ -139,6 +140,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 		step(true);
 		return getConn().getChanges64();
 	}
+	//#endif
 	//#endif
 
 	@Override

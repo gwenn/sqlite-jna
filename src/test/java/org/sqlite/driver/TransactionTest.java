@@ -125,10 +125,12 @@ public class TransactionTest {
 		}
 		conn2.setAutoCommit(true);
 
-		final ResultSet rs = stat1.executeQuery("select c1 from test");
-		final Set<Integer> seen = new HashSet<Integer>();
-		while (rs.next()) {
-			assertTrue(seen.add(rs.getInt(1)));
+		final Set<Integer> seen;
+		try (ResultSet rs = stat1.executeQuery("select c1 from test")) {
+			seen = new HashSet<Integer>();
+			while (rs.next()) {
+				assertTrue(seen.add(rs.getInt(1)));
+			}
 		}
 
 		assertEquals(new HashSet<Integer>(Arrays.asList(1, 2, 3)), seen);
@@ -316,10 +318,11 @@ public class TransactionTest {
 		stat1.executeUpdate("create table t (c1);");
 		stat1.executeUpdate("insert into t values (1);");
 		stat1.executeUpdate("insert into t values (2);");
-		ResultSet rs = stat1.executeQuery("select * from t;");
-		assertTrue(rs.next());
+		try (ResultSet rs = stat1.executeQuery("select * from t;")) {
+			assertTrue(rs.next());
 
-		stat2.executeUpdate("insert into t values (3);"); // can't be done
+			stat2.executeUpdate("insert into t values (3);"); // can't be done
+		}
 	}
 
 	@Test

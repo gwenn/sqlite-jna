@@ -1,5 +1,6 @@
 package org.sqlite.driver;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -83,7 +84,8 @@ public class BlobTest {
 		}
 	}
 
-	//@Test
+	@Test
+	@Ignore
 	public void setBinaryStream() throws SQLException {
 		Connection c = null;
 		try {

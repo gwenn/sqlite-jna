@@ -255,19 +255,19 @@ public class PrepStmtTest {
 
 	@Test
 	public void colNameAccess() throws SQLException {
-		PreparedStatement prep = conn.prepareStatement("select ? as col1, ? as col2, ? as bingo;");
-		prep.setNull(1, 0);
-		prep.setFloat(2, Float.MIN_VALUE);
-		prep.setShort(3, Short.MIN_VALUE);
-		prep.executeQuery();
-		ResultSet rs = prep.executeQuery();
-		assertTrue(rs.next());
-		assertNull(rs.getString("col1"));
-		assertTrue(rs.wasNull());
-		assertEquals(Float.MIN_VALUE, rs.getFloat("col2"), 0.0001);
-		assertEquals(Short.MIN_VALUE, rs.getShort("bingo"));
-		rs.close();
-		prep.close();
+		try (PreparedStatement prep = conn.prepareStatement("select ? as col1, ? as col2, ? as bingo;")) {
+			prep.setNull(1, 0);
+			prep.setFloat(2, Float.MIN_VALUE);
+			prep.setShort(3, Short.MIN_VALUE);
+			prep.executeQuery();
+			try (ResultSet rs = prep.executeQuery()) {
+				assertTrue(rs.next());
+				assertNull(rs.getString("col1"));
+				assertTrue(rs.wasNull());
+				assertEquals(Float.MIN_VALUE, rs.getFloat("col2"), 0.0001);
+				assertEquals(Short.MIN_VALUE, rs.getShort("bingo"));
+			}
+		}
 	}
 
 	@Test
@@ -520,22 +520,22 @@ public class PrepStmtTest {
 	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void metaData() throws SQLException {
-		PreparedStatement prep = conn.prepareStatement("select ? as col1, ? as col2, ? as delta;");
-		ResultSetMetaData meta = prep.getMetaData();
-		assertEquals(3, meta.getColumnCount());
-		assertEquals("col1", meta.getColumnName(1));
-		assertEquals("col2", meta.getColumnName(2));
-		assertEquals("delta", meta.getColumnName(3));
+		try (PreparedStatement prep = conn.prepareStatement("select ? as col1, ? as col2, ? as delta;")) {
+			ResultSetMetaData meta = prep.getMetaData();
+			assertEquals(3, meta.getColumnCount());
+			assertEquals("col1", meta.getColumnName(1));
+			assertEquals("col2", meta.getColumnName(2));
+			assertEquals("delta", meta.getColumnName(3));
         /*assertEquals(meta.getColumnType(1), Types.INTEGER);
         assertEquals(meta.getColumnType(2), Types.INTEGER);
         assertEquals(meta.getColumnType(3), Types.INTEGER);*/
 
-		prep.setInt(1, 2);
-		prep.setInt(2, 3);
-		prep.setInt(3, -1);
-		meta = prep.executeQuery().getMetaData();
-		assertEquals(3, meta.getColumnCount());
-		prep.close();
+			prep.setInt(1, 2);
+			prep.setInt(2, 3);
+			prep.setInt(3, -1);
+			meta = prep.executeQuery().getMetaData();
+			assertEquals(3, meta.getColumnCount());
+		}
 	}
 	//#endif
 

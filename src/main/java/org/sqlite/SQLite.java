@@ -8,6 +8,8 @@
  */
 package org.sqlite;
 
+import com.google.errorprone.annotations.DoNotCall;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -80,9 +82,11 @@ public final class SQLite {
 	// TODO https://sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfiglookaside constants
 	static native int sqlite3_db_config(sqlite3 pDb, int op, int v, IntPointer pOk);
 	//#if mvn.project.property.sqlite.omit.load.extension == "true"
+	@DoNotCall
 	static int sqlite3_enable_load_extension(Object pDb, boolean onoff) {
 		throw new UnsupportedOperationException("SQLITE_OMIT_LOAD_EXTENSION activated");
 	}
+	@DoNotCall
 	static int sqlite3_load_extension(Object pDb, BytePointer file, BytePointer proc, @Cast("char**") @ByPtrPtr BytePointer errMsg) {
 		throw new UnsupportedOperationException("SQLITE_OMIT_LOAD_EXTENSION activated");
 	}
@@ -99,9 +103,13 @@ public final class SQLite {
 	static native boolean sqlite3_get_autocommit(sqlite3 pDb);
 
 	static native int sqlite3_changes(sqlite3 pDb);
+	//#if mvn.project.property.large.update == "true"
 	static native long sqlite3_changes64(sqlite3 pDb); // 3.37.0
+	//#endif
 	static native int sqlite3_total_changes(sqlite3 pDb);
+	//#if mvn.project.property.large.update == "true"
 	static native long sqlite3_total_changes64(sqlite3 pDb); // 3.37.0
+	//#endif
 	static native @Cast("sqlite3_int64") long sqlite3_last_insert_rowid(sqlite3 pDb);
 
 	static native @Cast("const char*") BytePointer sqlite3_db_filename(sqlite3 pDb, @Cast("const char*") BytePointer dbName); // no copy needed
@@ -137,15 +145,19 @@ public final class SQLite {
 	static native @Cast("const char*") BytePointer sqlite3_column_database_name(sqlite3_stmt pStmt, int iCol); // copy needed
 	static native @Cast("const char*") BytePointer sqlite3_column_decltype(sqlite3_stmt pStmt, int iCol); // copy needed
 	//#else
+	@DoNotCall
 	static BytePointer sqlite3_column_origin_name(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
+	@DoNotCall
 	static BytePointer sqlite3_column_table_name(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
+	@DoNotCall
 	static BytePointer sqlite3_column_database_name(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
+	@DoNotCall
 	static BytePointer sqlite3_column_decltype(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
@@ -243,7 +255,7 @@ public final class SQLite {
 	static native int sqlite3_value_type(sqlite3_value pValue);
 	static native int sqlite3_value_numeric_type(sqlite3_value pValue);
 	// TODO sqlite3_value_pointer (https://sqlite.org/c3ref/value_blob.html) and carray extension
- 	static native BytePointer sqlite3_value_pointer(sqlite3_value pValue, @Cast("const char*") BytePointer zPType);
+	static native Pointer sqlite3_value_pointer(sqlite3_value pValue, @Cast("const char*") BytePointer zPType);
 
 	static native Pointer sqlite3_get_auxdata(sqlite3_context pCtx, int n);
 	static native void sqlite3_set_auxdata(sqlite3_context pCtx, int n, Pointer p, Destructor free);
