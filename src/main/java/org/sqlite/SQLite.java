@@ -929,10 +929,18 @@ public final class SQLite {
 		public static final int SQLITE_IGNORE = 2;
 	}
 
+	/**
+	 * Virtual table object
+	 * @see <a href="https://sqlite.org/c3ref/module.html">sqlite3_module</a>
+	 */
 	@Opaque // not really opaque
 	public static class sqlite3_module extends Pointer {
 	}
 
+	/**
+	 * Virtual table instance object
+	 * @see <a href="https://sqlite.org/c3ref/vtab.html>sqlite3_vtab</a>
+	 */
 	public static abstract class sqlite3_vtab extends Pointer {
 		public sqlite3_vtab() {
 			allocate();
@@ -969,6 +977,10 @@ public final class SQLite {
 		@Virtual(true) public native int Open(@ByPtrPtr sqlite3_vtab_cursor ppCursor);
 	}
 
+	/**
+	 * Virtual table cursor object
+	 * @see <a href="https://sqlite.org/c3ref/vtab_cursor.html">sqlite3_vtab_cursor</a>
+	 */
 	public static abstract class sqlite3_vtab_cursor extends Pointer {
 		public sqlite3_vtab_cursor() {
 			allocate();
