@@ -404,7 +404,7 @@ public final class Conn implements AutoCloseable {
 		checkOpen();
 		final sqlite3_blob pBlob = new sqlite3_blob();
 		final int res = sqlite3_blob_open(pDb, nativeString(dbName), nativeString(tblName), nativeString(colName), iRow, rw, pBlob); // ko if pDb is null
-		final sqlite3_blob blob = pBlob.isNull() ? null : new sqlite3_blob(pBlob);
+		final sqlite3_blob blob = pBlob.isNull() ? null : pBlob;
 		if (res != SQLITE_OK) {
 			sqlite3_blob_close(blob);
 			throw new SQLiteException(this, String.format("error while opening a blob to (db: '%s', table: '%s', col: '%s', row: %d)",

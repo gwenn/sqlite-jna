@@ -233,12 +233,6 @@ public final class SQLite {
 	static native int sqlite3_unlock_notify(sqlite3 pBlocked, UnlockNotifyCallback xNotify, Pointer pNotifyArg);
 	//#endif
 
-	/*
-	void (*)(sqlite3_context*,int,sqlite3_value**),
-	void (*)(sqlite3_context*,int,sqlite3_value**),
-	void (*)(sqlite3_context*),
-	void(*)(void*)
-	*/
 	// eTextRep: SQLITE_UTF8 => 1, ...
 	static native int sqlite3_create_function_v2(sqlite3 pDb, @Cast("const char*") BytePointer functionName, int nArg, int eTextRep,
 			Pointer pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, Destructor xDestroy);
@@ -390,11 +384,6 @@ public final class SQLite {
 	 */
 	@Opaque
 	public static class sqlite3 extends Pointer {
-		public sqlite3() {
-		}
-		public sqlite3(Pointer p) {
-			super(p);
-		}
 	}
 
 	/**
@@ -403,11 +392,6 @@ public final class SQLite {
 	 */
 	@Opaque
 	public static class sqlite3_stmt extends Pointer {
-		public sqlite3_stmt() {
-		}
-		public sqlite3_stmt(Pointer p) {
-			super(p);
-		}
 	}
 
 	/**
@@ -416,11 +400,6 @@ public final class SQLite {
 	 */
 	@Opaque
 	public static class sqlite3_blob extends Pointer {
-		public sqlite3_blob() {
-		}
-		public sqlite3_blob(Pointer p) {
-			super(p);
-		}
 	}
 
 	/**
@@ -429,11 +408,6 @@ public final class SQLite {
 	 */
 	@Opaque
 	public static class sqlite3_backup extends Pointer {
-		public sqlite3_backup() {
-		}
-		public sqlite3_backup(Pointer p) {
-			super(p);
-		}
 	}
 
 	/**
@@ -455,12 +429,6 @@ public final class SQLite {
 	 */
 	@Opaque
 	public static class sqlite3_context extends Pointer {
-		public sqlite3_context() {
-		}
-		public sqlite3_context(Pointer p) {
-			super(p);
-		}
-
 		/**
 		 * @return a copy of the pointer to the database connection (the 1st parameter) of
 		 * {@link SQLite#sqlite3_create_function_v2(sqlite3, BytePointer, int, int, Pointer, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, Destructor)}
@@ -963,11 +931,6 @@ public final class SQLite {
 
 	@Opaque // not really opaque
 	public static class sqlite3_module extends Pointer {
-		public sqlite3_module() {
-		}
-		public sqlite3_module(Pointer p) {
-			super(p);
-		}
 	}
 
 	public static abstract class sqlite3_vtab extends Pointer {
@@ -1003,7 +966,6 @@ public final class SQLite {
 		// int (*xBestIndex)(sqlite3_vtab *pVTab, sqlite3_index_info*);
 		@Virtual(true) public native int BestIndex(sqlite3_index_info info);
 		// int (*xOpen)(sqlite3_vtab *pVTab, /* Output * sqlite3_vtab_cursor **ppCursor);
-		@Virtual(true) public native int Open(@Cast("sqlite3_vtab_cursor**") PointerPointer ppCursor);
 		@Virtual(true) public native int Open(@ByPtrPtr sqlite3_vtab_cursor ppCursor);
 	}
 
