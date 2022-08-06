@@ -379,6 +379,9 @@ public class SqliteStatementTest extends SqliteTestHelper {
 
 	@Test
 	public void testReturning() throws Exception {
+		if (org.sqlite.Conn.libversionNumber() < 3035000) {
+			return;
+		}
 		try (Statement stmt = conn.createStatement()) {
 			stmt.execute("CREATE TABLE t0(\n" +
 					"  a INTEGER PRIMARY KEY,\n" +
