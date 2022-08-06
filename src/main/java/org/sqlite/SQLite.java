@@ -8,7 +8,6 @@
  */
 package org.sqlite;
 
-import com.google.errorprone.annotations.DoNotCall;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
@@ -85,11 +84,9 @@ public final class SQLite implements Library {
 	// TODO https://sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfiglookaside constants
 	static native int sqlite3_db_config(SQLite3 pDb, int op, int v, IntByReference pOk);
 	//#if mvn.project.property.sqlite.omit.load.extension == "true"
-	@DoNotCall
 	static int sqlite3_enable_load_extension(Object pDb, boolean onoff) {
 		throw new UnsupportedOperationException("SQLITE_OMIT_LOAD_EXTENSION activated");
 	}
-	@DoNotCall
 	static int sqlite3_load_extension(Object pDb, String file, String proc, PointerByReference errMsg) {
 		throw new UnsupportedOperationException("SQLITE_OMIT_LOAD_EXTENSION activated");
 	}
@@ -148,19 +145,15 @@ public final class SQLite implements Library {
 	static native String sqlite3_column_database_name(SQLite3Stmt pStmt, int iCol); // copy needed
 	static native String sqlite3_column_decltype(SQLite3Stmt pStmt, int iCol); // copy needed
 	//#else
-	@DoNotCall
 	static String sqlite3_column_origin_name(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
-	@DoNotCall
 	static String sqlite3_column_table_name(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
-	@DoNotCall
 	static String sqlite3_column_database_name(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
-	@DoNotCall
 	static String sqlite3_column_decltype(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
