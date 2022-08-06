@@ -376,4 +376,29 @@ public class SqliteStatementTest extends SqliteTestHelper {
 			stmt.setCursorName("foo");
 		}
 	}
+
+	@Test
+	public void testReturning() throws Exception {
+		try (Statement stmt = conn.createStatement()) {
+			stmt.execute("CREATE TABLE t0(\n" +
+					"  a INTEGER PRIMARY KEY,\n" +
+					"  b DATE DEFAULT CURRENT_TIMESTAMP,\n" +
+					"  c INTEGER\n" +
+					");");
+			int changes = stmt.executeUpdate("INSERT INTO t0(c) VALUES(random()) RETURNING *;", Statement.RETURN_GENERATED_KEYS);
+			assertEquals(1, changes);
+			try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+				assertTrue(generatedKeys.next());
+				assertTrue(generatedKeys.getInt(1) > 0);
+				assertNotNull(generatedKeys.getTimestamp(2));
+				generatedKeys.getInt(3);
+				assertFalse(generatedKeys.wasNull());
+			}
+			changes = stmt.executeUpdate("UPDATE t0 SET c = 0 WHERE 1 <> 1 RETURNING *;", Statement.RETURN_GENERATED_KEYS);
+			assertEquals(0, changes);
+			try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+				assertFalse(generatedKeys.next());
+			}
+		}
+	}
 }
