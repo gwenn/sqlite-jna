@@ -36,4 +36,5 @@ public interface OpenFlags {
 	int SQLITE_OPEN_PRIVATECACHE = 0x00040000; /* Ok for sqlite3_open_v2() */
 	//int SQLITE_OPEN_WAL = 0x00080000; /* VFS only */
 	int SQLITE_OPEN_NOFOLLOW = 0x01000000; /* Ok for sqlite3_open_v2() */
+	int SQLITE_OPEN_EXRESCODE = 0x02000000;
 }
