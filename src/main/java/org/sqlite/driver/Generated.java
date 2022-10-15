@@ -18,5 +18,5 @@ public enum Generated {
 	 * <a href="https://sqlite.org/lang_returning.html">RETURNING</a>
 	 */
 	RETURNING,
-	RETURNING_NO_ROW;
+	RETURNING_NO_ROW
 }

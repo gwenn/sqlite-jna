@@ -20,6 +20,7 @@ import com.sun.jna.ptr.PointerByReference;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
@@ -256,7 +257,7 @@ public final class SQLite implements Library {
 	static native Pointer sqlite3_aggregate_context(SQLite3Context pCtx, int nBytes);
 	static native SQLite3 sqlite3_context_db_handle(SQLite3Context pCtx);
 
-	public static final Charset UTF_8 = Charset.forName("UTF-8");
+	public static final Charset UTF_8 = StandardCharsets.UTF_8;
 	public static final String UTF_8_ECONDING = UTF_8.name();
 	static Pointer nativeString(String sql) {
 		if (sql == null) {

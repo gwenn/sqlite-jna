@@ -120,7 +120,7 @@ public class StatementTest {
 		assertTrue(rs.next());
 		assertEquals(Integer.MAX_VALUE, rs.getInt(1));
 		assertEquals(Integer.toString(Integer.MAX_VALUE), rs.getString(1));
-		assertEquals(new Integer(Integer.MAX_VALUE).doubleValue(),
+		assertEquals(Integer.valueOf(Integer.MAX_VALUE).doubleValue(),
 				rs.getDouble(1), 1e-3);
 		assertFalse(rs.next());
 		assertTrue(rs.isAfterLast());

@@ -137,7 +137,7 @@ public class PrepStmtTest {
 		assertTrue(rs.next());
 		assertEquals(Integer.MAX_VALUE, rs.getInt(1));
 		assertEquals(Integer.toString(Integer.MAX_VALUE), rs.getString(1));
-		assertEquals(new Integer(Integer.MAX_VALUE).doubleValue(), rs.getDouble(1), 0.0001);
+		assertEquals(Integer.valueOf(Integer.MAX_VALUE).doubleValue(), rs.getDouble(1), 0.0001);
 		assertFalse(rs.next());
 		assertTrue(rs.isAfterLast());
 		assertFalse(rs.next());

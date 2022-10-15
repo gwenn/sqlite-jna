@@ -139,7 +139,7 @@ public class SqliteResultSetTest extends SqliteTestHelper {
 
 	@Test
 	public void testGetTime() throws Exception {
-		Time testTime[] = {
+		Time[] testTime = {
 				Time.valueOf("05:25:00"),
 				Time.valueOf("05:25:22"),
 		};
