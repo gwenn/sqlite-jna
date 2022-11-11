@@ -56,7 +56,7 @@ public class TransactionTest {
 	public TemporaryFolder folder = new TemporaryFolder();
 	private Connection conn1, conn2, conn3;
 	private Statement stat1, stat2, stat3;
-	private boolean done = false;
+	private boolean done;
 
 	@Before
 	public void connect() throws Exception {

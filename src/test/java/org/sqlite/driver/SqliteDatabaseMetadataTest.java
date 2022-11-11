@@ -161,21 +161,21 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 					"SELECT null AS col0 UNION ALL SELECT 1 AS col0 ORDER BY col0 ASC")) {
 				assertArrayEquals(NULL_SORT_ASC_RESULT_SET, formatResultSet(rs));
 				assertEquals(dbMetadata.nullsAreSortedLow(),
-						NULL_SORT_ASC_RESULT_SET[0].equals("|null|"));
+						"|null|".equals(NULL_SORT_ASC_RESULT_SET[0]));
 				assertEquals(dbMetadata.nullsAreSortedAtEnd(),
-						NULL_SORT_ASC_RESULT_SET[1].equals("|null|"));
+						"|null|".equals(NULL_SORT_ASC_RESULT_SET[1]));
 				assertEquals(dbMetadata.nullsAreSortedHigh(),
-						NULL_SORT_ASC_RESULT_SET[1].equals("|null|"));
+						"|null|".equals(NULL_SORT_ASC_RESULT_SET[1]));
 			}
 			try (ResultSet rs = stmt.executeQuery(
 					"SELECT null AS col0 UNION ALL SELECT 1 AS col0 ORDER BY col0 DESC")) {
 				assertArrayEquals(NULL_SORT_DESC_RESULT_SET, formatResultSet(rs));
 				assertEquals(dbMetadata.nullsAreSortedHigh(),
-						NULL_SORT_DESC_RESULT_SET[0].equals("|null|"));
+						"|null|".equals(NULL_SORT_DESC_RESULT_SET[0]));
 				assertEquals(dbMetadata.nullsAreSortedAtStart(),
-						NULL_SORT_DESC_RESULT_SET[0].equals("|null|"));
+						"|null|".equals(NULL_SORT_DESC_RESULT_SET[0]));
 				assertEquals(dbMetadata.nullsAreSortedLow(),
-						NULL_SORT_DESC_RESULT_SET[1].equals("|null|"));
+						"|null|".equals(NULL_SORT_DESC_RESULT_SET[1]));
 			}
 		}
 	}

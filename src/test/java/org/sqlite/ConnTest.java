@@ -160,11 +160,11 @@ public class ConnTest {
 	@Test
 	public void limit() throws SQLiteException {
 		final Conn c = open();
-		final int max = c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER);
-		assertEquals(max, c.setLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER, max+1));
-		assertEquals(max, c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER)); // SQLITE_MAX_VARIABLE_NUMBER
-		assertEquals(max, c.setLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER, max-1));
-		assertEquals(max-1, c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER));
+		final int max = c.getLimit(SQLITE_LIMIT_VARIABLE_NUMBER);
+		assertEquals(max, c.setLimit(SQLITE_LIMIT_VARIABLE_NUMBER, max+1));
+		assertEquals(max, c.getLimit(SQLITE_LIMIT_VARIABLE_NUMBER)); // SQLITE_MAX_VARIABLE_NUMBER
+		assertEquals(max, c.setLimit(SQLITE_LIMIT_VARIABLE_NUMBER, max-1));
+		assertEquals(max-1, c.getLimit(SQLITE_LIMIT_VARIABLE_NUMBER));
 	}
 
 	@Test
@@ -334,14 +334,14 @@ public class ConnTest {
 	private static class ConnState {
 		private boolean triggersEnabled = true;
 		private final String encoding = UTF_8_ECONDING;
-		private boolean foreignKeys = false;
+		private boolean foreignKeys;
 		private String journalMode = "memory";
 		private final String lockingMode = "normal";
-		private boolean queryOnly = false;
-		private boolean recursiveTriggers = false;
+		private boolean queryOnly;
+		private boolean recursiveTriggers;
 		private final String synchronous = "2";
 	}
-	private static abstract class ConnStateTest {
+	private abstract static class ConnStateTest {
 		private final String uri;
 		private final ConnState state;
 
@@ -353,7 +353,7 @@ public class ConnTest {
 		protected abstract void expected(ConnState s);
 	}
 
-	private static final ConnStateTest[] CONN_STATE_TESTS = new ConnStateTest[]{
+	private static final ConnStateTest[] CONN_STATE_TESTS = {
 			new ConnStateTest("file:memdb?mode=memory") {
 				@Override
 				protected void expected(ConnState s) {

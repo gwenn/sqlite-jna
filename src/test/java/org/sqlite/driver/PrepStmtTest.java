@@ -56,7 +56,7 @@ import java.util.StringTokenizer;
 import static org.junit.Assert.*;
 
 public class PrepStmtTest {
-	private static final byte[] b1 = new byte[]{1, 2, 7, 4, 2, 6, 2, 8, 5, 2, 3, 1, 5, 3, 6, 3, 3, 6, 2, 5};
+	private static final byte[] b1 = {1, 2, 7, 4, 2, 6, 2, 8, 5, 2, 3, 1, 5, 3, 6, 3, 3, 6, 2, 5};
 	private static final byte[] b2 = "To be or not to be.".getBytes();
 	private static final byte[] b3 = "Question!#$%".getBytes();
 	private static final String utf01 = "\uD840\uDC40";

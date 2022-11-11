@@ -1307,18 +1307,18 @@ class Rows implements ResultSet {
 		} else if (LocalTime.class.equals(type)) {
 			return (T)LocalTime.parse(txt);
 		}
-		throw new SQLException("Conversion from text to " + type + "is not supported");
+		throw new SQLException("Conversion from text to " + type + " is not supported");
 	}
 
 	private <T> T convert(long l, Class<T> type) throws SQLException {
 		if (LocalDate.class.equals(type)) {
 			return (T)LocalDate.ofEpochDay(l);
 		}
-		throw new SQLException("Conversion from long to " + type + "is not supported");
+		throw new SQLException("Conversion from long to " + type + " is not supported");
 	}
 
 	private <T> T convert(double d, Class<T> type) throws SQLException {
-		throw new SQLException("Conversion from double to " + type + "is not supported");
+		throw new SQLException("Conversion from double to " + type + " is not supported");
 	}
 
 	@Override

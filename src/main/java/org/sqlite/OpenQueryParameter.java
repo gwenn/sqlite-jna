@@ -114,7 +114,7 @@ public enum OpenQueryParameter {
 	},
 	/** @see <a href="https://www.sqlite.org/pragma.html#pragma_journal_mode">pragma journal mode</a> */
 	JOURNAL_MODE("journal_mode") {
-		private final String[] MODES = new String[]{"DELETE", "MEMORY", "OFF", "PERSIST", "TRUNCATE", "WAL"};
+		private final String[] MODES = {"DELETE", "MEMORY", "OFF", "PERSIST", "TRUNCATE", "WAL"};
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
 			String mode = params.get(this.name);
@@ -130,7 +130,7 @@ public enum OpenQueryParameter {
 	},
 	/** @see <a href="https://www.sqlite.org/pragma.html#pragma_locking_mode">pragma locking mode</a> */
 	LOCKING_MODE("locking_mode") {
-		private final String[] MODES = new String[]{"EXCLUSIVE", "NORMAL"};
+		private final String[] MODES = {"EXCLUSIVE", "NORMAL"};
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
 			String mode = params.get(this.name);
@@ -188,7 +188,7 @@ public enum OpenQueryParameter {
 	},
 	/** @see <a href="https://www.sqlite.org/pragma.html#pragma_synchronous">pragma synchronous</a> */
 	SYNCHRONOUS("synchronous") {
-		private final String[] FLAGS = new String[]{"0", "1", "2", "FULL", "NORMAL", "OFF"};
+		private final String[] FLAGS = {"0", "1", "2", "FULL", "NORMAL", "OFF"};
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
 			String mode = params.get(this.name);
@@ -210,8 +210,8 @@ public enum OpenQueryParameter {
 
 	public abstract void config(Map<String, String> params, Conn conn) throws SQLiteException;
 
-	private static final String[] TRUES = new String[]{"on", "true", "yes"};
-	private static final String[] FALSES = new String[]{"false", "no", "off"};
+	private static final String[] TRUES = {"on", "true", "yes"};
+	private static final String[] FALSES = {"false", "no", "off"};
 	private static boolean uri_boolean(Map<String, String> params, String param, boolean defaultB) {
 		String value = params.get(param);
 		if (value == null || value.isEmpty()) {
