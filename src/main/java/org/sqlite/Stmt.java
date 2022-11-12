@@ -244,7 +244,7 @@ public class Stmt implements AutoCloseable, Row {
 	}
 
 	// http://sqlite.org/unlock_notify.html
-	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
+#if sqlite.enable.unlock.notify == "true"
 	private int blockingStep(Conn unused) throws SQLiteException {
 		int rc;
 		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_step(pStmt)) || ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE == rc) { // ok if pStmt is null => SQLITE_MISUSE
@@ -259,11 +259,11 @@ public class Stmt implements AutoCloseable, Row {
 		}
 		return rc;
 	}
-	//#else
+#else
 	private int blockingStep(Object unused) {
 		return sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
 	}
-	//#endif
+#endif
 
 	public void reset() throws StmtException {
 		check(sqlite3_reset(pStmt), "Error while resetting '%s'"); // ok if pStmt is null

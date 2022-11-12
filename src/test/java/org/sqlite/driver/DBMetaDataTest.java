@@ -346,8 +346,7 @@ public class DBMetaDataTest {
 
 		exportedKeys.close();
 	}
-
-	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
+#if sqlite.enable.column.metadata == "true"
 	@Test
 	public void columnOrderOfgetTables() throws SQLException {
 		ResultSet rs = meta.getTables(null, null, null, null);
@@ -584,7 +583,7 @@ public class DBMetaDataTest {
 		assertEquals("PSEUDO_COLUMN", rsmeta.getColumnName(8));
 		rs.close();
 	}
-	//#endif
+#endif
 
 	@Test
 	public void viewIngetPrimaryKeys() throws SQLException {
@@ -597,8 +596,7 @@ public class DBMetaDataTest {
 		assertFalse(rs.next());
 		rs.close();
 	}
-
-	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
+#if sqlite.enable.column.metadata == "true"
 	@Test
 	public void columnOrderOfgetPrimaryKeys() throws SQLException {
 		ResultSet rs;
@@ -662,7 +660,7 @@ public class DBMetaDataTest {
 		assertFalse(rs.next());
 		rs.close();
 	}
-	//#endif
+#endif
 
 	@Test
 	public void columnOrderOfgetImportedKeys() throws SQLException {
@@ -740,8 +738,7 @@ public class DBMetaDataTest {
     @Test public void columnOrderOfgetSuperTypes() throws SQLException {
     @Test public void columnOrderOfgetSuperTables() throws SQLException {
     @Test public void columnOrderOfgetAttributes() throws SQLException {*/
-
-	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
+#if sqlite.enable.column.metadata == "true"
 	@Test
 	public void columnOrderOfgetUDTs() throws SQLException {
 		ResultSet rs = meta.getUDTs(null, null, null, null);
@@ -757,7 +754,7 @@ public class DBMetaDataTest {
 		assertEquals("BASE_TYPE", rsmeta.getColumnName(7));
 		rs.close();
 	}
-	//#endif
+#endif
 
 	@Test
 	public void getIndexInfoOnTest() throws SQLException {
@@ -846,8 +843,7 @@ public class DBMetaDataTest {
 		assertNotNull(meta.getDatabaseProductVersion());
 		assertEquals("1.0", meta.getDriverVersion());
 	}
-
-	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
+#if sqlite.enable.column.metadata == "true"
 	@Test
 	public void indexInfo() throws SQLException {
 		ResultSet rs = meta.getIndexInfo(null, null, "", false, false);
@@ -916,7 +912,7 @@ public class DBMetaDataTest {
 		assertEquals("DEFERRABILITY", rsmeta.getColumnName(14));
 		rs.close();
 	}
-	//#endif
+#endif
 
 	@Test
 	public void virtualTable() throws SQLException {

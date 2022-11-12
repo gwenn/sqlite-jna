@@ -262,7 +262,7 @@ public final class Conn implements AutoCloseable {
 	}
 
 	// http://sqlite.org/unlock_notify.html
-	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
+#if sqlite.enable.unlock.notify == "true"
 	private int blockingPrepare(Conn unused, Pointer pSql, int flags, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
 		int rc;
 		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail))) {
@@ -273,14 +273,14 @@ public final class Conn implements AutoCloseable {
 		}
 		return rc;
 	}
-	//#else
+#else
 	private int blockingPrepare(Object unused, Pointer pSql, int flags, PointerByReference ppStmt, PointerByReference ppTail) {
 		return sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail); // FIXME nbytes + 1
 	}
-	//#endif
+#endif
 
 	// http://sqlite.org/unlock_notify.html
-	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
+#if sqlite.enable.unlock.notify == "true"
 	int waitForUnlockNotify(Conn unused) throws ConnException {
 		UnlockNotification notif = UnlockNotificationCallback.INSTANCE.add(pDb);
 		int rc = sqlite3_unlock_notify(pDb, UnlockNotificationCallback.INSTANCE, pDb.getPointer());
@@ -290,11 +290,11 @@ public final class Conn implements AutoCloseable {
 		}
 		return rc;
 	}
-	//#else
+#else
 	int waitForUnlockNotify(Object unused) throws ConnException {
 		return ErrCodes.SQLITE_LOCKED;
 	}
-	//#endif
+#endif
 
 	/**
 	 * @return Run-time library version number
@@ -424,7 +424,7 @@ public final class Conn implements AutoCloseable {
 		checkOpen();
 		return sqlite3_changes(pDb);
 	}
-	//#if mvn.project.property.large.update == "true"
+#if large.update == "true"
 	/**
 	 * @return Like {@link #getChanges()} but for large number.
 	 * @throws ConnException if current connection is closed
@@ -434,7 +434,7 @@ public final class Conn implements AutoCloseable {
 		checkOpen();
 		return sqlite3_changes64(pDb);
 	}
-	//#endif
+#endif
 	/**
 	 * @return Total number of rows modified
 	 * @throws ConnException if current connection is closed
@@ -444,7 +444,7 @@ public final class Conn implements AutoCloseable {
 		checkOpen();
 		return sqlite3_total_changes(pDb);
 	}
-	//#if mvn.project.property.large.update == "true"
+#if large.update == "true"
 	/**
 	 * @return Total number of rows modified
 	 * @throws ConnException if current connection is closed
@@ -454,7 +454,7 @@ public final class Conn implements AutoCloseable {
 		checkOpen();
 		return sqlite3_total_changes64(pDb);
 	}
-	//#endif
+#endif
 
 	/**
 	 * @return the rowid of the most recent successful INSERT into the database.

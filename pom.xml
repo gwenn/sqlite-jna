@@ -40,14 +40,6 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <!-- 4.0 (Java 6), 4.1 (Java 7), 4.2 (Java 8) -->
-    <jdbc.specification.version>4.2</jdbc.specification.version>
-    <!-- JDBC 4.2 + SQLite 3.37.0 -->
-    <large.update>false</large.update>
-    <sqlite.enable.column.metadata>true</sqlite.enable.column.metadata>
-    <sqlite.omit.load.extension>false</sqlite.omit.load.extension>
-    <sqlite.enable.stmt.scanstatus>false</sqlite.enable.stmt.scanstatus>
-    <sqlite.enable.unlock.notify>false</sqlite.enable.unlock.notify>
   </properties>
 
   <dependencies>
@@ -172,55 +164,27 @@
         </plugins>
       </build>
     </profile>
-
-    <profile>
-      <id>windows</id>
-
-      <activation>
-        <os>
-          <family>windows</family>
-        </os>
-      </activation>
-
-      <properties>
-        <sqlite.enable.column.metadata>false</sqlite.enable.column.metadata>
-      </properties>
-    </profile>
   </profiles>
 
   <build>
     <plugins>
       <plugin>
-        <groupId>com.igormaznitsa</groupId>
-        <artifactId>jcp</artifactId>
-        <version>7.0.4</version>
-        <configuration>
-          <verbose>false</verbose>
-        </configuration>
-        <executions>
-          <execution>
-            <id>preprocess-sources</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>preprocess</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>preprocess-test-sources</id>
-            <phase>generate-test-sources</phase>
-            <goals>
-              <goal>preprocess</goal>
-            </goals>
-            <configuration>
-              <useTestSources>true</useTestSources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
+        <configuration>
+          <useIncrementalCompilation>false</useIncrementalCompilation>
+          <compilerArgs>
+            <arg>-Xplugin:Manifold</arg>
+          </compilerArgs>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>systems.manifold</groupId>
+              <artifactId>manifold-preprocessor</artifactId>
+              <version>2022.1.23</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

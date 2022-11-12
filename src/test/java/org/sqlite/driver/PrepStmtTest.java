@@ -516,8 +516,7 @@ public class PrepStmtTest {
 		assertEquals(4, prep.getParameterMetaData().getParameterCount());
 		prep.close();
 	}
-
-	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
+#if sqlite.enable.column.metadata == "true"
 	@Test
 	public void metaData() throws SQLException {
 		try (PreparedStatement prep = conn.prepareStatement("select ? as col1, ? as col2, ? as delta;")) {
@@ -537,7 +536,7 @@ public class PrepStmtTest {
 			assertEquals(3, meta.getColumnCount());
 		}
 	}
-	//#endif
+#endif
 
 	@Test
 	public void date1() throws SQLException {
