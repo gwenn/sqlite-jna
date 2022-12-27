@@ -33,7 +33,7 @@ import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.annotation.Virtual;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
-@Platform(cinclude = "sqlite3.h", include = "vtab.h", link = "sqlite3")
+@Platform(compiler = "cpp11", cinclude = "sqlite3.h", include = "vtab.h", link = "sqlite3")
 @NoException(true)
 public final class SQLite {
 	static {
