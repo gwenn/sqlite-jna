@@ -199,7 +199,7 @@ public class SqliteConnectionTest extends SqliteTestHelper {
 		conn.setReadOnly(true);
 
 		try (Statement stmt = conn.createStatement()) {
-			final String[] sqlStatements = new String[]{
+			final String[] sqlStatements = {
 					"INSERT INTO test_table VALUES (3, 'test')",
 					"CREATE TABLE foo (id INTEGER)",
 					"DROP TABLE test_table",

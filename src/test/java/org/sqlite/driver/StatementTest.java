@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 
+import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static org.junit.Assert.*;
 
 /**
@@ -115,7 +116,7 @@ public class StatementTest {
 		assertTrue(rs.next());
 		assertEquals(Integer.MAX_VALUE, rs.getInt(1));
 		assertEquals(Integer.toString(Integer.MAX_VALUE), rs.getString(1));
-		assertEquals(new Integer(Integer.MAX_VALUE).doubleValue(),
+		assertEquals(Integer.valueOf(Integer.MAX_VALUE).doubleValue(),
 				rs.getDouble(1), 1e-3);
 		assertFalse(rs.next());
 		assertTrue(rs.isAfterLast());
@@ -314,12 +315,12 @@ public class StatementTest {
 	public void getGeneratedKeys() throws SQLException {
 		ResultSet rs;
 		stat.executeUpdate("create table t1 (c1 integer primary key, v);");
-		stat.executeUpdate("insert into t1 (v) values ('red');");
+		stat.executeUpdate("insert into t1 (v) values ('red');", RETURN_GENERATED_KEYS);
 		rs = stat.getGeneratedKeys();
 		assertTrue(rs.next());
 		assertEquals(1, rs.getInt(1));
 		rs.close();
-		stat.executeUpdate("insert into t1 (v) values ('blue');");
+		stat.executeUpdate("insert into t1 (v) values ('blue');", RETURN_GENERATED_KEYS);
 		rs = stat.getGeneratedKeys();
 		assertTrue(rs.next());
 		assertEquals(2, rs.getInt(1));

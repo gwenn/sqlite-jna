@@ -8,12 +8,11 @@
  */
 package org.sqlite;
 
-import com.google.errorprone.annotations.DoNotCall;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import com.google.errorprone.annotations.DoNotCall;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.FunctionPointer;
 import org.bytedeco.javacpp.IntPointer;
@@ -81,7 +80,7 @@ public final class SQLite {
 	static native int sqlite3_db_status(sqlite3 pDb, int op, IntPointer pCur, IntPointer pHiwtr, boolean resetFlg);
 	// TODO https://sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfiglookaside constants
 	static native int sqlite3_db_config(sqlite3 pDb, int op, int v, IntPointer pOk);
-	//#if mvn.project.property.sqlite.omit.load.extension == "true"
+#if sqlite.omit.load.extension == "true"
 	@DoNotCall
 	static int sqlite3_enable_load_extension(Object pDb, boolean onoff) {
 		throw new UnsupportedOperationException("SQLITE_OMIT_LOAD_EXTENSION activated");
@@ -90,10 +89,10 @@ public final class SQLite {
 	static int sqlite3_load_extension(Object pDb, BytePointer file, BytePointer proc, @Cast("char**") @ByPtrPtr BytePointer errMsg) {
 		throw new UnsupportedOperationException("SQLITE_OMIT_LOAD_EXTENSION activated");
 	}
-	//#else
+#else
 	static native int sqlite3_enable_load_extension(sqlite3 pDb, boolean onoff);
 	static native int sqlite3_load_extension(sqlite3 pDb, @Cast("const char*") BytePointer file, @Cast("const char*") BytePointer proc, @Cast("char**") @ByPtrPtr BytePointer errMsg);
-	//#endif
+#endif
 	// https://sqlite.org/c3ref/c_limit_attached.html
 	public static final int SQLITE_LIMIT_LENGTH = 0, SQLITE_LIMIT_SQL_LENGTH = 1, SQLITE_LIMIT_COLUMN = 2,
 			SQLITE_LIMIT_EXPR_DEPTH = 3, SQLITE_LIMIT_COMPOUND_SELECT = 4, SQLITE_LIMIT_VDBE_OP = 5,
@@ -103,13 +102,13 @@ public final class SQLite {
 	static native boolean sqlite3_get_autocommit(sqlite3 pDb);
 
 	static native int sqlite3_changes(sqlite3 pDb);
-	//#if mvn.project.property.large.update == "true"
+#if large.update == "true"
 	static native long sqlite3_changes64(sqlite3 pDb); // 3.37.0
-	//#endif
+#endif
 	static native int sqlite3_total_changes(sqlite3 pDb);
-	//#if mvn.project.property.large.update == "true"
+#if large.update == "true"
 	static native long sqlite3_total_changes64(sqlite3 pDb); // 3.37.0
-	//#endif
+#endif
 	static native @Cast("sqlite3_int64") long sqlite3_last_insert_rowid(sqlite3 pDb);
 
 	static native @Cast("const char*") BytePointer sqlite3_db_filename(sqlite3 pDb, @Cast("const char*") BytePointer dbName); // no copy needed
@@ -139,13 +138,13 @@ public final class SQLite {
 	static native int sqlite3_data_count(sqlite3_stmt pStmt);
 	static native int sqlite3_column_type(sqlite3_stmt pStmt, int iCol);
 	static native @Cast("const char*") BytePointer sqlite3_column_name(sqlite3_stmt pStmt, int iCol); // copy needed: The returned string pointer is valid until either the prepared statement is destroyed by sqlite3_finalize() or until the statement is automatically reprepared by the first call to sqlite3_step() for a particular run or until the next call to sqlite3_column_name() or sqlite3_column_name16() on the same column.
-	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
+#if sqlite.enable.column.metadata == "true"
 	static native @Cast("const char*") BytePointer sqlite3_column_origin_name(sqlite3_stmt pStmt, int iCol); // copy needed
 	static native @Cast("const char*") BytePointer sqlite3_column_table_name(sqlite3_stmt pStmt, int iCol); // copy needed
 	static native @Cast("const char*") BytePointer sqlite3_column_database_name(sqlite3_stmt pStmt, int iCol); // copy needed
 	static native @Cast("const char*") BytePointer sqlite3_column_decltype(sqlite3_stmt pStmt, int iCol); // copy needed
-	//#else
-	@DoNotCall
+#else
+  @DoNotCall
 	static BytePointer sqlite3_column_origin_name(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
@@ -161,7 +160,7 @@ public final class SQLite {
 	static BytePointer sqlite3_column_decltype(Object pStmt, int iCol) {
 		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
 	}
-	//#endif
+#endif
 
 	static native @Const BytePointer sqlite3_column_blob(sqlite3_stmt pStmt, int iCol); // copy needed: The pointers returned are valid until a type conversion occurs as described above, or until sqlite3_step() or sqlite3_reset() or sqlite3_finalize() is called.
 	static native int sqlite3_column_bytes(sqlite3_stmt pStmt, int iCol);
@@ -186,11 +185,11 @@ public final class SQLite {
 	//static native int sqlite3_bind_value(SQLite3Stmt pStmt, int i, const sqlite3_value*);
 	static native int sqlite3_bind_zeroblob(sqlite3_stmt pStmt, int i, int n);
 	static native int sqlite3_stmt_status(sqlite3_stmt pStmt, int op, boolean reset);
-	//#if mvn.project.property.sqlite.enable.stmt.scanstatus == "true"
+#if sqlite.enable.stmt.scanstatus == "true"
 	// TODO https://sqlite.org/c3ref/c_scanstat_est.html constants
 	static native int sqlite3_stmt_scanstatus(sqlite3_stmt pStmt, int idx, int iScanStatusOp, Pointer pOut);
 	static native void sqlite3_stmt_scanstatus_reset(sqlite3_stmt pStmt);
-	//#endif
+#endif
 
 	static native void sqlite3_free(Pointer p);
 
@@ -217,10 +216,9 @@ public final class SQLite {
 	// TODO sqlite3_commit_hook, sqlite3_rollback_hook
 	static native Pointer sqlite3_update_hook(sqlite3 pDb, UpdateHook xUpdate, Pointer pArg);
 	static native int sqlite3_set_authorizer(sqlite3 pDb, Authorizer authorizer, Pointer pUserData);
-
-	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
+#if sqlite.enable.unlock.notify == "true"
 	static native int sqlite3_unlock_notify(sqlite3 pBlocked, UnlockNotifyCallback xNotify, Pointer pNotifyArg);
-	//#endif
+#endif
 
 	/*
 	void (*)(sqlite3_context*,int,sqlite3_value**),
