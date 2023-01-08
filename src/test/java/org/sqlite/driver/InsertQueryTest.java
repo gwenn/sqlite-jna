@@ -76,7 +76,7 @@ public class InsertQueryTest {
 	}
 
 	class SharedConnectionFactory implements ConnectionFactory {
-		private Connection conn = null;
+		private Connection conn;
 
 		public Connection getConnection() throws SQLException {
 			if (conn == null)

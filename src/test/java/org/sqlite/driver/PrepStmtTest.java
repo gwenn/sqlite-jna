@@ -56,7 +56,7 @@ import java.util.StringTokenizer;
 import static org.junit.Assert.*;
 
 public class PrepStmtTest {
-	private static final byte[] b1 = new byte[]{1, 2, 7, 4, 2, 6, 2, 8, 5, 2, 3, 1, 5, 3, 6, 3, 3, 6, 2, 5};
+	private static final byte[] b1 = {1, 2, 7, 4, 2, 6, 2, 8, 5, 2, 3, 1, 5, 3, 6, 3, 3, 6, 2, 5};
 	private static final byte[] b2 = "To be or not to be.".getBytes();
 	private static final byte[] b3 = "Question!#$%".getBytes();
 	private static final String utf01 = "\uD840\uDC40";
@@ -137,7 +137,7 @@ public class PrepStmtTest {
 		assertTrue(rs.next());
 		assertEquals(Integer.MAX_VALUE, rs.getInt(1));
 		assertEquals(Integer.toString(Integer.MAX_VALUE), rs.getString(1));
-		assertEquals(new Integer(Integer.MAX_VALUE).doubleValue(), rs.getDouble(1), 0.0001);
+		assertEquals(Integer.valueOf(Integer.MAX_VALUE).doubleValue(), rs.getDouble(1), 0.0001);
 		assertFalse(rs.next());
 		assertTrue(rs.isAfterLast());
 		assertFalse(rs.next());
@@ -516,8 +516,7 @@ public class PrepStmtTest {
 		assertEquals(4, prep.getParameterMetaData().getParameterCount());
 		prep.close();
 	}
-
-	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
+#if sqlite.enable.column.metadata == "true"
 	@Test
 	public void metaData() throws SQLException {
 		try (PreparedStatement prep = conn.prepareStatement("select ? as col1, ? as col2, ? as delta;")) {
@@ -537,7 +536,7 @@ public class PrepStmtTest {
 			assertEquals(3, meta.getColumnCount());
 		}
 	}
-	//#endif
+#endif
 
 	@Test
 	public void date1() throws SQLException {

@@ -1,5 +1,10 @@
 package org.sqlite;
 
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.bytedeco.javacpp.LongPointer;
 import org.bytedeco.javacpp.Pointer;
 import org.junit.Assume;
@@ -17,11 +22,6 @@ import org.sqlite.SQLite.TraceCallback;
 import org.sqlite.SQLite.UpdateHook;
 import org.sqlite.SQLite.sqlite3_context;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -29,6 +29,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.sqlite.SQLite.SQLITE_LIMIT_VARIABLE_NUMBER;
 import static org.sqlite.SQLite.SQLite3Values;
 import static org.sqlite.SQLite.UTF_8_ECONDING;
 import static org.sqlite.SQLite.nativeString;
@@ -177,11 +178,11 @@ public class ConnTest {
 	@Test
 	public void limit() throws SQLiteException {
 		final Conn c = open();
-		final int max = c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER);
-		assertEquals(max, c.setLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER, max+1));
-		assertEquals(max, c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER)); // SQLITE_MAX_VARIABLE_NUMBER
-		assertEquals(max, c.setLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER, max-1));
-		assertEquals(max-1, c.getLimit(SQLite.SQLITE_LIMIT_VARIABLE_NUMBER));
+		final int max = c.getLimit(SQLITE_LIMIT_VARIABLE_NUMBER);
+		assertEquals(max, c.setLimit(SQLITE_LIMIT_VARIABLE_NUMBER, max+1));
+		assertEquals(max, c.getLimit(SQLITE_LIMIT_VARIABLE_NUMBER)); // SQLITE_MAX_VARIABLE_NUMBER
+		assertEquals(max, c.setLimit(SQLITE_LIMIT_VARIABLE_NUMBER, max-1));
+		assertEquals(max-1, c.getLimit(SQLITE_LIMIT_VARIABLE_NUMBER));
 	}
 
 	@Test
@@ -353,14 +354,14 @@ public class ConnTest {
 	private static class ConnState {
 		private boolean triggersEnabled = true;
 		private final String encoding = UTF_8_ECONDING;
-		private boolean foreignKeys = false;
+		private boolean foreignKeys;
 		private String journalMode = "memory";
 		private final String lockingMode = "normal";
-		private boolean queryOnly = false;
-		private boolean recursiveTriggers = false;
+		private boolean queryOnly;
+		private boolean recursiveTriggers;
 		private final String synchronous = "2";
 	}
-	private static abstract class ConnStateTest {
+	private abstract static class ConnStateTest {
 		private final String uri;
 		private final ConnState state;
 
@@ -372,7 +373,7 @@ public class ConnTest {
 		protected abstract void expected(ConnState s);
 	}
 
-	private static final ConnStateTest[] CONN_STATE_TESTS = new ConnStateTest[]{
+	private static final ConnStateTest[] CONN_STATE_TESTS = {
 			new ConnStateTest("file:memdb?mode=memory") {
 				@Override
 				protected void expected(ConnState s) {

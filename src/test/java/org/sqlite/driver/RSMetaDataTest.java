@@ -38,6 +38,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 
+import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 import static org.junit.Assert.*;
 
 public class RSMetaDataTest {
@@ -61,8 +62,7 @@ public class RSMetaDataTest {
 		stat.close();
 		conn.close();
 	}
-
-	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
+#if sqlite.enable.column.metadata == "true"
 	@Test
 	public void catalogName() throws SQLException {
 		assertEquals("main", meta.getCatalogName(1));
@@ -77,9 +77,9 @@ public class RSMetaDataTest {
 		assertEquals(Types.INTEGER, meta.getColumnType(1));
 		assertEquals(Types.VARCHAR, meta.getColumnType(2));
 		assertEquals(Types.VARCHAR, meta.getColumnType(3));
-		assertEquals("integer", meta.getColumnTypeName(1));
-		assertEquals("text", meta.getColumnTypeName(2));
-		assertEquals("text", meta.getColumnTypeName(3));
+		assertThat(meta.getColumnTypeName(1), equalToIgnoringCase("integer"));
+		assertThat(meta.getColumnTypeName(2), equalToIgnoringCase("text"));
+		assertThat(meta.getColumnTypeName(3), equalToIgnoringCase("text"));
 		assertTrue(meta.isAutoIncrement(1));
 		assertFalse(meta.isAutoIncrement(2));
 		assertFalse(meta.isAutoIncrement(3));
@@ -194,5 +194,5 @@ public class RSMetaDataTest {
 		assertEquals(0, meta.getScale(2));
 		assertEquals(0, meta.getScale(3));
 	}
-	//#endif
+#endif
 }
