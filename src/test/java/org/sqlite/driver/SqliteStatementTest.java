@@ -47,8 +47,8 @@ import static org.junit.Assert.*;
 
 public class SqliteStatementTest extends SqliteTestHelper {
 	private static final String[] BATCH_ATTACH_RESULT = {
-			"|db2|",
-			"|main|",
+			"|db2|null|",
+			"|main|null|",
 	};
 
 	@Test
@@ -62,10 +62,10 @@ public class SqliteStatementTest extends SqliteTestHelper {
 			assertArrayEquals(new int[]{1, 0/*, Statement.SUCCESS_NO_INFO*/, 1},
 					stmt.executeBatch());
 
-			final ResultSet catalogs = conn.getMetaData().getCatalogs();
+			final ResultSet schemas = conn.getMetaData().getSchemas();
 			assertArrayEquals(BATCH_ATTACH_RESULT,
-					formatResultSet(catalogs));
-			catalogs.close();
+					formatResultSet(schemas));
+			schemas.close();
 
 			assertArrayEquals(new int[0], stmt.executeBatch());
 

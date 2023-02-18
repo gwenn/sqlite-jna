@@ -51,7 +51,7 @@
     <dependency>
       <groupId>com.github.gwenn</groupId>
       <artifactId>sqlite-parser</artifactId>
-      <version>0.1.0</version>
+      <version>0.2.0</version>
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
@@ -193,7 +193,7 @@
             <path>
               <groupId>systems.manifold</groupId>
               <artifactId>manifold-preprocessor</artifactId>
-              <version>2022.1.23</version>
+              <version>2023.1.0</version>
             </path>
           </annotationProcessorPaths>
         </configuration>

@@ -240,6 +240,13 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
 	private static final String GET_SCHEMAS_HEADER =
 			"|TABLE_SCHEM|TABLE_CATALOG|";
+	private static final String[] GET_SCHEMA_RESULT = {
+			"|main|null|",
+	};
+	private static final String[] GET_ATTACH_SCHEMA_RESULT = {
+			"|extra_db|null|",
+			"|main|null|",
+	};
 
 	@Test
 	public void testGetSchemas() throws Exception {
@@ -247,11 +254,18 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 
 		try (ResultSet rs = dmd.getSchemas()) {
 			assertEquals(GET_SCHEMAS_HEADER, formatResultSetHeader(rs.getMetaData()));
-			assertArrayEquals(EMPTY_RESULT_SET, formatResultSet(rs));
+			assertArrayEquals(GET_SCHEMA_RESULT, formatResultSet(rs));
 		}
 		try (ResultSet rs = dmd.getSchemas(null, null)) {
 			assertEquals(GET_SCHEMAS_HEADER, formatResultSetHeader(rs.getMetaData()));
-			assertArrayEquals(EMPTY_RESULT_SET, formatResultSet(rs));
+			assertArrayEquals(GET_SCHEMA_RESULT, formatResultSet(rs));
+		}
+
+		try (Statement stmt = conn.createStatement()) {
+			stmt.executeUpdate("ATTACH ':memory:' as extra_db");
+			try (ResultSet rs = dmd.getSchemas()) {
+				assertArrayEquals(GET_ATTACH_SCHEMA_RESULT, formatResultSet(rs));
+			}
 		}
 	}
 
@@ -260,23 +274,13 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 		DatabaseMetaData dmd = conn.getMetaData();
 
 		try (ResultSet rs = dmd.getCatalogs()) {
-			assertTrue(rs.next());
-			assertEquals("main", rs.getString(1));
-			assertEquals("main", rs.getString("TABLE_CAT"));
-			assertFalse(rs.next());
+			assertArrayEquals(EMPTY_RESULT_SET, formatResultSet(rs));
 		}
 
 		try (Statement stmt = conn.createStatement()) {
 			stmt.executeUpdate("ATTACH ':memory:' as extra_db");
-
 			try (ResultSet rs = dmd.getCatalogs()) {
-				assertTrue(rs.next());
-				assertEquals("extra_db", rs.getString(1));
-				assertEquals("extra_db", rs.getString("TABLE_CAT"));
-				assertTrue(rs.next());
-				assertEquals("main", rs.getString(1));
-				assertEquals("main", rs.getString("TABLE_CAT"));
-				assertFalse(rs.next());
+				assertArrayEquals(EMPTY_RESULT_SET, formatResultSet(rs));
 			}
 		}
 	}
@@ -285,10 +289,10 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 			"|TABLE_CAT|TABLE_SCHEM|TABLE_NAME|TABLE_TYPE|REMARKS|TYPE_CAT|TYPE_SCHEM|TYPE_NAME|SELF_REFERENCING_COL_NAME|REF_GENERATION|";
 
 	private static final String[] TABLE_DUMPS = {
-			"|main|null|sqlite_master|SYSTEM TABLE|null|null|null|null|null|null|",
-			"|main|null|prim_table|TABLE|null|null|null|null|null|null|",
-			"|main|null|test_table|TABLE|null|null|null|null|null|null|",
-			"|main|null|type_table|TABLE|null|null|null|null|null|null|",
+			"|null|main|sqlite_master|SYSTEM TABLE|null|null|null|null|null|null|",
+			"|null|main|prim_table|TABLE|null|null|null|null|null|null|",
+			"|null|main|test_table|TABLE|null|null|null|null|null|null|",
+			"|null|main|type_table|TABLE|null|null|null|null|null|null|",
 	};
 
 	@Test
@@ -316,27 +320,27 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 	private static final String COLUMN_DUMP_HEADER =
 			"|TABLE_CAT|TABLE_SCHEM|TABLE_NAME|COLUMN_NAME|DATA_TYPE|TYPE_NAME|COLUMN_SIZE|" +
 					"BUFFER_LENGTH|DECIMAL_DIGITS|NUM_PREC_RADIX|NULLABLE|REMARKS|COLUMN_DEF|" +
-					"SQL_DATA_TYPE|SQL_DATETIME_SUB|CHAR_OCTET_LENGTH|ORDINAL_POSITION|IS_NULLABLE|SCOPE_CATLOG|" +
+					"SQL_DATA_TYPE|SQL_DATETIME_SUB|CHAR_OCTET_LENGTH|ORDINAL_POSITION|IS_NULLABLE|SCOPE_CATALOG|" +
 					"SCOPE_SCHEMA|SCOPE_TABLE|SOURCE_DATA_TYPE|IS_AUTOINCREMENT|IS_GENERATEDCOLUMN|";
 
 	private static final String[] COLUMN_DUMP = {
-			"|main|null|prim_table|id|4|INTEGER|10|null|10|10|1|null|null|null|null|10|1|YES|null|null|null|null|||",
-			"|main|null|prim_table|b|2|BOOLEAN|10|null|10|10|1|null|null|null|null|10|2|YES|null|null|null|null|||",
-			"|main|null|prim_table|bi|4|BIGINT|10|null|10|10|1|null|null|null|null|10|3|YES|null|null|null|null|||",
-			"|main|null|prim_table|f|7|FLOAT|10|null|10|10|1|null|null|null|null|10|4|YES|null|null|null|null|||",
-			"|main|null|prim_table|d|7|DOUBLE|10|null|10|10|1|null|null|null|null|10|5|YES|null|null|null|null|||",
-			"|main|null|sqlite_master|type|12|TEXT|10|null|10|10|1|null|null|null|null|10|1|YES|null|null|null|null|||",
-			"|main|null|sqlite_master|name|12|TEXT|10|null|10|10|1|null|null|null|null|10|2|YES|null|null|null|null|||",
-			"|main|null|sqlite_master|tbl_name|12|TEXT|10|null|10|10|1|null|null|null|null|10|3|YES|null|null|null|null|||",
-			"|main|null|sqlite_master|rootpage|4|INT|10|null|10|10|1|null|null|null|null|10|4|YES|null|null|null|null|||",
-			"|main|null|sqlite_master|sql|12|TEXT|10|null|10|10|1|null|null|null|null|10|5|YES|null|null|null|null|||",
-			"|main|null|test_table|id|4|INTEGER|10|null|10|10|1|null|null|null|null|10|1|YES|null|null|null|null|||",
-			"|main|null|test_table|name|12|VARCHAR|10|null|10|10|0|null|null|null|null|10|2|NO|null|null|null|null|||",
-			"|main|null|type_table|name|12|VARCHAR|10|null|10|10|1|null|null|null|null|10|1|YES|null|null|null|null|||",
-			"|main|null|type_table|birthdate|2|DATETIME|10|null|10|10|1|null|null|null|null|10|2|YES|null|null|null|null|||",
-			"|main|null|type_table|height|7|REAL|10|null|10|10|1|null|null|null|null|10|3|YES|null|null|null|null|||",
-			"|main|null|type_table|eyes|4|INTEGER|10|null|10|10|1|null|null|null|null|10|4|YES|null|null|null|null|||",
-			"|main|null|type_table|width|2|DECIMAL(10,2)|10|null|10|10|1|null|null|null|null|10|5|YES|null|null|null|null|||",
+			"|null|main|prim_table|id|4|INTEGER|10|null|10|10|1|null|null|null|null|10|1|YES|null|null|null|null|||",
+			"|null|main|prim_table|b|2|BOOLEAN|10|null|10|10|1|null|null|null|null|10|2|YES|null|null|null|null|||",
+			"|null|main|prim_table|bi|4|BIGINT|10|null|10|10|1|null|null|null|null|10|3|YES|null|null|null|null|||",
+			"|null|main|prim_table|f|7|FLOAT|10|null|10|10|1|null|null|null|null|10|4|YES|null|null|null|null|||",
+			"|null|main|prim_table|d|7|DOUBLE|10|null|10|10|1|null|null|null|null|10|5|YES|null|null|null|null|||",
+			"|null|main|sqlite_master|type|12|TEXT|10|null|10|10|1|null|null|null|null|10|1|YES|null|null|null|null|||",
+			"|null|main|sqlite_master|name|12|TEXT|10|null|10|10|1|null|null|null|null|10|2|YES|null|null|null|null|||",
+			"|null|main|sqlite_master|tbl_name|12|TEXT|10|null|10|10|1|null|null|null|null|10|3|YES|null|null|null|null|||",
+			"|null|main|sqlite_master|rootpage|4|INT|10|null|10|10|1|null|null|null|null|10|4|YES|null|null|null|null|||",
+			"|null|main|sqlite_master|sql|12|TEXT|10|null|10|10|1|null|null|null|null|10|5|YES|null|null|null|null|||",
+			"|null|main|test_table|id|4|INTEGER|10|null|10|10|1|null|null|null|null|10|1|YES|null|null|null|null|||",
+			"|null|main|test_table|name|12|VARCHAR|10|null|10|10|0|null|null|null|null|10|2|NO|null|null|null|null|||",
+			"|null|main|type_table|name|12|VARCHAR|10|null|10|10|1|null|null|null|null|10|1|YES|null|null|null|null|||",
+			"|null|main|type_table|birthdate|2|DATETIME|10|null|10|10|1|null|null|null|null|10|2|YES|null|null|null|null|||",
+			"|null|main|type_table|height|7|REAL|10|null|10|10|1|null|null|null|null|10|3|YES|null|null|null|null|||",
+			"|null|main|type_table|eyes|4|INTEGER|10|null|10|10|1|null|null|null|null|10|4|YES|null|null|null|null|||",
+			"|null|main|type_table|width|2|DECIMAL(10,2)|10|null|10|10|1|null|null|null|null|10|5|YES|null|null|null|null|||",
 	};
 	@Test
 	public void testGetColumns() throws Exception {
@@ -353,7 +357,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 			"|TABLE_CAT|TABLE_SCHEM|TABLE_NAME|COLUMN_NAME|KEY_SEQ|PK_NAME|";
 
 	private static final String[] PK_DUMP = {
-			"|main|null|test_table|id|1|null|",
+			"|null|main|test_table|id|1|null|",
 	};
 
 	@Test
@@ -380,12 +384,12 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 	private static final String INDEX_INFO_HEADER =
 			"|TABLE_CAT|TABLE_SCHEM|TABLE_NAME|NON_UNIQUE|INDEX_QUALIFIER|INDEX_NAME|TYPE|ORDINAL_POSITION|COLUMN_NAME|ASC_OR_DESC|CARDINALITY|PAGES|FILTER_CONDITION|";
 	private static final String[] INDEX_INFO_TEST_DUMP = {
-			"|main|null|test_table|1|main|test_index|3|0|id|null|0|0|null|",
-			"|main|null|test_table|1|main|test_index|3|1|name|null|0|0|null|",
+			"|null|main|test_table|1|main|test_index|3|0|id|null|0|0|null|",
+			"|null|main|test_table|1|main|test_index|3|1|name|null|0|0|null|",
 	};
 	private static final String[] INDEX_INFO_TYPE_DUMP = {
-			"|main|null|type_table|0|main|sqlite_autoindex_type_table_1|3|0|name|null|0|0|null|",
-			"|main|null|type_table|0|main|sqlite_autoindex_type_table_2|3|0|birthdate|null|0|0|null|",
+			"|null|main|type_table|0|main|sqlite_autoindex_type_table_1|3|0|name|null|0|0|null|",
+			"|null|main|type_table|0|main|sqlite_autoindex_type_table_2|3|0|birthdate|null|0|0|null|",
 	};
 
 	@Test
@@ -449,10 +453,10 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 					"DEFERRABILITY|";
 
 	private static final String[] IMPORTED_KEY_DUMP = {
-			"|main|null|artist|artistid|main|null|track|trackartist|1|3|3|track_artist_1|null|7|",
+			"|null|main|artist|artistid|null|main|track|trackartist|1|3|3|track_artist_1|null|7|",
 	};
 	private static final String[] EXPORTED_KEY_DUMP = {
-			"|main|null|artist|artistid|main|null|track|trackartist|1|3|3|track_artist_0|null|7|",
+			"|null|main|artist|artistid|null|main|track|trackartist|1|3|3|track_artist_0|null|7|",
 	};
 
 	@Test
@@ -474,21 +478,21 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 			);
 		}
 
-		try (ResultSet rs = dbMetadata.getImportedKeys("main", null, "track")) {
+		try (ResultSet rs = dbMetadata.getImportedKeys(null, "main", "track")) {
 			ResultSetMetaData rsm = rs.getMetaData();
 
 			assertEquals(IMPORTED_KEY_HEADER, formatResultSetHeader(rsm));
 			assertArrayEquals(IMPORTED_KEY_DUMP, formatResultSet(rs));
 		}
 
-		try (ResultSet rs = dbMetadata.getImportedKeys("main", null, "artist")) {
+		try (ResultSet rs = dbMetadata.getImportedKeys(null, "main", "artist")) {
 			ResultSetMetaData rsm = rs.getMetaData();
 
 			assertEquals(IMPORTED_KEY_HEADER, formatResultSetHeader(rsm));
 			assertArrayEquals(new String[0], formatResultSet(rs));
 		}
 
-		try (ResultSet rs = dbMetadata.getExportedKeys("main", null, "artist")) {
+		try (ResultSet rs = dbMetadata.getExportedKeys(null, "main", "artist")) {
 			ResultSetMetaData rsm = rs.getMetaData();
 
 			assertEquals(IMPORTED_KEY_HEADER, formatResultSetHeader(rsm));

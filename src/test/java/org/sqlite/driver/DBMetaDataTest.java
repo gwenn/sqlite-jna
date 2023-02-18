@@ -74,15 +74,15 @@ public class DBMetaDataTest {
 		assertTrue(rs.next());
 		assertEquals("sqlite_master", rs.getString("TABLE_NAME")); // 3
 		assertEquals("SYSTEM TABLE", rs.getString("TABLE_TYPE")); // 4
-		assertEquals("main", rs.getString("TABLE_CAT")); // 4
+		assertEquals("main", rs.getString("TABLE_SCHEM")); // 4
 		assertTrue(rs.next());
 		assertEquals("test", rs.getString("TABLE_NAME")); // 3
 		assertEquals("TABLE", rs.getString("TABLE_TYPE")); // 4
-		assertEquals("main", rs.getString("TABLE_CAT")); // 4
+		assertEquals("main", rs.getString("TABLE_SCHEM")); // 4
 		assertTrue(rs.next());
 		assertEquals("testView", rs.getString("TABLE_NAME"));
 		assertEquals("VIEW", rs.getString("TABLE_TYPE"));
-		assertEquals("main", rs.getString("TABLE_CAT")); // 4
+		assertEquals("main", rs.getString("TABLE_SCHEM")); // 4
 		rs.close();
 
 		rs = meta.getTables(null, null, "bob", null);
@@ -428,7 +428,7 @@ public class DBMetaDataTest {
 		assertEquals("ORDINAL_POSITION", rsmeta.getColumnName(17));
 		assertEquals("IS_NULLABLE", rsmeta.getColumnName(18));
 		// should be SCOPE_CATALOG, but misspelt in the standard
-		assertEquals("SCOPE_CATLOG", rsmeta.getColumnName(19));
+		assertEquals("SCOPE_CATALOG", rsmeta.getColumnName(19));
 		assertEquals("SCOPE_SCHEMA", rsmeta.getColumnName(20));
 		assertEquals("SCOPE_TABLE", rsmeta.getColumnName(21));
 		assertEquals("SOURCE_DATA_TYPE", rsmeta.getColumnName(22));
@@ -487,19 +487,19 @@ public class DBMetaDataTest {
 
 	@Test
 	public void columnOrderOfgetSchemas() throws SQLException {
-		ResultSet rs = meta.getSchemas();
-		assertFalse(rs.next());
-		ResultSetMetaData rsmeta = rs.getMetaData();
-		assertEquals(2, rsmeta.getColumnCount());
-		assertEquals("TABLE_SCHEM", rsmeta.getColumnName(1));
-		assertEquals("TABLE_CATALOG", rsmeta.getColumnName(2));
-		rs.close();
+		try (ResultSet rs = meta.getSchemas()) {
+			assertTrue(rs.next());
+			ResultSetMetaData rsmeta = rs.getMetaData();
+			assertEquals(2, rsmeta.getColumnCount());
+			assertEquals("TABLE_SCHEM", rsmeta.getColumnLabel(1));
+			assertEquals("TABLE_CATALOG", rsmeta.getColumnName(2));
+		}
 	}
 
 	@Test
 	public void columnOrderOfgetCatalogs() throws SQLException {
 		ResultSet rs = meta.getCatalogs();
-		assertTrue(rs.next());
+		assertFalse(rs.next());
 		ResultSetMetaData rsmeta = rs.getMetaData();
 		assertEquals(1, rsmeta.getColumnCount());
 		assertEquals("TABLE_CAT", rsmeta.getColumnLabel(1));
@@ -668,11 +668,11 @@ public class DBMetaDataTest {
 		stat.executeUpdate("create table person (id integer)");
 		stat.executeUpdate("create table address (pid integer, name, foreign key(pid) references person(id))");
 
-		ResultSet importedKeys = meta.getImportedKeys("main", "global", "address");
+		ResultSet importedKeys = meta.getImportedKeys("global", "main", "address");
 		assertTrue(importedKeys.next());
-		assertEquals("main", importedKeys.getString("PKTABLE_CAT"));
-		assertNull(importedKeys.getString("PKTABLE_SCHEM"));
-		assertEquals("main", importedKeys.getString("FKTABLE_CAT"));
+		assertNull(importedKeys.getString("PKTABLE_CAT"));
+		assertEquals("main", importedKeys.getString("PKTABLE_SCHEM"));
+		assertEquals("main", importedKeys.getString("FKTABLE_SCHEM"));
 		assertEquals("person", importedKeys.getString("PKTABLE_NAME"));
 		assertEquals("id", importedKeys.getString("PKCOLUMN_NAME"));
 		//assertNotNull(importedKeys.getString("PK_NAME")); // FIXME
@@ -692,12 +692,12 @@ public class DBMetaDataTest {
 		stat.executeUpdate("create table person (id integer primary key)");
 		stat.executeUpdate("create table address (pid integer, name, foreign key(pid) references person(id))");
 
-		ResultSet exportedKeys = meta.getExportedKeys("main", "global", "person");
+		ResultSet exportedKeys = meta.getExportedKeys("global", "main", "person");
 		assertTrue(exportedKeys.next());
-		assertEquals("main", exportedKeys.getString("PKTABLE_CAT"));
-		assertNull(exportedKeys.getString("PKTABLE_SCHEM"));
-		assertEquals("main", exportedKeys.getString("FKTABLE_CAT"));
-		assertNull(exportedKeys.getString("FKTABLE_SCHEM"));
+		assertNull(exportedKeys.getString("PKTABLE_CAT"));
+		assertEquals("main", exportedKeys.getString("PKTABLE_SCHEM"));
+		assertNull(exportedKeys.getString("FKTABLE_CAT"));
+		assertEquals("main", exportedKeys.getString("FKTABLE_SCHEM"));
 		// assertNotNull(exportedKeys.getString("PK_NAME")); FIXME
 		assertNotNull(exportedKeys.getString("FK_NAME"));
 
@@ -919,9 +919,9 @@ public class DBMetaDataTest {
 		// sqlite3 lib provided by vcpkg is not compiled with fst4 extension
 		Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
 		stat.execute("CREATE VIRTUAL TABLE vt USING fts4(name, tokenize=porter, matchinfo=fts3)");
-		ResultSet rs = meta.getTables("main", null, "vt", new String[]{"table"});
+		ResultSet rs = meta.getTables(null, "main", "vt", new String[]{"table"});
 		while (rs.next()) {
-			System.out.println(rs.getString("TABLE_CAT") + ", " + rs.getString("TABLE_NAME"));
+			System.out.println(rs.getString("TABLE_SCHEM") + ", " + rs.getString("TABLE_NAME"));
 		}
 		rs.close();
 	}
