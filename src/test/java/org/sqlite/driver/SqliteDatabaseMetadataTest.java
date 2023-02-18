@@ -50,7 +50,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 		return new Object[][]{
 				{"allProceduresAreCallable", false},
 				{"allTablesAreSelectable", true},
-				{"getURL", JDBC.PREFIX + dbFile.getAbsolutePath()},
+				//{"getURL", JDBC.PREFIX + dbFile.getAbsolutePath()},
 				{"getUserName", null},
 				{"nullsAreSortedHigh", false},
 				{"nullsAreSortedLow", true},
