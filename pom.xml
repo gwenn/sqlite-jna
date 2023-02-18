@@ -5,7 +5,7 @@
   <groupId>com.github.gwenn</groupId>
   <artifactId>sqlite-jna</artifactId>
   <packaging>jar</packaging>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
   <name>SQLite JNA binding</name>
   <description>JDBC Driver for SQLite using JNA</description>
   <url>https://github.com/gwenn/sqlite-jna</url>
