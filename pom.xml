@@ -53,7 +53,7 @@
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>javacpp</artifactId>
-      <version>1.5.8</version>
+      <version>1.5.9</version>
     </dependency>
     <dependency>
       <groupId>com.github.gwenn</groupId>
@@ -295,7 +295,7 @@
       <plugin>
         <groupId>org.bytedeco</groupId>
         <artifactId>javacpp</artifactId>
-        <version>1.5.8</version>
+        <version>1.5.9</version>
         <configuration>
           <properties>${javacpp.platform}</properties>
           <propertyKeysAndValues>
