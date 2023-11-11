@@ -40,6 +40,7 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <manifold.version>2023.1.29</manifold.version>
   </properties>
 
   <dependencies>
@@ -52,6 +53,13 @@
       <groupId>com.github.gwenn</groupId>
       <artifactId>sqlite-parser</artifactId>
       <version>0.2.0</version>
+    </dependency>
+    <!-- For Javadoc agent -->
+    <dependency>
+      <groupId>systems.manifold</groupId>
+      <artifactId>manifold-javadoc-agent</artifactId>
+      <scope>provided</scope>
+      <version>${manifold.version}</version>
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
@@ -130,10 +138,36 @@
               </execution>
             </executions>
           </plugin>
+          <!-- For javadoc agent referenced in maven-javadoc-plugin -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.8</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>properties</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <version>3.6.0</version>
+            <configuration>
+              <doclint>none</doclint>
+              <additionalJOptions>
+                <additionalJOption>-J-javaagent:${systems.manifold:manifold-javadoc-agent:jar}</additionalJOption>
+              </additionalJOptions>
+              <additionalDependencies>
+                <additionalDependency>
+                  <groupId>systems.manifold</groupId>
+                  <artifactId>manifold-preprocessor</artifactId>
+                  <version>${manifold.version}</version>
+                </additionalDependency>
+              </additionalDependencies>
+            </configuration>
             <executions>
               <execution>
                 <id>attach-javadocs</id>
@@ -193,7 +227,7 @@
             <path>
               <groupId>systems.manifold</groupId>
               <artifactId>manifold-preprocessor</artifactId>
-              <version>2023.1.29</version>
+              <version>${manifold.version}</version>
             </path>
           </annotationProcessorPaths>
         </configuration>
