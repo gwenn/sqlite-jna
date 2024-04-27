@@ -14,6 +14,7 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.temporal.ChronoField;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -23,9 +24,16 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 final class DateUtil {
+	static final int DATE_CONFIG = 0;
 	public static final String DATE_FORMAT = "date_format";
+	static final int TIME_CONFIG = 1;
 	public static final String TIME_FORMAT = "time_format";
+	static final int TIMESTAMP_CONFIG = 2;
 	public static final String TIMESTAMP_FORMAT = "timestamp_format";
+	/**
+	 * {@link ChronoField#EPOCH_DAY}
+	 */
+	public static final String EPOCH_DAY = "epochday";
 	public static final String JULIANDAY = "julianday";
 	public static final String UNIXEPOCH = "unixepoch";
 	public static final String YYYY_MM_DD = "yyyy-MM-dd"; // See java.sql.Date.toString()
@@ -43,9 +51,9 @@ final class DateUtil {
 			return new String[]{YYYY_MM_DD, HH_MM_SS, DEFAULT_FORMAT};
 		}
 		final String[] config = new String[3];
-		config[0] = info.getProperty(DATE_FORMAT, YYYY_MM_DD);
-		config[1] = info.getProperty(TIME_FORMAT, HH_MM_SS);
-		config[2] = info.getProperty(TIMESTAMP_FORMAT, DEFAULT_FORMAT);
+		config[DATE_CONFIG] = info.getProperty(DATE_FORMAT, YYYY_MM_DD);
+		config[TIME_CONFIG] = info.getProperty(TIME_FORMAT, HH_MM_SS);
+		config[TIMESTAMP_CONFIG] = info.getProperty(TIMESTAMP_FORMAT, DEFAULT_FORMAT);
 		return config;
 	}
 

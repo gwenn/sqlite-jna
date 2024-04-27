@@ -905,8 +905,11 @@ class Rows implements ResultSet {
 				final String txt = stmt.getColumnText(fixCol(columnIndex));
 				return DateUtil.toDate(txt, cal);
 			case ColTypes.SQLITE_INTEGER:
-				final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
-				return DateUtil.toDate(unixepoch, cal);
+				final long l = stmt.getColumnLong(fixCol(columnIndex));
+				if (cal == null && DateUtil.EPOCH_DAY.equals(s.conn().dateTimeConfig[DateUtil.DATE_CONFIG])) {
+					return Date.valueOf(LocalDate.ofEpochDay(l));
+				}
+				return DateUtil.toDate(l, cal);
 			case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
 				final double jd = stmt.getColumnDouble(fixCol(columnIndex));
 				return DateUtil.toDate(jd, cal);

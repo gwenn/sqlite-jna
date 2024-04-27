@@ -125,7 +125,7 @@ public class JDBC implements Driver {
 		encoding.choices = new String[]{"UTF-8", "UTF-16", "UTF-16le", "UTF-16be"};
 
 		final DriverPropertyInfo df = new DriverPropertyInfo(DateUtil.DATE_FORMAT, info == null ? null : info.getProperty(DateUtil.DATE_FORMAT));
-		df.description = "Specify the format used to persist date ('" + DateUtil.JULIANDAY + "', '" + DateUtil.UNIXEPOCH + "', 'yyyy-MM-dd', '...').";
+		df.description = "Specify the format used to persist date ('" + DateUtil.EPOCH_DAY + "', '" + DateUtil.JULIANDAY + "', '" + DateUtil.UNIXEPOCH + "', 'yyyy-MM-dd', '...').";
 		final DriverPropertyInfo tf = new DriverPropertyInfo(DateUtil.TIME_FORMAT, info == null ? null : info.getProperty(DateUtil.TIME_FORMAT));
 		tf.description = "Specify the format used to persist time ('" + DateUtil.JULIANDAY + "', '" + DateUtil.UNIXEPOCH + "', 'HH:mm:ss.SSSXXX', '...').";
 		final DriverPropertyInfo tsf = new DriverPropertyInfo(DateUtil.TIMESTAMP_FORMAT, info == null ? null : info.getProperty(DateUtil.TIMESTAMP_FORMAT));

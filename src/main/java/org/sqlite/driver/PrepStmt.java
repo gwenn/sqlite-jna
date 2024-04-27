@@ -249,7 +249,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 
 	@Override
 	public void setDate(int parameterIndex, Date x) throws SQLException {
-		bindDate(parameterIndex, x, 0);
+		bindDate(parameterIndex, x, DateUtil.DATE_CONFIG);
 	}
 	@Override
 	public void setDate(String parameterName, Date x) throws SQLException {
@@ -261,10 +261,13 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 			bindNull(parameterIndex);
 		} else {
 			final String fmt = conn().dateTimeConfig[cfgIdx];
-			if (fmt == null || DateUtil.UNIXEPOCH.equals(fmt)) {
-				bindLong(parameterIndex, cfgIdx == 0 ? DateUtil.normalizeDate(x.getTime(), null) : x.getTime());
+			final boolean sqlDate = cfgIdx == DateUtil.DATE_CONFIG;
+			if (sqlDate && DateUtil.EPOCH_DAY.equals(fmt)) {
+				bindLong(parameterIndex, ((java.sql.Date)x).toLocalDate().toEpochDay());
+			} else if (fmt == null || DateUtil.UNIXEPOCH.equals(fmt)) {
+				bindLong(parameterIndex, sqlDate ? DateUtil.normalizeDate(x.getTime(), null) : x.getTime());
 			} else if (DateUtil.JULIANDAY.equals(fmt)) {
-				final long unixepoch = cfgIdx == 0 ? DateUtil.normalizeDate(x.getTime(), null) : x.getTime();
+				final long unixepoch = sqlDate ? DateUtil.normalizeDate(x.getTime(), null) : x.getTime();
 				bindDouble(parameterIndex, DateUtil.toJulianDay(unixepoch));
 			} else {
 				bindText(parameterIndex, DateUtil.formatDate(x, fmt, null));
@@ -274,7 +277,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 
 	@Override
 	public void setTime(int parameterIndex, Time x) throws SQLException {
-		bindDate(parameterIndex, x, 1);
+		bindDate(parameterIndex, x, DateUtil.TIME_CONFIG);
 	}
 	@Override
 	public void setTime(String parameterName, Time x) throws SQLException {
@@ -283,7 +286,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 
 	@Override
 	public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-		bindDate(parameterIndex, x, 2);
+		bindDate(parameterIndex, x, DateUtil.TIMESTAMP_CONFIG);
 	}
 	@Override
 	public void setTimestamp(String parameterName, Timestamp x) throws SQLException {
