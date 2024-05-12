@@ -18,6 +18,7 @@ import java.util.NoSuchElementException;
 
 import static org.sqlite.ColTypes.SQLITE_NULL;
 import static org.sqlite.SQLite.*;
+import static org.sqlite.driver.Guard.sneakyThrow;
 
 public class Stmt implements AutoCloseable, Row {
 	final Conn c;
@@ -164,7 +165,7 @@ public class Stmt implements AutoCloseable, Row {
 						return false;
 					}
 				} catch (SQLiteException e) {
-					throw new IllegalStateException(e);
+					return sneakyThrow(e);
 				}
 			}
 			@Override
@@ -176,12 +177,8 @@ public class Stmt implements AutoCloseable, Row {
 				try {
 					return mapper.map(Stmt.this);
 				} catch (StmtException e) {
-					throw new IllegalStateException(e);
+					return sneakyThrow(e);
 				}
-			}
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException();
 			}
 		};
 	}
