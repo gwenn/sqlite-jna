@@ -62,10 +62,10 @@ public class SqliteStatementTest extends SqliteTestHelper {
 			assertArrayEquals(new int[]{1, 0/*, Statement.SUCCESS_NO_INFO*/, 1},
 					stmt.executeBatch());
 
-			final ResultSet schemas = conn.getMetaData().getSchemas();
-			assertArrayEquals(BATCH_ATTACH_RESULT,
-					formatResultSet(schemas));
-			schemas.close();
+			try (ResultSet schemas = conn.getMetaData().getSchemas()) {
+				assertArrayEquals(BATCH_ATTACH_RESULT,
+						formatResultSet(schemas));
+			}
 
 			assertArrayEquals(new int[0], stmt.executeBatch());
 

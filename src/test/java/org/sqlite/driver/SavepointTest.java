@@ -51,7 +51,6 @@ public class SavepointTest {
 
 	@Test
 	public void insert() throws SQLException {
-		ResultSet rs;
 		String countSql = "select count(*) from trans;";
 
 		stat1.executeUpdate("create table trans (c1);");
@@ -60,47 +59,45 @@ public class SavepointTest {
 		assertEquals(1, stat1.executeUpdate("insert into trans values (4);"));
 
 		// transaction not yet commited, conn1 can see, conn2 can not
-		rs = stat1.executeQuery(countSql);
-		assertTrue(rs.next());
-		assertEquals(1, rs.getInt(1));
-		rs.close();
-		rs = stat2.executeQuery(countSql);
-		assertTrue(rs.next());
-		assertEquals(0, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat1.executeQuery(countSql)) {
+			assertTrue(rs.next());
+			assertEquals(1, rs.getInt(1));
+		}
+		try (ResultSet rs = stat2.executeQuery(countSql)) {
+			assertTrue(rs.next());
+			assertEquals(0, rs.getInt(1));
+		}
 
 		conn1.commit();
 
 		// all connects can see data
-		rs = stat2.executeQuery(countSql);
-		assertTrue(rs.next());
-		assertEquals(1, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat2.executeQuery(countSql)) {
+			assertTrue(rs.next());
+			assertEquals(1, rs.getInt(1));
+		}
 	}
 
 	@Test
 	public void rollback() throws SQLException {
 		String select = "select * from trans;";
-		ResultSet rs;
 
 		stat1.executeUpdate("create table trans (c1);");
 		Savepoint sp = conn1.setSavepoint();
 		stat1.executeUpdate("insert into trans values (3);");
 
-		rs = stat1.executeQuery(select);
-		assertTrue(rs.next());
-		rs.close();
+		try (ResultSet rs = stat1.executeQuery(select)) {
+			assertTrue(rs.next());
+		}
 
 		conn1.rollback(sp);
 
-		rs = stat1.executeQuery(select);
-		assertFalse(rs.next());
-		rs.close();
+		try (ResultSet rs = stat1.executeQuery(select)) {
+			assertFalse(rs.next());
+		}
 	}
 
 	@Test
 	public void multiRollback() throws SQLException {
-		ResultSet rs;
 
 		stat1.executeUpdate("create table t (c1);");
 		conn1.setSavepoint();
@@ -133,28 +130,27 @@ public class SavepointTest {
 		conn1.setAutoCommit(true);
 		stat1.executeUpdate("insert into t values (5);");
 		conn1.setAutoCommit(false);
-		PreparedStatement p = conn1.prepareStatement("insert into t values (?);");
-		p.setInt(1, 6);
-		p.executeUpdate();
-		p.setInt(1, 7);
-		p.executeUpdate();
-		p.close();
+		try (PreparedStatement p = conn1.prepareStatement("insert into t values (?);")) {
+			p.setInt(1, 6);
+			p.executeUpdate();
+			p.setInt(1, 7);
+			p.executeUpdate();
+		}
 
 		// conn1 can see (1+...+7), conn2 can see (1+...+5)
-		rs = stat1.executeQuery("select sum(c1) from t;");
-		assertTrue(rs.next());
-		assertEquals(1 + 2 + 3 + 4 + 5 + 6 + 7, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat1.executeQuery("select sum(c1) from t;")) {
+			assertTrue(rs.next());
+			assertEquals(1 + 2 + 3 + 4 + 5 + 6 + 7, rs.getInt(1));
+		}
 
-		rs = stat2.executeQuery("select sum(c1) from t;");
-		assertTrue(rs.next());
-		assertEquals(1 + 2 + 3 + 4 + 5, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat2.executeQuery("select sum(c1) from t;")) {
+			assertTrue(rs.next());
+			assertEquals(1 + 2 + 3 + 4 + 5, rs.getInt(1));
+		}
 	}
 
 	@Test
 	public void release() throws SQLException {
-		ResultSet rs;
 		String countSql = "select count(*) from trans;";
 
 		stat1.executeUpdate("create table trans (c1);");
@@ -163,43 +159,43 @@ public class SavepointTest {
 		assertEquals(1, stat1.executeUpdate("insert into trans values (4);"));
 
 		// transaction not yet commited, conn1 can see, conn2 can not
-		rs = stat1.executeQuery(countSql);
-		assertTrue(rs.next());
-		assertEquals(1, rs.getInt(1));
-		rs.close();
-		rs = stat2.executeQuery(countSql);
-		assertTrue(rs.next());
-		assertEquals(0, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat1.executeQuery(countSql)) {
+			assertTrue(rs.next());
+			assertEquals(1, rs.getInt(1));
+		}
+		try (ResultSet rs = stat2.executeQuery(countSql)) {
+			assertTrue(rs.next());
+			assertEquals(0, rs.getInt(1));
+		}
 
 		Savepoint innerSP = conn1.setSavepoint("inner_sp");
 		assertEquals(1, stat1.executeUpdate("insert into trans values (5);"));
 
 		// transaction not yet commited, conn1 can see, conn2 can not
-		rs = stat1.executeQuery(countSql);
-		assertTrue(rs.next());
-		assertEquals(2, rs.getInt(1));
-		rs.close();
-		rs = stat2.executeQuery(countSql);
-		assertTrue(rs.next());
-		assertEquals(0, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat1.executeQuery(countSql)) {
+			assertTrue(rs.next());
+			assertEquals(2, rs.getInt(1));
+		}
+		try (ResultSet rs = stat2.executeQuery(countSql)) {
+			assertTrue(rs.next());
+			assertEquals(0, rs.getInt(1));
+		}
 
 		// releasing an inner savepoint, statements are still wrapped by the outer savepoint
 		conn1.releaseSavepoint(innerSP);
 
-		rs = stat2.executeQuery(countSql);
-		assertTrue(rs.next());
-		assertEquals(0, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat2.executeQuery(countSql)) {
+			assertTrue(rs.next());
+			assertEquals(0, rs.getInt(1));
+		}
 
 		// releasing the outer savepoint is like a commit
 		conn1.releaseSavepoint(outerSP);
 
 		// all connects can see SP1 data
-		rs = stat2.executeQuery(countSql);
-		assertTrue(rs.next());
-		assertEquals(2, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat2.executeQuery(countSql)) {
+			assertTrue(rs.next());
+			assertEquals(2, rs.getInt(1));
+		}
 	}
 }

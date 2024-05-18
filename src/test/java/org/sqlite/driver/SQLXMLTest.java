@@ -34,9 +34,9 @@ public class SQLXMLTest {
 	@Before
 	public void setUp() throws Exception {
 		c = DriverManager.getConnection(JDBC.MEMORY);
-		final Statement stmt = c.createStatement();
-		stmt.execute("CREATE TABLE test (data TEXT)");
-		stmt.close();
+		try (Statement stmt = c.createStatement()) {
+			stmt.execute("CREATE TABLE test (data TEXT)");
+		}
 
 		sqlxml = c.createSQLXML();
 	}
@@ -49,54 +49,54 @@ public class SQLXMLTest {
 		insert(sqlxml);
 		sqlxml.free();
 
-		final ResultSet rs = query();
-		sqlxml = rs.getSQLXML(1);
-		assertNotNull(sqlxml);
-		assertEquals(xml, sqlxml.getString());
-		set(sqlxml, "read-only", "not writable");
-		free(sqlxml);
-		rs.close();
+		try (ResultSet rs = query()) {
+			sqlxml = rs.getSQLXML(1);
+			assertNotNull(sqlxml);
+			assertEquals(xml, sqlxml.getString());
+			set(sqlxml, "read-only", "not writable");
+			free(sqlxml);
+		}
 	}
 
 	@Test
 	public void writer() throws Exception {
 		SQLXML sqlxml = new SQLXMLImpl(UTF_8);
 		final String xml = "<root></root>";
-		final Writer writer = sqlxml.setCharacterStream();
-		writer.write(xml);
-		writer.close();
+		try (Writer writer = sqlxml.setCharacterStream()) {
+			writer.write(xml);
+		}
 		insert(sqlxml);
 		sqlxml.free();
 
-		final ResultSet rs = query();
-		sqlxml = rs.getSQLXML(1);
-		assertNotNull(sqlxml);
-		final Reader reader = sqlxml.getCharacterStream();
-		assertNotNull(reader);
-		//assertEquals(xml, reader.toString());
-		sqlxml.free();
-		rs.close();
+		try (ResultSet rs = query()) {
+			sqlxml = rs.getSQLXML(1);
+			assertNotNull(sqlxml);
+			final Reader reader = sqlxml.getCharacterStream();
+			assertNotNull(reader);
+			//assertEquals(xml, reader.toString());
+			sqlxml.free();
+		}
 	}
 
 	@Test
 	public void stream() throws Exception {
 		SQLXML sqlxml = new SQLXMLImpl(UTF_8);
 		final String xml = "<root></root>";
-		final OutputStream out = sqlxml.setBinaryStream();
-		final byte[] bytes = xml.getBytes(UTF_8);
-		out.write(bytes);
-		out.close();
+		try (OutputStream out = sqlxml.setBinaryStream()) {
+			final byte[] bytes = xml.getBytes(UTF_8);
+			out.write(bytes);
+		}
 		insert(sqlxml);
 		sqlxml.free();
 
-		final ResultSet rs = query();
-		sqlxml = rs.getSQLXML(1);
-		assertNotNull(sqlxml);
-		final InputStream in = sqlxml.getBinaryStream();
-		assertNotNull(in);
-		//assertArrayEquals(bytes, in);
-		sqlxml.free();
-		rs.close();
+		try (ResultSet rs = query()) {
+			sqlxml = rs.getSQLXML(1);
+			assertNotNull(sqlxml);
+			final InputStream in = sqlxml.getBinaryStream();
+			assertNotNull(in);
+			//assertArrayEquals(bytes, in);
+			sqlxml.free();
+		}
 	}
 
 	@Test
@@ -114,14 +114,14 @@ public class SQLXMLTest {
 		insert(sqlxml);
 		sqlxml.free();
 
-		final ResultSet rs = query();
-		sqlxml = rs.getSQLXML(1);
-		assertNotNull(sqlxml);
-		final DOMSource src = sqlxml.getSource(DOMSource.class);
-		assertNotNull(src);
-		//assertEquals(doc, src.getNode());
-		sqlxml.free();
-		rs.close();
+		try (ResultSet rs = query()) {
+			sqlxml = rs.getSQLXML(1);
+			assertNotNull(sqlxml);
+			final DOMSource src = sqlxml.getSource(DOMSource.class);
+			assertNotNull(src);
+			//assertEquals(doc, src.getNode());
+			sqlxml.free();
+		}
 	}
 
 	@Test
@@ -152,10 +152,10 @@ public class SQLXMLTest {
 	}
 
 	private void insert(SQLXML sqlxml) throws SQLException {
-		final PreparedStatement ins = c.prepareStatement("INSERT INTO test (data) VALUES (?)");
-		ins.setSQLXML(1, sqlxml);
-		assertEquals(1, ins.executeUpdate());
-		ins.close();
+		try (PreparedStatement ins = c.prepareStatement("INSERT INTO test (data) VALUES (?)")) {
+			ins.setSQLXML(1, sqlxml);
+			assertEquals(1, ins.executeUpdate());
+		}
 	}
 
 	@Test

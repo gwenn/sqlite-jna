@@ -233,13 +233,13 @@ public class TransactionTest {
 		conn1.setAutoCommit(true);
 		stat1.executeUpdate("insert into t values (5);");
 		conn1.setAutoCommit(false);
-		PreparedStatement p = conn1.prepareStatement(
-				"insert into t values (?);");
-		p.setInt(1, 6);
-		p.executeUpdate();
-		p.setInt(1, 7);
-		p.executeUpdate();
-		p.close();
+		try (PreparedStatement p = conn1.prepareStatement(
+			"insert into t values (?);")) {
+			p.setInt(1, 6);
+			p.executeUpdate();
+			p.setInt(1, 7);
+			p.executeUpdate();
+		}
 
 		// conn1 can see (1+...+7), conn2 can see (1+...+5)
 		try (ResultSet rs = stat1.executeQuery("select sum(c1) from t;")) {

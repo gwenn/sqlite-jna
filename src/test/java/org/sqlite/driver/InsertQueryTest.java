@@ -133,12 +133,10 @@ public class InsertQueryTest {
 
 	void insertAndQuery(ConnectionFactory factory) throws SQLException {
 		try {
-			Statement st = factory.getConnection().createStatement();
-			st
-					.executeUpdate("CREATE TABLE IF NOT EXISTS data (fid VARCHAR(255) PRIMARY KEY, type VARCHAR(64), data BLOB);");
-			st
-					.executeUpdate("CREATE TABLE IF NOT EXISTS ResourcesTags (bd_fid VARCHAR(255), name VARCHAR(64), version INTEGER);");
-			st.close();
+			try (Statement st = factory.getConnection().createStatement()) {
+				st.executeUpdate("CREATE TABLE IF NOT EXISTS data (fid VARCHAR(255) PRIMARY KEY, type VARCHAR(64), data BLOB);");
+				st.executeUpdate("CREATE TABLE IF NOT EXISTS ResourcesTags (bd_fid VARCHAR(255), name VARCHAR(64), version INTEGER);");
+			}
 
 			factory.getConnection().setAutoCommit(false);
 
@@ -179,19 +177,15 @@ public class InsertQueryTest {
 			statAddRT.close();
 
 			//
-			PreparedStatement stat;
-			Long result = 0L;
 			String query = "SELECT COUNT(fid) FROM data";
 
-			stat = factory.getConnection().prepareStatement(query);
-			ResultSet rs = stat.executeQuery();
-
-			rs.next();
-			result = rs.getLong(1);
-			//System.out.println("count = " + result);
-
-			rs.close();
-			stat.close();
+			try (PreparedStatement stat = factory.getConnection().prepareStatement(query);
+					ResultSet rs = stat.executeQuery()) {
+				rs.next();
+				Long result = 0L;
+				result = rs.getLong(1);
+				//System.out.println("count = " + result);
+			}
 		} finally {
 			factory.dispose();
 		}

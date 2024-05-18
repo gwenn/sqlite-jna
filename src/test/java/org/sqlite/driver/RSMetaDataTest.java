@@ -89,14 +89,14 @@ public class RSMetaDataTest {
 
 	@Test
 	public void expression() throws SQLException {
-		final ResultSet rs = stat.executeQuery("SELECT NULL UNION SELECT 1");
-		meta = rs.getMetaData();
-		assertNull(meta.getColumnTypeName(1));
-		rs.next();
-		assertNull(meta.getColumnTypeName(1));
-		rs.next();
-		assertNull(meta.getColumnTypeName(1));
-		rs.close();
+		try (ResultSet rs = stat.executeQuery("SELECT NULL UNION SELECT 1")) {
+			meta = rs.getMetaData();
+			assertNull(meta.getColumnTypeName(1));
+			rs.next();
+			assertNull(meta.getColumnTypeName(1));
+			rs.next();
+			assertNull(meta.getColumnTypeName(1));
+		}
 	}
 
 	@Test
