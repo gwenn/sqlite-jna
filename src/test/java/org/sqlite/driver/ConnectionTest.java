@@ -293,9 +293,8 @@ public class ConnectionTest {
 			stmt1.executeUpdate("create table tbl (col int)");
 			stmt1.executeUpdate("insert into tbl values(100)");
 		}
-
-		Connection conn2 = DriverManager.getConnection("jdbc:sqlite:file:memdb1?mode=memory&cache=shared");
-		try (Statement stmt2 = conn2.createStatement();
+		try (Connection conn2 = DriverManager.getConnection("jdbc:sqlite:file:memdb1?mode=memory&cache=shared");
+				 Statement stmt2 = conn2.createStatement();
 				ResultSet rs = stmt2.executeQuery("select * from tbl")) {
 			assertTrue(rs.next());
 			assertEquals(100, rs.getInt(1));

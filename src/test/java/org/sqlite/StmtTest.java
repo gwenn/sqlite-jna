@@ -39,11 +39,12 @@ public class StmtTest {
 
 	@Test
 	public void expandedSql() throws SQLiteException {
-		final Conn c = ConnTest.open();
-		final Stmt s = c.prepare("SELECT ?", false);
-		assertNotNull(s);
-		s.bind("TEST");
-		assertEquals("SELECT 'TEST'", s.getExpandedSql());
+		try (Conn c = ConnTest.open()) {
+			final Stmt s = c.prepare("SELECT ?", false);
+			assertNotNull(s);
+			s.bind("TEST");
+			assertEquals("SELECT 'TEST'", s.getExpandedSql());
+		}
 	}
 
 	@Test

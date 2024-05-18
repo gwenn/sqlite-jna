@@ -85,11 +85,12 @@ public class BlobTest {
 			try (Statement stmt = c.createStatement()) {
 				stmt.execute("CREATE TABLE test (data BLOB)");
 				assertEquals(1, stmt.executeUpdate("INSERT INTO test (data) VALUES (zeroblob(1024))"));
-				ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid()");
-				assertTrue(rs.next());
-				rowid = rs.getLong(1);
-				assertTrue(rowid > 0);
-				assertFalse(rs.next());
+				try (ResultSet rs = stmt.executeQuery("SELECT last_insert_rowid()")) {
+					assertTrue(rs.next());
+					rowid = rs.getLong(1);
+					assertTrue(rowid > 0);
+					assertFalse(rs.next());
+				}
 			}
 
 			try (PreparedStatement pstmt = c.prepareStatement("UPDATE test SET data = :blob WHERE rowid = :rowid")) {

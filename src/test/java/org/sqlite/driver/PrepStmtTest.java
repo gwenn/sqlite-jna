@@ -258,7 +258,6 @@ public class PrepStmtTest {
 			prep.setNull(1, 0);
 			prep.setFloat(2, Float.MIN_VALUE);
 			prep.setShort(3, Short.MIN_VALUE);
-			prep.executeQuery();
 			try (ResultSet rs = prep.executeQuery()) {
 				assertTrue(rs.next());
 				assertNull(rs.getString("col1"));
@@ -531,8 +530,10 @@ public class PrepStmtTest {
 			prep.setInt(1, 2);
 			prep.setInt(2, 3);
 			prep.setInt(3, -1);
-			meta = prep.executeQuery().getMetaData();
-			assertEquals(3, meta.getColumnCount());
+			try (ResultSet resultSet = prep.executeQuery()) {
+				meta = resultSet.getMetaData();
+				assertEquals(3, meta.getColumnCount());
+			}
 		}
 	}
 #endif

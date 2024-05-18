@@ -159,46 +159,49 @@ public class ConnTest {
 
 	@Test
 	public void limit() throws SQLiteException {
-		final Conn c = open();
-		final int max = c.getLimit(SQLITE_LIMIT_VARIABLE_NUMBER);
-		assertEquals(max, c.setLimit(SQLITE_LIMIT_VARIABLE_NUMBER, max+1));
-		assertEquals(max, c.getLimit(SQLITE_LIMIT_VARIABLE_NUMBER)); // SQLITE_MAX_VARIABLE_NUMBER
-		assertEquals(max, c.setLimit(SQLITE_LIMIT_VARIABLE_NUMBER, max-1));
-		assertEquals(max-1, c.getLimit(SQLITE_LIMIT_VARIABLE_NUMBER));
+		try (Conn c = open()) {
+			final int max = c.getLimit(SQLITE_LIMIT_VARIABLE_NUMBER);
+			assertEquals(max, c.setLimit(SQLITE_LIMIT_VARIABLE_NUMBER, max + 1));
+			assertEquals(max, c.getLimit(SQLITE_LIMIT_VARIABLE_NUMBER)); // SQLITE_MAX_VARIABLE_NUMBER
+			assertEquals(max, c.setLimit(SQLITE_LIMIT_VARIABLE_NUMBER, max - 1));
+			assertEquals(max - 1, c.getLimit(SQLITE_LIMIT_VARIABLE_NUMBER));
+		}
 	}
 
 	@Test
 	public void trace() throws SQLiteException {
-		final Conn c = open();
-		final String[] traces = new String[1];
-		c.trace(new TraceCallback() {
-			private int i;
+		try (Conn c = open()) {
+			final String[] traces = new String[1];
+			c.trace(new TraceCallback() {
+				private int i;
 
-			@Override
-			public void trace(String sql) {
-				traces[i++] = sql;
-			}
-		});
-		final String sql = "SELECT 1";
-		c.fastExec(sql);
-		assertArrayEquals("traces", new String[]{sql}, traces);
+				@Override
+				public void trace(String sql) {
+					traces[i++] = sql;
+				}
+			});
+			final String sql = "SELECT 1";
+			c.fastExec(sql);
+			assertArrayEquals("traces", new String[]{sql}, traces);
+		}
 	}
 
 	@Test
 	public void profile() throws SQLiteException {
-		final Conn c = open();
-		final String[] profiles = new String[1];
-		c.profile(new ProfileCallback() {
-			private int i;
+		try (Conn c = open()) {
+			final String[] profiles = new String[1];
+			c.profile(new ProfileCallback() {
+				private int i;
 
-			@Override
-			public void profile(String sql, long ns) {
-				profiles[i++] = sql;
-			}
-		});
-		final String sql = "SELECT 1";
-		c.fastExec(sql);
-		assertArrayEquals("profiles", new String[]{sql}, profiles);
+				@Override
+				public void profile(String sql, long ns) {
+					profiles[i++] = sql;
+				}
+			});
+			final String sql = "SELECT 1";
+			c.fastExec(sql);
+			assertArrayEquals("profiles", new String[]{sql}, profiles);
+		}
 	}
 
 	@Test
@@ -318,17 +321,18 @@ public class ConnTest {
 
 	@Test
 	public void updateHook() throws SQLiteException {
-		final Conn c = open();
-		AtomicInteger count = new AtomicInteger();
-		c.updateHook(new UpdateHook() {
-			@Override
-			public void update(int actionCode, String dbName, String tblName, long rowId) {
-				count.incrementAndGet();
-			}
-		});
-		c.fastExec("CREATE TABLE test AS SELECT 0 as x;");
-		assertEquals(1, c.execDml("UPDATE test SET x = 1;", false));
-		assertEquals(1, count.get());
+		try (Conn c = open()) {
+			AtomicInteger count = new AtomicInteger();
+			c.updateHook(new UpdateHook() {
+				@Override
+				public void update(int actionCode, String dbName, String tblName, long rowId) {
+					count.incrementAndGet();
+				}
+			});
+			c.fastExec("CREATE TABLE test AS SELECT 0 as x;");
+			assertEquals(1, c.execDml("UPDATE test SET x = 1;", false));
+			assertEquals(1, count.get());
+		}
 	}
 
 	private static class ConnState {

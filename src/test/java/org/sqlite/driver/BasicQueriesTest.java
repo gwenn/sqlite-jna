@@ -93,7 +93,7 @@ public class BasicQueriesTest {
 	@Test
 	public void testImmediateExecuteQuery2() throws Exception {
 		try (Statement stmt = conn.createStatement()) {
-			stmt.executeQuery("select 1");
+			try(ResultSet rs = stmt.executeQuery("select 1")) {}
 		}
 	}
 
