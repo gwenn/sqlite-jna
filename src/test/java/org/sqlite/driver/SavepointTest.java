@@ -46,10 +46,7 @@ public class SavepointTest {
 
 	@After
 	public void close() throws Exception {
-		stat1.close();
-		stat2.close();
-		conn1.close();
-		conn2.close();
+		Guard.closeAll(stat1, stat2, conn1, conn2);
 	}
 
 	@Test

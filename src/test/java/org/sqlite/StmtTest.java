@@ -102,48 +102,66 @@ public class StmtTest {
 	@Test
 	public void reset_asap() throws Exception {
 		//File dbFile = testFolder.newFile("test.db");
-		final Conn c = ConnTest.open();
-		c.fastExec("CREATE TABLE foo (x INT)");
-		c.fastExec("BEGIN EXCLUSIVE");
-		final Stmt ins = c.prepare("ROLLBACK", false);
-		ins.exec();
-
-		assertFalse(ins.isBusy());
-		ins.close();
-		c.close();
+		try (Conn c = ConnTest.open()) {
+			c.fastExec("CREATE TABLE foo (x INT)");
+			c.fastExec("BEGIN EXCLUSIVE");
+			try (Stmt ins = c.prepare("ROLLBACK", false)) {
+				ins.exec();
+				assertFalse(ins.isBusy());
+			}
+		}
 	}
 
 	@Test
 	public void utf8() throws Exception {
-		final Conn c = ConnTest.open();
-		c.fastExec("PRAGMA encoding=\"UTF-8\"");
-		c.fastExec("CREATE TABLE foo (data TEXT)");
-		final Stmt ins = c.prepare("INSERT INTO foo VALUES (?)", false);
-
-		final String text = new String(Character.toChars(0x1F604));
-		ins.bindText(1, text);
-		ins.exec();
-		ins.close();
-
-		final Stmt sel = c.prepare("SELECT data FROM foo", false);
-		assertTrue(sel.step(0));
-		final byte[] bytes = sel.getColumnBlob(0);
-		assertArrayEquals(text.getBytes(StandardCharsets.UTF_8), bytes);
-		sel.close();
-		c.close();
+		try (Conn c = ConnTest.open()) {
+			c.fastExec("PRAGMA encoding=\"UTF-8\"");
+			c.fastExec("CREATE TABLE foo (data TEXT)");
+			String text;
+			try (Stmt ins = c.prepare("INSERT INTO foo VALUES (?)", false)) {
+				text = new String(Character.toChars(0x1F604));
+				ins.bindText(1, text);
+				ins.exec();
+			}
+			try (Stmt sel = c.prepare("SELECT data FROM foo", false)) {
+				assertTrue(sel.step(0));
+				final byte[] bytes = sel.getColumnBlob(0);
+				assertArrayEquals(text.getBytes(StandardCharsets.UTF_8), bytes);
+			}
+		}
 	}
 
 	@Test
 	public void pragma_func() throws Exception {
 		Assume.assumeTrue(org.sqlite.Conn.libversionNumber() >= 3020000);
-		final Conn c = ConnTest.open();
+		try (Conn c = ConnTest.open()) {
+			try (Stmt sel = c.prepare("SELECT * FROM pragma_table_info(?)", false)) {
+				sel.bindText(1, "sqlite_master");
+				assertTrue(sel.step(0));
+				assertEquals("type", sel.getColumnText(1));
+			}
+		}
+	}
 
-		final Stmt sel = c.prepare("SELECT * FROM pragma_table_info(?)", false);
-		sel.bindText(1, "sqlite_master");
-		assertTrue(sel.step(0));
-		assertEquals("type", sel.getColumnText(1));
-		sel.close();
-		c.close();
+	@Test
+	public void params() throws Exception {
+		try (Conn c = ConnTest.open()) {
+			c.fastExec("CREATE TABLE IF NOT EXISTS my_context (\n" +
+							 "    elt_name TEXT NOT NULL COLLATE NOCASE,\n" +
+							 "    attr_prefix TEXT NOT NULL COLLATE NOCASE, -- empty if there is no '/' in complete attr name\n" +
+							 "    entity_kind TEXT NULL, -- COLLATE NOCASE\n" +
+							 "    pdl TEXT, -- NOT NULL (CASE WHEN attr_prefix IS NULL THEN 'all PDL element attributes without prefix' ELSE 'all PDL attributes with prefix equals to attr_prefix' END)\n" +
+							 "    PRIMARY KEY (elt_name, attr_prefix)\n" +
+							 ") WITHOUT ROWID;");
+
+			try (Stmt stmt = c.prepare("SELECT json_type(pdl, '$.\"' || :attr_radix || '\"') AS attr_type, json_extract(pdl, '$.\"' || :attr_radix || '\"') AS attr_value\n" +
+											 " FROM my_context WHERE elt_name = :elt_name AND attr_prefix = :attr_prefix;", false)) {
+				assertEquals(3, stmt.getBindParameterCount());
+				assertEquals(":attr_radix", stmt.getBindParameterName(1));
+				assertEquals(":elt_name", stmt.getBindParameterName(2));
+				assertEquals(":attr_prefix", stmt.getBindParameterName(3));
+			}
+		}
 	}
 
 	static void checkResult(int res) {

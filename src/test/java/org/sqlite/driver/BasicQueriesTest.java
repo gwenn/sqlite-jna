@@ -99,7 +99,6 @@ public class BasicQueriesTest {
 
 	@Test
 	public void testSimpleQueries() throws Exception {
-		ResultSet rs;
 		try (Statement stmt = conn.createStatement()) {
 			assertEquals(conn, stmt.getConnection());
 
@@ -108,9 +107,9 @@ public class BasicQueriesTest {
 			stmt.executeUpdate("CREATE TABLE IF NOT EXISTS test_table " +
 					"(id INTEGER PRIMARY KEY, name TEXT, start DATETIME)");
 
-			rs = stmt.executeQuery("SELECT * FROM test_table");
-
-			assertFalse(rs.next());
+			try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table")) {
+				assertFalse(rs.next());
+			}
 
 			try {
 				stmt.executeQuery("THIS IS BAD SQL");
@@ -130,46 +129,41 @@ public class BasicQueriesTest {
 				assertFalse(conn.isReadOnly());
 			}
 
-			PreparedStatement ps = conn.prepareStatement("SELECT * FROM test_table WHERE id=?");
+			try (PreparedStatement ps = conn.prepareStatement("SELECT * FROM test_table WHERE id=?")) {
+				ps.setInt(1, 2);
+				try (ResultSet rs = ps.executeQuery()) {
+					assertFalse(rs.next());
+				}
 
-			ps.setInt(1, 2);
-			rs = ps.executeQuery();
+				ps.setInt(1, 1);
+				try (ResultSet rs = ps.executeQuery()) {
+					assertTrue(rs.next());
 
-			assertFalse(rs.next());
+					assertEquals(1, rs.getInt(1));
+					assertEquals(1, rs.getInt("id"));
+					assertEquals("Kino", rs.getString(2));
+					assertEquals("Kino", rs.getString("name"));
 
-			rs.close();
+					assertFalse(rs.next());
+				}
+			}
 
-			ps.setInt(1, 1);
-			rs = ps.executeQuery();
+			try (PreparedStatement ps = conn.prepareStatement("INSERT INTO test_table VALUES (?, ?, ?)")) {
+				ps.setInt(1, 2);
+				ps.setString(2, "Eve");
+				Timestamp ts = new Timestamp(1376222713L * 1000L);
 
-			assertTrue(rs.next());
+				ps.setTimestamp(3, ts);
 
-			assertEquals(1, rs.getInt(1));
-			assertEquals(1, rs.getInt("id"));
-			assertEquals("Kino", rs.getString(2));
-			assertEquals("Kino", rs.getString("name"));
+				rc = ps.executeUpdate();
+				assertEquals(1, rc);
+				assertEquals(-1, ps.getUpdateCount());
 
-			assertFalse(rs.next());
-
-			ps.close();
-
-			ps = conn.prepareStatement("INSERT INTO test_table VALUES (?, ?, ?)");
-			ps.setInt(1, 2);
-			ps.setString(2, "Eve");
-			Timestamp ts = new Timestamp(1376222713L * 1000L);
-
-			ps.setTimestamp(3, ts);
-
-			rc = ps.executeUpdate();
-			assertEquals(1, rc);
-			assertEquals(-1, ps.getUpdateCount());
-
-			rs = stmt.executeQuery("SELECT * FROM test_table ORDER BY id DESC");
-
-			assertTrue(rs.next());
-			// XXX assertEquals("2013-08-11 05:05:13.000", rs.getString(3));
-
-			ps.close();
+				try (ResultSet rs = stmt.executeQuery("SELECT * FROM test_table ORDER BY id DESC")) {
+					assertTrue(rs.next());
+					// XXX assertEquals("2013-08-11 05:05:13.000", rs.getString(3));
+				}
+			}
 		}
 	}
 }

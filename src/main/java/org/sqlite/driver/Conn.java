@@ -128,8 +128,7 @@ class Conn implements Connection {
 	@Override
 	public void close() throws SQLException {
 		if (c != null) {
-			if (getGeneratedKeys != null) getGeneratedKeys.close();
-			c.close();
+			Guard.closeAll(getGeneratedKeys, c);
 			if (clientInfo != null) clientInfo.clear();
 			c = null;
 		}

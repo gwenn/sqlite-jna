@@ -59,8 +59,7 @@ public class RSMetaDataTest {
 	@After
 	public void close() throws SQLException {
 		stat.executeUpdate("drop table people;");
-		stat.close();
-		conn.close();
+		Guard.closeAll(stat, conn);
 	}
 #if sqlite.enable.column.metadata == "true"
 	@Test

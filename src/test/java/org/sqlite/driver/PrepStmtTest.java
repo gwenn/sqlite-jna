@@ -79,8 +79,7 @@ public class PrepStmtTest {
 
 	@After
 	public void close() throws SQLException {
-		stat.close();
-		conn.close();
+		Guard.closeAll(stat, conn);
 	}
 
 	@Test

@@ -71,12 +71,7 @@ public class TransactionTest {
 
 	@After
 	public void close() throws Exception {
-		stat1.close();
-		stat2.close();
-		stat3.close();
-		conn1.close();
-		conn2.close();
-		conn3.close();
+		Guard.closeAll(stat1, stat2, stat3, conn1, conn2, conn3);
 	}
 
 	private void failedUpdatedPreventedFutureRollback(boolean prepared) throws SQLException {
@@ -153,15 +148,15 @@ public class TransactionTest {
 		stat2.executeUpdate("insert into test values (2);");
 		stat3.executeUpdate("insert into test values (3);");
 
-		ResultSet rs = stat1.executeQuery("select sum(c1) from test;");
-		assertTrue(rs.next());
-		assertEquals(6, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat1.executeQuery("select sum(c1) from test;")) {
+			assertTrue(rs.next());
+			assertEquals(6, rs.getInt(1));
+		}
 
-		rs = stat3.executeQuery("select sum(c1) from test;");
-		assertTrue(rs.next());
-		assertEquals(6, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat3.executeQuery("select sum(c1) from test;")) {
+			assertTrue(rs.next());
+			assertEquals(6, rs.getInt(1));
+		}
 	}
 
 	@Test
@@ -173,7 +168,6 @@ public class TransactionTest {
 
 	@Test
 	public void insert() throws SQLException {
-		ResultSet rs;
 		String countSql = "select count(*) from trans;";
 
 		stat1.executeUpdate("create table trans (c1);");
@@ -182,47 +176,45 @@ public class TransactionTest {
 		assertEquals(1, stat1.executeUpdate("insert into trans values (4);"));
 
 		// transaction not yet commited, conn1 can see, conn2 can not
-		rs = stat1.executeQuery(countSql);
-		assertTrue(rs.next());
-		assertEquals(1, rs.getInt(1));
-		rs.close();
-		rs = stat2.executeQuery(countSql);
-		assertTrue(rs.next());
-		assertEquals(0, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat1.executeQuery(countSql)) {
+			assertTrue(rs.next());
+			assertEquals(1, rs.getInt(1));
+		}
+		try (ResultSet rs = stat2.executeQuery(countSql)) {
+			assertTrue(rs.next());
+			assertEquals(0, rs.getInt(1));
+		}
 
 		conn1.commit();
 
 		// all connects can see data
-		rs = stat2.executeQuery(countSql);
-		assertTrue(rs.next());
-		assertEquals(1, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat2.executeQuery(countSql)) {
+			assertTrue(rs.next());
+			assertEquals(1, rs.getInt(1));
+		}
 	}
 
 	@Test
 	public void rollback() throws SQLException {
 		String select = "select * from trans;";
-		ResultSet rs;
 
 		stat1.executeUpdate("create table trans (c1);");
 		conn1.setAutoCommit(false);
 		stat1.executeUpdate("insert into trans values (3);");
 
-		rs = stat1.executeQuery(select);
-		assertTrue(rs.next());
-		rs.close();
+		try (ResultSet rs = stat1.executeQuery(select)) {
+			assertTrue(rs.next());
+		}
 
 		conn1.rollback();
 
-		rs = stat1.executeQuery(select);
-		assertFalse(rs.next());
-		rs.close();
+		try (ResultSet rs = stat1.executeQuery(select)) {
+			assertFalse(rs.next());
+		}
 	}
 
 	@Test
 	public void multiRollback() throws SQLException {
-		ResultSet rs;
 
 		stat1.executeUpdate("create table t (c1);");
 		conn1.setAutoCommit(false);
@@ -250,14 +242,14 @@ public class TransactionTest {
 		p.close();
 
 		// conn1 can see (1+...+7), conn2 can see (1+...+5)
-		rs = stat1.executeQuery("select sum(c1) from t;");
-		assertTrue(rs.next());
-		assertEquals(1 + 2 + 3 + 4 + 5 + 6 + 7, rs.getInt(1));
-		rs.close();
-		rs = stat2.executeQuery("select sum(c1) from t;");
-		assertTrue(rs.next());
-		assertEquals(1 + 2 + 3 + 4 + 5, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat1.executeQuery("select sum(c1) from t;")) {
+			assertTrue(rs.next());
+			assertEquals(1 + 2 + 3 + 4 + 5 + 6 + 7, rs.getInt(1));
+		}
+		try (ResultSet rs = stat2.executeQuery("select sum(c1) from t;")) {
+			assertTrue(rs.next());
+			assertEquals(1 + 2 + 3 + 4 + 5, rs.getInt(1));
+		}
 	}
 
 	@Test
@@ -265,13 +257,12 @@ public class TransactionTest {
 		stat1.executeUpdate("create table t (c1);");
 		stat1.executeUpdate("insert into t values (1);");
 		stat1.executeUpdate("insert into t values (2);");
-		ResultSet rs = stat1.executeQuery("select * from t;");
-		assertTrue(rs.next()); // select is open
+		try (ResultSet rs = stat1.executeQuery("select * from t;")) {
+			assertTrue(rs.next()); // select is open
 
-		conn2.setAutoCommit(false);
-		stat1.executeUpdate("insert into t values (2);");
-
-		rs.close();
+			conn2.setAutoCommit(false);
+			stat1.executeUpdate("insert into t values (2);");
+		}
 		conn2.commit();
 	}
 
@@ -330,13 +321,12 @@ public class TransactionTest {
 		stat1.executeUpdate("create table t (c1);");
 		stat1.executeUpdate("insert into t values (1);");
 		stat1.executeUpdate("insert into t values (2);");
-		final Statement stmt = conn1.createStatement();
-		ResultSet rs = stmt.executeQuery("select * from t;");
-		assertTrue(rs.next());
-
-		// commit now succeeds since sqlite 3.6.5
-		stat1.executeUpdate("insert into t values (3);"); // can't be done
-		stmt.close();
+		try (Statement stmt = conn1.createStatement();
+				 ResultSet rs = stmt.executeQuery("select * from t;")) {
+			assertTrue(rs.next());
+			// commit now succeeds since sqlite 3.6.5
+			stat1.executeUpdate("insert into t values (3);"); // can't be done
+		}
 	}
 
 	@Test

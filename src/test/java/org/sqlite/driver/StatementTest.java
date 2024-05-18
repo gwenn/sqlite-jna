@@ -38,8 +38,7 @@ public class StatementTest {
 
 	@After
 	public void close() throws SQLException {
-		stat.close();
-		conn.close();
+		Guard.closeAll(stat, conn);
 	}
 
 	@Test
@@ -317,42 +316,41 @@ public class StatementTest {
 
 	@Test
 	public void getGeneratedKeys() throws SQLException {
-		ResultSet rs;
 		stat.executeUpdate("create table t1 (c1 integer primary key, v);");
 		stat.executeUpdate("insert into t1 (v) values ('red');", RETURN_GENERATED_KEYS);
-		rs = stat.getGeneratedKeys();
-		assertTrue(rs.next());
-		assertEquals(1, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat.getGeneratedKeys()) {
+			assertTrue(rs.next());
+			assertEquals(1, rs.getInt(1));
+		}
 		stat.executeUpdate("insert into t1 (v) values ('blue');", RETURN_GENERATED_KEYS);
-		rs = stat.getGeneratedKeys();
-		assertTrue(rs.next());
-		assertEquals(2, rs.getInt(1));
-		rs.close();
+		try (ResultSet rs = stat.getGeneratedKeys()) {
+			assertTrue(rs.next());
+			assertEquals(2, rs.getInt(1));
+		}
 
 		// closing one statement shouldn't close shared db metadata object.
 		stat.close();
-		Statement stat2 = conn.createStatement();
-		rs = stat2.getGeneratedKeys();
-		assertNotNull(rs);
-		rs.close();
-		stat2.close();
+		try (Statement stat2 = conn.createStatement();
+			ResultSet rs = stat2.getGeneratedKeys()) {
+			assertNotNull(rs);
+			rs.close();
+		}
 	}
 
 	@Test
 	public void isBeforeFirst() throws SQLException {
-		ResultSet rs = stat.executeQuery("select 1 union all select 2;");
-		assertTrue(rs.isBeforeFirst());
-		assertTrue(rs.next());
-		assertTrue(rs.isFirst());
-		assertEquals(1, rs.getInt(1));
-		assertTrue(rs.next());
-		assertFalse(rs.isBeforeFirst());
-		assertFalse(rs.isFirst());
-		assertEquals(2, rs.getInt(1));
-		assertFalse(rs.next());
-		assertFalse(rs.isBeforeFirst());
-		rs.close();
+		try (ResultSet rs = stat.executeQuery("select 1 union all select 2;")) {
+			assertTrue(rs.isBeforeFirst());
+			assertTrue(rs.next());
+			assertTrue(rs.isFirst());
+			assertEquals(1, rs.getInt(1));
+			assertTrue(rs.next());
+			assertFalse(rs.isBeforeFirst());
+			assertFalse(rs.isFirst());
+			assertEquals(2, rs.getInt(1));
+			assertFalse(rs.next());
+			assertFalse(rs.isBeforeFirst());
+		}
 	}
 
 	@Test
@@ -361,21 +359,21 @@ public class StatementTest {
 		stat.executeUpdate("create table t2 (c1 integer);");
 		stat.executeUpdate("insert into t1 values (1);");
 		stat.executeUpdate("insert into t2 values (1);");
-		ResultSet rs = stat.executeQuery(
-				"select a.c1 AS c1 from t1 a, t2 where a.c1=t2.c1;");
-		assertTrue(rs.next());
-		assertEquals(1, rs.getInt("c1"));
-		rs.close();
+		try (ResultSet rs = stat.executeQuery(
+				"select a.c1 AS c1 from t1 a, t2 where a.c1=t2.c1;")) {
+			assertTrue(rs.next());
+			assertEquals(1, rs.getInt("c1"));
+		}
 	}
 
 	@Test
 	public void nullDate() throws SQLException {
-		ResultSet rs = stat.executeQuery("select null;");
-		assertTrue(rs.next());
-		assertNull(rs.getDate(1));
-		assertNull(rs.getTime(1));
-		assertNull(rs.getTimestamp(1));
-		rs.close();
+		try (ResultSet rs = stat.executeQuery("select null;")) {
+			assertTrue(rs.next());
+			assertNull(rs.getDate(1));
+			assertNull(rs.getTime(1));
+			assertNull(rs.getTimestamp(1));
+		}
 	}
 
 	@Test
@@ -384,11 +382,11 @@ public class StatementTest {
 		stat.executeUpdate("create table t2 (c1 int, c2 int);");
 		stat.executeUpdate("insert into t1 values (1);");
 		stat.executeUpdate("insert into t2 values (2, 1);");
-		ResultSet rs = stat.executeQuery(
-				"select a.c1, b.c1 from t1 a, t2 b where a.c1=b.c2;");
-		assertTrue(rs.next());
-		assertEquals(1, rs.getInt("c1"));
-		rs.close();
+		try (ResultSet rs = stat.executeQuery(
+				"select a.c1, b.c1 from t1 a, t2 b where a.c1=b.c2;")) {
+			assertTrue(rs.next());
+			assertEquals(1, rs.getInt("c1"));
+		}
 	}
 
 	@Test(expected = SQLException.class)
@@ -396,12 +394,9 @@ public class StatementTest {
 		stat.executeUpdate("create table t1 (c1);");
 		stat.executeUpdate("insert into t1 values (4);");
 		stat.executeUpdate("insert into t1 values (4);");
-		final Statement statement = conn.createStatement();
-		try {
+		try (Statement statement = conn.createStatement()) {
 			statement.executeQuery("select * from t1;").next();
 			stat.executeUpdate("drop table t1;");
-		} finally {
-			statement.close();
 		}
 	}
 
@@ -461,37 +456,34 @@ public class StatementTest {
 		Date day = new Date(new java.util.Date().getTime());
 
 		stat.executeUpdate("create table day (time datetime)");
-		PreparedStatement prep = conn.prepareStatement("insert into day values(?)");
-		prep.setDate(1, day);
-		prep.executeUpdate();
-		prep.close();
-		ResultSet rs = stat.executeQuery("select * from day");
-		assertTrue(rs.next());
-		Date d = rs.getDate(1);
-		assertEquals(day.toString(), d.toString());
+		try (PreparedStatement prep = conn.prepareStatement("insert into day values(?)")) {
+			prep.setDate(1, day);
+			prep.executeUpdate();
+		}
+		try (ResultSet rs = stat.executeQuery("select * from day")) {
+			assertTrue(rs.next());
+			Date d = rs.getDate(1);
+			assertEquals(day.toString(), d.toString());
+		}
 	}
 
 	@Test
 	public void maxRows() throws SQLException {
 		stat.setMaxRows(1);
 		assertEquals(1, stat.getMaxRows());
-		ResultSet rs = stat.executeQuery("select 1 union select 2 union select 3");
-
-		assertTrue(rs.next());
-		assertEquals(1, rs.getInt(1));
-		assertFalse(rs.next());
-
-		rs.close();
+		try (ResultSet rs = stat.executeQuery("select 1 union select 2 union select 3")) {
+			assertTrue(rs.next());
+			assertEquals(1, rs.getInt(1));
+			assertFalse(rs.next());
+		}
 		stat.setMaxRows(2);
-		rs = stat.executeQuery("select 1 union select 2 union select 3");
-
-		assertTrue(rs.next());
-		assertEquals(1, rs.getInt(1));
-		assertTrue(rs.next());
-		assertEquals(2, rs.getInt(1));
-		assertFalse(rs.next());
-
-		rs.close();
+		try (ResultSet rs = stat.executeQuery("select 1 union select 2 union select 3")) {
+			assertTrue(rs.next());
+			assertEquals(1, rs.getInt(1));
+			assertTrue(rs.next());
+			assertEquals(2, rs.getInt(1));
+			assertFalse(rs.next());
+		}
 	}
 
 	@Test
@@ -527,12 +519,10 @@ public class StatementTest {
 		assertEquals(stat, stat.unwrap(Statement.class));
 		assertEquals(stat, stat.unwrap(Stmt.class));
 
-		ResultSet rs = stat.executeQuery("select 1");
-
-		assertTrue(rs.isWrapperFor(ResultSet.class));
-		assertEquals(rs, rs.unwrap(ResultSet.class));
-
-		rs.close();
+		try (ResultSet rs = stat.executeQuery("select 1")) {
+			assertTrue(rs.isWrapperFor(ResultSet.class));
+			assertEquals(rs, rs.unwrap(ResultSet.class));
+		}
 	}
 
 	@Test
@@ -544,8 +534,8 @@ public class StatementTest {
 		mCloseOnCompletion.invoke(stat);
 		assertTrue((Boolean) mIsCloseOnCompletion.invoke(stat));
 
-		ResultSet rs = stat.executeQuery("select 1");
-		rs.close();
+		try (ResultSet rs = stat.executeQuery("select 1")) {
+		}
 
 		assertTrue(stat.isClosed());
 	}

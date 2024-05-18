@@ -33,10 +33,7 @@ public class ResultSetIterable<T> implements Iterable<T>, Guard {
 
 	@Override
 	public void close() throws SQLException {
-		if (rs != null) {
-			rs.close();
-		}
-		query.close();
+		Guard.closeAll(rs, query);
 	}
 
 	@Override
@@ -72,7 +69,7 @@ public class ResultSetIterable<T> implements Iterable<T>, Guard {
 						return false;
 					}
 				} catch (SQLException e) {
-					return sneakyThrow(e);
+					return sneakyThrow(Guard.close(rs, e));
 				}
 			}
 			@Override

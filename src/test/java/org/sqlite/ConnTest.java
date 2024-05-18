@@ -232,24 +232,24 @@ public class ConnTest {
 
 	@Test
 	public void createScalarFunctionWithArg() throws SQLiteException {
-		final Conn c = open();
-		c.createScalarFunction("test", 2, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
-			@Override
-			protected void func(SQLite3Context pCtx, SQLite3Values args) {
-				assertNotNull(pCtx);
-				assertEquals(2, args.getCount());
-				assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
-				final int value = args.getInt(0);
-				assertEquals(123456, value);
-				assertEquals(2, args.getInt(1));
-				pCtx.setResultInt(value);
+		try (Conn c = open()) {
+			c.createScalarFunction("test", 2, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
+				@Override
+				protected void func(SQLite3Context pCtx, SQLite3Values args) {
+					assertNotNull(pCtx);
+					assertEquals(2, args.getCount());
+					assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
+					final int value = args.getInt(0);
+					assertEquals(123456, value);
+					assertEquals(2, args.getInt(1));
+					pCtx.setResultInt(value);
+				}
+			});
+			try (Stmt stmt = c.prepare("SELECT test(123456, 2)", false)) {
+				assertTrue(stmt.step(0));
+				assertEquals(123456, stmt.getColumnInt(0));
 			}
-		});
-		final Stmt stmt = c.prepare("SELECT test(123456, 2)", false);
-		assertTrue(stmt.step(0));
-		assertEquals(123456, stmt.getColumnInt(0));
-		stmt.close();
-		c.close();
+		}
 	}
 
 	@Test
@@ -280,22 +280,22 @@ public class ConnTest {
 			}
 		});
 
-		Stmt stmt = c.prepare("SELECT my_sum(i) FROM (SELECT 2 AS i WHERE 1 <> 1)", false);
-		assertTrue(stmt.step(0));
-		assertEquals(ColTypes.SQLITE_NULL, stmt.getColumnType(0));
-		stmt.close();
+		try (Stmt stmt = c.prepare("SELECT my_sum(i) FROM (SELECT 2 AS i WHERE 1 <> 1)", false)) {
+			assertTrue(stmt.step(0));
+			assertEquals(ColTypes.SQLITE_NULL, stmt.getColumnType(0));
+		}
 
-		stmt = c.prepare("SELECT my_sum(i) FROM (SELECT 2 AS i UNION ALL SELECT 2)", false);
-		assertTrue(stmt.step(0));
-		assertEquals(ColTypes.SQLITE_INTEGER, stmt.getColumnType(0));
-		assertEquals(4L, stmt.getColumnLong(0));
-		stmt.close();
+		try (Stmt stmt = c.prepare("SELECT my_sum(i) FROM (SELECT 2 AS i UNION ALL SELECT 2)", false)) {
+			assertTrue(stmt.step(0));
+			assertEquals(ColTypes.SQLITE_INTEGER, stmt.getColumnType(0));
+			assertEquals(4L, stmt.getColumnLong(0));
+		}
 
-		stmt = c.prepare("SELECT my_sum(i), my_sum(j) FROM (SELECT 2 AS i, 1 AS j UNION ALL SELECT 2, 1)", false);
-		assertTrue(stmt.step(0));
-		assertEquals(4L, stmt.getColumnLong(0));
-		assertEquals(2L, stmt.getColumnLong(1));
-		stmt.close();
+		try (Stmt stmt = c.prepare("SELECT my_sum(i), my_sum(j) FROM (SELECT 2 AS i, 1 AS j UNION ALL SELECT 2, 1)", false)) {
+			assertTrue(stmt.step(0));
+			assertEquals(4L, stmt.getColumnLong(0));
+			assertEquals(2L, stmt.getColumnLong(1));
+		}
 
 		c.close();
 	}
@@ -311,9 +311,9 @@ public class ConnTest {
 	public void virtualTable() throws SQLiteException {
 		// sqlite3 lib provided by vcpkg is not compiled with fst4 extension
 		Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
-		final Conn c = open();
-		c.fastExec("CREATE VIRTUAL TABLE names USING fts4(name, desc, tokenize=porter)");
-		c.close();
+		try (Conn c = open()) {
+			c.fastExec("CREATE VIRTUAL TABLE names USING fts4(name, desc, tokenize=porter)");
+		}
 	}
 
 	@Test
@@ -405,9 +405,9 @@ public class ConnTest {
 	@Test
 	public void openUriQueryParameters() throws SQLiteException {
 		for (ConnStateTest t: CONN_STATE_TESTS) {
-			final Conn c = Conn.open(t.uri, OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_URI, null);
-			check(t.state, c);
-			c.close();
+			try (Conn c = Conn.open(t.uri, OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_URI, null)) {
+				check(t.state, c);
+			}
 		}
 	}
 

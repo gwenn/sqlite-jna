@@ -176,8 +176,8 @@ public class ConnectionTest {
 
 	@Test
 	public void openMemory() throws SQLException {
-		Connection conn = DriverManager.getConnection(JDBC.MEMORY);
-		conn.close();
+		try (Connection conn = DriverManager.getConnection(JDBC.MEMORY)) {
+		}
 	}
 
 	@Test
@@ -194,15 +194,15 @@ public class ConnectionTest {
 	public void closeTest() throws SQLException {
 		Connection conn = DriverManager.getConnection(JDBC.MEMORY);
 		PreparedStatement prep = conn.prepareStatement("select null;");
-		ResultSet rs = prep.executeQuery();
+		try (ResultSet rs = prep.executeQuery()) {}
 		conn.close();
 		prep.clearParameters();
 	}
 
 	@Test(expected = SQLException.class)
 	public void openInvalidLocation() throws SQLException {
-		Connection conn = DriverManager.getConnection("jdbc:sqlite:/");
-		conn.close();
+		try (Connection conn = DriverManager.getConnection("jdbc:sqlite:/")) {
+		}
 	}
 
     /*@Test
@@ -270,18 +270,18 @@ public class ConnectionTest {
 		File testdb = new File(folder.getRoot(), "test.db");
 
 		assertFalse(testdb.exists());
-		Connection conn = DriverManager.getConnection(JDBC.PREFIX + testdb);
-		if (org.sqlite.Conn.libversionNumber() >= 3008000) {
-			assertFalse(conn.isReadOnly());
+		try (Connection conn = DriverManager.getConnection(JDBC.PREFIX + testdb)) {
+			if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+				assertFalse(conn.isReadOnly());
+			}
 		}
-		conn.close();
 
 		assertTrue(testdb.exists());
-		conn = DriverManager.getConnection(JDBC.PREFIX + testdb);
-		if (org.sqlite.Conn.libversionNumber() >= 3008000) {
-			assertFalse(conn.isReadOnly());
+		try (Connection conn = DriverManager.getConnection(JDBC.PREFIX + testdb)) {
+			if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+				assertFalse(conn.isReadOnly());
+			}
 		}
-		conn.close();
 
 		assertTrue(testdb.exists());
 	}
@@ -289,36 +289,35 @@ public class ConnectionTest {
 	@Test
 	public void URIFilenames() throws SQLException {
 		Connection conn1 = DriverManager.getConnection("jdbc:sqlite:file:memdb1?mode=memory&cache=shared");
-		Statement stmt1 = conn1.createStatement();
-		stmt1.executeUpdate("create table tbl (col int)");
-		stmt1.executeUpdate("insert into tbl values(100)");
-		stmt1.close();
+		try (Statement stmt1 = conn1.createStatement()) {
+			stmt1.executeUpdate("create table tbl (col int)");
+			stmt1.executeUpdate("insert into tbl values(100)");
+		}
 
 		Connection conn2 = DriverManager.getConnection("jdbc:sqlite:file:memdb1?mode=memory&cache=shared");
-		Statement stmt2 = conn2.createStatement();
-		ResultSet rs = stmt2.executeQuery("select * from tbl");
-		assertTrue(rs.next());
-		assertEquals(100, rs.getInt(1));
-		stmt2.close();
+		try (Statement stmt2 = conn2.createStatement();
+				ResultSet rs = stmt2.executeQuery("select * from tbl")) {
+			assertTrue(rs.next());
+			assertEquals(100, rs.getInt(1));
+		}
 
 		Connection conn3 = DriverManager.getConnection("jdbc:sqlite:file::memory:?cache=shared");
-		Statement stmt3 = conn3.createStatement();
-		stmt3.executeUpdate("attach 'file:memdb1?mode=memory&cache=shared' as memdb1");
-		rs = stmt3.executeQuery("select * from memdb1.tbl");
-		assertTrue(rs.next());
-		assertEquals(100, rs.getInt(1));
-		stmt3.executeUpdate("create table tbl2(col int)");
-		stmt3.executeUpdate("insert into tbl2 values(200)");
-		stmt3.close();
+		try (Statement stmt3 = conn3.createStatement()) {
+			stmt3.executeUpdate("attach 'file:memdb1?mode=memory&cache=shared' as memdb1");
+			try (ResultSet rs = stmt3.executeQuery("select * from memdb1.tbl")) {
+				assertTrue(rs.next());
+				assertEquals(100, rs.getInt(1));
+			}
+			stmt3.executeUpdate("create table tbl2(col int)");
+			stmt3.executeUpdate("insert into tbl2 values(200)");
+		}
 
-		Connection conn4 = DriverManager.getConnection("jdbc:sqlite:file::memory:?cache=shared");
-		Statement stmt4 = conn4.createStatement();
-		rs = stmt4.executeQuery("select * from tbl2");
-		assertTrue(rs.next());
-		assertEquals(200, rs.getInt(1));
-		rs.close();
-		stmt4.close();
-		conn4.close();
+		try (Connection conn4 = DriverManager.getConnection("jdbc:sqlite:file::memory:?cache=shared");
+				Statement stmt4 = conn4.createStatement();
+				ResultSet rs = stmt4.executeQuery("select * from tbl2")) {
+			assertTrue(rs.next());
+			assertEquals(200, rs.getInt(1));
+		}
 	}
 
 	@Test
