@@ -75,12 +75,14 @@ public class ResultSetIterable<T> implements Iterable<T>, Guard {
 			@Override
 			public T next() {
 				if (!hasNext()) {
+					state = State.FAILED;
 					throw new NoSuchElementException();
 				}
 				state = State.NOT_READY;
 				try {
 					return mapper.map(rs);
 				} catch (SQLException e) {
+					state = State.FAILED;
 					return sneakyThrow(e);
 				}
 			}
