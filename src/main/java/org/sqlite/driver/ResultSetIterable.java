@@ -44,7 +44,7 @@ public class ResultSetIterable<T> implements Iterable<T>, Guard {
 			}
 			rs = query.executeQuery();
 		} catch (SQLException e) {
-			return sneakyThrow(e);
+			throw sneakyThrow(e);
 		}
 		return new Iterator<T>() {
 			private State state = State.NOT_READY;
@@ -69,7 +69,7 @@ public class ResultSetIterable<T> implements Iterable<T>, Guard {
 						return false;
 					}
 				} catch (SQLException e) {
-					return sneakyThrow(Guard.close(rs, e));
+					throw sneakyThrow(Guard.close(rs, e));
 				}
 			}
 			@Override
@@ -83,7 +83,7 @@ public class ResultSetIterable<T> implements Iterable<T>, Guard {
 					return mapper.map(rs);
 				} catch (SQLException e) {
 					state = State.FAILED;
-					return sneakyThrow(e);
+					throw sneakyThrow(e);
 				}
 			}
 			@Override

@@ -165,7 +165,7 @@ public class Stmt implements AutoCloseable, Row {
 						return false;
 					}
 				} catch (SQLiteException e) {
-					return sneakyThrow(e);
+					throw sneakyThrow(e);
 				}
 			}
 			@Override
@@ -177,7 +177,7 @@ public class Stmt implements AutoCloseable, Row {
 				try {
 					return mapper.map(Stmt.this);
 				} catch (StmtException e) {
-					return sneakyThrow(e);
+					throw sneakyThrow(e);
 				}
 			}
 		};

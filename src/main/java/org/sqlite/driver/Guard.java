@@ -4,7 +4,7 @@ import java.sql.SQLException;
 
 public interface Guard extends AutoCloseable {
 	@SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
-	static <E extends Throwable, T> T sneakyThrow(Exception e) throws E {
+	static <E extends Throwable> RuntimeException sneakyThrow(Exception e) throws E {
 		throw (E) e;
 	}
 
