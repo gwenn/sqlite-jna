@@ -65,6 +65,7 @@ public final class SQLite implements Library {
 	// Applications can use the sqlite3_log(E,F,..) API to send new messages to the log, if desired, but this is discouraged.
 	public static native void sqlite3_log(int iErrCode, String msg);
 
+	static native String sqlite3_errstr(int rc);
 	static native String sqlite3_errmsg(SQLite3 pDb); // copy needed: the error string might be overwritten or deallocated by subsequent calls to other SQLite interface functions.
 	static native int sqlite3_errcode(SQLite3 pDb);
 

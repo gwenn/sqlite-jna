@@ -39,8 +39,12 @@ public class SQLiteException extends SQLException {
 		super(reason, null, errCode, cause);
 		if (c == null) {
 			errMsg = null;
-		} else if (getErrorCode() >= 0) {
-			errMsg = c.getErrMsg();
+		} else if (errCode >= 0) {
+			if (c.getErrCode() == errCode) {
+				errMsg = c.getErrMsg();
+			} else {
+				errMsg = SQLite.sqlite3_errstr(errCode);
+			}
 		} else {
 			errMsg = null;
 		}

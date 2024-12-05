@@ -41,7 +41,7 @@ public interface Guard extends AutoCloseable {
 
 	void close() throws SQLException;
 
-	class SneakyGuard<T> implements AutoCloseable, Runnable {
+	class SneakyGuard implements AutoCloseable, Runnable {
 		private final Guard guard;
 		public SneakyGuard(Guard guard) {
 			this.guard = guard;
