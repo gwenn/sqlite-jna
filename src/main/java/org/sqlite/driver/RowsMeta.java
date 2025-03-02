@@ -102,8 +102,8 @@ class RowsMeta implements ResultSetMetaData {
 	}
 
 	@Override
-	public String getSchemaName(int column) {
-		return "";
+	public String getSchemaName(int column) throws SQLException {
+		return nullToEmpty(stmt.getColumnDatabaseName(fixCol(column)));
 	}
 
 	@Override
@@ -136,8 +136,8 @@ class RowsMeta implements ResultSetMetaData {
 	}
 
 	@Override
-	public String getCatalogName(int column) throws SQLException {
-		return nullToEmpty(stmt.getColumnDatabaseName(fixCol(column)));
+	public String getCatalogName(int column) {
+		return "";
 	}
 
 	@Override

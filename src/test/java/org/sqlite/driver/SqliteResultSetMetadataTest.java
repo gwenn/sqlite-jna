@@ -45,7 +45,7 @@ public class SqliteResultSetMetadataTest extends SqliteTestHelper {
 
 				assertEquals(5, rsm.getColumnCount());
 
-				assertEquals("main", rsm.getCatalogName(1));
+				assertEquals("main", rsm.getSchemaName(1));
 				assertEquals("type_table", rsm.getTableName(1));
 				assertFalse(rsm.isAutoIncrement(1));
 				assertEquals(ResultSetMetaData.columnNullable, rsm.isNullable(1));
@@ -65,7 +65,7 @@ public class SqliteResultSetMetadataTest extends SqliteTestHelper {
 
 				assertEquals(2, rsm.getColumnCount());
 
-				assertEquals("main", rsm.getCatalogName(1));
+				assertEquals("main", rsm.getSchemaName(1));
 				assertEquals("type_table", rsm.getTableName(1));
 				assertFalse(rsm.isAutoIncrement(1));
 				assertEquals(ResultSetMetaData.columnNullable, rsm.isNullable(1));
@@ -87,6 +87,7 @@ public class SqliteResultSetMetadataTest extends SqliteTestHelper {
 				assertEquals(1, rsm.getColumnCount());
 
 				assertEquals("", rsm.getCatalogName(1));
+				assertEquals("", rsm.getSchemaName(1));
 				assertEquals("", rsm.getTableName(1));
 				assertFalse(rsm.isAutoIncrement(1));
 				assertEquals(ResultSetMetaData.columnNullable, rsm.isNullable(1));

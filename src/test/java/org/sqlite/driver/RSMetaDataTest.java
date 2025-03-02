@@ -63,8 +63,8 @@ public class RSMetaDataTest {
 	}
 #if sqlite.enable.column.metadata == "true"
 	@Test
-	public void catalogName() throws SQLException {
-		assertEquals("main", meta.getCatalogName(1));
+	public void schemaName() throws SQLException {
+		assertEquals("main", meta.getSchemaName(1));
 	}
 
 	@Test
@@ -179,8 +179,8 @@ public class RSMetaDataTest {
 	}
 
 	@Test(expected = SQLException.class)
-	public void badCatalogIndex() throws SQLException {
-		meta.getCatalogName(4);
+	public void badSchemaIndex() throws SQLException {
+		meta.getSchemaName(4);
 	}
 
 	@Test(expected = SQLException.class)
