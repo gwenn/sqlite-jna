@@ -8,21 +8,20 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import java.lang.foreign.MemorySegment;
 
 /**
  * Profiling callback.
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
  */
 @FunctionalInterface
-public interface ProfileCallback extends Callback {
+public interface ProfileCallback {
 	/**
 	 * @param sql SQL statement text.
 	 * @param ns time in nanoseconds
 	 */
 	@SuppressWarnings("unused")
-	default void callback(Pointer arg, String sql, long ns) {
+	default void callback(MemorySegment arg, String sql, long ns) {
 		profile(sql, ns);
 	}
 

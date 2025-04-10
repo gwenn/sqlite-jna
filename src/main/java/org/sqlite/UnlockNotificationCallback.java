@@ -1,15 +1,16 @@
 package org.sqlite;
 
-import com.sun.jna.Pointer;
 import org.sqlite.SQLite.SQLite3;
 
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.util.Map;
 import java.util.WeakHashMap;
 
 class UnlockNotificationCallback implements UnlockNotifyCallback {
 	static final UnlockNotificationCallback INSTANCE = new UnlockNotificationCallback();
 
-	private final Map<Pointer, UnlockNotification> unlockNotifications = new WeakHashMap<>();
+	private final Map<MemorySegment, UnlockNotification> unlockNotifications = new WeakHashMap<>();
 
 	private UnlockNotificationCallback() {
 	}
@@ -19,9 +20,9 @@ class UnlockNotificationCallback implements UnlockNotifyCallback {
 	}
 
 	@Override
-	public void notify(Pointer[] args) {
-		for (Pointer arg : args) {
-			UnlockNotification notif = unlockNotifications.get(arg);
+	public void notify(MemorySegment args, int nArg) {
+		for (int i = 0; i < nArg; i++) {
+			UnlockNotification notif = unlockNotifications.get(args.getAtIndex(ValueLayout.ADDRESS, i));
 			notif.fire();
 		}
 	}

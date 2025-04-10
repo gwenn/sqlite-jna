@@ -1,7 +1,8 @@
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import java.lang.foreign.MemorySegment;
+
+import static org.sqlite.SQLite.getString;
 
 /**
  * Data change notification callback.
@@ -15,7 +16,7 @@ import com.sun.jna.Pointer;
  * @see <a href="http://sqlite.org/c3ref/update_hook.html">sqlite3_update_hook</a>
  */
 @FunctionalInterface
-public interface UpdateHook extends Callback {
+public interface UpdateHook {
 	/**
 	 * Data Change Notification Callback
 	 * @param pArg <code>null</code>.
@@ -24,8 +25,8 @@ public interface UpdateHook extends Callback {
 	 * @param tblName table name containing the affected row.
 	 * @param rowId id of the affected row.
 	 */
-	default void callback(Pointer pArg, int actionCode, String dbName, String tblName, long rowId) {
-		update(actionCode, dbName, tblName, rowId);
+	default void callback(MemorySegment pArg, int actionCode, MemorySegment dbName, MemorySegment tblName, long rowId) {
+		update(actionCode, getString(dbName), getString(tblName), rowId);
 	}
 	/**
 	 * Data Change Notification Callback

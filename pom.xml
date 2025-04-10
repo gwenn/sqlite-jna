@@ -3,11 +3,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.gwenn</groupId>
-  <artifactId>sqlite-jna</artifactId>
+  <artifactId>sqlite-ffm</artifactId>
   <packaging>jar</packaging>
   <version>0.3.0</version>
-  <name>SQLite JNA binding</name>
-  <description>JDBC Driver for SQLite using JNA</description>
+  <name>SQLite FFM binding</name>
+  <description>JDBC Driver for SQLite using FFM</description>
   <url>https://github.com/gwenn/sqlite-jna</url>
 
   <licenses>
@@ -36,7 +36,7 @@
   </ciManagement>
 
   <properties>
-    <java.version>1.8</java.version>
+    <java.version>22</java.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -44,11 +44,6 @@
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>net.java.dev.jna</groupId>
-      <artifactId>jna</artifactId>
-      <version>5.17.0</version>
-    </dependency>
     <dependency>
       <groupId>com.github.gwenn</groupId>
       <artifactId>sqlite-parser</artifactId>

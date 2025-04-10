@@ -1,16 +1,12 @@
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import java.lang.foreign.MemorySegment;
 
 @FunctionalInterface
-public interface UnlockNotifyCallback extends Callback {
-	default void callback(Pointer args, int nArg) {
-		if (nArg == 0) {
-			notify(new Pointer[0]);
-		}
-		notify(args.getPointerArray(0, nArg));
+public interface UnlockNotifyCallback {
+	default void callback(MemorySegment args, int nArg) {
+		notify(args, nArg);
 	}
 
-	void notify(Pointer[] args);
+	void notify(MemorySegment args, int nArg);
 }

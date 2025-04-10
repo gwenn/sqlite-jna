@@ -1,7 +1,5 @@
 package org.sqlite;
 
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -11,6 +9,8 @@ import org.sqlite.SQLite.SQLite3Context;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -261,25 +261,25 @@ public class ConnTest {
 		c.createAggregateFunction("my_sum", 1, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new AggregateStepCallback() {
 			@Override
 			protected int numberOfBytes() {
-				return Native.POINTER_SIZE;
+				return (int)ValueLayout.ADDRESS.byteSize();
 			}
 			@Override
-			protected void step(SQLite3Context pCtx, Pointer aggrCtx, SQLite3Values args) {
+			protected void step(SQLite3Context pCtx, MemorySegment aggrCtx, SQLite3Values args) {
 				assertNotNull(pCtx);
 				assertNotNull(aggrCtx);
 				assertEquals(1, args.getCount());
 				assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
-				aggrCtx.setLong(0, aggrCtx.getLong(0) + args.getLong(0));
+				aggrCtx.setAtIndex(ValueLayout.JAVA_LONG,0, aggrCtx.getAtIndex(ValueLayout.JAVA_LONG, 0) + args.getLong(0));
 			}
 		}, new AggregateFinalCallback() {
 			@Override
-			protected void finalStep(SQLite3Context pCtx, Pointer aggrCtx) {
+			protected void finalStep(SQLite3Context pCtx, MemorySegment aggrCtx) {
 				assertNotNull(pCtx);
 				if (aggrCtx == null) {
 					pCtx.setResultNull();
 					return;
 				}
-				pCtx.setResultLong(aggrCtx.getLong(0));
+				pCtx.setResultLong(aggrCtx.getAtIndex(ValueLayout.JAVA_LONG, 0));
 			}
 		});
 

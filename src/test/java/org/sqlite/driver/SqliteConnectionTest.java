@@ -302,7 +302,7 @@ public class SqliteConnectionTest extends SqliteTestHelper {
 		public void testAbort() throws Exception {
         Sqlite3.ProgressCallbackBase delayCallback = new Sqlite3.ProgressCallbackBase() {
             @Override
-            public int apply(Pointer<Void> context) {
+            public int apply(MemorySegment context) {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {

@@ -1,9 +1,8 @@
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import java.lang.foreign.MemorySegment;
 
 @FunctionalInterface
-public interface Destructor extends Callback {
-	void callback(Pointer p);
+public interface Destructor {
+	void callback(MemorySegment p);
 }

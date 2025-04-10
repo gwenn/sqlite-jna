@@ -8,8 +8,8 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
-
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -36,12 +36,12 @@ public class Stmt implements AutoCloseable, Row {
 	private int[] columnAffinities;
 	private boolean cacheable;
 
-	Stmt(Conn c, String sql, SQLite3Stmt pStmt, Pointer tail, boolean cacheable) {
+	Stmt(Conn c, String sql, SQLite3Stmt pStmt, MemorySegment tail, boolean cacheable) {
 		assert c != null;
 		this.c = c;
 		this.sql = sql;
 		this.pStmt = pStmt;
-		this.tail = blankToNull(tail.getString(0L, UTF_8_ECONDING));
+		this.tail = blankToNull(getString(tail));
 		this.cacheable = cacheable;
 	}
 
@@ -57,9 +57,9 @@ public class Stmt implements AutoCloseable, Row {
 	}
 
 	public String getExpandedSql() {
-		final Pointer ptr = sqlite3_expanded_sql(pStmt);
-		if (ptr != null) {
-			final String sql = ptr.getString(0L, UTF_8_ECONDING);
+		final MemorySegment ptr = sqlite3_expanded_sql(pStmt);
+		if (!MemorySegment.NULL.equals(ptr)) {
+			final String sql = getString(ptr);
 			sqlite3_free(ptr);
 			return sql;
 		}
@@ -365,7 +365,7 @@ public class Stmt implements AutoCloseable, Row {
 		if (type == SQLITE_NULL) {
 			return null;
 		}
-		final Pointer p = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
+		final MemorySegment p = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
 		if (p == null) {
 			final int bytes = getColumnBytes(iCol);
 			// The return value from sqlite3_column_blob() for a zero-length BLOB is a NULL pointer.
@@ -375,7 +375,7 @@ public class Stmt implements AutoCloseable, Row {
 			throw new StmtException(this, String.format("sqlite3_column_blob returns a NULL pointer for a %d-length BLOB", bytes),
 					ErrCodes.WRAPPER_SPECIFIC);
 		} else {
-			return p.getByteArray(0L, getColumnBytes(iCol)); // a copy is made...
+			return p.reinterpret(getColumnBytes(iCol)).toArray(ValueLayout.JAVA_BYTE); // a copy is made...
 		}
 	}
 

@@ -1,7 +1,8 @@
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import java.lang.foreign.MemorySegment;
+
+import static org.sqlite.SQLite.getString;
 
 /**
  * Compile-time authorization callback
@@ -10,14 +11,14 @@ import com.sun.jna.Pointer;
  * @see <a href="http://sqlite.org/c3ref/set_authorizer.html">sqlite3_set_authorizer</a>
  */
 @FunctionalInterface
-public interface Authorizer extends Callback {
+public interface Authorizer {
 	/**
 	 * @param pArg       User data (<code>null</code>)
 	 * @param actionCode {@link ActionCodes}.*
 	 * @return {@link #SQLITE_OK} or {@link #SQLITE_DENY} or {@link #SQLITE_IGNORE}
 	 */
-	default int callback(Pointer pArg, int actionCode, String arg1, String arg2, String dbName, String triggerName) {
-		return authorize(actionCode, arg1, arg2, dbName, triggerName);
+	default int callback(MemorySegment pArg, int actionCode, MemorySegment arg1, MemorySegment arg2, MemorySegment dbName, MemorySegment triggerName) {
+		return authorize(actionCode, getString(arg1), getString(arg2), getString(dbName), getString(triggerName));
 	}
 
 	/**

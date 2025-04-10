@@ -8,13 +8,13 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
 import org.sqlite.parser.ast.LiteralExpr;
 import org.sqlite.parser.ast.Pragma;
 import org.sqlite.parser.ast.QualifiedName;
 
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -72,11 +72,15 @@ public final class Conn implements AutoCloseable {
 		if (!sqlite3_threadsafe()) {
 			throw new SQLiteException("sqlite library was not compiled for thread-safe operation", ErrCodes.WRAPPER_SPECIFIC);
 		}
-		final PointerByReference ppDb = new PointerByReference();
-		final int res = sqlite3_open_v2(filename, ppDb, flags, vfs);
-		final Pointer pDb = ppDb.getValue();
+		final int res;
+		final MemorySegment pDb;
+		try (Arena arena = Arena.ofConfined()) {
+			final MemorySegment ppDb = arena.allocate(ValueLayout.ADDRESS);
+			res = sqlite3_open_v2(filename, ppDb, flags, vfs);
+			pDb = ppDb.get(ValueLayout.ADDRESS, 0);
+		}
 		if (res != SQLITE_OK) {
-			if (pDb != null) {
+			if (!MemorySegment.NULL.equals(pDb)) {
 				final SQLite3 sqlite3 = new SQLite3(pDb);
 				final int extRes;
 				if (sqlite3_extended_result_codes(sqlite3, true) == SQLITE_OK) {
@@ -94,7 +98,7 @@ public final class Conn implements AutoCloseable {
 		final Map<String, String> queryParams = uri ? OpenQueryParameter.getQueryParams(filename) : Collections.emptyMap();
 		// TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
 		final boolean sharedCacheMode = "shared".equals(queryParams.get("cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
-		final SQLite3 sqlite3 = pDb == null ? null: new SQLite3(pDb);
+		final SQLite3 sqlite3 = MemorySegment.NULL.equals(pDb) ? null: new SQLite3(pDb);
 		final Conn conn = new Conn(sqlite3, sharedCacheMode);
 		if (uri && !queryParams.isEmpty()) {
 			try {
@@ -251,19 +255,21 @@ public final class Conn implements AutoCloseable {
 				return stmt;
 			}
 		}
-		final Pointer pSql = nativeString(sql);
-		final PointerByReference ppStmt = new PointerByReference();
-		final PointerByReference ppTail = new PointerByReference();
-		final int res = blockingPrepare(null, pSql, cacheable ? SQLITE_PREPARE_PERSISTENT : 0, ppStmt, ppTail);
-		check(res, "error while preparing statement '%s'", sql);
-		final Pointer pStmt = ppStmt.getValue();
-		final SQLite3Stmt stmt = pStmt == null ? null: new SQLite3Stmt(pStmt);
-		return new Stmt(this, sql, stmt, ppTail.getValue(), cacheable);
+		try (Arena arena = Arena.ofConfined()) {
+			final MemorySegment pSql = nativeString(arena, sql);
+			final MemorySegment ppStmt = arena.allocate(ValueLayout.ADDRESS);
+			final MemorySegment ppTail = arena.allocate(ValueLayout.ADDRESS);
+			final int res = blockingPrepare(null, pSql, cacheable ? SQLITE_PREPARE_PERSISTENT : 0, ppStmt, ppTail);
+			check(res, "error while preparing statement '%s'", sql);
+			final MemorySegment pStmt = ppStmt.getAtIndex(ValueLayout.ADDRESS, 0);
+			final SQLite3Stmt stmt = MemorySegment.NULL.equals(pStmt) ? null : new SQLite3Stmt(pStmt);
+			return new Stmt(this, sql, stmt, ppTail.getAtIndex(ValueLayout.ADDRESS, 0), cacheable);
+		}
 	}
 
 	// http://sqlite.org/unlock_notify.html
 #if sqlite.enable.unlock.notify == "true"
-	private int blockingPrepare(Conn unused, Pointer pSql, int flags, PointerByReference ppStmt, PointerByReference ppTail) throws ConnException {
+	private int blockingPrepare(Conn unused, MemorySegment pSql, int flags, MemorySegment ppStmt, MemorySegment ppTail) throws ConnException {
 		int rc;
 		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail))) {
 			rc = waitForUnlockNotify(null);
@@ -274,7 +280,7 @@ public final class Conn implements AutoCloseable {
 		return rc;
 	}
 #else
-	private int blockingPrepare(Object unused, Pointer pSql, int flags, PointerByReference ppStmt, PointerByReference ppTail) {
+	private int blockingPrepare(Object unused, MemorySegment pSql, int flags, MemorySegment ppStmt, MemorySegment ppTail) {
 		return sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail); // FIXME nbytes + 1
 	}
 #endif
@@ -386,7 +392,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void fastExec(String sql) throws ConnException {
 		checkOpen();
-		check(sqlite3_exec(pDb, sql, null, null, null), "error while executing '%s'", sql);
+		check(sqlite3_exec(pDb, sql, MemorySegment.NULL, MemorySegment.NULL, MemorySegment.NULL), "error while executing '%s'", sql);
 	}
 
 	/**
@@ -402,16 +408,18 @@ public final class Conn implements AutoCloseable {
 	 */
 	public Blob open(String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
 		checkOpen();
-		final PointerByReference ppBlob = new PointerByReference();
-		final int res = sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob); // ko if pDb is null
-		final Pointer pBlob = ppBlob.getValue();
-		final SQLite3Blob blob = pBlob == null ? null : new SQLite3Blob(pBlob);
-		if (res != SQLITE_OK) {
-			sqlite3_blob_close(blob);
-			throw new SQLiteException(this, String.format("error while opening a blob to (db: '%s', table: '%s', col: '%s', row: %d)",
+		try (Arena arena = Arena.ofConfined()) {
+			final MemorySegment ppBlob = arena.allocate(ValueLayout.ADDRESS);
+			final int res = sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob); // ko if pDb is null
+			final MemorySegment pBlob = ppBlob.get(ValueLayout.ADDRESS, 0);
+			final SQLite3Blob blob = MemorySegment.NULL.equals(pBlob) ? null : new SQLite3Blob(pBlob);
+			if (res != SQLITE_OK) {
+				sqlite3_blob_close(blob);
+				throw new SQLiteException(this, String.format("error while opening a blob to (db: '%s', table: '%s', col: '%s', row: %d)",
 					dbName, tblName, colName, iRow), res);
+			}
+			return new Blob(this, blob);
 		}
-		return new Blob(this, blob);
 	}
 
 	/**
@@ -494,7 +502,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public int setBusyHandler(BusyHandler bh) throws ConnException {
 		checkOpen();
-		return sqlite3_busy_handler(pDb, bh, null);
+		return sqlite3_busy_handler(pDb, bh, MemorySegment.NULL);
 	}
 
 	/**
@@ -547,36 +555,44 @@ public final class Conn implements AutoCloseable {
 	 */
 	public boolean enableForeignKeys(boolean onoff) throws ConnException {
 		checkOpen();
-		final IntByReference pOk = new IntByReference();
-		check(sqlite3_db_config(pDb, 1002, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
-		return toBool(pOk);
+		try (Arena arena = Arena.ofConfined()) {
+			final MemorySegment pOk = arena.allocate(ValueLayout.JAVA_INT);
+			check(sqlite3_db_config(pDb, 1002, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
+			return toBool(pOk);
+		}
 	}
 	/**
 	 * @return whether or not foreign keys constraints enforcement is enabled
 	 */
 	public boolean areForeignKeysEnabled() throws ConnException {
 		checkOpen();
-		final IntByReference pOk = new IntByReference();
-		check(sqlite3_db_config(pDb, 1002, -1, pOk), "error while querying db config on '%s'", getFilename());
-		return toBool(pOk);
+		try (Arena arena = Arena.ofConfined()) {
+			final MemorySegment pOk = arena.allocate(ValueLayout.JAVA_INT);
+			check(sqlite3_db_config(pDb, 1002, -1, pOk), "error while querying db config on '%s'", getFilename());
+			return toBool(pOk);
+		}
 	}
 	/**
 	 * @param onoff enable or disable triggers
 	 */
 	public boolean enableTriggers(boolean onoff) throws ConnException {
 		checkOpen();
-		final IntByReference pOk = new IntByReference();
-		check(sqlite3_db_config(pDb, 1003, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
-		return toBool(pOk);
+		try (Arena arena = Arena.ofConfined()) {
+			final MemorySegment pOk = arena.allocate(ValueLayout.JAVA_INT);
+			check(sqlite3_db_config(pDb, 1003, onoff ? 1 : 0, pOk), "error while setting db config on '%s'", getFilename());
+			return toBool(pOk);
+		}
 	}
 	/**
 	 * @return whether or not triggers are enabled
 	 */
 	public boolean areTriggersEnabled() throws ConnException {
 		checkOpen();
-		final IntByReference pOk = new IntByReference();
-		check(sqlite3_db_config(pDb, 1003, -1, pOk), "error while querying db config on '%s'", getFilename());
-		return toBool(pOk);
+		try (Arena arena = Arena.ofConfined()) {
+			final MemorySegment pOk = arena.allocate(ValueLayout.JAVA_INT);
+			check(sqlite3_db_config(pDb, 1003, -1, pOk), "error while querying db config on '%s'", getFilename());
+			return toBool(pOk);
+		}
 	}
 	/**
 	 * @param onoff enable or disable loading extension
@@ -596,12 +612,15 @@ public final class Conn implements AutoCloseable {
 	 */
 	public String loadExtension(String file, String proc) throws ConnException {
 		checkOpen();
-		final PointerByReference pErrMsg = new PointerByReference();
-		final int res = sqlite3_load_extension(pDb, file, proc, pErrMsg);
-		if (res != SQLITE_OK) {
-			final String errMsg = pErrMsg.getValue().getString(0L, UTF_8_ECONDING);
-			sqlite3_free(pErrMsg.getValue());
-			return errMsg;
+		try (Arena arena = Arena.ofConfined()) {
+			final MemorySegment pErrMsg = arena.allocate(ValueLayout.ADDRESS);
+			final int res = sqlite3_load_extension(pDb, file, proc, pErrMsg);
+			if (res != SQLITE_OK) {
+				final MemorySegment ms = pErrMsg.get(ValueLayout.ADDRESS, 0);
+				final String errMsg = getString(ms);
+				sqlite3_free(ms);
+				return errMsg;
+			}
 		}
 		return null;
 	}
@@ -630,22 +649,24 @@ public final class Conn implements AutoCloseable {
 
 	boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) throws ConnException {
 		checkOpen();
-		final IntByReference pNotNull = new IntByReference();
-		final IntByReference pPrimaryKey = new IntByReference();
-		final IntByReference pAutoinc = new IntByReference();
+		try (Arena arena = Arena.ofConfined()) {
+			final MemorySegment pNotNull = arena.allocate(ValueLayout.JAVA_INT);
+			final MemorySegment pPrimaryKey = arena.allocate(ValueLayout.JAVA_INT);
+			final MemorySegment pAutoinc = arena.allocate(ValueLayout.JAVA_INT);
 
-		check(sqlite3_table_column_metadata(pDb,
+			check(sqlite3_table_column_metadata(pDb,
 				dbName,
 				tblName,
 				colName,
-				null, null,
+				MemorySegment.NULL, MemorySegment.NULL,
 				pNotNull, pPrimaryKey, pAutoinc), "error while accessing table column metatada of '%s'", tblName);
 
-		return new boolean[]{toBool(pNotNull), toBool(pPrimaryKey), toBool(pAutoinc)};
+			return new boolean[]{toBool(pNotNull), toBool(pPrimaryKey), toBool(pAutoinc)};
+		}
 	}
 
-	private static boolean toBool(IntByReference p) {
-		return p.getValue() != 0;
+	private static boolean toBool(MemorySegment p) {
+		return p.get(ValueLayout.JAVA_INT, 0) != 0;
 	}
 
 	/**
@@ -681,7 +702,7 @@ public final class Conn implements AutoCloseable {
 		if (timeoutProgressCallback == null) {
 			checkOpen();
 			timeoutProgressCallback = new TimeoutProgressCallback();
-			sqlite3_progress_handler(pDb, 100, timeoutProgressCallback, null);
+			sqlite3_progress_handler(pDb, 100, timeoutProgressCallback, MemorySegment.NULL);
 		}
 		timeoutProgressCallback.setTimeout(timeout * 1000L);
 	}
@@ -692,7 +713,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void trace(TraceCallback tc) throws ConnException {
 		checkOpen();
-		sqlite3_trace(pDb, tc, null);
+		sqlite3_trace(pDb, tc, MemorySegment.NULL);
 	}
 
 	/**
@@ -701,16 +722,16 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void profile(ProfileCallback pc) throws ConnException {
 		checkOpen();
-		sqlite3_profile(pDb, pc, null);
+		sqlite3_profile(pDb, pc, MemorySegment.NULL);
 	}
 
 	/**
 	 * @param uh Data change notification callback.
 	 * @see <a href="http://sqlite.org/c3ref/update_hook.html">sqlite3_update_hook</a>
 	 */
-	public Pointer updateHook(UpdateHook uh) throws ConnException {
+	public MemorySegment updateHook(UpdateHook uh) throws ConnException {
 		checkOpen();
-		return sqlite3_update_hook(pDb, uh, null);
+		return sqlite3_update_hook(pDb, uh, MemorySegment.NULL);
 	}
 	/**
 	 * Register an authorizer callback.
@@ -720,7 +741,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public int setAuhtorizer(Authorizer auth) throws ConnException {
 		checkOpen();
-		return sqlite3_set_authorizer(pDb, auth, null);
+		return sqlite3_set_authorizer(pDb, auth, MemorySegment.NULL);
 	}
 
 	/**
@@ -733,7 +754,7 @@ public final class Conn implements AutoCloseable {
 	 */
 	public void createScalarFunction(String name, int nArg, int flags, ScalarCallback xFunc) throws ConnException {
 		checkOpen();
-		check(sqlite3_create_function_v2(pDb, name, nArg, flags, null, xFunc, null, null, null),
+		check(sqlite3_create_function_v2(pDb, name, nArg, flags, MemorySegment.NULL, xFunc, null, null, null),
 				"error while registering function %s", name);
 	}
 	/**

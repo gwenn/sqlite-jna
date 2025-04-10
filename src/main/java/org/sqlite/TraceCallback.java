@@ -8,20 +8,19 @@
  */
 package org.sqlite;
 
-import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
+import java.lang.foreign.MemorySegment;
 
 /**
  * Tracing callback.
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
  */
 @FunctionalInterface
-public interface TraceCallback extends Callback {
+public interface TraceCallback {
 	/**
 	 * @param sql SQL statement text.
 	 */
 	@SuppressWarnings("unused")
-	default void callback(Pointer arg, String sql) {
+	default void callback(MemorySegment arg, String sql) {
 		trace(sql);
 	}
 

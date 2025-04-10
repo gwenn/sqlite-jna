@@ -33,7 +33,7 @@ public class ConfigTest {
 	public void testLog() {
 		/*int rv = SQLite.sqlite3_config(SQLite.SQLITE_CONFIG_LOG, new SQLite.LogCallback() {
       @Override
-      public void callback(Pointer udp, int err, String msg) {
+      public void callback(MemorySegment udp, int err, String msg) {
         System.out.printf("%d: %s\n", err, msg);
       }
     }, null);
