@@ -10,6 +10,8 @@ package org.sqlite;
 
 import java.lang.foreign.MemorySegment;
 
+import static org.sqlite.SQLite.getString;
+
 /**
  * Profiling callback.
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
@@ -21,8 +23,8 @@ public interface ProfileCallback {
 	 * @param ns time in nanoseconds
 	 */
 	@SuppressWarnings("unused")
-	default void callback(MemorySegment arg, String sql, long ns) {
-		profile(sql, ns);
+	default void callback(MemorySegment arg, MemorySegment sql, long ns) {
+		profile(getString(sql), ns);
 	}
 
 	/**

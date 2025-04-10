@@ -10,6 +10,8 @@ package org.sqlite;
 
 import java.lang.foreign.MemorySegment;
 
+import static org.sqlite.SQLite.getString;
+
 /**
  * Tracing callback.
  * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
@@ -20,8 +22,8 @@ public interface TraceCallback {
 	 * @param sql SQL statement text.
 	 */
 	@SuppressWarnings("unused")
-	default void callback(MemorySegment arg, String sql) {
-		trace(sql);
+	default void callback(MemorySegment arg, MemorySegment sql) {
+		trace(getString(sql));
 	}
 
 	/**
