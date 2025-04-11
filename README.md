@@ -1,4 +1,4 @@
-JDBC driver for SQLite using JNA instead of JNI to make it easy to deploy
+JDBC driver for SQLite using FFM instead of JNI to make it easy to deploy
 (if you already have SQLite installed).
 There are two layers:
  - a small one matching the SQLite API (package org.sqlite)
@@ -10,9 +10,8 @@ There are two layers:
 
 INSTALL
 -------
-1. https://github.com/twall/jna/blob/master/www/GettingStarted.md
-2. http://www.sqlite.org/download.html
-3. Ensure JVM and SQLite match (x86 vs x86-64)
+1. http://www.sqlite.org/download.html
+2. Ensure JVM and SQLite match (x86 vs x86-64)
 
 On Windows, to build your own x86-64 version (with cygwin&mingw):
 ```sh
