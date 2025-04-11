@@ -14,6 +14,8 @@ import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
 public final class SQLite {
@@ -258,6 +260,8 @@ public final class SQLite {
 			return (int) sqlite3_close.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
+		} finally {
+			pDb.clear();
 		}
 	}
 	private static final MethodHandle sqlite3_close_v2 = downcallHandle(
@@ -299,6 +303,8 @@ public final class SQLite {
 			return (int) sqlite3_busy_timeout.invokeExact(pDb.getPointer(), ms);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
+		} finally {
+			pDb.busyHanlder = null;
 		}
 	}
 	private static final MethodHandle sqlite3_db_status = downcallHandle(
@@ -1021,9 +1027,9 @@ public final class SQLite {
 	static int sqlite3_create_function_v2(SQLite3 pDb, String functionName, int nArg, int eTextRep,
 		MemorySegment pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, MemorySegment xDestroy) {
 		try (Arena arena = Arena.ofConfined()) {
-			final MemorySegment xFu = upcallStub(scalar_callback, xFunc, scalar_callback_desc, Arena.ofAuto());// FIXME
-			final MemorySegment xS = upcallStub(aggregate_step_callback, xStep, aggregate_step_callback_desc, Arena.ofAuto());// FIXME
-			final MemorySegment xFi = upcallStub(aggregate_final_callback, xFinal, aggregate_final_callback_desc, Arena.ofAuto());// FIXME
+			final MemorySegment xFu = pDb.add(upcallStub(scalar_callback, xFunc, scalar_callback_desc, Arena.ofAuto()));
+			final MemorySegment xS = pDb.add(upcallStub(aggregate_step_callback, xStep, aggregate_step_callback_desc, Arena.ofAuto()));
+			final MemorySegment xFi = pDb.add(upcallStub(aggregate_final_callback, xFinal, aggregate_final_callback_desc, Arena.ofAuto()));
 			return (int)sqlite3_create_function_v2.invokeExact(pDb.getPointer(), nativeString(arena, functionName), nArg, eTextRep, pApp, xFu, xS, xFi, xDestroy);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -1329,11 +1335,28 @@ public final class SQLite {
 		private MemorySegment xProfile;
 		private MemorySegment xUpdate;
 		private MemorySegment authorizer;
+		private final List<MemorySegment> functions = new ArrayList<>(0);
 		public SQLite3(MemorySegment p) {
 			this.p = p;
 		}
 		MemorySegment getPointer() {
 			return p;
+		}
+		private MemorySegment add(MemorySegment ms) {
+			if (MemorySegment.NULL.equals(ms)) {
+				return ms;
+			}
+			functions.add(ms);
+			return ms;
+		}
+		private void clear() {
+			busyHanlder = null;
+			xProgress = null;
+			xTrace = null;
+			xProfile = null;
+			xUpdate = null;
+			authorizer = null;
+			functions.clear();
 		}
 	}
 
