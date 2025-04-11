@@ -50,13 +50,13 @@ public class Blob implements AutoCloseable {
 	 * @return number of bytes read
 	 * <a href="https://www.sqlite.org/c3ref/blob_read.html">sqlite3_blob_read</a>
 	 */
-	public int read(ByteBuffer b) throws SQLiteException {
+	public int read(byte[] b, int off, int len) throws SQLiteException {
 		if (b == null) {
 			throw new NullPointerException();
 		}
 		checkOpen();
-		final int n = b.remaining();
-		final int res = sqlite3_blob_read(pBlob, b, n, readOffset);
+		final int n = len - off;
+		final int res = sqlite3_blob_read(pBlob, b, off, len, readOffset);
 		if (res != SQLITE_OK) {
 			throw new SQLiteException(c, "error while reading blob", res);
 		}
@@ -70,13 +70,13 @@ public class Blob implements AutoCloseable {
 	 * @return number of bytes written
 	 * <a href="https://www.sqlite.org/c3ref/blob_write.html">sqlite3_blob_write</a>
 	 */
-	public int write(ByteBuffer b) throws SQLiteException {
+	public int write(byte[] b, int off, int len) throws SQLiteException {
 		if (b == null) {
 			throw new NullPointerException();
 		}
 		checkOpen();
-		final int n = b.remaining();
-		final int res = sqlite3_blob_write(pBlob, b, n, writeOffset);
+		final int n = len - off;
+		final int res = sqlite3_blob_write(pBlob, b, off, len, writeOffset);
 		if (res != SQLITE_OK) {
 			throw new SQLiteException(c, "error while writing blob", res);
 		}
@@ -206,7 +206,7 @@ public class Blob implements AutoCloseable {
 				return 0;
 			}
 			try {
-				return Blob.this.read(ByteBuffer.wrap(b, off, len));
+				return Blob.this.read(b, off, len);
 			} catch (SQLiteException e) {
 				throw new IOException(e);
 			}
@@ -278,7 +278,7 @@ public class Blob implements AutoCloseable {
 		@Override
 		public void write(byte[] b, int off, int len) throws IOException {
 			try {
-				Blob.this.write(ByteBuffer.wrap(b, off, len));
+				Blob.this.write(b, off, len);
 			} catch (SQLiteException e) {
 				throw new IOException(e);
 			}
