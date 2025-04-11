@@ -51,6 +51,12 @@ public final class SQLite {
 			throw new AssertionError(ex);
 		}
 	}
+	static MemorySegment upcallStub(MethodHandle mh, Object x, FunctionDescriptor fd, Arena arena) {
+		if (x == null) {
+			return MemorySegment.NULL;
+		}
+		return LINKER.upcallStub(mh.bindTo(x), fd, arena);
+	}
 
 	static String getString(MemorySegment ms) {
 		if (MemorySegment.NULL.equals(ms)) {
@@ -280,7 +286,7 @@ public final class SQLite {
 		busy_handler_desc);
 	static int sqlite3_busy_handler(SQLite3 pDb, BusyHandler bh, MemorySegment pArg) {
 		try {
-			pDb.busyHanlder = LINKER.upcallStub(busy_handler.bindTo(bh), busy_handler_desc, Arena.ofAuto());
+			pDb.busyHanlder = upcallStub(busy_handler, bh, busy_handler_desc, Arena.ofAuto());
 			return (int) sqlite3_busy_handler.invokeExact(pDb.getPointer(), pDb.busyHanlder, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -930,7 +936,7 @@ public final class SQLite {
 		progress_callback_desc);
 	static void sqlite3_progress_handler(SQLite3 pDb, int nOps, ProgressCallback xProgress, MemorySegment pArg) {
 		try {
-			pDb.xProgress = LINKER.upcallStub(progress_callback.bindTo(xProgress), progress_callback_desc, Arena.ofAuto());
+			pDb.xProgress = upcallStub(progress_callback, xProgress, progress_callback_desc, Arena.ofAuto());
 			sqlite3_progress_handler.invokeExact(pDb.getPointer(), nOps, pDb.xProgress, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -943,7 +949,7 @@ public final class SQLite {
 		trace_callback_desc);
 	static void sqlite3_trace(SQLite3 pDb, TraceCallback xTrace, MemorySegment pArg) {
 		try {
-			pDb.xTrace = LINKER.upcallStub(trace_callback.bindTo(xTrace), trace_callback_desc, Arena.ofAuto());
+			pDb.xTrace = upcallStub(trace_callback, xTrace, trace_callback_desc, Arena.ofAuto());
 			sqlite3_trace.invokeExact(pDb.getPointer(), pDb.xTrace, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -956,7 +962,7 @@ public final class SQLite {
 		profile_callback_desc);
 	static void sqlite3_profile(SQLite3 pDb, ProfileCallback xProfile, MemorySegment pArg) {
 		try {
-			pDb.xProfile = LINKER.upcallStub(profile_callback.bindTo(xProfile), profile_callback_desc, Arena.ofAuto());
+			pDb.xProfile = upcallStub(profile_callback, xProfile, profile_callback_desc, Arena.ofAuto());
 			sqlite3_profile.invokeExact(pDb.getPointer(), pDb.xProfile, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -971,7 +977,7 @@ public final class SQLite {
 		update_hook_desc);
 	static MemorySegment sqlite3_update_hook(SQLite3 pDb, UpdateHook xUpdate, MemorySegment pArg) {
 		try {
-			pDb.xUpdate = LINKER.upcallStub(update_hook.bindTo(xUpdate), update_hook_desc, Arena.ofAuto());
+			pDb.xUpdate = upcallStub(update_hook, xUpdate, update_hook_desc, Arena.ofAuto());
 			return (MemorySegment)sqlite3_update_hook.invokeExact(pDb.getPointer(), pDb.xUpdate, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -984,7 +990,7 @@ public final class SQLite {
 		authorizer_desc);
 	static int sqlite3_set_authorizer(SQLite3 pDb, Authorizer authorizer, MemorySegment pUserData) {
 		try {
-			pDb.authorizer = LINKER.upcallStub(authorizer_up.bindTo(authorizer), authorizer_desc, Arena.ofAuto());
+			pDb.authorizer = upcallStub(authorizer_up, authorizer, authorizer_desc, Arena.ofAuto());
 			return (int)sqlite3_set_authorizer.invokeExact(pDb.getPointer(), pDb.authorizer, pUserData);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -1015,9 +1021,9 @@ public final class SQLite {
 	static int sqlite3_create_function_v2(SQLite3 pDb, String functionName, int nArg, int eTextRep,
 		MemorySegment pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, MemorySegment xDestroy) {
 		try (Arena arena = Arena.ofConfined()) {
-			final MemorySegment xFu = LINKER.upcallStub(scalar_callback.bindTo(xFunc), scalar_callback_desc, Arena.ofAuto());// FIXME
-			final MemorySegment xS = LINKER.upcallStub(aggregate_step_callback.bindTo(xStep), aggregate_step_callback_desc, Arena.ofAuto());// FIXME
-			final MemorySegment xFi = LINKER.upcallStub(aggregate_final_callback.bindTo(xStep), aggregate_final_callback_desc, Arena.ofAuto());// FIXME
+			final MemorySegment xFu = upcallStub(scalar_callback, xFunc, scalar_callback_desc, Arena.ofAuto());// FIXME
+			final MemorySegment xS = upcallStub(aggregate_step_callback, xStep, aggregate_step_callback_desc, Arena.ofAuto());// FIXME
+			final MemorySegment xFi = upcallStub(aggregate_final_callback, xFinal, aggregate_final_callback_desc, Arena.ofAuto());// FIXME
 			return (int)sqlite3_create_function_v2.invokeExact(pDb.getPointer(), nativeString(arena, functionName), nArg, eTextRep, pApp, xFu, xS, xFi, xDestroy);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -1497,7 +1503,7 @@ public final class SQLite {
 		}
 
 		private SQLite3Values(MemorySegment args, int nArg) {
-			this.args = args;
+			this.args = args.reinterpret(nArg * ValueLayout.ADDRESS.byteSize());
 			this.nArg = nArg;
 		}
 
