@@ -12,7 +12,6 @@ import org.sqlite.ErrCodes;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.sql.Blob;
 import java.sql.SQLException;
 

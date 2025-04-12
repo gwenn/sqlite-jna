@@ -261,6 +261,7 @@ public final class SQLite {
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		} finally {
+			// TODO only on success ?
 			pDb.clear();
 		}
 	}
@@ -268,6 +269,7 @@ public final class SQLite {
 		"sqlite3_close_v2", FunctionDescriptor.of(C_INT, C_POINTER));
 	static int sqlite3_close_v2(SQLite3 pDb) { // since 3.7.14
 		try {
+			// TODO pDb.clear() on success
 			return (int) sqlite3_close_v2.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -290,6 +292,7 @@ public final class SQLite {
 		busy_handler_desc);
 	static int sqlite3_busy_handler(SQLite3 pDb, BusyHandler bh, MemorySegment pArg) {
 		try {
+			// TODO override pDb.busyHanlder only after success call
 			pDb.busyHanlder = upcallStub(busy_handler, bh, busy_handler_desc, Arena.ofAuto());
 			return (int) sqlite3_busy_handler.invokeExact(pDb.getPointer(), pDb.busyHanlder, pArg);
 		} catch (Throwable e) {
@@ -387,7 +390,15 @@ public final class SQLite {
 		}
 	}
 #if large.update == "true"
-	static long sqlite3_changes64(SQLite3 pDb); // 3.37.0
+	private static final MethodHandle sqlite3_changes64 = downcallHandle(
+	"sqlite3_changes64", FunctionDescriptor.of(C_LONG_LONG, C_POINTER));
+	static long sqlite3_changes64(SQLite3 pDb) { // 3.37.0
+		try {
+			return (long) sqlite3_changes64.invokeExact(pDb.getPointer());
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
 #endif
 	private static final MethodHandle sqlite3_total_changes = downcallHandle(
 	"sqlite3_total_changes", FunctionDescriptor.of(C_INT, C_POINTER));
@@ -399,7 +410,15 @@ public final class SQLite {
 		}
 	}
 #if large.update == "true"
-	static long sqlite3_total_changes64(SQLite3 pDb); // 3.37.0
+	private static final MethodHandle sqlite3_total_changes64 = downcallHandle(
+	"sqlite3_total_changes64", FunctionDescriptor.of(C_INT, C_POINTER));
+	static long sqlite3_total_changes64(SQLite3 pDb) { // 3.37.0
+		try {
+			return (long) sqlite3_total_changes64.invokeExact(pDb.getPointer());
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
 #endif
 	private static final MethodHandle sqlite3_last_insert_rowid = downcallHandle(
 	"sqlite3_last_insert_rowid", FunctionDescriptor.of(C_LONG_LONG, C_POINTER));
@@ -776,6 +795,7 @@ public final class SQLite {
 		"sqlite3_bind_text", FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_POINTER, C_INT, C_POINTER));
 	static int sqlite3_bind_text(SQLite3Stmt pStmt, int i, String value, int n, MemorySegment xDel) { // no copy needed when xDel == SQLITE_TRANSIENT == -1
 		try (Arena arena = Arena.ofConfined()) {
+			// How to avoid copying twice ? nativeString + SQLite
 			return (int) sqlite3_bind_text.invokeExact(pStmt.getPointer(), i, nativeString(arena, value), n, xDel);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -803,8 +823,24 @@ public final class SQLite {
 	}
 #if sqlite.enable.stmt.scanstatus == "true"
 	// TODO https://sqlite.org/c3ref/c_scanstat_est.html constants
-	static int sqlite3_stmt_scanstatus(SQLite3Stmt pStmt, int idx, int iScanStatusOp, MemorySegment pOut);
-	static void sqlite3_stmt_scanstatus_reset(SQLite3Stmt pStmt);
+	private static final MethodHandle sqlite3_stmt_scanstatus = downcallHandle(
+	"sqlite3_stmt_scanstatus", FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_INT, C_POINTER));
+	static int sqlite3_stmt_scanstatus(SQLite3Stmt pStmt, int idx, int iScanStatusOp, MemorySegment pOut) {
+		try {
+			return (int) sqlite3_stmt_scanstatus.invokeExact(pStmt.getPointer(), idx, iScanStatusOp, pOut);
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
+	private static final MethodHandle sqlite3_stmt_scanstatus_reset = downcallHandle(
+		"sqlite3_stmt_scanstatus_reset", FunctionDescriptor.ofVoid(C_POINTER));
+	static void sqlite3_stmt_scanstatus_reset(SQLite3Stmt pStmt) {
+		try {
+			sqlite3_stmt_scanstatus_reset.invokeExact(pStmt.getPointer());
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
 #endif
 
 	private static final MethodHandle sqlite3_free = downcallHandle(
@@ -942,6 +978,7 @@ public final class SQLite {
 		progress_callback_desc);
 	static void sqlite3_progress_handler(SQLite3 pDb, int nOps, ProgressCallback xProgress, MemorySegment pArg) {
 		try {
+			// TODO override pDb.xProgress only after success call
 			pDb.xProgress = upcallStub(progress_callback, xProgress, progress_callback_desc, Arena.ofAuto());
 			sqlite3_progress_handler.invokeExact(pDb.getPointer(), nOps, pDb.xProgress, pArg);
 		} catch (Throwable e) {
@@ -955,6 +992,7 @@ public final class SQLite {
 		trace_callback_desc);
 	static void sqlite3_trace(SQLite3 pDb, TraceCallback xTrace, MemorySegment pArg) {
 		try {
+			// TODO override pDb.xTrace only after call
 			pDb.xTrace = upcallStub(trace_callback, xTrace, trace_callback_desc, Arena.ofAuto());
 			sqlite3_trace.invokeExact(pDb.getPointer(), pDb.xTrace, pArg);
 		} catch (Throwable e) {
@@ -968,6 +1006,7 @@ public final class SQLite {
 		profile_callback_desc);
 	static void sqlite3_profile(SQLite3 pDb, ProfileCallback xProfile, MemorySegment pArg) {
 		try {
+			// TODO override pDb.xProfile only after call
 			pDb.xProfile = upcallStub(profile_callback, xProfile, profile_callback_desc, Arena.ofAuto());
 			sqlite3_profile.invokeExact(pDb.getPointer(), pDb.xProfile, pArg);
 		} catch (Throwable e) {
@@ -983,6 +1022,7 @@ public final class SQLite {
 		update_hook_desc);
 	static MemorySegment sqlite3_update_hook(SQLite3 pDb, UpdateHook xUpdate, MemorySegment pArg) {
 		try {
+			// TODO override pDb.xUpdate only after success call
 			pDb.xUpdate = upcallStub(update_hook, xUpdate, update_hook_desc, Arena.ofAuto());
 			return (MemorySegment)sqlite3_update_hook.invokeExact(pDb.getPointer(), pDb.xUpdate, pArg);
 		} catch (Throwable e) {
@@ -996,6 +1036,7 @@ public final class SQLite {
 		authorizer_desc);
 	static int sqlite3_set_authorizer(SQLite3 pDb, Authorizer authorizer, MemorySegment pUserData) {
 		try {
+			// TODO override pDb.authorizer only after success call
 			pDb.authorizer = upcallStub(authorizer_up, authorizer, authorizer_desc, Arena.ofAuto());
 			return (int)sqlite3_set_authorizer.invokeExact(pDb.getPointer(), pDb.authorizer, pUserData);
 		} catch (Throwable e) {
@@ -1003,7 +1044,20 @@ public final class SQLite {
 		}
 	}
 #if sqlite.enable.unlock.notify == "true"
-	static int sqlite3_unlock_notify(SQLite3 pBlocked, UnlockNotifyCallback xNotify, MemorySegment pNotifyArg);
+	private static final MethodHandle sqlite3_unlock_notify = downcallHandle(
+	"sqlite3_unlock_notify", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER));
+	private static final FunctionDescriptor unlock_notify_desc = FunctionDescriptor.ofVoid(C_POINTER, C_INT);
+	private static final MethodHandle unlock_notify_up = upcallHandle(UnlockNotifyCallback.class, "callback",
+		unlock_notify_desc);
+	static int sqlite3_unlock_notify(SQLite3 pBlocked, UnlockNotifyCallback xNotify, MemorySegment pNotifyArg) {
+		try {
+			// TODO override pDb.xNotify only after success call
+			pBlocked.xNotify = upcallStub(unlock_notify_up, xNotify, unlock_notify_desc, Arena.ofAuto());
+			return (int)sqlite3_unlock_notify.invokeExact(pBlocked.getPointer(), pBlocked.xNotify, pNotifyArg);
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
 #endif
 
 	/*
@@ -1067,6 +1121,7 @@ public final class SQLite {
 		"sqlite3_result_text", FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_INT, C_POINTER));
 	static void sqlite3_result_text(SQLite3Context pCtx, String text, int n, MemorySegment xDel) { // no copy needed when xDel == SQLITE_TRANSIENT == -1
 		try (Arena arena = Arena.ofConfined()) {
+			// How to avoid copying twice ? nativeString + SQLite
 			sqlite3_result_text.invokeExact(pCtx.p, nativeString(arena, text), n, xDel);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -1079,7 +1134,7 @@ public final class SQLite {
 			MemorySegment ms = arena.allocate(n);
 			// How to avoid copying twice ? MemorySegment.copy + SQLite
 			MemorySegment.copy(blob, 0, ms, ValueLayout.JAVA_BYTE, 0, n);
-			sqlite3_result_blob.invokeExact(pCtx.p, blob, n, xDel);
+			sqlite3_result_blob.invokeExact(pCtx.p, ms, n, xDel);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -1335,8 +1390,9 @@ public final class SQLite {
 		private MemorySegment xProfile;
 		private MemorySegment xUpdate;
 		private MemorySegment authorizer;
+		private MemorySegment xNotify;
 		private final List<MemorySegment> functions = new ArrayList<>(0);
-		public SQLite3(MemorySegment p) {
+		SQLite3(MemorySegment p) {
 			this.p = p;
 		}
 		MemorySegment getPointer() {
@@ -1356,6 +1412,7 @@ public final class SQLite {
 			xProfile = null;
 			xUpdate = null;
 			authorizer = null;
+			xNotify = null;
 			functions.clear();
 		}
 	}
