@@ -11,7 +11,6 @@ package org.sqlite;
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -41,6 +40,7 @@ public final class SQLite {
 			.orElseThrow(() -> new UnsatisfiedLinkError("unresolved symbol: " + symbol));
 	}
 	private static final Linker LINKER = Linker.nativeLinker();
+	private static final Linker.Option CRITICAL = Linker.Option.critical(true);
 	private static MethodHandle downcallHandle(String symbol, FunctionDescriptor desc,
 											   Linker.Option... options) {
 		return LINKER.downcallHandle(findOrThrow(symbol), desc, options);
@@ -744,12 +744,11 @@ public final class SQLite {
 	}
 
 	private static final MethodHandle sqlite3_bind_blob = downcallHandle(
-		"sqlite3_bind_blob", FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_POINTER, C_INT, C_POINTER));
+		"sqlite3_bind_blob", FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_POINTER, C_INT, C_POINTER),
+		CRITICAL);
 	static int sqlite3_bind_blob(SQLite3Stmt pStmt, int i, byte[] value, int n, MemorySegment xDel) { // no copy needed when xDel == SQLITE_TRANSIENT == -1
-		try (Arena arena = Arena.ofConfined()) {
-			MemorySegment ms = arena.allocate(n);
-			// How to avoid copying twice ? MemorySegment.copy + SQLite
-			MemorySegment.copy(value, 0, ms, ValueLayout.JAVA_BYTE, 0, n);
+		try {
+			MemorySegment ms = MemorySegment.ofArray(value);
 			return (int) sqlite3_bind_blob.invokeExact(pStmt.getPointer(), i, ms, n, xDel);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -884,30 +883,25 @@ public final class SQLite {
 		}
 	}
 	private static final MethodHandle sqlite3_blob_read = downcallHandle(
-		"sqlite3_blob_read", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_INT, C_INT));
+		"sqlite3_blob_read", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_INT, C_INT),
+		CRITICAL);
 	static int sqlite3_blob_read(SQLite3Blob pBlob, byte[] z,  int off, int len, int iOffset) {
-		try (Arena arena = Arena.ofConfined()) {
-			// How to avoid copy ?
+		try {
 			int n = len - off;
-			MemorySegment ms = arena.allocate(n);
-			final int res = (int) sqlite3_blob_read.invokeExact(pBlob.getPointer(), ms, n, iOffset);
-			if (res == SQLITE_OK) {
-				MemorySegment.copy(ms, ValueLayout.JAVA_BYTE, 0, z, off, n);
-			}
-			return res;
+			MemorySegment ms = MemorySegment.ofArray(z);
+			return (int) sqlite3_blob_read.invokeExact(pBlob.getPointer(), ms.asSlice(off), n, iOffset);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
 	private static final MethodHandle sqlite3_blob_write = downcallHandle(
-		"sqlite3_blob_write", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_INT, C_INT));
+		"sqlite3_blob_write", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_INT, C_INT),
+		CRITICAL);
 	static int sqlite3_blob_write(SQLite3Blob pBlob, byte[] z, int off, int len, int iOffset) {
-		try (Arena arena = Arena.ofConfined()) {
-			// How to avoid copy ?
+		try {
 			int n = len - off;
-			MemorySegment ms = arena.allocate(n);
-			MemorySegment.copy(z, off, ms, ValueLayout.JAVA_BYTE, 0, n);
-			return (int)sqlite3_blob_write.invokeExact(pBlob.getPointer(), ms, n, iOffset);
+			MemorySegment ms = MemorySegment.ofArray(z);
+			return (int)sqlite3_blob_write.invokeExact(pBlob.getPointer(), ms.asSlice(off), n, iOffset);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -1128,12 +1122,11 @@ public final class SQLite {
 		}
 	}
 	private static final MethodHandle sqlite3_result_blob = downcallHandle(
-		"sqlite3_result_blob", FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_INT, C_POINTER));
+		"sqlite3_result_blob", FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_INT, C_POINTER),
+		CRITICAL);
 	static void sqlite3_result_blob(SQLite3Context pCtx, byte[] blob, int n, MemorySegment xDel) {
-		try (Arena arena = Arena.ofConfined()) {
-			MemorySegment ms = arena.allocate(n);
-			// How to avoid copying twice ? MemorySegment.copy + SQLite
-			MemorySegment.copy(blob, 0, ms, ValueLayout.JAVA_BYTE, 0, n);
+		try {
+			MemorySegment ms = MemorySegment.ofArray(blob);
 			sqlite3_result_blob.invokeExact(pCtx.p, ms, n, xDel);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
