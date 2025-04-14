@@ -1,0 +1,4 @@
+[default.extend-words]
+# TABLE_SCHEM
+SCHEM = "SCHEM"
+DOUB = "DOUB"

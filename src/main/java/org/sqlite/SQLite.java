@@ -292,9 +292,9 @@ public final class SQLite {
 		busy_handler_desc);
 	static int sqlite3_busy_handler(SQLite3 pDb, BusyHandler bh, MemorySegment pArg) {
 		try {
-			// TODO override pDb.busyHanlder only after success call
-			pDb.busyHanlder = upcallStub(busy_handler, bh, busy_handler_desc, Arena.ofAuto());
-			return (int) sqlite3_busy_handler.invokeExact(pDb.getPointer(), pDb.busyHanlder, pArg);
+			// TODO override pDb.busyHandler only after success call
+			pDb.busyHandler = upcallStub(busy_handler, bh, busy_handler_desc, Arena.ofAuto());
+			return (int) sqlite3_busy_handler.invokeExact(pDb.getPointer(), pDb.busyHandler, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -307,7 +307,7 @@ public final class SQLite {
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		} finally {
-			pDb.busyHanlder = null;
+			pDb.busyHandler = null;
 		}
 	}
 	private static final MethodHandle sqlite3_db_status = downcallHandle(
@@ -1377,7 +1377,7 @@ public final class SQLite {
 	 */
 	public static class SQLite3 {
 		private final MemorySegment p;
-		private MemorySegment busyHanlder;
+		private MemorySegment busyHandler;
 		private MemorySegment xProgress;
 		private MemorySegment xTrace;
 		private MemorySegment xProfile;
@@ -1399,7 +1399,7 @@ public final class SQLite {
 			return ms;
 		}
 		private void clear() {
-			busyHanlder = null;
+			busyHandler = null;
 			xProgress = null;
 			xTrace = null;
 			xProfile = null;

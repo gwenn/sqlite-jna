@@ -107,7 +107,7 @@ public class Backup implements AutoCloseable {
 		return res;
 	}
 	/**
-	 * Destroy this backup and throw an exception if an error occured.
+	 * Destroy this backup and throw an exception if an error occurred.
 	 */
 	@Override
 	public void close() throws ConnException {

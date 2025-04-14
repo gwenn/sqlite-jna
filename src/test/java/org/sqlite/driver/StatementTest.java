@@ -498,7 +498,7 @@ public class StatementTest {
 	}
 
 	@Test(expected = SQLFeatureNotSupportedException.class)
-	public void setEscapeProcessingToFals() throws SQLException {
+	public void setEscapeProcessingToFalse() throws SQLException {
 		stat.setEscapeProcessing(false);
 	}
 

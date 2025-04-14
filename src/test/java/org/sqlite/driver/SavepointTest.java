@@ -58,7 +58,7 @@ public class SavepointTest {
 
 		assertEquals(1, stat1.executeUpdate("insert into trans values (4);"));
 
-		// transaction not yet commited, conn1 can see, conn2 can not
+		// transaction not yet committed, conn1 can see, conn2 can not
 		try (ResultSet rs = stat1.executeQuery(countSql)) {
 			assertTrue(rs.next());
 			assertEquals(1, rs.getInt(1));
@@ -158,7 +158,7 @@ public class SavepointTest {
 		Savepoint outerSP = conn1.setSavepoint("outer_sp");
 		assertEquals(1, stat1.executeUpdate("insert into trans values (4);"));
 
-		// transaction not yet commited, conn1 can see, conn2 can not
+		// transaction not yet committed, conn1 can see, conn2 can not
 		try (ResultSet rs = stat1.executeQuery(countSql)) {
 			assertTrue(rs.next());
 			assertEquals(1, rs.getInt(1));
@@ -171,7 +171,7 @@ public class SavepointTest {
 		Savepoint innerSP = conn1.setSavepoint("inner_sp");
 		assertEquals(1, stat1.executeUpdate("insert into trans values (5);"));
 
-		// transaction not yet commited, conn1 can see, conn2 can not
+		// transaction not yet committed, conn1 can see, conn2 can not
 		try (ResultSet rs = stat1.executeQuery(countSql)) {
 			assertTrue(rs.next());
 			assertEquals(2, rs.getInt(1));

@@ -123,7 +123,7 @@ public class Blob implements AutoCloseable {
 		return res;
 	}
 	/**
-	 * Close this BLOB and throw an exception if an error occured.
+	 * Close this BLOB and throw an exception if an error occurred.
 	 */
 	@Override
 	public void close() throws SQLiteException {

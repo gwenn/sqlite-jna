@@ -175,7 +175,7 @@ public class TransactionTest {
 
 		assertEquals(1, stat1.executeUpdate("insert into trans values (4);"));
 
-		// transaction not yet commited, conn1 can see, conn2 can not
+		// transaction not yet committed, conn1 can see, conn2 can not
 		try (ResultSet rs = stat1.executeQuery(countSql)) {
 			assertTrue(rs.next());
 			assertEquals(1, rs.getInt(1));
@@ -365,18 +365,18 @@ public class TransactionTest {
     SQLiteDataSource ds = new SQLiteDataSource();
     ds.setUrl(JDBC.PREFIX + tmpFile.getAbsolutePath());
 
-    // deffered
+    // deferred
     SQLiteConnection con = (SQLiteConnection) ds.getConnection();
-    assertEquals(TransactionMode.DEFFERED, transactionMode.get(con));
+    assertEquals(TransactionMode.DEFERRED, transactionMode.get(con));
     assertEquals("begin;",
-        ((Map<?, ?>) beginCommandMap.get(con)).get(TransactionMode.DEFFERED));
+        ((Map<?, ?>) beginCommandMap.get(con)).get(TransactionMode.DEFERRED));
     runUpdates(con, "tbl1");
 
-    ds.setTransactionMode(TransactionMode.DEFFERED.name());
+    ds.setTransactionMode(TransactionMode.DEFERRED.name());
     con = (SQLiteConnection) ds.getConnection();
-    assertEquals(TransactionMode.DEFFERED, transactionMode.get(con));
+    assertEquals(TransactionMode.DEFERRED, transactionMode.get(con));
     assertEquals("begin;",
-        ((Map<?, ?>) beginCommandMap.get(con)).get(TransactionMode.DEFFERED));
+        ((Map<?, ?>) beginCommandMap.get(con)).get(TransactionMode.DEFERRED));
 
     // immediate
     ds.setTransactionMode(TransactionMode.IMMEDIATE.name());

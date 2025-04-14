@@ -659,7 +659,7 @@ public final class Conn implements AutoCloseable {
 				tblName,
 				colName,
 				MemorySegment.NULL, MemorySegment.NULL,
-				pNotNull, pPrimaryKey, pAutoinc), "error while accessing table column metatada of '%s'", tblName);
+				pNotNull, pPrimaryKey, pAutoinc), "error while accessing table column metadata of '%s'", tblName);
 
 			return new boolean[]{toBool(pNotNull), toBool(pPrimaryKey), toBool(pAutoinc)};
 		}
