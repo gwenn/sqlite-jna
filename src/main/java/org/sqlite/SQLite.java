@@ -13,8 +13,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
 public final class SQLite {
@@ -288,6 +286,7 @@ public final class SQLite {
 		busy_handler_desc);
 	static int sqlite3_busy_handler(SQLite3 pDb, BusyHandler bh, MemorySegment pArg) {
 		try {
+			// FIXME previous busyHandler will not be freed until pDb is closed & gced
 			MemorySegment busyHandler = upcallStub(busy_handler, bh, busy_handler_desc, pDb.arena);
 			return (int) sqlite3_busy_handler.invokeExact(pDb.getPointer(), busyHandler, pArg);
 		} catch (Throwable e) {
@@ -966,6 +965,7 @@ public final class SQLite {
 		progress_callback_desc);
 	static void sqlite3_progress_handler(SQLite3 pDb, int nOps, ProgressCallback xProgress, MemorySegment pArg) {
 		try {
+			// FIXME previous pc will not be freed until pDb is closed & gced
 			MemorySegment pc = upcallStub(progress_callback, xProgress, progress_callback_desc, pDb.arena);
 			sqlite3_progress_handler.invokeExact(pDb.getPointer(), nOps, pc, pArg);
 		} catch (Throwable e) {
@@ -979,6 +979,7 @@ public final class SQLite {
 		trace_callback_desc);
 	static void sqlite3_trace(SQLite3 pDb, TraceCallback xTrace, MemorySegment pArg) {
 		try {
+			// FIXME previous tc will not be freed until pDb is closed & gced
 			MemorySegment tc = upcallStub(trace_callback, xTrace, trace_callback_desc, pDb.arena);
 			sqlite3_trace.invokeExact(pDb.getPointer(), tc, pArg);
 		} catch (Throwable e) {
@@ -992,6 +993,7 @@ public final class SQLite {
 		profile_callback_desc);
 	static void sqlite3_profile(SQLite3 pDb, ProfileCallback xProfile, MemorySegment pArg) {
 		try {
+			// FIXME previous pc will not be freed until pDb is closed & gced
 			MemorySegment pc = upcallStub(profile_callback, xProfile, profile_callback_desc, pDb.arena);
 			sqlite3_profile.invokeExact(pDb.getPointer(), pc, pArg);
 		} catch (Throwable e) {
@@ -1007,6 +1009,7 @@ public final class SQLite {
 		update_hook_desc);
 	static MemorySegment sqlite3_update_hook(SQLite3 pDb, UpdateHook xUpdate, MemorySegment pArg) {
 		try {
+			// FIXME previous uh will not be freed until pDb is closed & gced
 			MemorySegment uh = upcallStub(update_hook, xUpdate, update_hook_desc, pDb.arena);
 			return (MemorySegment)sqlite3_update_hook.invokeExact(pDb.getPointer(), uh, pArg);
 		} catch (Throwable e) {
@@ -1020,6 +1023,7 @@ public final class SQLite {
 		authorizer_desc);
 	static int sqlite3_set_authorizer(SQLite3 pDb, Authorizer authorizer, MemorySegment pUserData) {
 		try {
+			// FIXME previous auth will not be freed until pDb is closed & gced
 			MemorySegment auth = upcallStub(authorizer_up, authorizer, authorizer_desc, pDb.arena);
 			return (int)sqlite3_set_authorizer.invokeExact(pDb.getPointer(), auth, pUserData);
 		} catch (Throwable e) {
@@ -1034,6 +1038,7 @@ public final class SQLite {
 		unlock_notify_desc);
 	static int sqlite3_unlock_notify(SQLite3 pBlocked, UnlockNotifyCallback xNotify, MemorySegment pNotifyArg) {
 		try {
+			// FIXME previous unc will not be freed until pDb is closed & gced
 			MemorySegment unc = upcallStub(unlock_notify_up, xNotify, unlock_notify_desc, pBlocked.arena);
 			return (int)sqlite3_unlock_notify.invokeExact(pBlocked.getPointer(), unc, pNotifyArg);
 		} catch (Throwable e) {
