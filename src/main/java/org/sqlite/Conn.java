@@ -245,7 +245,7 @@ public final class Conn implements AutoCloseable {
 	 * @param sql query
 	 * @return Prepared Statement
 	 * @throws ConnException if current connection is closed or an error occurred during statement compilation.
-	 * @see <a href="https://www.sqlite.org/c3ref/prepare.html">sqlite3_prepare_v2</a>
+	 * @see <a href="https://www.sqlite.org/c3ref/prepare.html">sqlite3_prepare_v3</a>
 	 */
 	public Stmt prepare(String sql, boolean cacheable) throws ConnException {
 		checkOpen();
