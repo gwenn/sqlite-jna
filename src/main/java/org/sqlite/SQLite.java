@@ -260,16 +260,12 @@ public final class SQLite {
 			return (int) sqlite3_close.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
-		} finally {
-			// TODO only on success ?
-			pDb.clear();
 		}
 	}
 	private static final MethodHandle sqlite3_close_v2 = downcallHandle(
 		"sqlite3_close_v2", FunctionDescriptor.of(C_INT, C_POINTER));
 	static int sqlite3_close_v2(SQLite3 pDb) { // since 3.7.14
 		try {
-			// TODO pDb.clear() on success
 			return (int) sqlite3_close_v2.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -292,9 +288,8 @@ public final class SQLite {
 		busy_handler_desc);
 	static int sqlite3_busy_handler(SQLite3 pDb, BusyHandler bh, MemorySegment pArg) {
 		try {
-			// TODO override pDb.busyHandler only after success call
-			pDb.busyHandler = upcallStub(busy_handler, bh, busy_handler_desc, Arena.ofAuto());
-			return (int) sqlite3_busy_handler.invokeExact(pDb.getPointer(), pDb.busyHandler, pArg);
+			MemorySegment busyHandler = upcallStub(busy_handler, bh, busy_handler_desc, pDb.arena);
+			return (int) sqlite3_busy_handler.invokeExact(pDb.getPointer(), busyHandler, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -303,11 +298,10 @@ public final class SQLite {
 		"sqlite3_busy_timeout", FunctionDescriptor.of(C_INT, C_POINTER, C_INT));
 	static int sqlite3_busy_timeout(SQLite3 pDb, int ms) {
 		try {
+			// TODO How to free previous busyHandler ?
 			return (int) sqlite3_busy_timeout.invokeExact(pDb.getPointer(), ms);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
-		} finally {
-			pDb.busyHandler = null;
 		}
 	}
 	private static final MethodHandle sqlite3_db_status = downcallHandle(
@@ -972,9 +966,8 @@ public final class SQLite {
 		progress_callback_desc);
 	static void sqlite3_progress_handler(SQLite3 pDb, int nOps, ProgressCallback xProgress, MemorySegment pArg) {
 		try {
-			// TODO override pDb.xProgress only after success call
-			pDb.xProgress = upcallStub(progress_callback, xProgress, progress_callback_desc, Arena.ofAuto());
-			sqlite3_progress_handler.invokeExact(pDb.getPointer(), nOps, pDb.xProgress, pArg);
+			MemorySegment pc = upcallStub(progress_callback, xProgress, progress_callback_desc, pDb.arena);
+			sqlite3_progress_handler.invokeExact(pDb.getPointer(), nOps, pc, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -986,9 +979,8 @@ public final class SQLite {
 		trace_callback_desc);
 	static void sqlite3_trace(SQLite3 pDb, TraceCallback xTrace, MemorySegment pArg) {
 		try {
-			// TODO override pDb.xTrace only after call
-			pDb.xTrace = upcallStub(trace_callback, xTrace, trace_callback_desc, Arena.ofAuto());
-			sqlite3_trace.invokeExact(pDb.getPointer(), pDb.xTrace, pArg);
+			MemorySegment tc = upcallStub(trace_callback, xTrace, trace_callback_desc, pDb.arena);
+			sqlite3_trace.invokeExact(pDb.getPointer(), tc, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -1000,9 +992,8 @@ public final class SQLite {
 		profile_callback_desc);
 	static void sqlite3_profile(SQLite3 pDb, ProfileCallback xProfile, MemorySegment pArg) {
 		try {
-			// TODO override pDb.xProfile only after call
-			pDb.xProfile = upcallStub(profile_callback, xProfile, profile_callback_desc, Arena.ofAuto());
-			sqlite3_profile.invokeExact(pDb.getPointer(), pDb.xProfile, pArg);
+			MemorySegment pc = upcallStub(profile_callback, xProfile, profile_callback_desc, pDb.arena);
+			sqlite3_profile.invokeExact(pDb.getPointer(), pc, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -1016,9 +1007,8 @@ public final class SQLite {
 		update_hook_desc);
 	static MemorySegment sqlite3_update_hook(SQLite3 pDb, UpdateHook xUpdate, MemorySegment pArg) {
 		try {
-			// TODO override pDb.xUpdate only after success call
-			pDb.xUpdate = upcallStub(update_hook, xUpdate, update_hook_desc, Arena.ofAuto());
-			return (MemorySegment)sqlite3_update_hook.invokeExact(pDb.getPointer(), pDb.xUpdate, pArg);
+			MemorySegment uh = upcallStub(update_hook, xUpdate, update_hook_desc, pDb.arena);
+			return (MemorySegment)sqlite3_update_hook.invokeExact(pDb.getPointer(), uh, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -1030,9 +1020,8 @@ public final class SQLite {
 		authorizer_desc);
 	static int sqlite3_set_authorizer(SQLite3 pDb, Authorizer authorizer, MemorySegment pUserData) {
 		try {
-			// TODO override pDb.authorizer only after success call
-			pDb.authorizer = upcallStub(authorizer_up, authorizer, authorizer_desc, Arena.ofAuto());
-			return (int)sqlite3_set_authorizer.invokeExact(pDb.getPointer(), pDb.authorizer, pUserData);
+			MemorySegment auth = upcallStub(authorizer_up, authorizer, authorizer_desc, pDb.arena);
+			return (int)sqlite3_set_authorizer.invokeExact(pDb.getPointer(), auth, pUserData);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -1045,9 +1034,8 @@ public final class SQLite {
 		unlock_notify_desc);
 	static int sqlite3_unlock_notify(SQLite3 pBlocked, UnlockNotifyCallback xNotify, MemorySegment pNotifyArg) {
 		try {
-			// TODO override pDb.xNotify only after success call
-			pBlocked.xNotify = upcallStub(unlock_notify_up, xNotify, unlock_notify_desc, Arena.ofAuto());
-			return (int)sqlite3_unlock_notify.invokeExact(pBlocked.getPointer(), pBlocked.xNotify, pNotifyArg);
+			MemorySegment unc = upcallStub(unlock_notify_up, xNotify, unlock_notify_desc, pBlocked.arena);
+			return (int)sqlite3_unlock_notify.invokeExact(pBlocked.getPointer(), unc, pNotifyArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -1075,9 +1063,9 @@ public final class SQLite {
 	static int sqlite3_create_function_v2(SQLite3 pDb, String functionName, int nArg, int eTextRep,
 		MemorySegment pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, MemorySegment xDestroy) {
 		try (Arena arena = Arena.ofConfined()) {
-			final MemorySegment xFu = pDb.add(upcallStub(scalar_callback, xFunc, scalar_callback_desc, Arena.ofAuto()));
-			final MemorySegment xS = pDb.add(upcallStub(aggregate_step_callback, xStep, aggregate_step_callback_desc, Arena.ofAuto()));
-			final MemorySegment xFi = pDb.add(upcallStub(aggregate_final_callback, xFinal, aggregate_final_callback_desc, Arena.ofAuto()));
+			final MemorySegment xFu = upcallStub(scalar_callback, xFunc, scalar_callback_desc, pDb.arena);
+			final MemorySegment xS = upcallStub(aggregate_step_callback, xStep, aggregate_step_callback_desc, pDb.arena);
+			final MemorySegment xFi = upcallStub(aggregate_final_callback, xFinal, aggregate_final_callback_desc, pDb.arena);
 			return (int)sqlite3_create_function_v2.invokeExact(pDb.getPointer(), nativeString(arena, functionName), nArg, eTextRep, pApp, xFu, xS, xFi, xDestroy);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -1377,36 +1365,12 @@ public final class SQLite {
 	 */
 	public static class SQLite3 {
 		private final MemorySegment p;
-		private MemorySegment busyHandler;
-		private MemorySegment xProgress;
-		private MemorySegment xTrace;
-		private MemorySegment xProfile;
-		private MemorySegment xUpdate;
-		private MemorySegment authorizer;
-		private MemorySegment xNotify;
-		private final List<MemorySegment> functions = new ArrayList<>(0);
+		private final Arena arena = Arena.ofAuto();
 		SQLite3(MemorySegment p) {
 			this.p = p;
 		}
 		MemorySegment getPointer() {
 			return p;
-		}
-		private MemorySegment add(MemorySegment ms) {
-			if (MemorySegment.NULL.equals(ms)) {
-				return ms;
-			}
-			functions.add(ms);
-			return ms;
-		}
-		private void clear() {
-			busyHandler = null;
-			xProgress = null;
-			xTrace = null;
-			xProfile = null;
-			xUpdate = null;
-			authorizer = null;
-			xNotify = null;
-			functions.clear();
 		}
 	}
 
