@@ -11,6 +11,7 @@ package org.sqlite;
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.ref.Cleaner;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -32,6 +33,8 @@ public final class SQLite {
 	public static final int SQLITE_DONE = 101;
 
 	static final MemorySegment SQLITE_TRANSIENT = MemorySegment.ofAddress(-1L);
+	static final Cleaner cleaner = Cleaner.create();
+	static final Runnable NO_OP = () -> {};
 
 	private static MemorySegment findOrThrow(String symbol) {
 		return SYMBOL_LOOKUP.find(symbol)
@@ -59,10 +62,14 @@ public final class SQLite {
 	}
 
 	static String getString(MemorySegment ms) {
-		if (MemorySegment.NULL.equals(ms)) {
+		if (isNull(ms)) {
 			return null;
 		}
 		return ms.reinterpret(Integer.MAX_VALUE).getString(0);
+	}
+
+	static boolean isNull(MemorySegment ms) {
+		return MemorySegment.NULL.equals(ms);
 	}
 
 	private static final MethodHandle sqlite3_libversion = downcallHandle(
@@ -262,7 +269,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_close_v2 = downcallHandle(
 		"sqlite3_close_v2", FunctionDescriptor.of(C_INT, C_POINTER));
-	static int sqlite3_close_v2(SQLite3 pDb) { // since 3.7.14
+	private static int sqlite3_close_v2(SQLite3 pDb) { // since 3.7.14
 		try {
 			return (int) sqlite3_close_v2.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
@@ -448,7 +455,7 @@ public final class SQLite {
 		try {
 			final MemorySegment stmt = pStmt == null ? MemorySegment.NULL : pStmt.getPointer();
 			final MemorySegment ms = (MemorySegment) sqlite3_next_stmt.invokeExact(pDb.getPointer(), stmt);
-			return MemorySegment.NULL.equals(ms) ? null : new SQLite3Stmt(ms);
+			return isNull(ms) ? null : new SQLite3Stmt(ms);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -510,7 +517,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_finalize = downcallHandle(
 		"sqlite3_finalize", FunctionDescriptor.of(C_INT, C_POINTER));
-	static int sqlite3_finalize(SQLite3Stmt pStmt) {
+	private static int sqlite3_finalize(SQLite3Stmt pStmt) {
 		try {
 			return (int) sqlite3_finalize.invokeExact(pStmt.getPointer());
 		} catch (Throwable e) {
@@ -948,7 +955,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_backup_finish = downcallHandle(
 		"sqlite3_backup_finish", FunctionDescriptor.of(C_INT, C_POINTER));
-	static int sqlite3_backup_finish(SQLite3Backup pBackup) {
+	private static int sqlite3_backup_finish(SQLite3Backup pBackup) {
 		try {
 			return (int)sqlite3_backup_finish.invokeExact(pBackup.getPointer());
 		} catch (Throwable e) {
@@ -1369,13 +1376,34 @@ public final class SQLite {
 	 * @see <a href="http://sqlite.org/c3ref/sqlite3.html">sqlite3</a>
 	 */
 	public static class SQLite3 {
-		private final MemorySegment p;
+		private MemorySegment p;
+		int res;
 		private final Arena arena = Arena.ofAuto();
 		SQLite3(MemorySegment p) {
 			this.p = p;
 		}
 		MemorySegment getPointer() {
 			return p;
+		}
+		void close() {
+			if (isNull(p)) {
+				return;
+			}
+			// Dangling statements
+			SQLite3Stmt stmt = sqlite3_next_stmt(this, null);
+			while (stmt != null) {
+				if (sqlite3_stmt_busy(stmt)) {
+					sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\"");
+				} else {
+					sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\"");
+				}
+				stmt = sqlite3_next_stmt(this, stmt);
+			}
+			res = sqlite3_close_v2(this); // must be called only once
+			p = MemorySegment.NULL;
+		}
+		boolean isClosed() {
+			return isNull(p);
 		}
 	}
 
@@ -1384,12 +1412,23 @@ public final class SQLite {
 	 * @see <a href="http://sqlite.org/c3ref/stmt.html">sqlite3_stmt</a>
 	 */
 	public static class SQLite3Stmt {
-		private final MemorySegment p;
+		private MemorySegment p;
+		int res;
 		SQLite3Stmt(MemorySegment p) {
 			this.p = p;
 		}
 		MemorySegment getPointer() {
 			return p;
+		}
+		void close() {
+			if (isNull(p)) {
+				return;
+			}
+			res = sqlite3_finalize(this); // must be called only once
+			p = MemorySegment.NULL;
+		}
+		boolean isClosed() {
+			return isNull(p);
 		}
 	}
 
@@ -1398,12 +1437,23 @@ public final class SQLite {
 	 * @see <a href="http://sqlite.org/c3ref/blob.html">sqlite3_blob</a>
 	 */
 	public static class SQLite3Blob {
-		private final MemorySegment p;
+		private MemorySegment p;
+		int res;
 		SQLite3Blob(MemorySegment p) {
 			this.p = p;
 		}
 		MemorySegment getPointer() {
 			return p;
+		}
+		void close() {
+			if (isNull(p)) {
+				return;
+			}
+			res = sqlite3_blob_close(this); // must be called only once
+			p = MemorySegment.NULL;
+		}
+		boolean isClosed() {
+			return isNull(p);
 		}
 	}
 
@@ -1412,12 +1462,23 @@ public final class SQLite {
 	 * @see <a href="http://sqlite.org/c3ref/backup.html">sqlite3_backup</a>
 	 */
 	public static class SQLite3Backup {
-		private final MemorySegment p;
+		private MemorySegment p;
+		int res;
 		SQLite3Backup(MemorySegment p) {
 			this.p = p;
 		}
 		MemorySegment getPointer() {
 			return p;
+		}
+		void finish() {
+			if (isNull(p)) {
+				return;
+			}
+			res = sqlite3_backup_finish(this); // must be called only once
+			p = MemorySegment.NULL;
+		}
+		boolean isFinished() {
+			return isNull(p);
 		}
 	}
 
@@ -1563,7 +1624,7 @@ public final class SQLite {
 		public byte[] getBlob(int i) {
 			MemorySegment arg = arg(i);
 			MemorySegment blob = sqlite3_value_blob(arg);
-			if (MemorySegment.NULL.equals(blob)) {
+			if (isNull(blob)) {
 				return null;
 			} else {
 				return blob.reinterpret(sqlite3_value_bytes(arg)).toArray(ValueLayout.JAVA_BYTE); // a copy is made...

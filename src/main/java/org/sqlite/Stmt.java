@@ -10,6 +10,7 @@ package org.sqlite;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.lang.ref.Cleaner;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,7 +25,8 @@ public class Stmt implements AutoCloseable, Row {
 	final Conn c;
 	// Whole SQL (including tail)...
 	final String sql;
-	private SQLite3Stmt pStmt;
+	private final SQLite3Stmt pStmt;
+	private final Cleaner.Cleanable cleanable;
 	private final String tail;
 	// cached parameter count
 	private int paramCount = -1;
@@ -43,6 +45,7 @@ public class Stmt implements AutoCloseable, Row {
 		this.pStmt = pStmt;
 		this.tail = blankToNull(getString(tail));
 		this.cacheable = cacheable;
+		cleanable = cleaner.register(this, pStmt == null ? NO_OP : pStmt::close);
 	}
 
 	boolean isDumb() {
@@ -58,7 +61,7 @@ public class Stmt implements AutoCloseable, Row {
 
 	public String getExpandedSql() {
 		final MemorySegment ptr = sqlite3_expanded_sql(pStmt);
-		if (!MemorySegment.NULL.equals(ptr)) {
+		if (!isNull(ptr)) {
 			final String sql = getString(ptr);
 			sqlite3_free(ptr);
 			return sql;
@@ -70,14 +73,6 @@ public class Stmt implements AutoCloseable, Row {
 		return c.getErrMsg();
 	}
 
-	@Override
-	protected void finalize() throws Throwable {
-		if (pStmt != null) {
-			sqlite3_log(-1, "dangling SQLite statement.");
-			close(true);
-		}
-		super.finalize();
-	}
 	/**
 	 * @return result code (No exception is thrown).
 	 */
@@ -85,7 +80,7 @@ public class Stmt implements AutoCloseable, Row {
 		return close(false);
 	}
 	public int close(boolean force) {
-		if (pStmt == null) return SQLITE_OK;
+		if (isClosed()) return SQLITE_OK;
 		if (!force && cacheable && (tail == null || tail.isEmpty()) && !isBusy()) {
 			if (sqlite3_reset(pStmt) == SQLITE_OK &&
 					sqlite3_clear_bindings(pStmt) == SQLITE_OK &&
@@ -93,11 +88,8 @@ public class Stmt implements AutoCloseable, Row {
 				return SQLITE_OK;
 			}
 		}
-		synchronized (c.lock) {
-			final int res = sqlite3_finalize(pStmt); // must be called only once
-			pStmt = null;
-			return res;
-		}
+		cleanable.clean();
+		return pStmt.res;
 	}
 	@Override
 	public void close() throws StmtException {
@@ -589,7 +581,7 @@ public class Stmt implements AutoCloseable, Row {
 		}
 	}
 	public void checkOpen() throws StmtException {
-		if (pStmt == null) {
+		if (isClosed()) {
 			throw new StmtException(this, "stmt finalized", ErrCodes.WRAPPER_SPECIFIC);
 		}
 		if (c.isClosed()) {
@@ -598,7 +590,7 @@ public class Stmt implements AutoCloseable, Row {
 	}
 
 	public boolean isClosed() {
-		return pStmt == null;
+		return pStmt == null || pStmt.isClosed();
 	}
 
 	// Only lossy conversion is reported as error.

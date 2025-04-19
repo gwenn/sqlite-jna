@@ -11,6 +11,7 @@ package org.sqlite;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.Cleaner;
 
 import static org.sqlite.SQLite.*;
 
@@ -20,7 +21,8 @@ import static org.sqlite.SQLite.*;
  */
 public class Blob implements AutoCloseable {
 	private final Conn c;
-	private SQLite3Blob pBlob;
+	private final SQLite3Blob pBlob;
+	private final Cleaner.Cleanable cleanable;
 	private int readOffset;
 	private int writeOffset;
 	private int size = -1;
@@ -29,6 +31,7 @@ public class Blob implements AutoCloseable {
 		assert c != null;
 		this.c = c;
 		this.pBlob = pBlob;
+		cleanable = cleaner.register(this, pBlob::close);
 	}
 
 	/**
@@ -100,27 +103,14 @@ public class Blob implements AutoCloseable {
 		size = -1;
 	}
 
-	@Override
-	protected void finalize() throws Throwable {
-		if (pBlob != null) {
-			sqlite3_log(-1, "dangling SQLite blob.");
-			closeNoCheck();
-		}
-		super.finalize();
-	}
-
 	/**
 	 * Close this BLOB handle
 	 * @return result code (No exception is thrown).
 	 * <a href="https://www.sqlite.org/c3ref/blob_close.html">sqlite3_blob_close</a>
 	 */
 	public int closeNoCheck() {
-		if (pBlob == null) {
-			return SQLITE_OK;
-		}
-		final int res = sqlite3_blob_close(pBlob); // must be called only once
-		pBlob = null;
-		return res;
+		cleanable.clean();
+		return pBlob.res;
 	}
 	/**
 	 * Close this BLOB and throw an exception if an error occurred.
@@ -136,7 +126,7 @@ public class Blob implements AutoCloseable {
 	 * @return whether or not this BLOB is closed
 	 */
 	public boolean isClosed() {
-		return pBlob == null;
+		return pBlob.isClosed();
 	}
 
 	public void checkOpen() throws SQLiteException {

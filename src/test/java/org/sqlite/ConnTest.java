@@ -276,7 +276,7 @@ public class ConnTest {
 			@Override
 			protected void finalStep(SQLite3Context pCtx, MemorySegment aggrCtx) {
 				assertNotNull(pCtx);
-				if (MemorySegment.NULL.equals(aggrCtx)) {
+				if (isNull(aggrCtx)) {
 					pCtx.setResultNull();
 					return;
 				}

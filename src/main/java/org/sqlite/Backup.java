@@ -8,6 +8,8 @@
  */
 package org.sqlite;
 
+import java.lang.ref.Cleaner;
+
 import static org.sqlite.SQLite.*;
 
 /**
@@ -15,7 +17,8 @@ import static org.sqlite.SQLite.*;
  * <a href="https://www.sqlite.org/c3ref/backup.html">sqlite3_backup</a>
  */
 public class Backup implements AutoCloseable {
-	private SQLite3Backup pBackup;
+	private final SQLite3Backup pBackup;
+	private final Cleaner.Cleanable cleanable;
 	private final Conn dst, src;
 
 	Backup(SQLite3Backup pBackup, Conn dst, Conn src) {
@@ -23,6 +26,7 @@ public class Backup implements AutoCloseable {
 		this.pBackup = pBackup;
 		this.dst = dst;
 		this.src = src;
+		cleanable = cleaner.register(this, pBackup::finish);
 	}
 
 	/**
@@ -84,27 +88,14 @@ public class Backup implements AutoCloseable {
 		return sqlite3_backup_pagecount(pBackup);
 	}
 
-	@Override
-	protected void finalize() throws Throwable {
-		if (pBackup != null) {
-			sqlite3_log(-1, "dangling SQLite backup.");
-			finish();
-		}
-		super.finalize();
-	}
-
 	/**
 	 * Destroy this backup.
 	 * @return result code (No exception is thrown).
 	 * @see <a href="https://www.sqlite.org/c3ref/backup_finish.html#sqlite3backupfinish">sqlite3_backup_finish</a>
 	 */
 	public int finish() {
-		if (pBackup == null) {
-			return SQLITE_OK;
-		}
-		final int res = sqlite3_backup_finish(pBackup); // must be called only once
-		pBackup = null;
-		return res;
+		cleanable.clean();
+		return pBackup.res;
 	}
 	/**
 	 * Destroy this backup and throw an exception if an error occurred.
@@ -120,7 +111,7 @@ public class Backup implements AutoCloseable {
 	 * @return whether or not this backup is finished
 	 */
 	public boolean isFinished() {
-		return pBackup == null;
+		return pBackup.isFinished();
 	}
 
 	void checkInit() throws ConnException {
