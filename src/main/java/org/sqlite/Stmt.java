@@ -88,8 +88,10 @@ public class Stmt implements AutoCloseable, Row {
 				return SQLITE_OK;
 			}
 		}
-		cleanable.clean();
-		return pStmt.res;
+		synchronized (c.lock) {
+			cleanable.clean();
+			return pStmt.res;
+		}
 	}
 	@Override
 	public void close() throws StmtException {
