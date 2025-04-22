@@ -39,7 +39,4 @@ jobs:
 
     - name: Build with Maven
       if: matrix.os == 'windows-latest'
-      shell: cmd
-      run: |
-        set PATH=.;%PATH%
-        mvn -q -B test --file pom.xml
+      run: mvn -Djna.library.path=. -q -B test --file pom.xml
