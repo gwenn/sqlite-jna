@@ -39,4 +39,7 @@ jobs:
 
     - name: Build with Maven
       if: matrix.os == 'windows-latest'
-      run: mvn -q -B test --file pom.xml
+      shell: cmd
+      run: |
+        set PATH=.;%PATH%
+        mvn -q -B test --file pom.xml
