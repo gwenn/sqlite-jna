@@ -24,6 +24,7 @@ jobs:
         unzip -p "$SQLITE.zip" "$SQLITE/sqlite3.h" > "sqlite3.h"
         rm -f "$SQLITE.zip"
         gcc.exe -Os -fpic -DWIN64 -m64 -I. -shared -o sqlite3.dll -DSQLITE_ENABLE_COLUMN_METADATA -DSQLITE_THREADSAFE=1 -DSQLITE_DEFAULT_FOREIGN_KEYS=1 sqlite3.c
+        ls -l sqlite3.dll
 
     - name: Set up JDK 1.8
       uses: actions/setup-java@v3
@@ -40,4 +41,6 @@ jobs:
     - name: Build with Maven
       if: matrix.os == 'windows-latest'
       shell: cmd
-      run: mvn -Djna.library.path=. -q -B test
+      run: |
+        dir sqlite3.dll
+        mvn -Djna.library.path=. -Djna.debug_load=true -B test
