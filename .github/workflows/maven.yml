@@ -35,8 +35,9 @@ jobs:
 
     - name: Build with Maven
       if: matrix.os == 'ubuntu-latest'
-      run: mvn -q -B test --file pom.xml
+      run: mvn -q -B test
 
     - name: Build with Maven
       if: matrix.os == 'windows-latest'
-      run: mvn -Djna.library.path=. -q -B test --file pom.xml
+      shell: cmd
+      run: mvn -Djna.library.path=. -q -B test
