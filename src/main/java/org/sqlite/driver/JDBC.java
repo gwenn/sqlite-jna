@@ -196,12 +196,13 @@ public class JDBC implements Driver {
 	public boolean jdbcCompliant() {
 		return false;
 	}
-#if jdbc.specification.version >= "4.1"
+
+	//#if mvn.project.property.jdbc.specification.version >= "4.1"
 	@Override
 	public Logger getParentLogger() throws SQLFeatureNotSupportedException {
 		throw Util.unsupported("Driver.getParentLogger");
 	}
-#endif
+	//#endif
 
 	private static Driver registeredDriver;
 	public static void register() throws SQLException {

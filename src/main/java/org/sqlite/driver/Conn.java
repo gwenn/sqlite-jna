@@ -452,7 +452,8 @@ class Conn implements Connection {
 		checkOpen();
 		throw Util.unsupported("Connection.createStruct");
 	}
-#if jdbc.specification.version >= "4.1"
+
+	//#if mvn.project.property.jdbc.specification.version >= "4.1"
 	@Override
 	public void setSchema(String schema) throws SQLException {
 		checkOpen();
@@ -479,7 +480,7 @@ class Conn implements Connection {
 	public int getNetworkTimeout() throws SQLException {
 		throw Util.unsupported("Connection.getNetworkTimeout");
 	}
-#endif
+	//#endif
 
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {

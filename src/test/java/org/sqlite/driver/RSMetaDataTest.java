@@ -61,7 +61,8 @@ public class RSMetaDataTest {
 		stat.executeUpdate("drop table people;");
 		Guard.closeAll(stat, conn);
 	}
-#if sqlite.enable.column.metadata == "true"
+
+	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void schemaName() throws SQLException {
 		assertEquals("main", meta.getSchemaName(1));
@@ -193,5 +194,5 @@ public class RSMetaDataTest {
 		assertEquals(0, meta.getScale(2));
 		assertEquals(0, meta.getScale(3));
 	}
-#endif
+	//#endif
 }

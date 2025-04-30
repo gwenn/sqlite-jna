@@ -40,7 +40,6 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <manifold.version>2025.1.12</manifold.version>
   </properties>
 
   <dependencies>
@@ -53,13 +52,6 @@
       <groupId>com.github.gwenn</groupId>
       <artifactId>sqlite-parser</artifactId>
       <version>0.2.0</version>
-    </dependency>
-    <!-- For Javadoc agent -->
-    <dependency>
-      <groupId>systems.manifold</groupId>
-      <artifactId>manifold-javadoc-agent</artifactId>
-      <scope>provided</scope>
-      <version>${manifold.version}</version>
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
@@ -157,16 +149,6 @@
             <version>3.11.2</version>
             <configuration>
               <doclint>none</doclint>
-              <additionalJOptions>
-                <additionalJOption>-J-javaagent:${systems.manifold:manifold-javadoc-agent:jar}</additionalJOption>
-              </additionalJOptions>
-              <additionalDependencies>
-                <additionalDependency>
-                  <groupId>systems.manifold</groupId>
-                  <artifactId>manifold-preprocessor</artifactId>
-                  <version>${manifold.version}</version>
-                </additionalDependency>
-              </additionalDependencies>
             </configuration>
             <executions>
               <execution>
@@ -215,21 +197,55 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>1.2.1</version>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <goals>
+              <goal>read-project-properties</goal>
+            </goals>
+            <configuration>
+              <files>
+                <file>build.properties</file>
+              </files>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>      <plugin>
+        <groupId>com.igormaznitsa</groupId>
+        <artifactId>jcp</artifactId>
+        <version>7.1.2</version>
+        <configuration>
+          <verbose>false</verbose>
+        </configuration>
+        <executions>
+          <execution>
+            <id>preprocess-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>preprocess</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>preprocess-test-sources</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>preprocess</goal>
+            </goals>
+            <configuration>
+              <useTestSources>true</useTestSources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.14.0</version>
         <configuration>
           <useIncrementalCompilation>false</useIncrementalCompilation>
-          <compilerArgs>
-            <arg>-Xplugin:Manifold</arg>
-          </compilerArgs>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>systems.manifold</groupId>
-              <artifactId>manifold-preprocessor</artifactId>
-              <version>${manifold.version}</version>
-            </path>
-          </annotationProcessorPaths>
         </configuration>
       </plugin>
       <plugin>
