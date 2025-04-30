@@ -138,6 +138,7 @@ public class ConnTest {
 		checkResult(c.closeNoCheck());
 	}
 
+	//#if mvn.project.property.sqlite.omit.load.extension == "true"
 	@Test
 	public void enableLoadExtension() throws SQLiteException {
 		final Conn c = open();
@@ -146,6 +147,7 @@ public class ConnTest {
 		}
 		checkResult(c.closeNoCheck());
 	}
+	//#endif
 
 	@Ignore
 	@Test
