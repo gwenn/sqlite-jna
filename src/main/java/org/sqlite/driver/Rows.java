@@ -1275,7 +1275,6 @@ class Rows implements ResultSet {
 		throw concurReadOnly();
 	}
 
-	//#if mvn.project.property.jdbc.specification.version >= "4.1"
 	@Override
 	public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
 		if (type == null) {
@@ -1328,7 +1327,6 @@ class Rows implements ResultSet {
 	public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
 		return getObject(findColumn(columnLabel), type);
 	}
-	//#endif
 
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
