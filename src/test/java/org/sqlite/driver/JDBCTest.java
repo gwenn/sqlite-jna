@@ -36,6 +36,8 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Properties;
 
+import static org.junit.Assert.assertEquals;
+
 public class JDBCTest {
 	@Test
 	public void enableLoadExtensionTest() throws Exception {
@@ -58,8 +60,8 @@ public class JDBCTest {
 
 	@Test
 	public void majorVersion() throws Exception {
-		int major = DriverManager.getDriver(JDBC.MEMORY).getMajorVersion();
-		int minor = DriverManager.getDriver(JDBC.MEMORY).getMinorVersion();
+		assertEquals(DriverInfo.MAJOR_VERSION, DriverManager.getDriver(JDBC.MEMORY).getMajorVersion());
+		assertEquals(DriverInfo.MINOR_VERSION, DriverManager.getDriver(JDBC.MEMORY).getMinorVersion());
 	}
 
 	@Test

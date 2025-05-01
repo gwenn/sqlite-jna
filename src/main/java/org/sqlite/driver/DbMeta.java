@@ -111,24 +111,24 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public String getDriverName() {
-		return "SQLiteJNA";
+		return DriverInfo.DRIVER_NAME;
 	}
 
 	@Override
 	public String getDriverVersion() {
-		return "1.0"; // FIXME
+		return DriverInfo.DRIVER_VERSION;
 	}
 
 	/** @see JDBC#getMajorVersion() */
 	@Override
 	public int getDriverMajorVersion() {
-		return 1; // FIXME Keep in sync with Driver
+		return DriverInfo.MAJOR_VERSION;
 	}
 
 	/** @see JDBC#getMinorVersion() */
 	@Override
 	public int getDriverMinorVersion() {
-		return 0; // FIXME Keep in sync with Driver
+		return DriverInfo.MINOR_VERSION;
 	}
 
 	@Override
@@ -1433,12 +1433,12 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public int getJDBCMajorVersion() {
-		return 4;
+		return DriverInfo.JDBC_MAJOR_VERSION;
 	}
 
 	@Override
 	public int getJDBCMinorVersion() {
-		return 1;
+		return DriverInfo.JDBC_MINOR_VERSION;
 	}
 
 	@Override

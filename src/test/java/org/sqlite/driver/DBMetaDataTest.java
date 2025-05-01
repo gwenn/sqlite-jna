@@ -830,7 +830,7 @@ public class DBMetaDataTest {
 	@Test
 	public void version() throws SQLException {
 		assertNotNull(meta.getDatabaseProductVersion());
-		assertEquals("1.0", meta.getDriverVersion());
+		assertEquals(DriverInfo.DRIVER_VERSION, meta.getDriverVersion());
 	}
 
 	//#if mvn.project.property.sqlite.enable.column.metadata == "true"

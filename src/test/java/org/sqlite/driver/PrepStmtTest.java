@@ -493,7 +493,7 @@ public class PrepStmtTest {
 				prep.setInt(1, Integer.MIN_VALUE + i);
 				prep.addBatch();
 			}
-			assertArrayEquals(prep.executeBatch(), new int[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
+			assertArrayEquals(new int[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, prep.executeBatch());
 		}
 		try (ResultSet rs = stat.executeQuery("select count(*) from test;")) {
 			assertTrue(rs.next());

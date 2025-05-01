@@ -68,8 +68,8 @@ public class SqliteDriverTest {
 
 	@Test
 	public void testVersion() {
-		assertEquals(1, driver.getMajorVersion());
-		assertEquals(0, driver.getMinorVersion());
+		assertEquals(DriverInfo.MAJOR_VERSION, driver.getMajorVersion());
+		assertEquals(DriverInfo.MINOR_VERSION, driver.getMinorVersion());
 	}
 
 	@Test(expected = SQLiteException.class)
