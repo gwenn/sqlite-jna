@@ -38,6 +38,8 @@
   <properties>
     <java.version>8</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <osgi.version>5.0.0</osgi.version>
+    <osgi.jdbc.version>1.1.0</osgi.jdbc.version>
   </properties>
 
   <dependencies>
@@ -68,6 +70,18 @@
       <artifactId>junit</artifactId>
       <version>4.13.2</version>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.core</artifactId>
+      <version>${osgi.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.service.jdbc</artifactId>
+      <version>${osgi.jdbc.version}</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 
@@ -252,6 +266,24 @@
           <!--argLine>-Xcheck:jni</argLine-->
         </configuration>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.1</version>
+        <configuration>
+          <archive>
+            <manifestFile>src/main/resources/META-INF/MANIFEST.MF</manifestFile>
+            <manifestEntries>
+              <Implementation-Version>${project.version}</Implementation-Version>
+              <Bundle-Version>${project.version}</Bundle-Version>
+              <Export-Package>org.sqlite;version="${project.version}",
+                org.sqlite.driver;version="${project.version}",
+                org.sqlite.osgi;version="${project.version}"</Export-Package>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+
       <!--  mvn package shade:shade -->
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
