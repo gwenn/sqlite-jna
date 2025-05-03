@@ -43,13 +43,13 @@ public class StatementTest {
 
 	@Test
 	public void executeUpdate() throws SQLException {
-		assertEquals(stat.executeUpdate("create table s1 (c1);"), 0);
-		assertEquals(stat.executeUpdate("insert into s1 values (0);"), 1);
-		assertEquals(stat.executeUpdate("insert into s1 values (1);"), 1);
-		assertEquals(stat.executeUpdate("insert into s1 values (2);"), 1);
-		assertEquals(stat.executeUpdate("update s1 set c1 = 5;"), 3);
+		assertEquals(0, stat.executeUpdate("create table s1 (c1);"));
+		assertEquals(1, stat.executeUpdate("insert into s1 values (0);"));
+		assertEquals(1, stat.executeUpdate("insert into s1 values (1);"));
+		assertEquals(1, stat.executeUpdate("insert into s1 values (2);"));
+		assertEquals(3, stat.executeUpdate("update s1 set c1 = 5;"));
 		// count_changes_pgrama. truncate_optimization
-		assertEquals(stat.executeUpdate("delete from s1;"), 3);
+		assertEquals(3, stat.executeUpdate("delete from s1;"));
 
 		// multiple SQL statements
 		int tuc = stat.executeUpdate("insert into s1 values (11);" +
@@ -85,10 +85,10 @@ public class StatementTest {
 		}
 		assertEquals(2, tuc); // c1 = 23 does not exist
 
-		assertEquals(stat.executeUpdate("drop table s1;"), 0);
+		assertEquals(0, stat.executeUpdate("drop table s1;"));
 
-		assertEquals(stat.executeUpdate("CREATE TABLE t (t TEXT);"), 0);
-		assertEquals(stat.executeUpdate("ALTER TABLE t RENAME TO t2;"), 0);
+		assertEquals(0, stat.executeUpdate("CREATE TABLE t (t TEXT);"));
+		assertEquals(0, stat.executeUpdate("ALTER TABLE t RENAME TO t2;"));
 	}
 
 	@Test
@@ -182,14 +182,14 @@ public class StatementTest {
 
 	@Test
 	public void colNameAccess() throws SQLException {
-		assertEquals(stat.executeUpdate(
-				"create table tab (id, firstname, surname);"), 0);
-		assertEquals(stat.executeUpdate(
-				"insert into tab values (0, 'Bob', 'Builder');"), 1);
-		assertEquals(stat.executeUpdate(
-				"insert into tab values (1, 'Fred', 'Blogs');"), 1);
-		assertEquals(stat.executeUpdate(
-				"insert into tab values (2, 'John', 'Smith');"), 1);
+		assertEquals(0, stat.executeUpdate(
+				"create table tab (id, firstname, surname);"));
+		assertEquals(1, stat.executeUpdate(
+				"insert into tab values (0, 'Bob', 'Builder');"));
+		assertEquals(1, stat.executeUpdate(
+				"insert into tab values (1, 'Fred', 'Blogs');"));
+		assertEquals(1, stat.executeUpdate(
+				"insert into tab values (2, 'John', 'Smith');"));
 		try (ResultSet rs = stat.executeQuery("select * from tab;")) {
 			assertTrue(rs.next());
 			assertEquals(0, rs.getInt("id"));
@@ -250,8 +250,8 @@ public class StatementTest {
 		assertEquals(0, stat.executeUpdate("create table in1000 (a);"));
 		conn.setAutoCommit(false);
 		for (int i = 0; i < 1000; i++)
-			assertEquals(stat.executeUpdate(
-					"insert into in1000 values (" + i + ");"), 1);
+			assertEquals(1, stat.executeUpdate(
+					"insert into in1000 values (" + i + ");"));
 		conn.commit();
 
 		try (ResultSet rs = stat.executeQuery("select count(a) from in1000;")) {
@@ -545,7 +545,7 @@ public class StatementTest {
 	}
 	@Test
 	public void emptyQuery() throws Exception {
-		assertEquals(stat.executeUpdate(";"), 0);
+		assertEquals(0, stat.executeUpdate(";"));
 		assertFalse(stat.execute(";"));
 		try (ResultSet rs = stat.executeQuery(";")) {
 			assertFalse(rs.next());

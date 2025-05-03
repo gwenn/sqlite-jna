@@ -37,10 +37,9 @@
 
   <properties>
     <java.version>22</java.version>
-    <maven.compiler.source>${java.version}</maven.compiler.source>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <manifold.version>2025.1.9</manifold.version>
+    <osgi.version>5.0.0</osgi.version>
+    <osgi.jdbc.version>1.1.0</osgi.jdbc.version>
   </properties>
 
   <dependencies>
@@ -48,13 +47,6 @@
       <groupId>com.github.gwenn</groupId>
       <artifactId>sqlite-parser</artifactId>
       <version>0.2.0</version>
-    </dependency>
-    <!-- For Javadoc agent -->
-    <dependency>
-      <groupId>systems.manifold</groupId>
-      <artifactId>manifold-javadoc-agent</artifactId>
-      <scope>provided</scope>
-      <version>${manifold.version}</version>
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
@@ -74,6 +66,18 @@
       <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.core</artifactId>
+      <version>${osgi.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.service.jdbc</artifactId>
+      <version>${osgi.jdbc.version}</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
   <profiles>
@@ -86,7 +90,6 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <version>3.11.2</version>
             <configuration>
@@ -121,7 +124,6 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
             <version>3.3.1</version>
             <executions>
@@ -135,7 +137,6 @@
           </plugin>
           <!-- For javadoc agent referenced in maven-javadoc-plugin -->
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
             <version>3.8.1</version>
             <executions>
@@ -147,21 +148,10 @@
             </executions>
           </plugin>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <version>3.11.2</version>
             <configuration>
               <doclint>none</doclint>
-              <additionalJOptions>
-                <additionalJOption>-J-javaagent:${systems.manifold:manifold-javadoc-agent:jar}</additionalJOption>
-              </additionalJOptions>
-              <additionalDependencies>
-                <additionalDependency>
-                  <groupId>systems.manifold</groupId>
-                  <artifactId>manifold-preprocessor</artifactId>
-                  <version>${manifold.version}</version>
-                </additionalDependency>
-              </additionalDependencies>
             </configuration>
             <executions>
               <execution>
@@ -173,7 +163,6 @@
             </executions>
           </plugin>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
             <version>3.2.7</version>
             <executions>
@@ -187,7 +176,6 @@
             </executions>
           </plugin>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-deploy-plugin</artifactId>
             <version>3.1.4</version>
           </plugin>
@@ -210,25 +198,58 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>properties-maven-plugin</artifactId>
+        <version>1.2.1</version>
+        <executions>
+          <execution>
+            <phase>initialize</phase>
+            <goals>
+              <goal>read-project-properties</goal>
+            </goals>
+            <configuration>
+              <files>
+                <file>build.properties</file>
+              </files>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.igormaznitsa</groupId>
+        <artifactId>jcp</artifactId>
+        <version>7.1.2</version>
+        <configuration>
+          <verbose>false</verbose>
+        </configuration>
+        <executions>
+          <execution>
+            <id>preprocess-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>preprocess</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>preprocess-test-sources</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>preprocess</goal>
+            </goals>
+            <configuration>
+              <useTestSources>true</useTestSources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.14.0</version>
         <configuration>
-          <useIncrementalCompilation>false</useIncrementalCompilation>
-          <compilerArgs>
-            <arg>-Xplugin:Manifold</arg>
-          </compilerArgs>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>systems.manifold</groupId>
-              <artifactId>manifold-preprocessor</artifactId>
-              <version>${manifold.version}</version>
-            </path>
-          </annotationProcessorPaths>
+          <release>${java.version}</release>
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.5.3</version>
         <configuration>
@@ -240,9 +261,26 @@
           <!--argLine>-Xcheck:jni</argLine-->
         </configuration>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.1</version>
+        <configuration>
+          <archive>
+            <manifestFile>src/main/resources/META-INF/MANIFEST.MF</manifestFile>
+            <manifestEntries>
+              <Implementation-Version>${project.version}</Implementation-Version>
+              <Bundle-Version>${project.version}</Bundle-Version>
+              <Export-Package>org.sqlite;version="${project.version}",
+                org.sqlite.driver;version="${project.version}",
+                org.sqlite.osgi;version="${project.version}"</Export-Package>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+
       <!--  mvn package shade:shade -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.6.0</version>
       </plugin>
@@ -252,12 +290,10 @@
   <reporting>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-project-info-reports-plugin</artifactId>
         <version>3.9.0</version>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>3.11.2</version>
       </plugin>

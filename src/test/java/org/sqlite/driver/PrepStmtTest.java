@@ -493,7 +493,7 @@ public class PrepStmtTest {
 				prep.setInt(1, Integer.MIN_VALUE + i);
 				prep.addBatch();
 			}
-			assertArrayEquals(prep.executeBatch(), new int[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
+			assertArrayEquals(new int[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, prep.executeBatch());
 		}
 		try (ResultSet rs = stat.executeQuery("select count(*) from test;")) {
 			assertTrue(rs.next());
@@ -507,7 +507,8 @@ public class PrepStmtTest {
 			assertEquals(4, prep.getParameterMetaData().getParameterCount());
 		}
 	}
-#if sqlite.enable.column.metadata == "true"
+
+	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void metaData() throws SQLException {
 		try (PreparedStatement prep = conn.prepareStatement("select ? as col1, ? as col2, ? as delta;")) {
@@ -529,7 +530,7 @@ public class PrepStmtTest {
 			}
 		}
 	}
-#endif
+	//#endif
 
 	@Test
 	public void date1() throws SQLException {

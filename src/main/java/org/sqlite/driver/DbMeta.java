@@ -111,24 +111,24 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public String getDriverName() {
-		return "SQLiteJNA";
+		return DriverInfo.DRIVER_NAME;
 	}
 
 	@Override
 	public String getDriverVersion() {
-		return "1.0"; // FIXME
+		return DriverInfo.DRIVER_VERSION;
 	}
 
 	/** @see JDBC#getMajorVersion() */
 	@Override
 	public int getDriverMajorVersion() {
-		return 1; // FIXME Keep in sync with Driver
+		return DriverInfo.MAJOR_VERSION;
 	}
 
 	/** @see JDBC#getMinorVersion() */
 	@Override
 	public int getDriverMinorVersion() {
-		return 0; // FIXME Keep in sync with Driver
+		return DriverInfo.MINOR_VERSION;
 	}
 
 	@Override
@@ -1433,12 +1433,12 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public int getJDBCMajorVersion() {
-		return 4;
+		return DriverInfo.JDBC_MAJOR_VERSION;
 	}
 
 	@Override
 	public int getJDBCMinorVersion() {
-		return 1;
+		return DriverInfo.JDBC_MINOR_VERSION;
 	}
 
 	@Override
@@ -1507,7 +1507,7 @@ class DbMeta implements DatabaseMetaData {
 		Util.trace("DatabaseMetaData.getFunctionColumns");
 		return null;
 	}
-#if jdbc.specification.version >= "4.1"
+
 	@Override
 	public ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
 		checkOpen();
@@ -1534,7 +1534,6 @@ class DbMeta implements DatabaseMetaData {
 	public boolean generatedKeyAlwaysReturned() {
 		return false;
 	}
-#endif
 
 	@Override
 	public <T> T unwrap(Class<T> iface) throws SQLException {
@@ -1548,12 +1547,11 @@ class DbMeta implements DatabaseMetaData {
 	public boolean isWrapperFor(Class<?> iface) {
 		return iface.isAssignableFrom(getClass());
 	}
-#if jdbc.specification.version >= "4.2"
+
 	@Override
 	public long getMaxLogicalLobSize() {
 		return Integer.MAX_VALUE;
 	}
-#endif
 
 	private static String quote(String data) {
 		if (data == null) {

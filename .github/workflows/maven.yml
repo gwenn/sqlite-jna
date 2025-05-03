@@ -1,6 +1,6 @@
 name: CI
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build:
@@ -28,11 +28,10 @@ jobs:
 
     - name: Build with Maven
       if: matrix.os == 'ubuntu-latest'
-      run: mvn -q -B test --file pom.xml
+      run: mvn -q -B test
 
     - name: Build with Maven
       if: matrix.os == 'windows-latest'
       shell: cmd
       run: |
-        set PATH=%PATH%;C:\vcpkg\installed\x64-windows\bin\
-        mvn -q -B test --file pom.xml
+        mvn -Djna.library.path=C:/vcpkg/installed/x64-windows/bin -q -B test

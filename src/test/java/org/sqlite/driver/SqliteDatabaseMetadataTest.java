@@ -43,7 +43,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 		DatabaseMetaData dmd = conn.getMetaData();
 		String[] words = dmd.getSQLKeywords().split(",");
 
-		assertEquals(words[0], "ABORT");
+		assertEquals("ABORT", words[0]);
 	}
 
 	private Object[][] getMethodResults() {
@@ -57,16 +57,18 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 				{"nullsAreSortedAtStart", false},
 				{"nullsAreSortedAtEnd", false},
 				{"getDatabaseProductName", "SQLite 3"},
-				{"getDriverName", "SQLiteJNA"},
-				{"getDriverVersion", "1.0"},
-				{"getDriverMajorVersion", 1},
-				{"getDriverMinorVersion", 0},
+				{"getDriverName", DriverInfo.DRIVER_NAME},
+				{"getDriverVersion", DriverInfo.DRIVER_VERSION},
+				{"getDriverMajorVersion", DriverInfo.MAJOR_VERSION},
+				{"getDriverMinorVersion", DriverInfo.MINOR_VERSION},
 				{"usesLocalFiles", true},
 				{"usesLocalFilePerTable", false},
 				{"supportsMixedCaseIdentifiers", false},
 				{"storesUpperCaseIdentifiers", false},
 				{"storesLowerCaseIdentifiers", false},
 				{"storesMixedCaseIdentifiers", true},
+				{"getJDBCMajorVersion", DriverInfo.JDBC_MAJOR_VERSION},
+				{"getJDBCMinorVersion", DriverInfo.JDBC_MINOR_VERSION},
 		};
 	}
 
