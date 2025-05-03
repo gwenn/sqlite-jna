@@ -1,10 +1,10 @@
 Implementation-Title: SQLite3 JDBC driver
 Implementation-URL: https://github.com/gwenn/sqlite-jna
-Automatic-Module-Name: com.github.gwenn.sqlite-jna
+Automatic-Module-Name: com.github.gwenn.sqlite.jna
 Bundle-Activator: org.sqlite.osgi.DbDriverActivator
 Bundle-ManifestVersion: 2
 Bundle-Name: SQLite3 JDBC driver
-Bundle-SymbolicName: com.github.gwenn.sqlite-jna;singleton:=true
+Bundle-SymbolicName: com.github.gwenn.sqlite.jna;singleton:=true
 Bundle-License: http://unlicense.org/
 Bundle-Category: jdbc
 Multi-Release: true
