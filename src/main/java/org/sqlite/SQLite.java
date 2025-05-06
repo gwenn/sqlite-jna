@@ -15,6 +15,7 @@ import java.lang.ref.Cleaner;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLFeatureNotSupportedException;
+import java.nio.file.Path;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
 public final class SQLite {
@@ -25,8 +26,10 @@ public final class SQLite {
 	private static final AddressLayout C_POINTER = ValueLayout.ADDRESS;
 
 	private static final Arena LIBRARY_ARENA = Arena.ofAuto();
-	private static final SymbolLookup SYMBOL_LOOKUP = SymbolLookup.libraryLookup(
-		System.mapLibraryName(System.getProperty("sqlite3.library.name", JNA_LIBRARY_NAME)), LIBRARY_ARENA);
+	private static final SymbolLookup SYMBOL_LOOKUP = System.getProperty("sqlite3.library.path", "").isEmpty() ?
+		SymbolLookup.libraryLookup(System.mapLibraryName(System.getProperty("sqlite3.library.name", JNA_LIBRARY_NAME)), LIBRARY_ARENA)
+		:
+		SymbolLookup.libraryLookup(Path.of(System.getProperty("sqlite3.library.path")), LIBRARY_ARENA);
 
 	public static final int SQLITE_OK = 0;
 
