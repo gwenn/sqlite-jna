@@ -213,7 +213,7 @@
           <disableXmlReport>true</disableXmlReport>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <trimStackTrace>true</trimStackTrace>
-          <!--argLine>-Djna.library.path=/usr/local/opt/sqlite/lib</argLine-->
+          <!--argLine>-Dsqlite3.library.path=/usr/local/opt/sqlite/lib</argLine-->
           <!--argLine>-Xcheck:jni</argLine-->
         </configuration>
       </plugin>

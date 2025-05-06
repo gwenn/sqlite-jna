@@ -34,4 +34,4 @@ jobs:
       if: matrix.os == 'windows-latest'
       shell: cmd
       run: |
-        mvn -Djna.library.path=C:/vcpkg/installed/x64-windows/bin -q -B test
+        mvn -Dsqlite3.library.path=C:/vcpkg/installed/x64-windows/bin/sqlite3.dll -q -B test
