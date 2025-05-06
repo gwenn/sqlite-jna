@@ -202,6 +202,7 @@
         <version>3.14.0</version>
         <configuration>
           <release>${java.version}</release>
+          <useIncrementalCompilation>false</useIncrementalCompilation>
         </configuration>
       </plugin>
       <plugin>

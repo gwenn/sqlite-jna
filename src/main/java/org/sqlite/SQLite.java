@@ -34,6 +34,7 @@ public final class SQLite {
 	public static final int SQLITE_DONE = 101;
 
 	static final MemorySegment SQLITE_TRANSIENT = MemorySegment.ofAddress(-1L);
+	static final MemorySegment SQLITE_STATIC = MemorySegment.ofAddress(0L);
 	static final Cleaner cleaner = Cleaner.create();
 	static final Runnable NO_OP = () -> {};
 
@@ -309,7 +310,7 @@ public final class SQLite {
 	static int sqlite3_busy_handler(SQLite3 pDb, BusyHandler bh, MemorySegment pArg) {
 		try {
 			// FIXME previous busyHandler will not be freed until pDb is closed & gced
-			MemorySegment busyHandler = upcallStub(busy_handler, bh, busy_handler_desc, pDb.arena);
+			MemorySegment busyHandler = upcallStub(busy_handler, bh, busy_handler_desc, pDb.getArena());
 			return (int) sqlite3_busy_handler.invokeExact(pDb.getPointer(), busyHandler, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -561,6 +562,8 @@ public final class SQLite {
 			return (int) sqlite3_clear_bindings.invokeExact(pStmt.getPointer());
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
+		} finally {
+			pStmt.clear();
 		}
 	}
 	private static final MethodHandle sqlite3_stmt_busy = downcallHandle(
@@ -793,9 +796,8 @@ public final class SQLite {
 	private static final MethodHandle sqlite3_bind_text = downcallHandle(
 		"sqlite3_bind_text", FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_POINTER, C_INT, C_POINTER));
 	static int sqlite3_bind_text(SQLite3Stmt pStmt, int i, String value, int n, MemorySegment xDel) { // no copy needed when xDel == SQLITE_TRANSIENT == -1
-		try (Arena arena = Arena.ofConfined()) {
-			// How to avoid copying twice ? nativeString + SQLite
-			return (int) sqlite3_bind_text.invokeExact(pStmt.getPointer(), i, nativeString(arena, value), n, xDel);
+		try {
+			return (int) sqlite3_bind_text.invokeExact(pStmt.getPointer(), i, nativeString(pStmt.getArena(), value), n, SQLITE_STATIC);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -974,7 +976,7 @@ public final class SQLite {
 	static void sqlite3_progress_handler(SQLite3 pDb, int nOps, ProgressCallback xProgress, MemorySegment pArg) {
 		try {
 			// FIXME previous pc will not be freed until pDb is closed & gced
-			MemorySegment pc = upcallStub(progress_callback, xProgress, progress_callback_desc, pDb.arena);
+			MemorySegment pc = upcallStub(progress_callback, xProgress, progress_callback_desc, pDb.getArena());
 			sqlite3_progress_handler.invokeExact(pDb.getPointer(), nOps, pc, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -988,7 +990,7 @@ public final class SQLite {
 	static void sqlite3_trace(SQLite3 pDb, TraceCallback xTrace, MemorySegment pArg) {
 		try {
 			// FIXME previous tc will not be freed until pDb is closed & gced
-			MemorySegment tc = upcallStub(trace_callback, xTrace, trace_callback_desc, pDb.arena);
+			MemorySegment tc = upcallStub(trace_callback, xTrace, trace_callback_desc, pDb.getArena());
 			sqlite3_trace.invokeExact(pDb.getPointer(), tc, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -1002,7 +1004,7 @@ public final class SQLite {
 	static void sqlite3_profile(SQLite3 pDb, ProfileCallback xProfile, MemorySegment pArg) {
 		try {
 			// FIXME previous pc will not be freed until pDb is closed & gced
-			MemorySegment pc = upcallStub(profile_callback, xProfile, profile_callback_desc, pDb.arena);
+			MemorySegment pc = upcallStub(profile_callback, xProfile, profile_callback_desc, pDb.getArena());
 			sqlite3_profile.invokeExact(pDb.getPointer(), pc, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -1018,7 +1020,7 @@ public final class SQLite {
 	static MemorySegment sqlite3_update_hook(SQLite3 pDb, UpdateHook xUpdate, MemorySegment pArg) {
 		try {
 			// FIXME previous uh will not be freed until pDb is closed & gced
-			MemorySegment uh = upcallStub(update_hook, xUpdate, update_hook_desc, pDb.arena);
+			MemorySegment uh = upcallStub(update_hook, xUpdate, update_hook_desc, pDb.getArena());
 			return (MemorySegment)sqlite3_update_hook.invokeExact(pDb.getPointer(), uh, pArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -1032,7 +1034,7 @@ public final class SQLite {
 	static int sqlite3_set_authorizer(SQLite3 pDb, Authorizer authorizer, MemorySegment pUserData) {
 		try {
 			// FIXME previous auth will not be freed until pDb is closed & gced
-			MemorySegment auth = upcallStub(authorizer_up, authorizer, authorizer_desc, pDb.arena);
+			MemorySegment auth = upcallStub(authorizer_up, authorizer, authorizer_desc, pDb.getArena());
 			return (int)sqlite3_set_authorizer.invokeExact(pDb.getPointer(), auth, pUserData);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -1047,7 +1049,7 @@ public final class SQLite {
 		checkActivated(sqlite3_unlock_notify, "SQLITE_ENABLE_UNLOCK_NOTIFY not activated");
 		try {
 			// FIXME previous unc will not be freed until pDb is closed & gced
-			MemorySegment unc = upcallStub(unlock_notify_up, xNotify, unlock_notify_desc, pBlocked.arena);
+			MemorySegment unc = upcallStub(unlock_notify_up, xNotify, unlock_notify_desc, pBlocked.getArena());
 			return (int)sqlite3_unlock_notify.invokeExact(pBlocked.getPointer(), unc, pNotifyArg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -1075,9 +1077,9 @@ public final class SQLite {
 	static int sqlite3_create_function_v2(SQLite3 pDb, String functionName, int nArg, int eTextRep,
 		MemorySegment pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, MemorySegment xDestroy) {
 		try (Arena arena = Arena.ofConfined()) {
-			final MemorySegment xFu = upcallStub(scalar_callback, xFunc, scalar_callback_desc, pDb.arena);
-			final MemorySegment xS = upcallStub(aggregate_step_callback, xStep, aggregate_step_callback_desc, pDb.arena);
-			final MemorySegment xFi = upcallStub(aggregate_final_callback, xFinal, aggregate_final_callback_desc, pDb.arena);
+			final MemorySegment xFu = upcallStub(scalar_callback, xFunc, scalar_callback_desc, pDb.getArena());
+			final MemorySegment xS = upcallStub(aggregate_step_callback, xStep, aggregate_step_callback_desc, pDb.getArena());
+			final MemorySegment xFi = upcallStub(aggregate_final_callback, xFinal, aggregate_final_callback_desc, pDb.getArena());
 			return (int)sqlite3_create_function_v2.invokeExact(pDb.getPointer(), nativeString(arena, functionName), nArg, eTextRep, pApp, xFu, xS, xFi, xDestroy);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -1378,7 +1380,8 @@ public final class SQLite {
 	public static class SQLite3 {
 		private MemorySegment p;
 		int res;
-		private final Arena arena = Arena.ofAuto();
+		// To avoid upcallStub(s) from being GCed before connection is closed
+		private Arena arena;
 		SQLite3(MemorySegment p) {
 			this.p = p;
 		}
@@ -1405,6 +1408,12 @@ public final class SQLite {
 		boolean isClosed() {
 			return isNull(p);
 		}
+		private Arena getArena() {
+			if (arena == null) { // lazy loading
+				arena = Arena.ofAuto();
+			}
+			return arena;
+		}
 	}
 
 	/**
@@ -1414,10 +1423,12 @@ public final class SQLite {
 	public static class SQLite3Stmt {
 		private MemorySegment p;
 		int res;
+		// To avoid copying text twice in sqlite3_bind_text
+		private Arena arena;
 		SQLite3Stmt(MemorySegment p) {
 			this.p = p;
 		}
-		MemorySegment getPointer() {
+		private MemorySegment getPointer() {
 			return p;
 		}
 		void close() {
@@ -1429,6 +1440,15 @@ public final class SQLite {
 		}
 		boolean isClosed() {
 			return isNull(p);
+		}
+		private void clear() {
+			arena = null;
+		}
+		private Arena getArena() {
+			if (arena == null) { // lazy loading
+				arena = Arena.ofAuto();
+			}
+			return arena;
 		}
 	}
 
@@ -1442,7 +1462,7 @@ public final class SQLite {
 		SQLite3Blob(MemorySegment p) {
 			this.p = p;
 		}
-		MemorySegment getPointer() {
+		private MemorySegment getPointer() {
 			return p;
 		}
 		void close() {
@@ -1464,10 +1484,10 @@ public final class SQLite {
 	public static class SQLite3Backup {
 		private MemorySegment p;
 		int res;
-		SQLite3Backup(MemorySegment p) {
+		private SQLite3Backup(MemorySegment p) {
 			this.p = p;
 		}
-		MemorySegment getPointer() {
+		private MemorySegment getPointer() {
 			return p;
 		}
 		void finish() {
