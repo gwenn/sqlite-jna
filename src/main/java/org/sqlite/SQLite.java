@@ -14,6 +14,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.ref.Cleaner;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLFeatureNotSupportedException;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
 public final class SQLite {
@@ -72,6 +73,12 @@ public final class SQLite {
 		return MemorySegment.NULL.equals(ms);
 	}
 
+	private static void checkActivated(MethodHandle mh, String msg) {
+		if (mh == null) {
+			throw new UnsupportedOperationException(msg);
+		}
+	}
+
 	private static final MethodHandle sqlite3_libversion = downcallHandle(
 		"sqlite3_libversion", FunctionDescriptor.of(C_POINTER));
 	static String sqlite3_libversion() { // no copy needed
@@ -90,6 +97,10 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
+	static boolean versionAtLeast(int min) {
+		return sqlite3_libversion_number() >= min;
+	}
+
 	private static final MethodHandle sqlite3_threadsafe = downcallHandle(
 		"sqlite3_threadsafe", FunctionDescriptor.of(C_INT));
 	static boolean sqlite3_threadsafe() {
@@ -109,6 +120,10 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
+	public static final boolean ENABLE_COLUMN_METADATA = sqlite3_compileoption_used("ENABLE_COLUMN_METADATA");
+	public static final boolean ENABLE_STMT_SCANSTATUS = sqlite3_compileoption_used("ENABLE_STMT_SCANSTATUS");
+	public static final boolean ENABLE_UNLOCK_NOTIFY = sqlite3_compileoption_used("ENABLE_UNLOCK_NOTIFY");
+	public static final boolean OMIT_LOAD_EXTENSION = sqlite3_compileoption_used("OMIT_LOAD_EXTENSION");
 	private static final MethodHandle sqlite3_compileoption_get = downcallHandle(
 		"sqlite3_compileoption_get", FunctionDescriptor.of(C_POINTER, C_INT));
 	static String sqlite3_compileoption_get(int n) {
@@ -329,33 +344,28 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	//#if mvn.project.property.sqlite.omit.load.extension == "true"
-	static int sqlite3_enable_load_extension(Object pDb, boolean onoff) {
-		throw new UnsupportedOperationException("SQLITE_OMIT_LOAD_EXTENSION activated");
-	}
-	static int sqlite3_load_extension(Object pDb, String file, String proc, MemorySegment errMsg) {
-		throw new UnsupportedOperationException("SQLITE_OMIT_LOAD_EXTENSION activated");
-	}
-	//#else
-	private static final MethodHandle sqlite3_enable_load_extension = downcallHandle(
+
+	private static final MethodHandle sqlite3_enable_load_extension = OMIT_LOAD_EXTENSION ? null : downcallHandle(
 	"sqlite3_enable_load_extension", FunctionDescriptor.of(C_INT, C_POINTER, C_INT));
 	static int sqlite3_enable_load_extension(SQLite3 pDb, boolean onoff) {
+		checkActivated(sqlite3_enable_load_extension, "SQLITE_OMIT_LOAD_EXTENSION activated");
 		try {
 			return (int) sqlite3_enable_load_extension.invokeExact(pDb.getPointer(), onoff ? 1 : 0);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_load_extension = downcallHandle(
+
+	private static final MethodHandle sqlite3_load_extension = OMIT_LOAD_EXTENSION ? null : downcallHandle(
 		"sqlite3_load_extension", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
 	static int sqlite3_load_extension(SQLite3 pDb, String file, String proc, MemorySegment errMsg) {
+		checkActivated(sqlite3_load_extension, "SQLITE_OMIT_LOAD_EXTENSION activated");
 		try (Arena arena = Arena.ofConfined()) {
 			return (int) sqlite3_load_extension.invokeExact(pDb.getPointer(), nativeString(arena, file), nativeString(arena, proc), errMsg);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	//#endif
 	// https://sqlite.org/c3ref/c_limit_attached.html
 	public static final int SQLITE_LIMIT_LENGTH = 0, SQLITE_LIMIT_SQL_LENGTH = 1, SQLITE_LIMIT_COLUMN = 2,
 			SQLITE_LIMIT_EXPR_DEPTH = 3, SQLITE_LIMIT_COMPOUND_SELECT = 4, SQLITE_LIMIT_VDBE_OP = 5,
@@ -389,17 +399,18 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	//#if mvn.project.property.large.update == "true"
-	private static final MethodHandle sqlite3_changes64 = downcallHandle(
-	"sqlite3_changes64", FunctionDescriptor.of(C_LONG_LONG, C_POINTER));
-	static long sqlite3_changes64(SQLite3 pDb) { // 3.37.0
+	private static final MethodHandle sqlite3_changes64 = versionAtLeast(3037000) ? downcallHandle(
+	"sqlite3_changes64", FunctionDescriptor.of(C_LONG_LONG, C_POINTER)) : null;
+	static long sqlite3_changes64(SQLite3 pDb) throws SQLFeatureNotSupportedException { // 3.37.0
+		if (sqlite3_changes64 == null) {
+			throw new SQLFeatureNotSupportedException("LargeUpdate not implemented for " + sqlite3_libversion());
+		}
 		try {
 			return (long) sqlite3_changes64.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	//#endif
 	private static final MethodHandle sqlite3_total_changes = downcallHandle(
 	"sqlite3_total_changes", FunctionDescriptor.of(C_INT, C_POINTER));
 	static int sqlite3_total_changes(SQLite3 pDb) {
@@ -409,17 +420,18 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	//#if mvn.project.property.large.update == "true"
-	private static final MethodHandle sqlite3_total_changes64 = downcallHandle(
-	"sqlite3_total_changes64", FunctionDescriptor.of(C_INT, C_POINTER));
-	static long sqlite3_total_changes64(SQLite3 pDb) { // 3.37.0
+	private static final MethodHandle sqlite3_total_changes64 = versionAtLeast(3037000) ? downcallHandle(
+	"sqlite3_total_changes64", FunctionDescriptor.of(C_INT, C_POINTER)) : null;
+	static long sqlite3_total_changes64(SQLite3 pDb) throws SQLFeatureNotSupportedException { // 3.37.0
+		if (sqlite3_total_changes64 == null) {
+			throw new SQLFeatureNotSupportedException("LargeUpdate not implemented for " + sqlite3_libversion());
+		}
 		try {
 			return (long) sqlite3_total_changes64.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	//#endif
 	private static final MethodHandle sqlite3_last_insert_rowid = downcallHandle(
 	"sqlite3_last_insert_rowid", FunctionDescriptor.of(C_LONG_LONG, C_POINTER));
 	static long sqlite3_last_insert_rowid(SQLite3 pDb) {
@@ -606,28 +618,30 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
-	private static final MethodHandle sqlite3_column_origin_name = downcallHandle(
-	"sqlite3_column_origin_name", FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT));
+	private static final MethodHandle sqlite3_column_origin_name = ENABLE_COLUMN_METADATA ? downcallHandle(
+	"sqlite3_column_origin_name", FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT)) : null;
 	static String sqlite3_column_origin_name(SQLite3Stmt pStmt, int iCol) { // copy needed
+		checkActivated(sqlite3_column_origin_name, "SQLITE_ENABLE_COLUMN_METADATA not activated");
 		try {
 			return getString((MemorySegment) sqlite3_column_origin_name.invokeExact(pStmt.getPointer(), iCol));
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_column_table_name = downcallHandle(
-		"sqlite3_column_table_name", FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT));
+	private static final MethodHandle sqlite3_column_table_name = ENABLE_COLUMN_METADATA ? downcallHandle(
+		"sqlite3_column_table_name", FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT)) : null;
 	static String sqlite3_column_table_name(SQLite3Stmt pStmt, int iCol) { // copy needed
+		checkActivated(sqlite3_column_table_name, "SQLITE_ENABLE_COLUMN_METADATA not activated");
 		try {
 			return getString((MemorySegment) sqlite3_column_table_name.invokeExact(pStmt.getPointer(), iCol));
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_column_database_name = downcallHandle(
-		"sqlite3_column_database_name", FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT));
+	private static final MethodHandle sqlite3_column_database_name = ENABLE_COLUMN_METADATA ? downcallHandle(
+		"sqlite3_column_database_name", FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT)) : null;
 	static String sqlite3_column_database_name(SQLite3Stmt pStmt, int iCol) { // copy needed
+		checkActivated(sqlite3_column_database_name, "SQLITE_ENABLE_COLUMN_METADATA not activated");
 		try {
 			return getString((MemorySegment) sqlite3_column_database_name.invokeExact(pStmt.getPointer(), iCol));
 		} catch (Throwable e) {
@@ -643,20 +657,6 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	//#else
-	static String sqlite3_column_origin_name(Object pStmt, int iCol) {
-		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
-	}
-	static String sqlite3_column_table_name(Object pStmt, int iCol) {
-		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
-	}
-	static String sqlite3_column_database_name(Object pStmt, int iCol) {
-		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
-	}
-	static String sqlite3_column_decltype(Object pStmt, int iCol) {
-		throw new UnsupportedOperationException("SQLITE_ENABLE_COLUMN_METADATA not activated");
-	}
-	//#endif
 
 	private static final MethodHandle sqlite3_column_blob = downcallHandle(
 		"sqlite3_column_blob", FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT));
@@ -820,27 +820,28 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	//#if mvn.project.property.sqlite.enable.stmt.scanstatus == "true"
+
 	// TODO https://sqlite.org/c3ref/c_scanstat_est.html constants
-	private static final MethodHandle sqlite3_stmt_scanstatus = downcallHandle(
-	"sqlite3_stmt_scanstatus", FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_INT, C_POINTER));
+	private static final MethodHandle sqlite3_stmt_scanstatus = ENABLE_STMT_SCANSTATUS ? downcallHandle(
+	"sqlite3_stmt_scanstatus", FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_INT, C_POINTER)) : null;
 	static int sqlite3_stmt_scanstatus(SQLite3Stmt pStmt, int idx, int iScanStatusOp, MemorySegment pOut) {
+		checkActivated(sqlite3_stmt_scanstatus, "SQLITE_ENABLE_STMT_SCANSTATUS not activated");
 		try {
 			return (int) sqlite3_stmt_scanstatus.invokeExact(pStmt.getPointer(), idx, iScanStatusOp, pOut);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_stmt_scanstatus_reset = downcallHandle(
-		"sqlite3_stmt_scanstatus_reset", FunctionDescriptor.ofVoid(C_POINTER));
+	private static final MethodHandle sqlite3_stmt_scanstatus_reset = ENABLE_STMT_SCANSTATUS ? downcallHandle(
+		"sqlite3_stmt_scanstatus_reset", FunctionDescriptor.ofVoid(C_POINTER)) : null;
 	static void sqlite3_stmt_scanstatus_reset(SQLite3Stmt pStmt) {
+		checkActivated(sqlite3_stmt_scanstatus_reset, "SQLITE_ENABLE_STMT_SCANSTATUS not activated");
 		try {
 			sqlite3_stmt_scanstatus_reset.invokeExact(pStmt.getPointer());
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	//#endif
 
 	private static final MethodHandle sqlite3_free = downcallHandle(
 		"sqlite3_free", FunctionDescriptor.ofVoid(C_POINTER));
@@ -1037,13 +1038,13 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
-	private static final MethodHandle sqlite3_unlock_notify = downcallHandle(
-	"sqlite3_unlock_notify", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER));
+	private static final MethodHandle sqlite3_unlock_notify = ENABLE_UNLOCK_NOTIFY ? downcallHandle(
+	"sqlite3_unlock_notify", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER)) : null;
 	private static final FunctionDescriptor unlock_notify_desc = FunctionDescriptor.ofVoid(C_POINTER, C_INT);
 	private static final MethodHandle unlock_notify_up = upcallHandle(UnlockNotifyCallback.class, "callback",
 		unlock_notify_desc);
 	static int sqlite3_unlock_notify(SQLite3 pBlocked, UnlockNotifyCallback xNotify, MemorySegment pNotifyArg) {
+		checkActivated(sqlite3_unlock_notify, "SQLITE_ENABLE_UNLOCK_NOTIFY not activated");
 		try {
 			// FIXME previous unc will not be freed until pDb is closed & gced
 			MemorySegment unc = upcallStub(unlock_notify_up, xNotify, unlock_notify_desc, pBlocked.arena);
@@ -1052,7 +1053,6 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	//#endif
 
 	/*
 	void (*)(sqlite3_context*,int,sqlite3_value**),

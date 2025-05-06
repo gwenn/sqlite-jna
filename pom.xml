@@ -198,51 +198,6 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>properties-maven-plugin</artifactId>
-        <version>1.2.1</version>
-        <executions>
-          <execution>
-            <phase>initialize</phase>
-            <goals>
-              <goal>read-project-properties</goal>
-            </goals>
-            <configuration>
-              <files>
-                <file>build.properties</file>
-              </files>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>com.igormaznitsa</groupId>
-        <artifactId>jcp</artifactId>
-        <version>7.1.2</version>
-        <configuration>
-          <verbose>false</verbose>
-        </configuration>
-        <executions>
-          <execution>
-            <id>preprocess-sources</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>preprocess</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>preprocess-test-sources</id>
-            <phase>generate-test-sources</phase>
-            <goals>
-              <goal>preprocess</goal>
-            </goals>
-            <configuration>
-              <useTestSources>true</useTestSources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.14.0</version>
         <configuration>

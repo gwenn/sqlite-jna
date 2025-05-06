@@ -196,7 +196,7 @@ public class Stmt implements AutoCloseable, Row {
 	 */
 	public boolean step(int timeout) throws SQLiteException {
 		c.setQueryTimeout(timeout);
-		final int res = blockingStep(c);
+		final int res = blockingStep();
 		if (res == SQLITE_ROW) {
 			return true;
 		}
@@ -213,7 +213,7 @@ public class Stmt implements AutoCloseable, Row {
 	 */
 	public int stepNoCheck(int timeout) throws SQLiteException {
 		c.setQueryTimeout(timeout);
-		final int res = blockingStep(c);
+		final int res = blockingStep();
 		if (res == SQLITE_ROW) {
 			return res;
 		}
@@ -223,7 +223,7 @@ public class Stmt implements AutoCloseable, Row {
 	}
 	public void exec() throws SQLiteException {
 		c.setQueryTimeout(0);
-		final int res = blockingStep(c);
+		final int res = blockingStep();
 		// Release implicit lock as soon as possible
 		sqlite3_reset(pStmt); // ok if pStmt is null
 		if (res == SQLITE_ROW) {
@@ -235,14 +235,16 @@ public class Stmt implements AutoCloseable, Row {
 	}
 
 	// http://sqlite.org/unlock_notify.html
-	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
-	private int blockingStep(Conn unused) throws SQLiteException {
+	private int blockingStep() throws SQLiteException {
+		if (!ENABLE_UNLOCK_NOTIFY) {
+			return sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
+		}
 		int rc;
 		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_step(pStmt)) || ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE == rc) { // ok if pStmt is null => SQLITE_MISUSE
 			if (ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE != rc && ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE != c.getExtendedErrcode()) {
 				break;
 			}
-			rc = c.waitForUnlockNotify(null);
+			rc = c.waitForUnlockNotify();
 			if (rc != SQLITE_OK) {
 				break;
 			}
@@ -250,11 +252,6 @@ public class Stmt implements AutoCloseable, Row {
 		}
 		return rc;
 	}
-	//#else
-	private int blockingStep(Object unused) {
-		return sqlite3_step(pStmt); // ok if pStmt is null => SQLITE_MISUSE
-	}
-	//#endif
 
 	public void reset() throws StmtException {
 		check(sqlite3_reset(pStmt), "Error while resetting '%s'"); // ok if pStmt is null

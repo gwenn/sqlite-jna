@@ -138,16 +138,14 @@ public class ConnTest {
 		checkResult(c.closeNoCheck());
 	}
 
-	//#if mvn.project.property.sqlite.omit.load.extension == "false"
 	@Test
 	public void enableLoadExtension() throws SQLiteException {
 		final Conn c = open();
-		if (!sqlite3_compileoption_used("OMIT_LOAD_EXTENSION")) {
+		if (!OMIT_LOAD_EXTENSION) {
 			c.enableLoadExtension(true);
 		}
 		checkResult(c.closeNoCheck());
 	}
-	//#endif
 
 	@Ignore
 	@Test

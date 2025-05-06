@@ -36,7 +36,6 @@ import java.sql.Types;
 import static org.junit.Assert.*;
 
 public class SqliteResultSetMetadataTest extends SqliteTestHelper {
-	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void testColumnType() throws Exception {
 		try (Statement stmt = conn.createStatement()) {
@@ -97,5 +96,4 @@ public class SqliteResultSetMetadataTest extends SqliteTestHelper {
 			}
 		}
 	}
-	//#endif
 }

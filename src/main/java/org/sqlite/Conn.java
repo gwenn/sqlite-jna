@@ -16,6 +16,7 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.lang.ref.Cleaner;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -241,7 +242,7 @@ public final class Conn implements AutoCloseable {
 			final MemorySegment pSql = nativeString(arena, sql);
 			final MemorySegment ppStmt = arena.allocate(ValueLayout.ADDRESS);
 			final MemorySegment ppTail = arena.allocate(ValueLayout.ADDRESS);
-			final int res = blockingPrepare(null, pSql, cacheable ? SQLITE_PREPARE_PERSISTENT : 0, ppStmt, ppTail);
+			final int res = blockingPrepare(pSql, cacheable ? SQLITE_PREPARE_PERSISTENT : 0, ppStmt, ppTail);
 			check(res, "error while preparing statement '%s'", sql);
 			final MemorySegment pStmt = ppStmt.getAtIndex(ValueLayout.ADDRESS, 0);
 			final SQLite3Stmt stmt = isNull(pStmt) ? null : new SQLite3Stmt(pStmt);
@@ -250,26 +251,25 @@ public final class Conn implements AutoCloseable {
 	}
 
 	// http://sqlite.org/unlock_notify.html
-	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
-	private int blockingPrepare(Conn unused, MemorySegment pSql, int flags, MemorySegment ppStmt, MemorySegment ppTail) throws ConnException {
+	private int blockingPrepare(MemorySegment pSql, int flags, MemorySegment ppStmt, MemorySegment ppTail) throws ConnException {
+		if (!ENABLE_UNLOCK_NOTIFY) {
+			return sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail); // FIXME nbytes + 1
+		}
 		int rc;
 		while (ErrCodes.SQLITE_LOCKED == (rc = sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail))) {
-			rc = waitForUnlockNotify(null);
+			rc = waitForUnlockNotify();
 			if (rc != SQLITE_OK) {
 				break;
 			}
 		}
 		return rc;
 	}
-	//#else
-	private int blockingPrepare(Object unused, MemorySegment pSql, int flags, MemorySegment ppStmt, MemorySegment ppTail) {
-		return sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail); // FIXME nbytes + 1
-	}
-	//#endif
 
 	// http://sqlite.org/unlock_notify.html
-	//#if mvn.project.property.sqlite.enable.unlock.notify == "true"
-	int waitForUnlockNotify(Conn unused) throws ConnException {
+	int waitForUnlockNotify() throws ConnException {
+		if (!ENABLE_UNLOCK_NOTIFY) {
+			return ErrCodes.SQLITE_LOCKED;
+		}
 		UnlockNotification notif = UnlockNotificationCallback.INSTANCE.add(pDb);
 		int rc = sqlite3_unlock_notify(pDb, UnlockNotificationCallback.INSTANCE, pDb.getPointer());
 		assert rc == ErrCodes.SQLITE_LOCKED || rc == ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE || rc == SQLITE_OK;
@@ -278,11 +278,6 @@ public final class Conn implements AutoCloseable {
 		}
 		return rc;
 	}
-	//#else
-	int waitForUnlockNotify(Object unused) throws ConnException {
-		return ErrCodes.SQLITE_LOCKED;
-	}
-	//#endif
 
 	/**
 	 * @return Run-time library version number
@@ -414,17 +409,15 @@ public final class Conn implements AutoCloseable {
 		checkOpen();
 		return sqlite3_changes(pDb);
 	}
-	//#if mvn.project.property.large.update == "true"
 	/**
 	 * @return Like {@link #getChanges()} but for large number.
 	 * @throws ConnException if current connection is closed
 	 * @see <a href="https://www.sqlite.org/c3ref/changes.html">sqlite3_changes64</a>
 	 */
-	public long getChanges64() throws ConnException {
+	public long getChanges64() throws ConnException, SQLFeatureNotSupportedException {
 		checkOpen();
 		return sqlite3_changes64(pDb);
 	}
-	//#endif
 	/**
 	 * @return Total number of rows modified
 	 * @throws ConnException if current connection is closed
@@ -434,17 +427,15 @@ public final class Conn implements AutoCloseable {
 		checkOpen();
 		return sqlite3_total_changes(pDb);
 	}
-	//#if mvn.project.property.large.update == "true"
 	/**
 	 * @return Total number of rows modified
 	 * @throws ConnException if current connection is closed
 	 * @see <a href="https://www.sqlite.org/c3ref/total_changes.html">sqlite3_total_changes64</a>
 	 */
-	public long getTotalChanges64() throws ConnException {
+	public long getTotalChanges64() throws ConnException, SQLFeatureNotSupportedException {
 		checkOpen();
 		return sqlite3_total_changes64(pDb);
 	}
-	//#endif
 
 	/**
 	 * @return the rowid of the most recent successful INSERT into the database.

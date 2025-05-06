@@ -508,7 +508,6 @@ public class PrepStmtTest {
 		}
 	}
 
-	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void metaData() throws SQLException {
 		try (PreparedStatement prep = conn.prepareStatement("select ? as col1, ? as col2, ? as delta;")) {
@@ -530,7 +529,6 @@ public class PrepStmtTest {
 			}
 		}
 	}
-	//#endif
 
 	@Test
 	public void date1() throws SQLException {

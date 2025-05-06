@@ -62,7 +62,6 @@ public class RSMetaDataTest {
 		Guard.closeAll(stat, conn);
 	}
 
-	//#if mvn.project.property.sqlite.enable.column.metadata == "true"
 	@Test
 	public void schemaName() throws SQLException {
 		assertEquals("main", meta.getSchemaName(1));
@@ -194,5 +193,4 @@ public class RSMetaDataTest {
 		assertEquals(0, meta.getScale(2));
 		assertEquals(0, meta.getScale(3));
 	}
-	//#endif
 }
