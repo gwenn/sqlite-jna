@@ -32,7 +32,7 @@ public class OsgiDataSourceFactory implements DataSourceFactory {
 		return ds;
 	}
 
-	private void setupDataSource(BasicDataSource ds, Properties p) {
+	private static void setupDataSource(BasicDataSource ds, Properties p) {
 		// Setting user and password
 		p.remove(DataSourceFactory.JDBC_USER);
 		p.remove(DataSourceFactory.JDBC_PASSWORD);

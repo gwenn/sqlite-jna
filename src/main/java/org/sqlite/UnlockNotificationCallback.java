@@ -7,7 +7,7 @@ import java.lang.foreign.ValueLayout;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-class UnlockNotificationCallback implements UnlockNotifyCallback {
+final class UnlockNotificationCallback implements UnlockNotifyCallback {
 	static final UnlockNotificationCallback INSTANCE = new UnlockNotificationCallback();
 
 	private final Map<MemorySegment, UnlockNotification> unlockNotifications = new WeakHashMap<>();

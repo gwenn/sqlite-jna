@@ -931,7 +931,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 
 	private void bindZeroBlob(int parameterIndex, ZeroBlob x) throws SQLException {
 		if (!batching) {
-			getStmt().bindZeroblob(parameterIndex, x.n);
+			getStmt().bindZeroblob(parameterIndex, x.n());
 		}
 		bind(parameterIndex, x);
 	}

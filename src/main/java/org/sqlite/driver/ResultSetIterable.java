@@ -46,7 +46,7 @@ public class ResultSetIterable<T> implements Iterable<T>, Guard {
 		} catch (SQLException e) {
 			throw sneakyThrow(e);
 		}
-		return new Iterator<T>() {
+		return new Iterator<>() {
 			private State state = State.NOT_READY;
 			@Override
 			public boolean hasNext() {

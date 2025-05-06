@@ -34,7 +34,7 @@ public final class SQLite {
 	public static final int SQLITE_DONE = 101;
 
 	static final MemorySegment SQLITE_TRANSIENT = MemorySegment.ofAddress(-1L);
-	static final MemorySegment SQLITE_STATIC = MemorySegment.ofAddress(0L);
+	private static final MemorySegment SQLITE_STATIC = MemorySegment.ofAddress(0L);
 	static final Cleaner cleaner = Cleaner.create();
 	static final Runnable NO_OP = () -> {};
 
@@ -49,14 +49,14 @@ public final class SQLite {
 		return LINKER.downcallHandle(findOrThrow(symbol), desc, options);
 	}
 	private static final MethodHandles.Lookup MH_LOOKUP = MethodHandles.lookup();
-	static MethodHandle upcallHandle(Class<?> fi, String name, FunctionDescriptor fdesc) {
+	private static MethodHandle upcallHandle(Class<?> fi, String name, FunctionDescriptor fdesc) {
 		try {
 			return MH_LOOKUP.findVirtual(fi, name, fdesc.toMethodType());
 		} catch (ReflectiveOperationException ex) {
 			throw new AssertionError(ex);
 		}
 	}
-	static MemorySegment upcallStub(MethodHandle mh, Object x, FunctionDescriptor fd, Arena arena) {
+	private static MemorySegment upcallStub(MethodHandle mh, Object x, FunctionDescriptor fd, Arena arena) {
 		if (x == null) {
 			return MemorySegment.NULL;
 		}
@@ -98,7 +98,7 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	static boolean versionAtLeast(int min) {
+	public static boolean versionAtLeast(int min) {
 		return sqlite3_libversion_number() >= min;
 	}
 
@@ -113,7 +113,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_compileoption_used = downcallHandle(
 		"sqlite3_compileoption_used", FunctionDescriptor.of(C_INT, C_POINTER));
-	static boolean sqlite3_compileoption_used(String optName) {
+	public static boolean sqlite3_compileoption_used(String optName) {
 		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment ms = arena.allocateFrom(optName);
 			return ((int) sqlite3_compileoption_used.invokeExact(ms)) != 0;
@@ -464,7 +464,7 @@ public final class SQLite {
 
 	private static final MethodHandle sqlite3_next_stmt = downcallHandle(
 		"sqlite3_next_stmt", FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER));
-	static SQLite3Stmt sqlite3_next_stmt(SQLite3 pDb, SQLite3Stmt pStmt) {
+	private static SQLite3Stmt sqlite3_next_stmt(SQLite3 pDb, SQLite3Stmt pStmt) {
 		try {
 			final MemorySegment stmt = pStmt == null ? MemorySegment.NULL : pStmt.getPointer();
 			final MemorySegment ms = (MemorySegment) sqlite3_next_stmt.invokeExact(pDb.getPointer(), stmt);
@@ -1088,7 +1088,7 @@ public final class SQLite {
 
 	private static final MethodHandle sqlite3_result_null = downcallHandle(
 		"sqlite3_result_null", FunctionDescriptor.ofVoid(C_POINTER));
-	static void sqlite3_result_null(SQLite3Context pCtx) {
+	private static void sqlite3_result_null(SQLite3Context pCtx) {
 		try {
 			sqlite3_result_null.invokeExact(pCtx.p);
 		} catch (Throwable e) {
@@ -1097,7 +1097,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_result_int = downcallHandle(
 		"sqlite3_result_int", FunctionDescriptor.ofVoid(C_POINTER, C_INT));
-	static void sqlite3_result_int(SQLite3Context pCtx, int i) {
+	private static void sqlite3_result_int(SQLite3Context pCtx, int i) {
 		try {
 			sqlite3_result_int.invokeExact(pCtx.p, i);
 		} catch (Throwable e) {
@@ -1106,7 +1106,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_result_double = downcallHandle(
 		"sqlite3_result_double", FunctionDescriptor.ofVoid(C_POINTER, C_DOUBLE));
-	static void sqlite3_result_double(SQLite3Context pCtx, double d) {
+	private static void sqlite3_result_double(SQLite3Context pCtx, double d) {
 		try {
 			sqlite3_result_double.invokeExact(pCtx.p, d);
 		} catch (Throwable e) {
@@ -1115,7 +1115,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_result_text = downcallHandle(
 		"sqlite3_result_text", FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_INT, C_POINTER));
-	static void sqlite3_result_text(SQLite3Context pCtx, String text, int n, MemorySegment xDel) { // no copy needed when xDel == SQLITE_TRANSIENT == -1
+	private static void sqlite3_result_text(SQLite3Context pCtx, String text, int n, MemorySegment xDel) { // no copy needed when xDel == SQLITE_TRANSIENT == -1
 		try (Arena arena = Arena.ofConfined()) {
 			// How to avoid copying twice ? nativeString + SQLite
 			sqlite3_result_text.invokeExact(pCtx.p, nativeString(arena, text), n, xDel);
@@ -1126,7 +1126,7 @@ public final class SQLite {
 	private static final MethodHandle sqlite3_result_blob = downcallHandle(
 		"sqlite3_result_blob", FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_INT, C_POINTER),
 		CRITICAL);
-	static void sqlite3_result_blob(SQLite3Context pCtx, byte[] blob, int n, MemorySegment xDel) {
+	private static void sqlite3_result_blob(SQLite3Context pCtx, byte[] blob, int n, MemorySegment xDel) {
 		try {
 			MemorySegment ms = MemorySegment.ofArray(blob);
 			sqlite3_result_blob.invokeExact(pCtx.p, ms, n, xDel);
@@ -1136,7 +1136,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_result_int64 = downcallHandle(
 		"sqlite3_result_int64", FunctionDescriptor.ofVoid(C_POINTER, C_LONG_LONG));
-	static void sqlite3_result_int64(SQLite3Context pCtx, long l) {
+	private static void sqlite3_result_int64(SQLite3Context pCtx, long l) {
 		try {
 			sqlite3_result_int64.invokeExact(pCtx.p, l);
 		} catch (Throwable e) {
@@ -1145,7 +1145,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_result_zeroblob = downcallHandle(
 		"sqlite3_result_zeroblob", FunctionDescriptor.ofVoid(C_POINTER, C_INT));
-	static void sqlite3_result_zeroblob(SQLite3Context pCtx, int n) {
+	private static void sqlite3_result_zeroblob(SQLite3Context pCtx, int n) {
 		try {
 			sqlite3_result_zeroblob.invokeExact(pCtx.p, n);
 		} catch (Throwable e) {
@@ -1155,7 +1155,7 @@ public final class SQLite {
 
 	private static final MethodHandle sqlite3_result_error = downcallHandle(
 		"sqlite3_result_error", FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_INT));
-	static void sqlite3_result_error(SQLite3Context pCtx, String err, int length) {
+	private static void sqlite3_result_error(SQLite3Context pCtx, String err, int length) {
 		try (Arena arena = Arena.ofConfined()) {
 			sqlite3_result_error.invokeExact(pCtx.p, nativeString(arena, err), length);
 		} catch (Throwable e) {
@@ -1164,7 +1164,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_result_error_code = downcallHandle(
 		"sqlite3_result_error_code", FunctionDescriptor.ofVoid(C_POINTER, C_INT));
-	static void sqlite3_result_error_code(SQLite3Context pCtx, int errCode) {
+	private static void sqlite3_result_error_code(SQLite3Context pCtx, int errCode) {
 		try {
 			sqlite3_result_error_code.invokeExact(pCtx.p, errCode);
 		} catch (Throwable e) {
@@ -1182,7 +1182,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_result_error_toobig = downcallHandle(
 		"sqlite3_result_error_toobig", FunctionDescriptor.ofVoid(C_POINTER));
-	static void sqlite3_result_error_toobig(SQLite3Context pCtx) {
+	private static void sqlite3_result_error_toobig(SQLite3Context pCtx) {
 		try {
 			sqlite3_result_error_toobig.invokeExact(pCtx.p);
 		} catch (Throwable e) {
@@ -1193,7 +1193,7 @@ public final class SQLite {
 
 	private static final MethodHandle sqlite3_value_blob = downcallHandle(
 		"sqlite3_value_blob", FunctionDescriptor.of(C_POINTER, C_POINTER));
-	static MemorySegment sqlite3_value_blob(MemorySegment pValue) {
+	private static MemorySegment sqlite3_value_blob(MemorySegment pValue) {
 		try {
 			return (MemorySegment)sqlite3_value_blob.invokeExact(pValue);
 		} catch (Throwable e) {
@@ -1202,7 +1202,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_value_bytes = downcallHandle(
 		"sqlite3_value_bytes", FunctionDescriptor.of(C_INT, C_POINTER));
-	static int sqlite3_value_bytes(MemorySegment pValue) {
+	private static int sqlite3_value_bytes(MemorySegment pValue) {
 		try {
 			return (int)sqlite3_value_bytes.invokeExact(pValue);
 		} catch (Throwable e) {
@@ -1211,7 +1211,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_value_double = downcallHandle(
 		"sqlite3_value_double", FunctionDescriptor.of(C_LONG_LONG, C_POINTER));
-	static double sqlite3_value_double(MemorySegment pValue) {
+	private static double sqlite3_value_double(MemorySegment pValue) {
 		try {
 			return (double)sqlite3_value_double.invokeExact(pValue);
 		} catch (Throwable e) {
@@ -1220,7 +1220,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_value_int = downcallHandle(
 		"sqlite3_value_int", FunctionDescriptor.of(C_INT, C_POINTER));
-	static int sqlite3_value_int(MemorySegment pValue) {
+	private static int sqlite3_value_int(MemorySegment pValue) {
 		try {
 			return (int)sqlite3_value_int.invokeExact(pValue);
 		} catch (Throwable e) {
@@ -1229,7 +1229,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_value_int64 = downcallHandle(
 		"sqlite3_value_int64", FunctionDescriptor.of(C_LONG_LONG, C_POINTER));
-	static long sqlite3_value_int64(MemorySegment pValue) {
+	private static long sqlite3_value_int64(MemorySegment pValue) {
 		try {
 			return (long)sqlite3_value_int64.invokeExact(pValue);
 		} catch (Throwable e) {
@@ -1238,7 +1238,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_value_text = downcallHandle(
 		"sqlite3_value_text", FunctionDescriptor.of(C_POINTER, C_POINTER));
-	static String sqlite3_value_text(MemorySegment pValue){
+	private static String sqlite3_value_text(MemorySegment pValue){
 		try {
 			return getString((MemorySegment)sqlite3_value_text.invokeExact(pValue));
 		} catch (Throwable e) {
@@ -1247,7 +1247,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_value_type = downcallHandle(
 		"sqlite3_value_type", FunctionDescriptor.of(C_INT, C_POINTER));
-	static int sqlite3_value_type(MemorySegment pValue){
+	private static int sqlite3_value_type(MemorySegment pValue){
 		try {
 			return (int)sqlite3_value_type.invokeExact(pValue);
 		} catch (Throwable e) {
@@ -1256,7 +1256,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_value_numeric_type = downcallHandle(
 		"sqlite3_value_numeric_type", FunctionDescriptor.of(C_INT, C_POINTER));
-	static int sqlite3_value_numeric_type(MemorySegment pValue){
+	private static int sqlite3_value_numeric_type(MemorySegment pValue){
 		try {
 			return (int)sqlite3_value_numeric_type.invokeExact(pValue);
 		} catch (Throwable e) {
@@ -1293,7 +1293,7 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_context_db_handle = downcallHandle(
 		"sqlite3_context_db_handle", FunctionDescriptor.of(C_POINTER, C_POINTER));
-	static SQLite3 sqlite3_context_db_handle(SQLite3Context pCtx) {
+	private static SQLite3 sqlite3_context_db_handle(SQLite3Context pCtx) {
 		try {
 			return new SQLite3((MemorySegment)sqlite3_context_db_handle.invokeExact(pCtx.p));
 		} catch (Throwable e) {
@@ -1377,7 +1377,7 @@ public final class SQLite {
 	 * Database connection handle
 	 * @see <a href="http://sqlite.org/c3ref/sqlite3.html">sqlite3</a>
 	 */
-	public static class SQLite3 {
+	public static final class SQLite3 {
 		private MemorySegment p;
 		int res;
 		// To avoid upcallStub(s) from being GCed before connection is closed
@@ -1420,7 +1420,7 @@ public final class SQLite {
 	 * Prepared statement object
 	 * @see <a href="http://sqlite.org/c3ref/stmt.html">sqlite3_stmt</a>
 	 */
-	public static class SQLite3Stmt {
+	public static final class SQLite3Stmt {
 		private MemorySegment p;
 		int res;
 		// To avoid copying text twice in sqlite3_bind_text
@@ -1456,7 +1456,7 @@ public final class SQLite {
 	 * A handle to an open BLOB
 	 * @see <a href="http://sqlite.org/c3ref/blob.html">sqlite3_blob</a>
 	 */
-	public static class SQLite3Blob {
+	public static final class SQLite3Blob {
 		private MemorySegment p;
 		int res;
 		SQLite3Blob(MemorySegment p) {
@@ -1481,7 +1481,7 @@ public final class SQLite {
 	 * Online backup object
 	 * @see <a href="http://sqlite.org/c3ref/backup.html">sqlite3_backup</a>
 	 */
-	public static class SQLite3Backup {
+	public static final class SQLite3Backup {
 		private MemorySegment p;
 		int res;
 		private SQLite3Backup(MemorySegment p) {
@@ -1506,7 +1506,7 @@ public final class SQLite {
 	 * SQL function context object
 	 * @see <a href="http://sqlite.org/c3ref/context.html">sqlite3_context</a>
 	 */
-	public static class SQLite3Context {
+	public static final class SQLite3Context {
 		private final MemorySegment p;
 		SQLite3Context(MemorySegment p) {
 			this.p = p;
@@ -1568,7 +1568,7 @@ public final class SQLite {
 		 * @see <a href="http://sqlite.org/c3ref/result_blob.html">sqlite3_result_zeroblob</a>
 		 */
 		public void setResultZeroBlob(ZeroBlob result) {
-			sqlite3_result_zeroblob(this, result.n);
+			sqlite3_result_zeroblob(this, result.n());
 		}
 
 		/*
@@ -1613,7 +1613,7 @@ public final class SQLite {
 	 * Dynamically typed value objects
 	 * @see <a href="http://sqlite.org/c3ref/value.html">sqlite3_value</a>
 	 */
-	public static class SQLite3Values {
+	public static final class SQLite3Values {
 		private static final SQLite3Values NO_ARG = new SQLite3Values(MemorySegment.NULL, 0);
 		private final MemorySegment args;
 		private final int nArg;

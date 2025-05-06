@@ -39,7 +39,7 @@ public final class Conn implements AutoCloseable {
 	private final boolean sharedCacheMode;
 	private TimeoutProgressCallback timeoutProgressCallback;
 
-	private final Map<String, Stmt> cache = new LinkedHashMap<String, Stmt>() {
+	private final Map<String, Stmt> cache = new LinkedHashMap<>() {
 		@Override
 		protected boolean removeEldestEntry(Map.Entry eldest) {
 			if (size() <= maxCacheSize) {
@@ -267,9 +267,6 @@ public final class Conn implements AutoCloseable {
 
 	// http://sqlite.org/unlock_notify.html
 	int waitForUnlockNotify() throws ConnException {
-		if (!ENABLE_UNLOCK_NOTIFY) {
-			return ErrCodes.SQLITE_LOCKED;
-		}
 		UnlockNotification notif = UnlockNotificationCallback.INSTANCE.add(pDb);
 		int rc = sqlite3_unlock_notify(pDb, UnlockNotificationCallback.INSTANCE, pDb.getPointer());
 		assert rc == ErrCodes.SQLITE_LOCKED || rc == ExtErrCodes.SQLITE_LOCKED_SHAREDCACHE || rc == SQLITE_OK;
@@ -798,7 +795,7 @@ public final class Conn implements AutoCloseable {
 	}
 
 	// To be called in Conn.prepare
-	Stmt find(String sql) {
+	private Stmt find(String sql) {
 		if (maxCacheSize <= 0) {
 			return null;
 		}

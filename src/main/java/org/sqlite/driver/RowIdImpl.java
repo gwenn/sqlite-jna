@@ -12,12 +12,7 @@ import org.sqlite.SQLite;
 
 import java.sql.RowId;
 
-class RowIdImpl implements RowId {
-	final long value;
-
-	RowIdImpl(long value) {
-		this.value = value;
-	}
+record RowIdImpl(long value) implements RowId {
 
 	@Override
 	public byte[] getBytes() {
@@ -42,7 +37,7 @@ class RowIdImpl implements RowId {
 
 	@Override
 	public int hashCode() {
-		return (int) (value ^ (value >>> 32));
+		return Long.hashCode(value);
 	}
 
 	static long getValue(RowId rowId) {

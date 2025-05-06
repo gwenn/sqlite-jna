@@ -137,7 +137,7 @@ public class Stmt implements AutoCloseable, Row {
 	 */
 	public <T> Iterator<T> queryMap(RowMapper<T> mapper, Object... params) throws SQLiteException {
 		bind(params);
-		return new Iterator<T>() {
+		return new Iterator<>() {
 			private State state = State.NOT_READY;
 			@Override
 			public boolean hasNext() {
@@ -452,7 +452,7 @@ public class Stmt implements AutoCloseable, Row {
 		} else if (value instanceof byte[]) {
 			bindBlob(i, (byte[]) value);
 		} else if (value instanceof ZeroBlob) {
-			bindZeroblob(i, ((ZeroBlob) value).n);
+			bindZeroblob(i, ((ZeroBlob) value).n());
 		} else {
 			throw new StmtException(this, String.format("unsupported type in bind: %s", value.getClass().getSimpleName()), ErrCodes.WRAPPER_SPECIFIC);
 		}
@@ -569,7 +569,7 @@ public class Stmt implements AutoCloseable, Row {
 		return UNKNOWN;
 	}
 
-	void check(int res, String format) throws StmtException {
+	private void check(int res, String format) throws StmtException {
 		if (res != SQLITE_OK) {
 			throw new StmtException(this, String.format(format, getSql()), res);
 		}

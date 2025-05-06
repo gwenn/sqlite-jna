@@ -70,13 +70,7 @@ final class DateUtil {
 		return (ms + adj) / 86400000.0 + 2440587.5;
 	}
 
-	private static class ParsedDate {
-		private final Date value;
-		private final boolean tz;
-		private ParsedDate(Date value, boolean tz) {
-			this.value = value;
-			this.tz = tz;
-		}
+	private record ParsedDate(Date value, boolean tz) {
 	}
 
 	private static ParsedDate parseDate(String txt, Calendar cal) throws SQLException {
@@ -119,32 +113,24 @@ final class DateUtil {
 	}
 
 	static String formatDate(Date date, int length, Calendar cal) {
-		final String layout;
-		switch (length) {
-			case 5: // HH:MM
-				layout = "HH:mm";
-				break;
-			case 8: // HH:MM:SS
-				layout = HH_MM_SS;
-				break;
-			case 10: // YYYY-MM-DD
-				layout = YYYY_MM_DD;
-				break;
-			case 12: // HH:MM:SS.SSS
-				layout = "HH:mm:ss.SSS";
-				break;
-			case 16: // YYYY-MM-DDTHH:MM
-				layout = "yyyy-MM-dd'T'HH:mm";
-				break;
-			case 19: // YYYY-MM-DDTHH:MM:SS
-				layout = "yyyy-MM-dd'T'HH:mm:ss";
-				break;
-			case 23: // YYYY-MM-DDTHH:MM:SS.SSS
-				layout = "yyyy-MM-dd'T'HH:mm:ss.SSS";
-				break;
-			default: // YYYY-MM-DDTHH:MM:SS.SSSZhh:mm or parse error
-				layout = DEFAULT_FORMAT;
-		}
+		final String layout = switch (length) {
+			case 5 -> // HH:MM
+				"HH:mm";
+			case 8 -> // HH:MM:SS
+				HH_MM_SS;
+			case 10 -> // YYYY-MM-DD
+				YYYY_MM_DD;
+			case 12 -> // HH:MM:SS.SSS
+				"HH:mm:ss.SSS";
+			case 16 -> // YYYY-MM-DDTHH:MM
+				"yyyy-MM-dd'T'HH:mm";
+			case 19 -> // YYYY-MM-DDTHH:MM:SS
+				"yyyy-MM-dd'T'HH:mm:ss";
+			case 23 -> // YYYY-MM-DDTHH:MM:SS.SSS
+				"yyyy-MM-dd'T'HH:mm:ss.SSS";
+			default -> // YYYY-MM-DDTHH:MM:SS.SSSZhh:mm or parse error
+				DEFAULT_FORMAT;
+		};
 		return formatDate(date, layout, cal);
 	}
 

@@ -39,13 +39,10 @@ class RowsMeta implements ResultSetMetaData {
 
 	@Override
 	public boolean isCaseSensitive(int column) throws SQLException {
-		switch (stmt.getColumnAffinity(fixCol(column))) {
-			case ColAffinities.INTEGER:
-			case ColAffinities.NUMERIC:
-			case ColAffinities.REAL:
-				return false;
-		}
-		return true; // FIXME Collation 'NOCASE'
+		return switch (stmt.getColumnAffinity(fixCol(column))) {
+			case ColAffinities.INTEGER, ColAffinities.NUMERIC, ColAffinities.REAL -> false;
+			default -> true;
+		};
 	}
 
 	@Override
@@ -67,24 +64,19 @@ class RowsMeta implements ResultSetMetaData {
 
 	@Override
 	public boolean isSigned(int column) throws SQLException {
-		switch (stmt.getColumnAffinity(fixCol(column))) {
-			case ColAffinities.INTEGER:
-			case ColAffinities.NUMERIC:
-			case ColAffinities.REAL:
-				return true;
-		}
-		return false;
+		return switch (stmt.getColumnAffinity(fixCol(column))) {
+			case ColAffinities.INTEGER, ColAffinities.NUMERIC, ColAffinities.REAL -> true;
+			default -> false;
+		};
 	}
 
 	@Override
 	public int getColumnDisplaySize(int column) throws SQLException {
-		switch (stmt.getColumnAffinity(fixCol(column))) {
-			case ColAffinities.INTEGER:
-				return 20;
-			case ColAffinities.REAL:
-				return 25;
-		}
-		return 10; // Like in SQLite shell with column mode TODO
+		return switch (stmt.getColumnAffinity(fixCol(column))) {
+			case ColAffinities.INTEGER -> 20;
+			case ColAffinities.REAL -> 25;
+			default -> 10;
+		};
 	}
 
 	@Override
@@ -108,26 +100,20 @@ class RowsMeta implements ResultSetMetaData {
 
 	@Override
 	public int getPrecision(int column) throws SQLException {
-		switch (stmt.getColumnAffinity(fixCol(column))) {
-			case ColAffinities.INTEGER:
-				return 19;
-			case ColAffinities.NUMERIC:
-			case ColAffinities.REAL:
-				return 15;
-		}
-		return 0;
+		return switch (stmt.getColumnAffinity(fixCol(column))) {
+			case ColAffinities.INTEGER -> 19;
+			case ColAffinities.NUMERIC, ColAffinities.REAL -> 15;
+			default -> 0;
+		};
 	}
 
 	@Override
 	public int getScale(int column) throws SQLException {
-		switch (stmt.getColumnAffinity(fixCol(column))) {
-			case ColAffinities.INTEGER:
-				return 0;
-			case ColAffinities.NUMERIC:
-			case ColAffinities.REAL:
-				return 15;
-		}
-		return 0;
+		return switch (stmt.getColumnAffinity(fixCol(column))) {
+			case ColAffinities.INTEGER -> 0;
+			case ColAffinities.NUMERIC, ColAffinities.REAL -> 15;
+			default -> 0;
+		};
 	}
 
 	@Override
@@ -171,18 +157,13 @@ class RowsMeta implements ResultSetMetaData {
 	@Override
 	public String getColumnClassName(int column) throws SQLException {
 		final int affinity = stmt.getColumnAffinity(fixCol(column));
-		switch (affinity) {
-			case ColAffinities.TEXT:
-				return "java.lang.String";
-			case ColAffinities.INTEGER:
-				return "java.lang.Long";
-			case ColAffinities.REAL:
-				return "java.lang.Double";
-			case ColAffinities.NONE:
-				return "[B";
-			default:
-				return "java.lang.Number";
-		}
+		return switch (affinity) {
+			case ColAffinities.TEXT -> "java.lang.String";
+			case ColAffinities.INTEGER -> "java.lang.Long";
+			case ColAffinities.REAL -> "java.lang.Double";
+			case ColAffinities.NONE -> "[B";
+			default -> "java.lang.Number";
+		};
 	}
 
 	@Override

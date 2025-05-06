@@ -893,18 +893,13 @@ class DbMeta implements DatabaseMetaData {
 		return getJavaType(SQLite.getAffinity(colType));
 	}
 	public static int getJavaType(int affinity) {
-		switch (affinity) {
-			case ColAffinities.TEXT:
-				return Types.VARCHAR;
-			case ColAffinities.INTEGER:
-				return Types.INTEGER;
-			case ColAffinities.REAL:
-				return Types.REAL;
-			case ColAffinities.NONE:
-				return Types.OTHER;
-			default:
-				return Types.NUMERIC;
-		}
+		return switch (affinity) {
+			case ColAffinities.TEXT -> Types.VARCHAR;
+			case ColAffinities.INTEGER -> Types.INTEGER;
+			case ColAffinities.REAL -> Types.REAL;
+			case ColAffinities.NONE -> Types.OTHER;
+			default -> Types.NUMERIC;
+		};
 	}
 
 	@Override

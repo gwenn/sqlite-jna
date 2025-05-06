@@ -25,14 +25,14 @@ import java.io.Writer;
 import java.sql.SQLException;
 import java.sql.SQLXML;
 
-public class SQLXMLFromRows implements SQLXML {
+class SQLXMLFromRows implements SQLXML {
 	private /*final*/ Rows rs;
 	private final int columnIndex;
 
 	private boolean freed;
 	private boolean readable;
 
-	public SQLXMLFromRows(Rows rs, int columnIndex) {
+	SQLXMLFromRows(Rows rs, int columnIndex) {
 		this.rs = rs;
 		this.columnIndex = columnIndex;
 		this.readable = true;

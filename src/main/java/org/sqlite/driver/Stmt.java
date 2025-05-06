@@ -237,7 +237,7 @@ class Stmt implements Statement {
 		return execute(sql, Statement.NO_GENERATED_KEYS);
 	}
 
-	protected boolean step(boolean updateOnly) throws SQLException {
+	boolean step(boolean updateOnly) throws SQLException {
 		final int res = stmt.stepNoCheck(queryTimeout);
 		final boolean hasRow = res == SQLite.SQLITE_ROW;
 		final boolean hasRowOrColumn = hasRow || stmt.getColumnCount() != 0;
@@ -259,7 +259,7 @@ class Stmt implements Statement {
 		throw new StmtException(stmt, String.format("error while stepping '%s'", stmt.getSql()), res);
 	}
 
-	protected boolean exec() throws SQLException {
+	boolean exec() throws SQLException {
 		if (step(false)) {
 			status = 1;
 		} else if (stmt.getColumnCount() != 0) {

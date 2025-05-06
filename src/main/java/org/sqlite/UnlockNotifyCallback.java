@@ -3,7 +3,7 @@ package org.sqlite;
 import java.lang.foreign.MemorySegment;
 
 @FunctionalInterface
-public interface UnlockNotifyCallback {
+interface UnlockNotifyCallback {
 	default void callback(MemorySegment args, int nArg) {
 		notify(args, nArg);
 	}

@@ -43,7 +43,7 @@ public abstract class AggregateFinalCallback {
 	 * @return <code>null</code> when no rows match an aggregate query.
 	 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_aggregate_context</a>
 	 */
-	protected MemorySegment getAggregateContext(SQLite3Context pCtx) {
+	protected static MemorySegment getAggregateContext(SQLite3Context pCtx) {
 		// Within the xFinal callback, it is customary to set N=0 in calls to sqlite3_aggregate_context(C,N)
 		// so that no pointless memory allocations occur.
 		return sqlite3_aggregate_context(pCtx, 0);

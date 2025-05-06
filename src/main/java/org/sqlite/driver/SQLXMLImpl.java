@@ -225,7 +225,7 @@ public class SQLXMLImpl implements SQLXML {
 		}
 	};
 
-	private class StringSrc implements Src {
+	private final class StringSrc implements Src {
 		private final String value;
 
 		private StringSrc(String value) {
@@ -254,7 +254,7 @@ public class SQLXMLImpl implements SQLXML {
 		}
 	}
 
-	private class OutputStreamSrc implements Src {
+	private final class OutputStreamSrc implements Src {
 		private final ByteArrayOutputStream outputStream;
 
 		private OutputStreamSrc(ByteArrayOutputStream outputStream) {
@@ -267,7 +267,7 @@ public class SQLXMLImpl implements SQLXML {
 		}
 		@Override
 		public String getString() {
-			return new String(outputStream.toByteArray(), charset);
+			return outputStream.toString(charset);
 		}
 		@Override
 		public InputStream getBinaryStream() {
@@ -283,7 +283,7 @@ public class SQLXMLImpl implements SQLXML {
 		}
 	}
 
-	private class WriterSrc implements Src {
+	private final class WriterSrc implements Src {
 		private final StringWriter writer;
 
 		private WriterSrc(StringWriter writer) {
@@ -312,7 +312,7 @@ public class SQLXMLImpl implements SQLXML {
 		}
 	}
 
-	private class DOMSrc implements Src {
+	private final class DOMSrc implements Src {
 		private final DOMResult result;
 
 		private DOMSrc(DOMResult result) {

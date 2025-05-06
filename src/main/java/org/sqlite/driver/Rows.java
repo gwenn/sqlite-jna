@@ -844,7 +844,7 @@ class Rows implements ResultSet {
 		}
 		org.sqlite.Blob blob = blobByColIndex.get(columnIndex);
 		if (blob == null || blob.isClosed()) {
-			blob = getStmt().open(fixCol(columnIndex), rowId.value, false);
+			blob = getStmt().open(fixCol(columnIndex), rowId.value(), false);
 			if (blob != null) {
 				if (blobByColIndex.isEmpty() && !(blobByColIndex instanceof TreeMap)) {
 					blobByColIndex = new TreeMap<>();
@@ -852,7 +852,7 @@ class Rows implements ResultSet {
 				blobByColIndex.put(columnIndex, blob);
 			}
 		} else {
-			blob.reopen(rowId.value);
+			blob.reopen(rowId.value());
 		}
 		return blob == null ? null : new BlobImpl(blob);
 	}
@@ -929,21 +929,23 @@ class Rows implements ResultSet {
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
 		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
-		switch (sourceType) {
-			case ColTypes.SQLITE_NULL:
-				return null;
-			case ColTypes.SQLITE_TEXT: // does not work as expected if column type affinity is TEXT but inserted value was a numeric
+		return switch (sourceType) {
+			case ColTypes.SQLITE_NULL -> null;
+			case ColTypes.SQLITE_TEXT -> {
 				final String txt = stmt.getColumnText(fixCol(columnIndex));
-				return DateUtil.toTime(txt, cal);
-			case ColTypes.SQLITE_INTEGER:
+				yield DateUtil.toTime(txt, cal);
+			}
+			case ColTypes.SQLITE_INTEGER -> {
 				final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
-				return DateUtil.toTime(unixepoch);
-			case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
+				yield DateUtil.toTime(unixepoch);
+			}
+			case ColTypes.SQLITE_FLOAT -> {
 				final double jd = stmt.getColumnDouble(fixCol(columnIndex));
-				return DateUtil.toTime(jd);
-			default:
+				yield DateUtil.toTime(jd);
+			}
+			default ->
 				throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
-		}
+		};
 	}
 
 	@Override
@@ -957,21 +959,23 @@ class Rows implements ResultSet {
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
 		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
-		switch (sourceType) {
-			case ColTypes.SQLITE_NULL:
-				return null;
-			case ColTypes.SQLITE_TEXT: // does not work as expected if column type affinity is TEXT but inserted value was a numeric
+		return switch (sourceType) {
+			case ColTypes.SQLITE_NULL -> null;
+			case ColTypes.SQLITE_TEXT -> {
 				final String txt = stmt.getColumnText(fixCol(columnIndex));
-				return DateUtil.toTimestamp(txt, cal);
-			case ColTypes.SQLITE_INTEGER:
+				yield DateUtil.toTimestamp(txt, cal);
+			}
+			case ColTypes.SQLITE_INTEGER -> {
 				final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
-				return DateUtil.toTimestamp(unixepoch);
-			case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
+				yield DateUtil.toTimestamp(unixepoch);
+			}
+			case ColTypes.SQLITE_FLOAT -> {
 				final double jd = stmt.getColumnDouble(fixCol(columnIndex));
-				return DateUtil.toTimestamp(jd);
-			default:
+				yield DateUtil.toTimestamp(jd);
+			}
+			default ->
 				throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
-		}
+		};
 	}
 
 	@Override
@@ -1282,24 +1286,26 @@ class Rows implements ResultSet {
 		}
 		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
-		switch (sourceType) {
-			case ColTypes.SQLITE_NULL:
-				return null;
-			case ColTypes.SQLITE_TEXT:
+		return switch (sourceType) {
+			case ColTypes.SQLITE_NULL -> null;
+			case ColTypes.SQLITE_TEXT -> {
 				final String txt = stmt.getColumnText(fixCol(columnIndex));
-				return convert(txt, type);
-			case ColTypes.SQLITE_INTEGER:
+				yield convert(txt, type);
+			}
+			case ColTypes.SQLITE_INTEGER -> {
 				final long l = stmt.getColumnLong(fixCol(columnIndex));
-				return convert(l, type);
-			case ColTypes.SQLITE_FLOAT:
+				yield convert(l, type);
+			}
+			case ColTypes.SQLITE_FLOAT -> {
 				final double d = stmt.getColumnDouble(fixCol(columnIndex));
-				return convert(d, type);
-			default:
+				yield convert(d, type);
+			}
+			default ->
 				throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
-		}
+		};
 	}
 
-	private <T> T convert(String txt, Class<T> type) throws SQLException {
+	private static <T> T convert(String txt, Class<T> type) throws SQLException {
 		if (LocalDate.class.equals(type)) {
 			return (T)LocalDate.parse(txt); // TODO wrap DateTimeParseException into SQLException
 		} else if (LocalDateTime.class.equals(type)) {
@@ -1312,14 +1318,14 @@ class Rows implements ResultSet {
 		throw new SQLException("Conversion from text to " + type + " is not supported");
 	}
 
-	private <T> T convert(long l, Class<T> type) throws SQLException {
+	private static <T> T convert(long l, Class<T> type) throws SQLException {
 		if (LocalDate.class.equals(type)) {
 			return (T)LocalDate.ofEpochDay(l);
 		}
 		throw new SQLException("Conversion from long to " + type + " is not supported");
 	}
 
-	private <T> T convert(double d, Class<T> type) throws SQLException {
+	private static <T> T convert(double d, Class<T> type) throws SQLException {
 		throw new SQLException("Conversion from double to " + type + " is not supported");
 	}
 
