@@ -127,7 +127,9 @@ public final class SQLite {
 	public static final boolean ENABLE_COLUMN_METADATA = sqlite3_compileoption_used("ENABLE_COLUMN_METADATA");
 	public static final boolean ENABLE_STMT_SCANSTATUS = sqlite3_compileoption_used("ENABLE_STMT_SCANSTATUS");
 	public static final boolean ENABLE_UNLOCK_NOTIFY = sqlite3_compileoption_used("ENABLE_UNLOCK_NOTIFY");
+	public static final boolean OMIT_INCRBLOB = sqlite3_compileoption_used("OMIT_INCRBLOB");
 	public static final boolean OMIT_LOAD_EXTENSION = sqlite3_compileoption_used("OMIT_LOAD_EXTENSION");
+	public static final boolean OMIT_TRACE = sqlite3_compileoption_used("OMIT_TRACE");
 	private static final MethodHandle sqlite3_compileoption_get = downcallHandle(
 		"sqlite3_compileoption_get", FunctionDescriptor.of(C_POINTER, C_INT));
 	static String sqlite3_compileoption_get(int n) {
@@ -654,9 +656,10 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_column_decltype = downcallHandle(
-		"sqlite3_column_decltype", FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT));
+	private static final MethodHandle sqlite3_column_decltype = sqlite3_compileoption_used("OMIT_DECLTYPE") ? null :
+		downcallHandle("sqlite3_column_decltype", FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT));
 	static String sqlite3_column_decltype(SQLite3Stmt pStmt, int iCol) { // copy needed
+		checkActivated(sqlite3_column_decltype, "SQLITE_OMIT_DECLTYPE activated");
 		try {
 			return getString((MemorySegment) sqlite3_column_decltype.invokeExact(pStmt.getPointer(), iCol));
 		} catch (Throwable e) {
@@ -858,10 +861,11 @@ public final class SQLite {
 		}
 	}
 
-	private static final MethodHandle sqlite3_blob_open = downcallHandle(
+	private static final MethodHandle sqlite3_blob_open = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_open", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_LONG_LONG, C_INT, C_POINTER));
 	static int sqlite3_blob_open(SQLite3 pDb, String dbName, String tableName, String columnName,
 			long iRow, boolean flags, MemorySegment ppBlob) { // no copy needed
+		checkActivated(sqlite3_blob_open, "SQLITE_OMIT_INCRBLOB activated");
 		try (Arena arena = Arena.ofConfined()) {
 			return (int)sqlite3_blob_open.invokeExact(pDb.getPointer(),
 				nativeString(arena, dbName), nativeString(arena, tableName), nativeString(arena, columnName),
@@ -870,28 +874,31 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_blob_reopen = downcallHandle(
+	private static final MethodHandle sqlite3_blob_reopen = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_reopen", FunctionDescriptor.of(C_INT, C_POINTER, C_LONG_LONG));
 	static int sqlite3_blob_reopen(SQLite3Blob pBlob, long iRow) {
+		checkActivated(sqlite3_blob_reopen, "SQLITE_OMIT_INCRBLOB activated");
 		try {
 			return (int)sqlite3_blob_reopen.invokeExact(pBlob.getPointer(), iRow);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_blob_bytes = downcallHandle(
+	private static final MethodHandle sqlite3_blob_bytes = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_bytes", FunctionDescriptor.of(C_INT, C_POINTER));
 	static int sqlite3_blob_bytes(SQLite3Blob pBlob) {
+		checkActivated(sqlite3_blob_bytes, "SQLITE_OMIT_INCRBLOB activated");
 		try {
 			return (int)sqlite3_blob_bytes.invokeExact(pBlob.getPointer());
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_blob_read = downcallHandle(
+	private static final MethodHandle sqlite3_blob_read = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_read", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_INT, C_INT),
 		CRITICAL);
 	static int sqlite3_blob_read(SQLite3Blob pBlob, byte[] z,  int off, int len, int iOffset) {
+		checkActivated(sqlite3_blob_read, "SQLITE_OMIT_INCRBLOB activated");
 		try {
 			int n = len - off;
 			MemorySegment ms = MemorySegment.ofArray(z);
@@ -900,10 +907,11 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_blob_write = downcallHandle(
+	private static final MethodHandle sqlite3_blob_write = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_write", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_INT, C_INT),
 		CRITICAL);
 	static int sqlite3_blob_write(SQLite3Blob pBlob, byte[] z, int off, int len, int iOffset) {
+		checkActivated(sqlite3_blob_write, "SQLITE_OMIT_INCRBLOB activated");
 		try {
 			int n = len - off;
 			MemorySegment ms = MemorySegment.ofArray(z);
@@ -912,9 +920,10 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_blob_close = downcallHandle(
+	private static final MethodHandle sqlite3_blob_close = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_close", FunctionDescriptor.of(C_INT, C_POINTER));
 	static int sqlite3_blob_close(SQLite3Blob pBlob) {
+		checkActivated(sqlite3_blob_close, "SQLITE_OMIT_INCRBLOB activated");
 		try {
 			return (int)sqlite3_blob_close.invokeExact(pBlob.getPointer());
 		} catch (Throwable e) {
@@ -971,12 +980,13 @@ public final class SQLite {
 
 	// As there is only one ProgressCallback by connection, and it is used to implement query timeout,
 	// the method visibility is restricted.
-	private static final MethodHandle sqlite3_progress_handler = downcallHandle(
-		"sqlite3_progress_handler", FunctionDescriptor.ofVoid(C_POINTER, C_INT, C_POINTER, C_POINTER));
+	private static final MethodHandle sqlite3_progress_handler = sqlite3_compileoption_used("OMIT_PROGRESS_CALLBACK") ? null :
+		downcallHandle("sqlite3_progress_handler", FunctionDescriptor.ofVoid(C_POINTER, C_INT, C_POINTER, C_POINTER));
 	private static final FunctionDescriptor progress_callback_desc = FunctionDescriptor.of(C_INT, C_POINTER);
 	private static final MethodHandle progress_callback = upcallHandle(ProgressCallback.class, "callback",
 		progress_callback_desc);
 	static void sqlite3_progress_handler(SQLite3 pDb, int nOps, ProgressCallback xProgress, MemorySegment pArg) {
+		checkActivated(sqlite3_progress_handler, "SQLITE_OMIT_PROGRESS_CALLBACK activated");
 		try {
 			// FIXME previous pc will not be freed until pDb is closed & gced
 			MemorySegment pc = upcallStub(progress_callback, xProgress, progress_callback_desc, pDb.getArena());
@@ -985,12 +995,14 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_trace = downcallHandle(
+
+	private static final MethodHandle sqlite3_trace = OMIT_TRACE ? null : downcallHandle(
 		"sqlite3_trace", FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_POINTER));
 	private static final FunctionDescriptor trace_callback_desc = FunctionDescriptor.ofVoid(C_POINTER, C_POINTER);
 	private static final MethodHandle trace_callback = upcallHandle(TraceCallback.class, "callback",
 		trace_callback_desc);
 	static void sqlite3_trace(SQLite3 pDb, TraceCallback xTrace, MemorySegment pArg) {
+		checkActivated(sqlite3_trace, "SQLITE_OMIT_TRACE activated");
 		try {
 			// FIXME previous tc will not be freed until pDb is closed & gced
 			MemorySegment tc = upcallStub(trace_callback, xTrace, trace_callback_desc, pDb.getArena());
@@ -999,12 +1011,13 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_profile = downcallHandle(
+	private static final MethodHandle sqlite3_profile = OMIT_TRACE ? null : downcallHandle(
 		"sqlite3_profile", FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_POINTER));
 	private static final FunctionDescriptor profile_callback_desc = FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_LONG_LONG);
 	private static final MethodHandle profile_callback = upcallHandle(ProfileCallback.class, "callback",
 		profile_callback_desc);
 	static void sqlite3_profile(SQLite3 pDb, ProfileCallback xProfile, MemorySegment pArg) {
+		checkActivated(sqlite3_profile, "SQLITE_OMIT_TRACE activated");
 		try {
 			// FIXME previous pc will not be freed until pDb is closed & gced
 			MemorySegment pc = upcallStub(profile_callback, xProfile, profile_callback_desc, pDb.getArena());
@@ -1029,12 +1042,13 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	private static final MethodHandle sqlite3_set_authorizer = downcallHandle(
-		"sqlite3_set_authorizer", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER));
+	private static final MethodHandle sqlite3_set_authorizer = sqlite3_compileoption_used("OMIT_AUTHORIZATION") ? null :
+		downcallHandle("sqlite3_set_authorizer", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER));
 	private static final FunctionDescriptor authorizer_desc = FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER);
 	private static final MethodHandle authorizer_up = upcallHandle(Authorizer.class, "callback",
 		authorizer_desc);
 	static int sqlite3_set_authorizer(SQLite3 pDb, Authorizer authorizer, MemorySegment pUserData) {
+		checkActivated(sqlite3_set_authorizer, "SQLITE_OMIT_AUTHORIZATION activated");
 		try {
 			// FIXME previous auth will not be freed until pDb is closed & gced
 			MemorySegment auth = upcallStub(authorizer_up, authorizer, authorizer_desc, pDb.getArena());
