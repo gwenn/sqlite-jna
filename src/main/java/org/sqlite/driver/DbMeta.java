@@ -213,7 +213,6 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public String getSearchStringEscape() {
-		Util.trace("DatabaseMetaData.getSearchStringEscape");
 		return null; // TODO Validate (Y LIKE X [ESCAPE Z])
 	}
 
@@ -244,13 +243,11 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public boolean supportsConvert() {
-		Util.trace("DatabaseMetaData.supportsConvert");
 		return false; // TODO Validate
 	}
 
 	@Override
 	public boolean supportsConvert(int fromType, int toType) {
-		Util.trace("DatabaseMetaData.supportsConvert");
 		return false; // TODO Validate
 	}
 
@@ -322,25 +319,21 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public boolean supportsExtendedSQLGrammar() {
-		Util.trace("DatabaseMetaData.supportsExtendedSQLGrammar");
 		return false;
 	}
 
 	@Override
 	public boolean supportsANSI92EntryLevelSQL() {
-		Util.trace("DatabaseMetaData.supportsANSI92EntryLevelSQL");
 		return false;
 	}
 
 	@Override
 	public boolean supportsANSI92IntermediateSQL() {
-		Util.trace("DatabaseMetaData.supportsANSI92IntermediateSQL");
 		return false;
 	}
 
 	@Override
 	public boolean supportsANSI92FullSQL() {
-		Util.trace("DatabaseMetaData.supportsANSI92FullSQL");
 		return false;
 	}
 
@@ -476,7 +469,6 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public boolean supportsSubqueriesInQuantifieds() {
-		Util.trace("DatabaseMetaData.supportsSubqueriesInQuantifieds");
 		return false; // TODO Validate
 	}
 
@@ -497,25 +489,21 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public boolean supportsOpenCursorsAcrossCommit() {
-		Util.trace("DatabaseMetaData.supportsOpenCursorsAcrossCommit");
 		return false;
 	}
 
 	@Override
 	public boolean supportsOpenCursorsAcrossRollback() {
-		Util.trace("DatabaseMetaData.supportsOpenCursorsAcrossRollback");
 		return false;
 	}
 
 	@Override
 	public boolean supportsOpenStatementsAcrossCommit() {
-		Util.trace("DatabaseMetaData.supportsOpenStatementsAcrossCommit");
 		return false; // TODO Validate
 	}
 
 	@Override
 	public boolean supportsOpenStatementsAcrossRollback() {
-		Util.trace("DatabaseMetaData.supportsOpenStatementsAcrossRollback");
 		return false; // TODO Validate
 	}
 
@@ -1454,7 +1442,6 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public RowIdLifetime getRowIdLifetime() {
-		Util.trace("DatabaseMetaData.getRowIdLifetime");
 		return RowIdLifetime.ROWID_VALID_FOREVER; // TODO http://www.sqlite.org/autoinc.html
 	}
 
@@ -1493,13 +1480,11 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) {
-		Util.trace("DatabaseMetaData.getFunctions");
 		return null;
 	}
 
 	@Override
 	public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) {
-		Util.trace("DatabaseMetaData.getFunctionColumns");
 		return null;
 	}
 

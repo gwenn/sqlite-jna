@@ -358,7 +358,6 @@ class Rows implements ResultSet {
 
 	@Override
 	public String getCursorName() throws SQLException {
-		Util.trace("ResultSet.getCursorName");
 		checkOpen();
 		return null;
 	}
@@ -474,7 +473,6 @@ class Rows implements ResultSet {
 
 	@Override
 	public boolean isLast() throws SQLException {
-		Util.trace("ResultSet.isLast");
 		checkOpen();
 		final int maxRows = s.getMaxRows();
 		if (maxRows != 0 && row == maxRows) {

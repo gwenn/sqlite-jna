@@ -94,7 +94,6 @@ class Conn implements Connection {
 
 	@Override
 	public String nativeSQL(String sql) {
-		Util.trace("Connection.nativeSQL");
 		return sql;
 	}
 
@@ -403,14 +402,12 @@ class Conn implements Connection {
 
 	@Override
 	public boolean isValid(int seconds) throws SQLException {
-		Util.trace("Connection.isValid");
 		if (seconds < 0) throw Util.error("timeout must be >= 0");
 		return !isClosed();
 	}
 
 	@Override
 	public void setClientInfo(String name, String value) {
-		Util.trace("Connection.setClientInfo(String,String)");
 		//checkOpen();
 		if (clientInfo == null) return;
 		clientInfo.setProperty(name, value);
@@ -418,14 +415,12 @@ class Conn implements Connection {
 
 	@Override
 	public void setClientInfo(Properties properties) {
-		Util.trace("Connection.setClientInfo(Properties)");
 		//checkOpen();
 		clientInfo = new Properties(properties);
 	}
 
 	@Override
 	public String getClientInfo(String name) throws SQLException {
-		Util.trace("Connection.getClientInfo(String)");
 		checkOpen();
 		if (clientInfo == null) return null;
 		return clientInfo.getProperty(name);
@@ -433,7 +428,6 @@ class Conn implements Connection {
 
 	@Override
 	public Properties getClientInfo() throws SQLException {
-		Util.trace("Connection.getClientInfo()");
 		checkOpen();
 		if (clientInfo == null) {
 			clientInfo = new Properties();
@@ -466,7 +460,6 @@ class Conn implements Connection {
 
 	@Override
 	public void abort(Executor executor) throws SQLException {
-		Util.trace("Connection.abort");
 		// TODO
 	}
 

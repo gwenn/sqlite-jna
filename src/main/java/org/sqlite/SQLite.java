@@ -8,6 +8,9 @@
  */
 package org.sqlite;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -19,6 +22,7 @@ import java.nio.file.Path;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
 public final class SQLite {
+	private static Logger log = LoggerFactory.getLogger(SQLite.class);
 	private static final String JNA_LIBRARY_NAME = "sqlite3";
 	private static final ValueLayout.OfDouble C_DOUBLE = ValueLayout.JAVA_DOUBLE;
 	private static final ValueLayout.OfInt C_INT = ValueLayout.JAVA_INT;
@@ -94,9 +98,15 @@ public final class SQLite {
 	}
 	private static final MethodHandle sqlite3_libversion_number = downcallHandle(
 		"sqlite3_libversion_number", FunctionDescriptor.of(C_INT));
+	private static int SQLITE_VERSION_NUMBER;
 	static int sqlite3_libversion_number() {
+		if (SQLITE_VERSION_NUMBER > 0) {
+			log.debug("Using SQLite version {}", SQLITE_VERSION_NUMBER);
+			return SQLITE_VERSION_NUMBER;
+		}
 		try {
-			return (int) sqlite3_libversion_number.invokeExact();
+			SQLITE_VERSION_NUMBER = (int) sqlite3_libversion_number.invokeExact();
+			return SQLITE_VERSION_NUMBER;
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -1360,7 +1370,15 @@ public final class SQLite {
 	}
 
 	private static void log_callback(MemorySegment udp, int err, MemorySegment msg) {
-		System.out.printf("%d: %s%n", err, getString(msg));
+		if (err == ErrCodes.WRAPPER_SPECIFIC) {
+			log.error("{}: {}", err, getString(msg));
+		} else if (err == ErrCodes.SQLITE_OK) {
+			log.info("{}: {}", err, getString(msg));
+		} else if ((err & ErrCodes.SQLITE_WARNING) == ErrCodes.SQLITE_WARNING) {
+			log.warn("{}: {}", err, getString(msg));
+		} else {
+			log.error("{}: {}", err, getString(msg));
+		}
 	}
 
 	static {
@@ -1533,7 +1551,7 @@ public final class SQLite {
 		 * @return a copy of the pointer to the database connection (the 1st parameter) of
 		 * {@link SQLite#sqlite3_create_function_v2(SQLite3, String, int, int, MemorySegment, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, MemorySegment)}
 		 * @see <a href="http://sqlite.org/c3ref/context_db_handle.html">sqlite3_context_db_handle</a>
-         */
+		 */
 		public SQLite3 getDbHandle() {
 			return sqlite3_context_db_handle(this);
 		}
