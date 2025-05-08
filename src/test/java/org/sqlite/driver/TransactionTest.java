@@ -115,6 +115,7 @@ public class TransactionTest {
 		conn2.setAutoCommit(false);
 		if (pstat2 != null) {
 			pstat2.execute();
+			pstat2.close();
 		} else {
 			stat2.execute("insert into test values (3);");
 		}

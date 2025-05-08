@@ -39,8 +39,7 @@ public class StmtTest {
 
 	@Test
 	public void expandedSql() throws SQLiteException {
-		try (Conn c = ConnTest.open()) {
-			final Stmt s = c.prepare("SELECT ?", false);
+		try (Conn c = ConnTest.open(); Stmt s = c.prepare("SELECT ?", false)) {
 			assertNotNull(s);
 			s.bind("TEST");
 			assertEquals("SELECT 'TEST'", s.getExpandedSql());
