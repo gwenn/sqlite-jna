@@ -483,7 +483,7 @@ public final class SQLite {
 		try {
 			final MemorySegment stmt = pStmt == null ? MemorySegment.NULL : pStmt.getPointer();
 			final MemorySegment ms = (MemorySegment) sqlite3_next_stmt.invokeExact(pDb.getPointer(), stmt);
-			return isNull(ms) ? null : new SQLite3Stmt(ms);
+			return isNull(ms) ? null : new SQLite3Stmt(pDb.lock, ms);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -1417,6 +1417,8 @@ public final class SQLite {
 		int res;
 		// To avoid upcallStub(s) from being GCed before connection is closed
 		private Arena arena;
+		// Make sure a stmt is not finalized while current conn is being closed
+		final Object lock = new Object();
 		SQLite3(MemorySegment p) {
 			this.p = p;
 		}
@@ -1424,21 +1426,23 @@ public final class SQLite {
 			return p;
 		}
 		void close() {
-			if (isNull(p)) {
-				return;
-			}
-			// Dangling statements
-			SQLite3Stmt stmt = sqlite3_next_stmt(this, null);
-			while (stmt != null) {
-				if (sqlite3_stmt_busy(stmt)) {
-					sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\"");
-				} else {
-					sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\"");
+			synchronized (lock) {
+				if (isNull(p)) {
+					return;
 				}
-				stmt = sqlite3_next_stmt(this, stmt);
+				// Dangling statements
+				SQLite3Stmt stmt = sqlite3_next_stmt(this, null);
+				while (stmt != null) {
+					if (sqlite3_stmt_busy(stmt)) {
+						sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not reset): \"" + sqlite3_sql(stmt) + "\"");
+					} else {
+						sqlite3_log(ErrCodes.SQLITE_MISUSE, "Dangling statement (not finalize): \"" + sqlite3_sql(stmt) + "\"");
+					}
+					stmt = sqlite3_next_stmt(this, stmt);
+				}
+				res = sqlite3_close_v2(this); // must be called only once
+				p = MemorySegment.NULL;
 			}
-			res = sqlite3_close_v2(this); // must be called only once
-			p = MemorySegment.NULL;
 		}
 		boolean isClosed() {
 			return isNull(p);
@@ -1460,18 +1464,23 @@ public final class SQLite {
 		int res;
 		// To avoid copying text twice in sqlite3_bind_text
 		private Arena arena;
-		SQLite3Stmt(MemorySegment p) {
+		// Make sure a stmt is not finalized while current conn is being closed
+		final Object lock;
+		SQLite3Stmt(Object lock, MemorySegment p) {
+			this.lock = lock;
 			this.p = p;
 		}
 		private MemorySegment getPointer() {
 			return p;
 		}
 		void close() {
-			if (isNull(p)) {
-				return;
+			synchronized (lock) {
+				if (isNull(p)) {
+					return;
+				}
+				res = sqlite3_finalize(this); // must be called only once
+				p = MemorySegment.NULL;
 			}
-			res = sqlite3_finalize(this); // must be called only once
-			p = MemorySegment.NULL;
 		}
 		boolean isClosed() {
 			return isNull(p);

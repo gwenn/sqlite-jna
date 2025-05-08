@@ -59,9 +59,6 @@ public final class Conn implements AutoCloseable {
 	};
 	private int maxCacheSize = 100; // TODO parameterize
 
-	// Make sure a stmt is not finalized while current conn is being closed
-	final Object lock = new Object();
-
 	/**
 	 * Open a new database connection.
 	 * <p>
@@ -126,11 +123,9 @@ public final class Conn implements AutoCloseable {
 		if (pDb.isClosed()) {
 			return SQLITE_OK;
 		}
-		synchronized (lock) {
-			flush();
-			cleanable.clean();
-			return pDb.res;
-		}
+		flush();
+		cleanable.clean();
+		return pDb.res;
 	}
 	/**
 	 * Close a database connection and throw an exception if an error occurred.
@@ -247,7 +242,7 @@ public final class Conn implements AutoCloseable {
 			final int res = blockingPrepare(pSql, cacheable ? SQLITE_PREPARE_PERSISTENT : 0, ppStmt, ppTail);
 			check(res, "error while preparing statement '%s'", sql);
 			final MemorySegment pStmt = ppStmt.getAtIndex(ValueLayout.ADDRESS, 0);
-			final SQLite3Stmt stmt = isNull(pStmt) ? null : new SQLite3Stmt(pStmt);
+			final SQLite3Stmt stmt = isNull(pStmt) ? null : new SQLite3Stmt(pDb.lock, pStmt);
 			return new Stmt(this, sql, stmt, ppTail.getAtIndex(ValueLayout.ADDRESS, 0), cacheable);
 		}
 	}
