@@ -30,7 +30,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import org.sqlite.ErrCodes;
+import org.sqlite.ExtErrCodes;
 
 import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
@@ -793,7 +793,7 @@ public class PrepStmtTest {
 			statement.execute();
 			fail("expected exception");
 		} catch (SQLException e) {
-			assertEquals(ErrCodes.SQLITE_CONSTRAINT, e.getErrorCode());
+			assertEquals(ExtErrCodes.SQLITE_CONSTRAINT_UNIQUE, e.getErrorCode());
 		}
 	}
 
@@ -807,7 +807,7 @@ public class PrepStmtTest {
 			statement.executeUpdate();
 			fail("expected exception");
 		} catch (SQLException e) {
-			assertEquals(ErrCodes.SQLITE_CONSTRAINT, e.getErrorCode());
+			assertEquals(ExtErrCodes.SQLITE_CONSTRAINT_UNIQUE, e.getErrorCode());
 		}
 	}
 

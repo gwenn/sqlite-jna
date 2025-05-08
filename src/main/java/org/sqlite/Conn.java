@@ -74,6 +74,8 @@ public final class Conn implements AutoCloseable {
 	public static Conn open(String filename, int flags, String vfs) throws SQLiteException {
 		if (!sqlite3_threadsafe()) {
 			throw new SQLiteException("sqlite library was not compiled for thread-safe operation", ErrCodes.WRAPPER_SPECIFIC);
+		} else if (versionAtLeast(3037000)) {
+			flags |= OpenFlags.SQLITE_OPEN_EXRESCODE;
 		}
 		final int res;
 		final MemorySegment pDb;
@@ -86,7 +88,7 @@ public final class Conn implements AutoCloseable {
 			if (!isNull(pDb)) {
 				final SQLite3 sqlite3 = new SQLite3(pDb);
 				final int extRes;
-				if (sqlite3_extended_result_codes(sqlite3, true) == SQLITE_OK) {
+				if ((flags & OpenFlags.SQLITE_OPEN_EXRESCODE) == 0 && sqlite3_extended_result_codes(sqlite3, true) == SQLITE_OK) {
 					extRes = sqlite3_extended_errcode(sqlite3);
 				} else {
 					extRes = res;
