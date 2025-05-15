@@ -178,7 +178,7 @@ class Conn implements Connection {
 	@Override
 	public String getCatalog() throws SQLException {
 		checkOpen();
-		return null; // "main" is not the default catalog ("temp" catalog is searched first)
+		return null;
 	}
 
 	@Override
@@ -455,7 +455,7 @@ class Conn implements Connection {
 	@Override
 	public String getSchema() throws SQLException {
 		checkOpen();
-		return null;
+		return null; // "main" is not the default schema ("temp" catalog is searched first)
 	}
 
 	@Override

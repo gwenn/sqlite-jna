@@ -8,7 +8,7 @@ public interface DriverInfo {
 
 	// Driver version
 	int MAJOR_VERSION = 0;
-	int MINOR_VERSION = 3;
+	int MINOR_VERSION = 4;
 
 	// JDBC specification
 	int JDBC_MAJOR_VERSION = 4;

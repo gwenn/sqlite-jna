@@ -101,6 +101,9 @@ public final class Conn implements AutoCloseable {
 		// TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
 		final boolean sharedCacheMode = "shared".equals(queryParams.get("cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
 		final SQLite3 sqlite3 = isNull(pDb) ? null: new SQLite3(pDb);
+		if ((flags & OpenFlags.SQLITE_OPEN_EXRESCODE) == 0) { // activate by default
+			sqlite3_extended_result_codes(sqlite3, true);
+		}
 		final Conn conn = new Conn(sqlite3, sharedCacheMode);
 		if (uri && !queryParams.isEmpty()) {
 			try {

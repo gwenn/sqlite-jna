@@ -1406,12 +1406,13 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public int getDatabaseMajorVersion() {
-		return 3; // FIXME
+		return org.sqlite.Conn.libversionNumber() / 1000000;
 	}
 
 	@Override
 	public int getDatabaseMinorVersion() {
-		return 0; // FIXME
+		final int v = org.sqlite.Conn.libversionNumber() / 1000;
+		return v - ((v / 1000) * 1000);
 	}
 
 	@Override

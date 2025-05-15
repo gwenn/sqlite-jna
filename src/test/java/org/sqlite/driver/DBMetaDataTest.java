@@ -907,4 +907,11 @@ public class DBMetaDataTest {
 			}
 		}
 	}
+
+	@Test
+	public void databaseVersion() throws SQLException {
+		assertEquals(3, meta.getDatabaseMajorVersion());
+		final int minorVersion = meta.getDatabaseMinorVersion();
+		assertTrue(minorVersion < 100 && minorVersion > 30);
+	}
 }
