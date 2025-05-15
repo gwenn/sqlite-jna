@@ -29,6 +29,7 @@ package org.sqlite.driver;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.sqlite.SQLite;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -125,7 +126,7 @@ public class BasicQueriesTest {
 			assertEquals(1, rc);
 
 			assertTrue(conn.getAutoCommit());
-			if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+			if (SQLite.versionAtLeast(3008000)) {
 				assertFalse(conn.isReadOnly());
 			}
 

@@ -228,7 +228,7 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public boolean supportsAlterTableWithDropColumn() {
-		return org.sqlite.Conn.libversionNumber() >= 3035000;
+		return SQLite.versionAtLeast(3035000);
 	}
 
 	@Override
@@ -819,7 +819,7 @@ class DbMeta implements DatabaseMetaData {
 				append("'' as IS_GENERATEDCOLUMN from ("); // FIXME
 
 		boolean colFound = false;
-		boolean xInfo = org.sqlite.Conn.libversionNumber() >= 3026000;
+		boolean xInfo = SQLite.versionAtLeast(3026000);
 		for (QualifiedName tbl : tbls) {
 			Pragma pragma = new Pragma(new QualifiedName(tbl.dbName, xInfo ? "table_xinfo" : "table_info"), new IdExpr(tbl.name));
 			// Pragma cannot be used as subquery...

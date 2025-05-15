@@ -29,6 +29,7 @@ package org.sqlite.driver;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.sqlite.SQLite;
 
 import java.io.File;
 import java.io.IOException;
@@ -183,7 +184,7 @@ public class ConnectionTest {
 	@Test
 	public void isClosed() throws SQLException {
 		Connection conn = DriverManager.getConnection(JDBC.MEMORY);
-		if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+		if (SQLite.versionAtLeast(3008000)) {
 			assertFalse(conn.isReadOnly());
 		}
 		conn.close();
@@ -271,14 +272,14 @@ public class ConnectionTest {
 
 		assertFalse(testdb.exists());
 		try (Connection conn = DriverManager.getConnection(JDBC.PREFIX + testdb)) {
-			if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+			if (SQLite.versionAtLeast(3008000)) {
 				assertFalse(conn.isReadOnly());
 			}
 		}
 
 		assertTrue(testdb.exists());
 		try (Connection conn = DriverManager.getConnection(JDBC.PREFIX + testdb)) {
-			if (org.sqlite.Conn.libversionNumber() >= 3008000) {
+			if (SQLite.versionAtLeast(3008000)) {
 				assertFalse(conn.isReadOnly());
 			}
 		}

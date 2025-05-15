@@ -133,7 +133,7 @@ public class StmtTest {
 
 	@Test
 	public void pragma_func() throws Exception {
-		Assume.assumeTrue(org.sqlite.Conn.libversionNumber() >= 3020000);
+		Assume.assumeTrue(SQLite.versionAtLeast(3020000));
 		try (Conn c = ConnTest.open()) {
 			try (Stmt sel = c.prepare("SELECT * FROM pragma_table_info(?)", false)) {
 				sel.bindText(1, "sqlite_master");

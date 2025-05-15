@@ -28,6 +28,7 @@ package org.sqlite.driver;
 
 import org.junit.Assume;
 import org.junit.Test;
+import org.sqlite.SQLite;
 
 import java.lang.reflect.Method;
 import java.sql.DatabaseMetaData;
@@ -346,7 +347,7 @@ public class SqliteDatabaseMetadataTest extends SqliteTestHelper {
 	};
 	@Test
 	public void testGetColumns() throws Exception {
-		Assume.assumeTrue(org.sqlite.Conn.libversionNumber() >= 3021000);
+		Assume.assumeTrue(SQLite.versionAtLeast(3021000));
 		try (ResultSet rs = dbMetadata.getColumns(null, null, null, null)) {
 			ResultSetMetaData rsm = rs.getMetaData();
 
