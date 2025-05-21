@@ -1,6 +1,7 @@
 package org.sqlite;
 
 import java.lang.foreign.*;
+import java.lang.foreign.ValueLayout.OfInt;
 import java.lang.invoke.MethodHandle;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
@@ -9,6 +10,11 @@ import static org.sqlite.SQLite.*;
 /** TODO
  * - sqlite3_create_module_v2
  * - sqlite3_declare_vtab
+ * - sqlite3_vtab
+ * - sqlite3_vtab_cursor
+ * - sqlite3_index_info
+ * - sqlite3_context => org.sqlite.SQLite.SQLite3Context
+ * - sqlite3_value => org.sqlite.SQLite.SQLite3Values
  */
 public class sqlite3_module {
 	public static MemorySegment eponymousOnly(EponymousModule m, Arena arena) {
@@ -73,7 +79,7 @@ public class sqlite3_module {
 		C_POINTER.withName("xIntegrity")
 	).withName("sqlite3_module");
 
-	private static final ValueLayout.OfInt iVersion = (ValueLayout.OfInt)layout.select(groupElement("iVersion"));
+	private static final OfInt iVersion = (OfInt)layout.select(groupElement("iVersion"));
 
 	private static void iVersion(MemorySegment struct, int fieldValue) {
 		struct.set(iVersion, 0, fieldValue);

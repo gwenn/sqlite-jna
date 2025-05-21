@@ -22,11 +22,13 @@ import java.nio.file.Path;
 
 // TODO JNA/Bridj/JNR/JNI and native libs embedded in JAR.
 public final class SQLite {
-	private static Logger log = LoggerFactory.getLogger(SQLite.class);
+	private static final Logger log = LoggerFactory.getLogger(SQLite.class);
 	private static final String JNA_LIBRARY_NAME = "sqlite3";
-	private static final ValueLayout.OfDouble C_DOUBLE = ValueLayout.JAVA_DOUBLE;
+
+	static final ValueLayout.OfByte C_CHAR = ValueLayout.JAVA_BYTE;
+	static final ValueLayout.OfDouble C_DOUBLE = ValueLayout.JAVA_DOUBLE;
 	static final ValueLayout.OfInt C_INT = ValueLayout.JAVA_INT;
-	private static final ValueLayout.OfLong C_LONG_LONG = ValueLayout.JAVA_LONG;
+	static final ValueLayout.OfLong C_LONG_LONG = ValueLayout.JAVA_LONG;
 	static final AddressLayout C_POINTER = ValueLayout.ADDRESS;
 
 	public static final FunctionDescriptor IP = FunctionDescriptor.of(C_INT, C_POINTER);

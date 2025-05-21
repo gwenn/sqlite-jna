@@ -46,7 +46,7 @@
 - [ ] `sqlite3_snprintf`
 - [ ] `sqlite3_vsnprintf`
 
-- [ ] `sqlite3_malloc`
+- [X] `sqlite3_malloc`
 - [ ] `sqlite3_malloc64`
 - [ ] `sqlite3_realloc`
 - [ ] `sqlite3_realloc64`
