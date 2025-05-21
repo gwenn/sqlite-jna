@@ -1,0 +1,25 @@
+package org.sqlite;
+
+import java.lang.foreign.MemorySegment;
+
+import static org.sqlite.ErrCodes.SQLITE_OK;
+
+public interface Module extends EponymousModule {
+	/**
+	 * @param db      sqlite3*
+	 * @param aux     void*
+	 * @param argc    int
+	 * @param argv    const char**
+	 * @param pp_vtab sqlite3_vtab**
+	 * @param err_msg char**
+	 */
+	default int create(MemorySegment db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment pp_vtab, MemorySegment err_msg) {
+		return connect(db, aux, argc, argv, pp_vtab, err_msg);
+	}
+	/**
+	 * @param vtab sqlite3_vtab*
+	 */
+	default int destroy(MemorySegment vtab) {
+		return SQLITE_OK;
+	}
+}
