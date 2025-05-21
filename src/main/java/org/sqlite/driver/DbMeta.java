@@ -1480,8 +1480,23 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) {
-		return null;
+	public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
+		checkOpen();
+		String sql;
+		sql = "select "
+			+ "null AS FUNCTION_CAT, "
+			+ "null AS FUNCTION_SCHEM, "
+			+ "name AS FUNCTION_NAME, "
+			+ "'' AS REMARKS, "
+			+ functionResultUnknown + " AS FUNCTION_TYPE, " // TODO type = s | a | w
+			+ "'' AS SPECIFIC_NAME "
+			+ "FROM pragma_function_list() ";
+		if (functionNamePattern != null) {
+			sql += "WHERE name LIKE " + quote(functionNamePattern);
+		}
+		final PreparedStatement stmt = c.prepareStatement(sql);
+		stmt.closeOnCompletion();
+		return stmt.executeQuery();
 	}
 
 	@Override

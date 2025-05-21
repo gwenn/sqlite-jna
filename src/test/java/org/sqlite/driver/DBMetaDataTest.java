@@ -914,4 +914,24 @@ public class DBMetaDataTest {
 		final int minorVersion = meta.getDatabaseMinorVersion();
 		assertTrue(minorVersion < 100 && minorVersion > 30);
 	}
+
+	@Test
+	public void getFunctions() throws SQLException {
+		try (ResultSet rs = meta.getFunctions(null, null, null)) {
+			assertTrue(rs.next());
+			ResultSetMetaData rsmeta = rs.getMetaData();
+			assertEquals(6, rsmeta.getColumnCount());
+			assertEquals("FUNCTION_CAT", rsmeta.getColumnName(1));
+			assertEquals("FUNCTION_SCHEM", rsmeta.getColumnName(2));
+			assertEquals("FUNCTION_NAME", rsmeta.getColumnLabel(3));
+			assertEquals("REMARKS", rsmeta.getColumnName(4));
+			assertEquals("FUNCTION_TYPE", rsmeta.getColumnName(5));
+			assertEquals("SPECIFIC_NAME", rsmeta.getColumnName(6));
+			int count = 1;
+			while (rs.next()) {
+				count++;
+			}
+			assertTrue(count > 0);
+		}
+	}
 }
