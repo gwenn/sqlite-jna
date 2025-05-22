@@ -221,7 +221,7 @@ public class ConnTest {
 		final Conn c = open();
 		c.createScalarFunction("test", 0, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
 			@Override
-			protected void func(SQLite3Context pCtx, SQLite3Values args) {
+			protected void func(sqlite3_context pCtx, sqlite3_values args) {
 				assertNotNull(pCtx);
 				assertEquals(0, args.getCount());
 				pCtx.setResultNull();
@@ -237,7 +237,7 @@ public class ConnTest {
 		try (Conn c = open()) {
 			c.createScalarFunction("test", 2, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new ScalarCallback() {
 				@Override
-				protected void func(SQLite3Context pCtx, SQLite3Values args) {
+				protected void func(sqlite3_context pCtx, sqlite3_values args) {
 					assertNotNull(pCtx);
 					assertEquals(2, args.getCount());
 					assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
@@ -263,7 +263,7 @@ public class ConnTest {
 				return (int)ValueLayout.JAVA_LONG.byteSize();
 			}
 			@Override
-			protected void step(SQLite3Context pCtx, MemorySegment aggrCtx, SQLite3Values args) {
+			protected void step(sqlite3_context pCtx, MemorySegment aggrCtx, sqlite3_values args) {
 				assertNotNull(pCtx);
 				assertNotNull(aggrCtx);
 				assertEquals(1, args.getCount());
@@ -273,7 +273,7 @@ public class ConnTest {
 			}
 		}, new AggregateFinalCallback() {
 			@Override
-			protected void finalStep(SQLite3Context pCtx, MemorySegment aggrCtx) {
+			protected void finalStep(sqlite3_context pCtx, MemorySegment aggrCtx) {
 				assertNotNull(pCtx);
 				if (isNull(aggrCtx)) {
 					pCtx.setResultNull();

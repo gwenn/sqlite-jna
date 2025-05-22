@@ -12,18 +12,18 @@ import static org.sqlite.SQLite.*;
  *
  * @see <a href="http://sqlite.org/c3ref/blob.html">sqlite3_blob</a>
  */
-final class SQLite3Blob {
+final class sqlite3_blob {
 	private static final boolean OMIT_INCRBLOB = sqlite3_compileoption_used("OMIT_INCRBLOB");
 	private MemorySegment p;
 	int res;
 
-	SQLite3Blob(MemorySegment p) {
+	sqlite3_blob(MemorySegment p) {
 		this.p = p;
 	}
 
 	private static final MethodHandle sqlite3_blob_reopen = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_reopen", FunctionDescriptor.of(C_INT, C_POINTER, C_LONG_LONG));
-	static int sqlite3_blob_reopen(SQLite3Blob pBlob, long iRow) {
+	static int sqlite3_blob_reopen(sqlite3_blob pBlob, long iRow) {
 		checkActivated(sqlite3_blob_reopen, "SQLITE_OMIT_INCRBLOB activated");
 		try {
 			return (int)sqlite3_blob_reopen.invokeExact(pBlob.p, iRow);
@@ -34,7 +34,7 @@ final class SQLite3Blob {
 
 	private static final MethodHandle sqlite3_blob_bytes = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_bytes", IP);
-	static int sqlite3_blob_bytes(SQLite3Blob pBlob) {
+	static int sqlite3_blob_bytes(sqlite3_blob pBlob) {
 		checkActivated(sqlite3_blob_bytes, "SQLITE_OMIT_INCRBLOB activated");
 		try {
 			return (int)sqlite3_blob_bytes.invokeExact(pBlob.p);
@@ -46,7 +46,7 @@ final class SQLite3Blob {
 	private static final MethodHandle sqlite3_blob_read = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_read", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_INT, C_INT),
 		CRITICAL);
-	static int sqlite3_blob_read(SQLite3Blob pBlob, byte[] z, int off, int len, int iOffset) {
+	static int sqlite3_blob_read(sqlite3_blob pBlob, byte[] z, int off, int len, int iOffset) {
 		checkActivated(sqlite3_blob_read, "SQLITE_OMIT_INCRBLOB activated");
 		try {
 			int n = len - off;
@@ -60,7 +60,7 @@ final class SQLite3Blob {
 	private static final MethodHandle sqlite3_blob_write = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_write", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_INT, C_INT),
 		CRITICAL);
-	static int sqlite3_blob_write(SQLite3Blob pBlob, byte[] z, int off, int len, int iOffset) {
+	static int sqlite3_blob_write(sqlite3_blob pBlob, byte[] z, int off, int len, int iOffset) {
 		checkActivated(sqlite3_blob_write, "SQLITE_OMIT_INCRBLOB activated");
 		try {
 			int n = len - off;
@@ -73,7 +73,7 @@ final class SQLite3Blob {
 
 	private static final MethodHandle sqlite3_blob_close = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_close", IP);
-	static int sqlite3_blob_close(SQLite3Blob pBlob) {
+	static int sqlite3_blob_close(sqlite3_blob pBlob) {
 		checkActivated(sqlite3_blob_close, "SQLITE_OMIT_INCRBLOB activated");
 		try {
 			return (int)sqlite3_blob_close.invokeExact(pBlob.p);
@@ -84,7 +84,7 @@ final class SQLite3Blob {
 
 	private static final MethodHandle sqlite3_blob_open = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_open", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_LONG_LONG, C_INT, C_POINTER));
-	static int sqlite3_blob_open(SQLite3 pDb, String dbName, String tableName, String columnName,
+	static int sqlite3_blob_open(sqlite3 pDb, String dbName, String tableName, String columnName,
 								 long iRow, boolean flags, MemorySegment ppBlob) { // no copy needed
 		checkActivated(sqlite3_blob_open, "SQLITE_OMIT_INCRBLOB activated");
 		try (Arena arena = Arena.ofConfined()) {

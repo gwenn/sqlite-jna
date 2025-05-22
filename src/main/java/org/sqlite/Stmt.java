@@ -19,14 +19,14 @@ import java.util.NoSuchElementException;
 
 import static org.sqlite.ColTypes.SQLITE_NULL;
 import static org.sqlite.SQLite.*;
-import static org.sqlite.SQLite3Stmt.*;
+import static org.sqlite.sqlite3_stmt.*;
 import static org.sqlite.driver.Guard.sneakyThrow;
 
 public class Stmt implements AutoCloseable, Row {
 	final Conn c;
 	// Whole SQL (including tail)...
 	final String sql;
-	private final SQLite3Stmt pStmt;
+	private final sqlite3_stmt pStmt;
 	private final Cleaner.Cleanable cleanable;
 	private final String tail;
 	// cached parameter count
@@ -39,7 +39,7 @@ public class Stmt implements AutoCloseable, Row {
 	private int[] columnAffinities;
 	private boolean cacheable;
 
-	Stmt(Conn c, String sql, SQLite3Stmt pStmt, MemorySegment tail, boolean cacheable) {
+	Stmt(Conn c, String sql, sqlite3_stmt pStmt, MemorySegment tail, boolean cacheable) {
 		assert c != null;
 		this.c = c;
 		this.sql = sql;

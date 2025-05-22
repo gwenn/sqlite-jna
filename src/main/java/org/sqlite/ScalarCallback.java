@@ -10,8 +10,8 @@ package org.sqlite;
 
 import java.lang.foreign.MemorySegment;
 
-import static org.sqlite.SQLite3Context.sqlite3_get_auxdata;
-import static org.sqlite.SQLite3Context.sqlite3_set_auxdata;
+import static org.sqlite.sqlite3_context.sqlite3_get_auxdata;
+import static org.sqlite.sqlite3_context.sqlite3_set_auxdata;
 
 /**
  * User defined SQL scalar function.
@@ -35,26 +35,26 @@ public abstract class ScalarCallback {
 	 */
 	@SuppressWarnings("unused")
 	public void callback(MemorySegment ms, int nArg, MemorySegment args) {
-		SQLite3Context pCtx = new SQLite3Context(ms);
-		func(pCtx, SQLite3Values.build(nArg, args));
+		sqlite3_context pCtx = new sqlite3_context(ms);
+		func(pCtx, sqlite3_values.build(nArg, args));
 	}
 
 	/**
 	 * @param pCtx <code>sqlite3_context*</code>
 	 * @param args function arguments
 	 */
-	protected abstract void func(SQLite3Context pCtx, SQLite3Values args);
+	protected abstract void func(sqlite3_context pCtx, sqlite3_values args);
 
 	/**
 	 * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_set_auxdata</a>
 	 */
-	public static void setAuxData(SQLite3Context pCtx, int n, MemorySegment auxData, Destructor free) {
+	public static void setAuxData(sqlite3_context pCtx, int n, MemorySegment auxData, Destructor free) {
 		sqlite3_set_auxdata(pCtx, n, auxData, free);
 	}
 	/**
 	 * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_get_auxdata</a>
 	 */
-	public static MemorySegment getAuxData(SQLite3Context pCtx, int n) {
+	public static MemorySegment getAuxData(sqlite3_context pCtx, int n) {
 		return sqlite3_get_auxdata(pCtx, n);
 	}
 }

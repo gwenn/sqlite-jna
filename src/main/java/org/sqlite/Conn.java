@@ -23,8 +23,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.sqlite.SQLite.*;
-import static org.sqlite.SQLite3Backup.*;
-import static org.sqlite.SQLite3Blob.*;
+import static org.sqlite.sqlite3.*;
+import static org.sqlite.sqlite3_backup.*;
+import static org.sqlite.sqlite3_blob.*;
 
 /**
  * Database Connection Handle
@@ -36,7 +37,7 @@ public final class Conn implements AutoCloseable {
 	/** If the filename is an empty string, then a private, temporary on-disk database will be created. */
 	public static final String TEMP_FILE = "";
 
-	private final SQLite3 pDb;
+	private final sqlite3 pDb;
 	private final Cleaner.Cleanable cleanable;
 	private final boolean sharedCacheMode;
 	private TimeoutProgressCallback timeoutProgressCallback;
@@ -85,7 +86,7 @@ public final class Conn implements AutoCloseable {
 		}
 		if (res != SQLITE_OK) {
 			if (!isNull(pDb)) {
-				final SQLite3 sqlite3 = new SQLite3(pDb);
+				final sqlite3 sqlite3 = new sqlite3(pDb);
 				final int extRes;
 				if ((flags & OpenFlags.SQLITE_OPEN_EXRESCODE) == 0 && sqlite3_extended_result_codes(sqlite3, true) == SQLITE_OK) {
 					extRes = sqlite3_extended_errcode(sqlite3);
@@ -102,7 +103,7 @@ public final class Conn implements AutoCloseable {
 		final Map<String, String> queryParams = uri ? OpenQueryParameter.getQueryParams(filename) : Collections.emptyMap();
 		// TODO not reliable (and may depend on sqlite3_enable_shared_cache global status)
 		final boolean sharedCacheMode = "shared".equals(queryParams.get("cache")) || (flags & OpenFlags.SQLITE_OPEN_SHAREDCACHE) != 0;
-		final SQLite3 sqlite3 = isNull(pDb) ? null: new SQLite3(pDb);
+		final sqlite3 sqlite3 = isNull(pDb) ? null: new sqlite3(pDb);
 		if ((flags & OpenFlags.SQLITE_OPEN_EXRESCODE) == 0) { // activate by default
 			sqlite3_extended_result_codes(sqlite3, true);
 		}
@@ -142,7 +143,7 @@ public final class Conn implements AutoCloseable {
 		}
 	}
 
-	private Conn(SQLite3 pDb, boolean sharedCacheMode) {
+	private Conn(sqlite3 pDb, boolean sharedCacheMode) {
 		assert pDb != null;
 		this.pDb = pDb;
 		this.sharedCacheMode = sharedCacheMode;
@@ -247,7 +248,7 @@ public final class Conn implements AutoCloseable {
 			final int res = blockingPrepare(pSql, cacheable ? SQLITE_PREPARE_PERSISTENT : 0, ppStmt, ppTail);
 			check(res, "error while preparing statement '%s'", sql);
 			final MemorySegment pStmt = ppStmt.getAtIndex(ValueLayout.ADDRESS, 0);
-			final SQLite3Stmt stmt = isNull(pStmt) ? null : new SQLite3Stmt(pDb.lock, pStmt);
+			final sqlite3_stmt stmt = isNull(pStmt) ? null : new sqlite3_stmt(pDb.lock, pStmt);
 			return new Stmt(this, sql, stmt, ppTail.getAtIndex(ValueLayout.ADDRESS, 0), cacheable);
 		}
 	}
@@ -388,7 +389,7 @@ public final class Conn implements AutoCloseable {
 			final MemorySegment ppBlob = arena.allocate(ValueLayout.ADDRESS);
 			final int res = sqlite3_blob_open(pDb, dbName, tblName, colName, iRow, rw, ppBlob); // ko if pDb is null
 			final MemorySegment pBlob = ppBlob.get(ValueLayout.ADDRESS, 0);
-			final SQLite3Blob blob = isNull(pBlob) ? null : new SQLite3Blob(pBlob);
+			final sqlite3_blob blob = isNull(pBlob) ? null : new sqlite3_blob(pBlob);
 			if (res != SQLITE_OK) {
 				sqlite3_blob_close(blob);
 				throw new SQLiteException(this, String.format("error while opening a blob to (db: '%s', table: '%s', col: '%s', row: %d)",
@@ -654,7 +655,7 @@ public final class Conn implements AutoCloseable {
 	public static Backup open(Conn dst, String dstName, Conn src, String srcName) throws ConnException {
 		dst.checkOpen();
 		src.checkOpen();
-		final SQLite3Backup pBackup = sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
+		final sqlite3_backup pBackup = sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
 		if (pBackup == null) {
 			throw new ConnException(dst, "backup init failed", dst.getErrCode());
 		}

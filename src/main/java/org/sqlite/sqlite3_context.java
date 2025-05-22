@@ -12,16 +12,16 @@ import static org.sqlite.SQLite.*;
  *
  * @see <a href="http://sqlite.org/c3ref/context.html">sqlite3_context</a>
  */
-public final class SQLite3Context {
+public final class sqlite3_context {
 	private final MemorySegment p;
 
-	SQLite3Context(MemorySegment p) {
+	sqlite3_context(MemorySegment p) {
 		this.p = p;
 	}
 
 	private static final MethodHandle sqlite3_get_auxdata = downcallHandle(
 		"sqlite3_get_auxdata", PPI);
-	static MemorySegment sqlite3_get_auxdata(SQLite3Context pCtx, int n) {
+	static MemorySegment sqlite3_get_auxdata(sqlite3_context pCtx, int n) {
 		try {
 			return (MemorySegment) sqlite3_get_auxdata.invokeExact(pCtx.p, n);
 		} catch (Throwable e) {
@@ -31,7 +31,7 @@ public final class SQLite3Context {
 
 	private static final MethodHandle sqlite3_set_auxdata = downcallHandle(
 		"sqlite3_set_auxdata", FunctionDescriptor.ofVoid(C_POINTER, C_INT, C_POINTER, C_POINTER));
-	static void sqlite3_set_auxdata(SQLite3Context pCtx, int n, MemorySegment p, Destructor free) {
+	static void sqlite3_set_auxdata(sqlite3_context pCtx, int n, MemorySegment p, Destructor free) {
 		try {
 			sqlite3_set_auxdata.invokeExact(pCtx.p, n, p, free);
 		} catch (Throwable e) {
@@ -41,7 +41,7 @@ public final class SQLite3Context {
 
 	private static final MethodHandle sqlite3_aggregate_context = downcallHandle(
 		"sqlite3_aggregate_context", PPI);
-	static MemorySegment sqlite3_aggregate_context(SQLite3Context pCtx, int nBytes) {
+	static MemorySegment sqlite3_aggregate_context(sqlite3_context pCtx, int nBytes) {
 		try {
 			return (MemorySegment) sqlite3_aggregate_context.invokeExact(pCtx.p, nBytes);
 		} catch (Throwable e) {
@@ -53,12 +53,12 @@ public final class SQLite3Context {
 		"sqlite3_context_db_handle", PP);
 	/**
 	 * @return a copy of the pointer to the database connection (the 1st parameter) of
-	 * {@link SQLite#sqlite3_create_function_v2(SQLite3, String, int, int, MemorySegment, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, MemorySegment)}
+	 * {@link sqlite3#sqlite3_create_function_v2(sqlite3, String, int, int, MemorySegment, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, MemorySegment)}
 	 * @see <a href="http://sqlite.org/c3ref/context_db_handle.html">sqlite3_context_db_handle</a>
 	 */
-	public SQLite3 getDbHandle() {
+	public sqlite3 getDbHandle() {
 		try {
-			return new SQLite3((MemorySegment) sqlite3_context_db_handle.invokeExact(p));
+			return new sqlite3((MemorySegment) sqlite3_context_db_handle.invokeExact(p));
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}

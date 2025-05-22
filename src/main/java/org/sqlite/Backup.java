@@ -11,18 +11,18 @@ package org.sqlite;
 import java.lang.ref.Cleaner;
 
 import static org.sqlite.SQLite.*;
-import static org.sqlite.SQLite3Backup.*;
+import static org.sqlite.sqlite3_backup.*;
 
 /**
  * Online Backup Object
  * <a href="https://www.sqlite.org/c3ref/backup.html">sqlite3_backup</a>
  */
 public class Backup implements AutoCloseable {
-	private final SQLite3Backup pBackup;
+	private final sqlite3_backup pBackup;
 	private final Cleaner.Cleanable cleanable;
 	private final Conn dst, src;
 
-	Backup(SQLite3Backup pBackup, Conn dst, Conn src) {
+	Backup(sqlite3_backup pBackup, Conn dst, Conn src) {
 		assert pBackup != null && dst != null && src != null;
 		this.pBackup = pBackup;
 		this.dst = dst;

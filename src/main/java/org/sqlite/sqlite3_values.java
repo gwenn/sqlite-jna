@@ -12,19 +12,19 @@ import static org.sqlite.SQLite.*;
  *
  * @see <a href="http://sqlite.org/c3ref/value.html">sqlite3_value</a>
  */
-public final class SQLite3Values {
-	private static final SQLite3Values NO_ARG = new SQLite3Values(MemorySegment.NULL, 0);
+public final class sqlite3_values {
+	private static final sqlite3_values NO_ARG = new sqlite3_values(MemorySegment.NULL, 0);
 	private final MemorySegment args;
 	private final int nArg;
 
-	public static SQLite3Values build(int nArg, MemorySegment args) {
+	public static sqlite3_values build(int nArg, MemorySegment args) {
 		if (nArg == 0) {
 			return NO_ARG;
 		}
-		return new SQLite3Values(args, nArg);
+		return new sqlite3_values(args, nArg);
 	}
 
-	private SQLite3Values(MemorySegment args, int nArg) {
+	private sqlite3_values(MemorySegment args, int nArg) {
 		this.args = args.reinterpret(nArg * ValueLayout.ADDRESS.byteSize());
 		this.nArg = nArg;
 	}

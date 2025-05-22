@@ -1,7 +1,5 @@
 package org.sqlite;
 
-import org.sqlite.SQLite.SQLite3;
-
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Map;
@@ -15,7 +13,7 @@ final class UnlockNotificationCallback implements UnlockNotifyCallback {
 	private UnlockNotificationCallback() {
 	}
 
-	synchronized UnlockNotification add(SQLite3 db) {
+	synchronized UnlockNotification add(sqlite3 db) {
 		return unlockNotifications.computeIfAbsent(db.getPointer(), k -> new UnlockNotification());
 	}
 

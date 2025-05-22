@@ -2,7 +2,7 @@ package org.sqlite;
 
 import java.lang.foreign.MemorySegment;
 
-import static org.sqlite.SQLite3Context.sqlite3_aggregate_context;
+import static org.sqlite.sqlite3_context.sqlite3_aggregate_context;
 
 /**
  * User defined SQL aggregate function.
@@ -29,11 +29,11 @@ public abstract class AggregateFinalCallback {
 	 */
 	@SuppressWarnings("unused")
 	public void callback(MemorySegment ms) {
-		SQLite3Context pCtx = new SQLite3Context(ms);
+		sqlite3_context pCtx = new sqlite3_context(ms);
 		finalStep(pCtx, getAggregateContext(pCtx));
 	}
 
-	protected abstract void finalStep(SQLite3Context pCtx, MemorySegment aggrCtx);
+	protected abstract void finalStep(sqlite3_context pCtx, MemorySegment aggrCtx);
 
 	/**
 	 * Obtain aggregate function context.
@@ -41,7 +41,7 @@ public abstract class AggregateFinalCallback {
 	 * @return <code>null</code> when no rows match an aggregate query.
 	 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_aggregate_context</a>
 	 */
-	protected static MemorySegment getAggregateContext(SQLite3Context pCtx) {
+	protected static MemorySegment getAggregateContext(sqlite3_context pCtx) {
 		// Within the xFinal callback, it is customary to set N=0 in calls to sqlite3_aggregate_context(C,N)
 		// so that no pointless memory allocations occur.
 		return sqlite3_aggregate_context(pCtx, 0);

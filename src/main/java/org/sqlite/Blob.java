@@ -14,7 +14,7 @@ import java.io.OutputStream;
 import java.lang.ref.Cleaner;
 
 import static org.sqlite.SQLite.*;
-import static org.sqlite.SQLite3Blob.*;
+import static org.sqlite.sqlite3_blob.*;
 
 /**
  * A Handle To An Open BLOB
@@ -22,13 +22,13 @@ import static org.sqlite.SQLite3Blob.*;
  */
 public class Blob implements AutoCloseable {
 	private final Conn c;
-	private final SQLite3Blob pBlob;
+	private final sqlite3_blob pBlob;
 	private final Cleaner.Cleanable cleanable;
 	private int readOffset;
 	private int writeOffset;
 	private int size = -1;
 
-	Blob(Conn c, SQLite3Blob pBlob) {
+	Blob(Conn c, sqlite3_blob pBlob) {
 		assert c != null;
 		this.c = c;
 		this.pBlob = pBlob;

@@ -2,7 +2,7 @@ package org.sqlite;
 
 import java.lang.foreign.MemorySegment;
 
-import static org.sqlite.SQLite3Context.sqlite3_aggregate_context;
+import static org.sqlite.sqlite3_context.sqlite3_aggregate_context;
 
 /**
  * User defined SQL aggregate function.
@@ -29,14 +29,14 @@ public abstract class AggregateStepCallback {
 	 */
 	@SuppressWarnings("unused")
 	public void callback(MemorySegment ms, int nArg, MemorySegment args) {
-		SQLite3Context pCtx = new SQLite3Context(ms);
+		sqlite3_context pCtx = new sqlite3_context(ms);
 		final int nBytes = numberOfBytes();
 		final MemorySegment p = sqlite3_aggregate_context(pCtx, nBytes);
 		if (p == null && nBytes > 0) {
 			pCtx.setResultErrorNoMem();;
 			return;
 		}
-		step(pCtx, p, SQLite3Values.build(nArg, args));
+		step(pCtx, p, sqlite3_values.build(nArg, args));
 	}
 
 	/**
@@ -50,5 +50,5 @@ public abstract class AggregateStepCallback {
 	 * @param aggrCtx aggregate context
 	 * @param args function arguments
 	 */
-	protected abstract void step(SQLite3Context pCtx, MemorySegment aggrCtx, SQLite3Values args);
+	protected abstract void step(sqlite3_context pCtx, MemorySegment aggrCtx, sqlite3_values args);
 }
