@@ -11,6 +11,10 @@ import static org.sqlite.sqlite3_index_info.*;
 import static org.sqlite.sqlite3_index_info.sqlite3_index_constraint.SQLITE_INDEX_CONSTRAINT_EQ;
 import static org.sqlite.sqlite3_module.sqlite3_declare_vtab;
 
+/**
+ * Port of <a href="http://www.sqlite.org/cgi/src/finfo?name=ext/misc/carray.c">carray</a>
+ * C extension: <a href="https://www.sqlite.org/carray.html">carray</a>
+ */
 public class ArrayModule implements EponymousModule {
 	public static final ArrayModule INSTANCE = new ArrayModule();
 	private static final int COLUMN_POINTER = 1;

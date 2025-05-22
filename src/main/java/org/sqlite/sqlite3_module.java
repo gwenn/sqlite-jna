@@ -7,13 +7,6 @@ import java.lang.invoke.MethodHandle;
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static org.sqlite.SQLite.*;
 
-/** TODO
- * - sqlite3_vtab
- * - sqlite3_vtab_cursor
- * - sqlite3_index_info
- * - sqlite3_context => org.sqlite.SQLite.SQLite3Context
- * - sqlite3_value => org.sqlite.SQLite.SQLite3Values
- */
 public class sqlite3_module {
 	public static MemorySegment eponymousOnly(EponymousModule m, Arena arena) {
 		final MemorySegment struct = arena.allocate(layout);
