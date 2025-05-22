@@ -8,8 +8,6 @@ import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static org.sqlite.SQLite.*;
 
 /** TODO
- * - sqlite3_create_module_v2
- * - sqlite3_declare_vtab
  * - sqlite3_vtab
  * - sqlite3_vtab_cursor
  * - sqlite3_index_info
@@ -48,6 +46,16 @@ public class sqlite3_module {
 		xCreate(struct, m, arena);
 		xDestroy(struct, m, arena);
 		return struct;
+	}
+
+	private static final MethodHandle sqlite3_declare_vtab = downcallHandle(
+		"sqlite3_declare_vtab", IPP);
+	static int sqlite3_declare_vtab(sqlite3 pDb, String sql) {
+		try (Arena arena = Arena.ofConfined()) {
+			return (int)sqlite3_declare_vtab.invokeExact(pDb.getPointer(), nativeString(arena, sql));
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
 	}
 
 	private static final GroupLayout layout = MemoryLayout.structLayout(

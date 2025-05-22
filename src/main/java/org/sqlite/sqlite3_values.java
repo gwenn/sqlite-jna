@@ -2,7 +2,6 @@ package org.sqlite;
 
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 
 import static org.sqlite.SQLite.*;
@@ -25,7 +24,7 @@ public final class sqlite3_values {
 	}
 
 	private sqlite3_values(MemorySegment args, int nArg) {
-		this.args = args.reinterpret(nArg * ValueLayout.ADDRESS.byteSize());
+		this.args = args.reinterpret(nArg * C_POINTER.byteSize());
 		this.nArg = nArg;
 	}
 
@@ -62,7 +61,7 @@ public final class sqlite3_values {
 		if (isNull(blob)) {
 			return null;
 		} else {
-			return blob.reinterpret(sqlite3_value_bytes(arg)).toArray(ValueLayout.JAVA_BYTE); // a copy is made...
+			return blob.reinterpret(sqlite3_value_bytes(arg)).toArray(C_CHAR); // a copy is made...
 		}
 	}
 
@@ -159,7 +158,22 @@ public final class sqlite3_values {
 		}
 	}
 
+	private static final MethodHandle sqlite3_value_pointer = downcallHandle(
+		"sqlite3_value_pointer", PPP);
+	/**
+	 * @param i 0...
+	 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_pointer</a>
+	 */
+	public MemorySegment getPointer(int i, MemorySegment name) {
+		MemorySegment pValue = arg(i);
+		try {
+			return (MemorySegment)sqlite3_value_pointer.invokeExact(pValue, name);
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
+
 	private MemorySegment arg(int i) {
-		return args.getAtIndex(ValueLayout.ADDRESS, i);
+		return args.getAtIndex(C_POINTER, i);
 	}
 }

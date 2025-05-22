@@ -220,9 +220,9 @@
 - [ ] `sqlite3_reset_auto_extension`
 
 - [ ] `sqlite3_create_module`
-- [ ] `sqlite3_create_module_v2`
+- [X] `sqlite3_create_module_v2`
 - [ ] `sqlite3_drop_modules`
-- [ ] `sqlite3_declare_vtab`
+- [X] `sqlite3_declare_vtab`
 - [ ] `sqlite3_overload_function`
 
 - [X] `sqlite3_blob_open`

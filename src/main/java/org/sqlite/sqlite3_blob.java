@@ -21,6 +21,20 @@ final class sqlite3_blob {
 		this.p = p;
 	}
 
+	private static final MethodHandle sqlite3_blob_open = OMIT_INCRBLOB ? null : downcallHandle(
+		"sqlite3_blob_open", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_LONG_LONG, C_INT, C_POINTER));
+	static int sqlite3_blob_open(sqlite3 pDb, String dbName, String tableName, String columnName,
+								 long iRow, boolean flags, MemorySegment ppBlob) { // no copy needed
+		checkActivated(sqlite3_blob_open, "SQLITE_OMIT_INCRBLOB activated");
+		try (Arena arena = Arena.ofConfined()) {
+			return (int)sqlite3_blob_open.invokeExact(pDb.getPointer(),
+				nativeString(arena, dbName), nativeString(arena, tableName), nativeString(arena, columnName),
+				iRow, flags ? 1 : 0, ppBlob);
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
+
 	private static final MethodHandle sqlite3_blob_reopen = OMIT_INCRBLOB ? null : downcallHandle(
 		"sqlite3_blob_reopen", FunctionDescriptor.of(C_INT, C_POINTER, C_LONG_LONG));
 	static int sqlite3_blob_reopen(sqlite3_blob pBlob, long iRow) {
@@ -77,20 +91,6 @@ final class sqlite3_blob {
 		checkActivated(sqlite3_blob_close, "SQLITE_OMIT_INCRBLOB activated");
 		try {
 			return (int)sqlite3_blob_close.invokeExact(pBlob.p);
-		} catch (Throwable e) {
-			throw new AssertionError("should not reach here", e);
-		}
-	}
-
-	private static final MethodHandle sqlite3_blob_open = OMIT_INCRBLOB ? null : downcallHandle(
-		"sqlite3_blob_open", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_LONG_LONG, C_INT, C_POINTER));
-	static int sqlite3_blob_open(sqlite3 pDb, String dbName, String tableName, String columnName,
-								 long iRow, boolean flags, MemorySegment ppBlob) { // no copy needed
-		checkActivated(sqlite3_blob_open, "SQLITE_OMIT_INCRBLOB activated");
-		try (Arena arena = Arena.ofConfined()) {
-			return (int)sqlite3_blob_open.invokeExact(pDb.getPointer(),
-				nativeString(arena, dbName), nativeString(arena, tableName), nativeString(arena, columnName),
-				iRow, flags ? 1 : 0, ppBlob);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}

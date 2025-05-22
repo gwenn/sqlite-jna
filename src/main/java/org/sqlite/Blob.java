@@ -210,7 +210,7 @@ public class Blob implements AutoCloseable {
 					k = Math.max(n, 0L);
 				}
 
-				readOffset += (int) k;
+				readOffset += Math.toIntExact(k);
 				return k;
 			} catch (SQLiteException e) {
 				throw new IOException(e);

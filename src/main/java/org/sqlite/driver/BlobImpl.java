@@ -127,7 +127,7 @@ class BlobImpl implements Blob, AutoCloseable {
 		if (pos > Integer.MAX_VALUE) {
 			throw new SQLException(String.format("invalid position: %d > %d", pos, Integer.MAX_VALUE), null, ErrCodes.WRAPPER_SPECIFIC);
 		}
-		return (int) (pos - 1L);
+		return Math.toIntExact(pos - 1L);
 	}
 
 	static int checkLength(long length) throws SQLException {
@@ -137,6 +137,6 @@ class BlobImpl implements Blob, AutoCloseable {
 		if (length > Integer.MAX_VALUE) {
 			throw new SQLException(String.format("invalid length: %d > %d", length, Integer.MAX_VALUE), null, ErrCodes.WRAPPER_SPECIFIC);
 		}
-		return (int) length;
+		return Math.toIntExact(length);
 	}
 }

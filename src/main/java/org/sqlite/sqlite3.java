@@ -237,7 +237,7 @@ final class sqlite3 {
 	}
 
 	private static final MethodHandle sqlite3_db_filename = downcallHandle(
-		"sqlite3_db_filename", FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER));
+		"sqlite3_db_filename", PPP);
 	static String sqlite3_db_filename(sqlite3 pDb, String dbName) { // no copy needed
 		try (Arena arena = Arena.ofConfined()) {
 			return getString((MemorySegment) sqlite3_db_filename.invokeExact(pDb.getPointer(), nativeString(arena, dbName)));
@@ -257,7 +257,7 @@ final class sqlite3 {
 	}
 
 	private static final MethodHandle sqlite3_next_stmt = downcallHandle(
-		"sqlite3_next_stmt", FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER));
+		"sqlite3_next_stmt", PPP);
 	private static MemorySegment sqlite3_next_stmt(sqlite3 pDb, MemorySegment stmt) {
 		try {
 			return (MemorySegment) sqlite3_next_stmt.invokeExact(pDb.getPointer(), stmt);
@@ -418,6 +418,23 @@ final class sqlite3 {
 			final MemorySegment xS = upcallStub(aggregate_step_callback, xStep, VPIP, pDb.getArena());
 			final MemorySegment xFi = upcallStub(aggregate_final_callback, xFinal, VP, pDb.getArena());
 			return (int)sqlite3_create_function_v2.invokeExact(pDb.getPointer(), nativeString(arena, functionName), nArg, eTextRep, pApp, xFu, xS, xFi, xDestroy);
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
+	private static final MethodHandle sqlite3_create_module_v2 = downcallHandle(
+		"sqlite3_create_module_v2", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
+	static int sqlite3_create_module_v2(sqlite3 pDb, String moduleName, EponymousModule module, boolean eponymousOnly, MemorySegment pClientData, MemorySegment xDestroy) {
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment ms;
+			if (module instanceof Module) {
+				ms = sqlite3_module.readOnly((Module) module, pDb.getArena());
+			} else if (eponymousOnly) {
+				ms = sqlite3_module.eponymousOnly(module, pDb.getArena());
+			} else {
+				ms = sqlite3_module.eponymous(module, pDb.getArena());
+			}
+			return (int)sqlite3_create_module_v2.invokeExact(pDb.getPointer(), nativeString(arena, moduleName), ms, pClientData, xDestroy);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}

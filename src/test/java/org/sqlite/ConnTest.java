@@ -269,7 +269,7 @@ public class ConnTest {
 				assertEquals(1, args.getCount());
 				assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
 				aggrCtx = aggrCtx.reinterpret(numberOfBytes());
-				aggrCtx.setAtIndex(ValueLayout.JAVA_LONG,0, aggrCtx.getAtIndex(ValueLayout.JAVA_LONG, 0) + args.getLong(0));
+				aggrCtx.setAtIndex(ValueLayout.JAVA_LONG,0, aggrCtx.get(ValueLayout.JAVA_LONG, 0) + args.getLong(0));
 			}
 		}, new AggregateFinalCallback() {
 			@Override
@@ -279,7 +279,7 @@ public class ConnTest {
 					pCtx.setResultNull();
 					return;
 				}
-				pCtx.setResultLong(aggrCtx.reinterpret(ValueLayout.JAVA_LONG.byteSize()).getAtIndex(ValueLayout.JAVA_LONG, 0));
+				pCtx.setResultLong(aggrCtx.reinterpret(ValueLayout.JAVA_LONG.byteSize()).get(ValueLayout.JAVA_LONG, 0));
 			}
 		});
 

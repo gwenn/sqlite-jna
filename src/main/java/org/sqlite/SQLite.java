@@ -10,6 +10,7 @@ package org.sqlite;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.Unsafe;
 
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
@@ -33,10 +34,11 @@ public final class SQLite {
 	static final FunctionDescriptor IP = FunctionDescriptor.of(C_INT, C_POINTER);
 	static final FunctionDescriptor IPI = FunctionDescriptor.of(C_INT, C_POINTER, C_INT);
 	static final FunctionDescriptor IPII = FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_INT);
-	public static final FunctionDescriptor IPIPIP = FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_POINTER, C_INT, C_POINTER);
-	public static final FunctionDescriptor IPP = FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER);
+	static final FunctionDescriptor IPIPIP = FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_POINTER, C_INT, C_POINTER);
+	static final FunctionDescriptor IPP = FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER);
 	static final FunctionDescriptor LP = FunctionDescriptor.of(C_LONG_LONG, C_POINTER);
 	static final FunctionDescriptor PP = FunctionDescriptor.of(C_POINTER, C_POINTER);
+	static final FunctionDescriptor PPP = FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER);
 	static final FunctionDescriptor PPI = FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT);
 	static final FunctionDescriptor VP = FunctionDescriptor.ofVoid(C_POINTER);
 	static final FunctionDescriptor VPI = FunctionDescriptor.ofVoid(C_POINTER, C_INT);
@@ -260,6 +262,7 @@ public final class SQLite {
 
 	private static final MethodHandle sqlite3_free = downcallHandle(
 		"sqlite3_free", VP);
+	static final MemorySegment xFree = findOrThrow("sqlite3_free");
 	static void sqlite3_free(MemorySegment p) {
 		try {
 			sqlite3_free.invokeExact(p);
@@ -269,9 +272,17 @@ public final class SQLite {
 	}
 	static final MethodHandle sqlite3_malloc = downcallHandle(
 		"sqlite3_malloc", FunctionDescriptor.of(C_POINTER, C_INT));
-	static MemorySegment sqlite3_malloc(int n) {
+	static MemorySegment sqlite3_malloc(MemoryLayout ml) {
+		return sqlite3_malloc(ml.byteSize());
+	}
+	static MemorySegment sqlite3_malloc(long n) {
 		try {
-			return (MemorySegment) sqlite3_malloc.invokeExact(n);
+			final MemorySegment ms = (MemorySegment) sqlite3_malloc.invokeExact(Math.toIntExact(n));
+			if (ms != null) {
+				ms.reinterpret(n);
+				Unsafe.getUnsafe().setMemory(ms.address(), n, (byte)0); // memset
+			}
+			return ms;
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}

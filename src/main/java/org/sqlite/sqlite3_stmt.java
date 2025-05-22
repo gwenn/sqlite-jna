@@ -6,7 +6,6 @@ import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 
 import static org.sqlite.SQLite.*;
-import static org.sqlite.SQLite.SQLITE_STATIC;
 
 /**
  * Prepared statement object
@@ -360,6 +359,16 @@ final class sqlite3_stmt {
 	static int sqlite3_bind_zeroblob(sqlite3_stmt pStmt, int i, int n) {
 		try {
 			return (int) sqlite3_bind_zeroblob.invokeExact(pStmt.p, i, n);
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
+
+	private static final MethodHandle sqlite3_bind_pointer = downcallHandle(
+		"sqlite3_bind_pointer", FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_POINTER, C_POINTER, C_POINTER));
+	static int sqlite3_bind_pointer(sqlite3_stmt pStmt, int i, MemorySegment value, MemorySegment name, MemorySegment xDel) {
+		try {
+			return (int) sqlite3_bind_pointer.invokeExact(pStmt.p, i, value, name, xDel);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}

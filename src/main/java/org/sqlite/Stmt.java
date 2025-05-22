@@ -9,7 +9,6 @@
 package org.sqlite;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.lang.ref.Cleaner;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -365,7 +364,7 @@ public class Stmt implements AutoCloseable, Row {
 			throw new StmtException(this, String.format("sqlite3_column_blob returns a NULL pointer for a %d-length BLOB", bytes),
 					ErrCodes.WRAPPER_SPECIFIC);
 		} else {
-			return p.reinterpret(getColumnBytes(iCol)).toArray(ValueLayout.JAVA_BYTE); // a copy is made...
+			return p.reinterpret(getColumnBytes(iCol)).toArray(C_CHAR); // a copy is made...
 		}
 	}
 
@@ -452,6 +451,8 @@ public class Stmt implements AutoCloseable, Row {
 			bindBlob(i, (byte[]) value);
 		} else if (value instanceof ZeroBlob) {
 			bindZeroblob(i, ((ZeroBlob) value).n());
+		} else if (value instanceof long[]) {
+			bindArray(i, (long[]) value);
 		} else {
 			throw new StmtException(this, String.format("unsupported type in bind: %s", value.getClass().getSimpleName()), ErrCodes.WRAPPER_SPECIFIC);
 		}
@@ -556,6 +557,10 @@ public class Stmt implements AutoCloseable, Row {
 	public void bindZeroblob(int i, int n) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
 		checkBind(sqlite3_bind_zeroblob(pStmt, i, n), "sqlite3_bind_zeroblob", i);
+	}
+
+	public void bindArray(int i, long[] array) throws StmtException {
+		checkBind(ArrayModule.bind_array(pStmt, i, array), "sqlite3_bind_pointer", i);
 	}
 
 	private static final boolean[] UNKNOWN = new boolean[3];

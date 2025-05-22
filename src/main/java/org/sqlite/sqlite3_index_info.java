@@ -39,7 +39,7 @@ public class sqlite3_index_info {
 	}
 
 	public static class sqlite3_index_constraint {
-		private static final GroupLayout layout = MemoryLayout.structLayout(
+		static final GroupLayout layout = MemoryLayout.structLayout(
 			C_INT.withName("iColumn"),
 			C_CHAR.withName("op"),
 			C_CHAR.withName("usable"),
@@ -50,6 +50,22 @@ public class sqlite3_index_info {
 		public static int iColumn(MemorySegment struct) {
 			return struct.get(iColumn, 0);
 		}
+		public static final byte SQLITE_INDEX_CONSTRAINT_EQ = 2;
+		public static final byte SQLITE_INDEX_CONSTRAINT_GT = 4;
+		public static final byte SQLITE_INDEX_CONSTRAINT_LE = 8;
+		public static final byte SQLITE_INDEX_CONSTRAINT_LT = 16;
+		public static final byte SQLITE_INDEX_CONSTRAINT_GE = 32;
+		public static final byte SQLITE_INDEX_CONSTRAINT_MATCH = 64;
+		public static final byte SQLITE_INDEX_CONSTRAINT_LIKE = 65;
+		public static final byte SQLITE_INDEX_CONSTRAINT_GLOB = 66;
+		public static final byte SQLITE_INDEX_CONSTRAINT_REGEXP = 67;
+		public static final byte SQLITE_INDEX_CONSTRAINT_NE = 68;
+		public static final byte SQLITE_INDEX_CONSTRAINT_ISNOT = 69;
+		public static final byte SQLITE_INDEX_CONSTRAINT_ISNOTNULL = 70;
+		public static final byte SQLITE_INDEX_CONSTRAINT_ISNULL = 71;
+		public static final byte SQLITE_INDEX_CONSTRAINT_IS = 72;
+		public static final byte SQLITE_INDEX_CONSTRAINT_LIMIT = 73;
+		public static final byte SQLITE_INDEX_CONSTRAINT_OFFSET = 74;
 		private static final OfByte op = (OfByte)layout.select(groupElement("op"));
 		public static byte op(MemorySegment struct) {
 			return struct.get(op, 4);
@@ -96,7 +112,7 @@ public class sqlite3_index_info {
 	}
 
 	public static class sqlite3_index_constraint_usage {
-		private static final GroupLayout layout = MemoryLayout.structLayout(
+		static final GroupLayout layout = MemoryLayout.structLayout(
 			C_INT.withName("argvIndex"),
 			C_CHAR.withName("omit"),
 			MemoryLayout.paddingLayout(3)
