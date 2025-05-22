@@ -23,6 +23,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.sqlite.SQLite.*;
+import static org.sqlite.SQLite3Backup.*;
+import static org.sqlite.SQLite3Blob.*;
 
 /**
  * Database Connection Handle

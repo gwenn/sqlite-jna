@@ -14,6 +14,7 @@ import java.io.OutputStream;
 import java.lang.ref.Cleaner;
 
 import static org.sqlite.SQLite.*;
+import static org.sqlite.SQLite3Blob.*;
 
 /**
  * A Handle To An Open BLOB

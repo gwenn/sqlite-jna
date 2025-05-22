@@ -19,6 +19,7 @@ import java.util.NoSuchElementException;
 
 import static org.sqlite.ColTypes.SQLITE_NULL;
 import static org.sqlite.SQLite.*;
+import static org.sqlite.SQLite3Stmt.*;
 import static org.sqlite.driver.Guard.sneakyThrow;
 
 public class Stmt implements AutoCloseable, Row {

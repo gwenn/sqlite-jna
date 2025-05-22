@@ -29,8 +29,8 @@ package org.sqlite.driver;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.sqlite.FunctionFlags;
-import org.sqlite.SQLite.SQLite3Context;
-import org.sqlite.SQLite.SQLite3Values;
+import org.sqlite.SQLite3Context;
+import org.sqlite.SQLite3Values;
 import org.sqlite.SQLiteException;
 import org.sqlite.ScalarCallback;
 

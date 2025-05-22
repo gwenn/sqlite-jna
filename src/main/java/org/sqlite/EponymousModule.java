@@ -46,10 +46,10 @@ public interface EponymousModule {
 	 * @param argv sqlite3_value**
 	 */
 	default int filter(MemorySegment cursor, int idx_num, MemorySegment idx_str, int argc, MemorySegment argv) {
-		final SQLite.SQLite3Values values = SQLite.SQLite3Values.build(argc, argv);
+		final SQLite3Values values = SQLite3Values.build(argc, argv);
 		return filter(cursor, idx_num, idx_str, values);
 	}
-	int filter(MemorySegment cursor, int idxNum, MemorySegment idxStr, SQLite.SQLite3Values values);
+	int filter(MemorySegment cursor, int idxNum, MemorySegment idxStr, SQLite3Values values);
 
 	/**
 	 * @param cursor sqlite3_vtab_cursor*

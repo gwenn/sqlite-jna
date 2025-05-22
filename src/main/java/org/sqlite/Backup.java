@@ -11,6 +11,7 @@ package org.sqlite;
 import java.lang.ref.Cleaner;
 
 import static org.sqlite.SQLite.*;
+import static org.sqlite.SQLite3Backup.*;
 
 /**
  * Online Backup Object

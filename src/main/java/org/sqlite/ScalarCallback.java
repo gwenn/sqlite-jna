@@ -8,13 +8,10 @@
  */
 package org.sqlite;
 
-import org.sqlite.SQLite.SQLite3Context;
-import org.sqlite.SQLite.SQLite3Values;
-
 import java.lang.foreign.MemorySegment;
 
-import static org.sqlite.SQLite.sqlite3_get_auxdata;
-import static org.sqlite.SQLite.sqlite3_set_auxdata;
+import static org.sqlite.SQLite3Context.sqlite3_get_auxdata;
+import static org.sqlite.SQLite3Context.sqlite3_set_auxdata;
 
 /**
  * User defined SQL scalar function.

@@ -1,12 +1,8 @@
 package org.sqlite;
 
-import org.sqlite.SQLite.SQLite3Context;
-import org.sqlite.SQLite.SQLite3Values;
-
 import java.lang.foreign.MemorySegment;
 
-import static org.sqlite.SQLite.sqlite3_aggregate_context;
-import static org.sqlite.SQLite.sqlite3_result_error_nomem;
+import static org.sqlite.SQLite3Context.sqlite3_aggregate_context;
 
 /**
  * User defined SQL aggregate function.
@@ -37,7 +33,7 @@ public abstract class AggregateStepCallback {
 		final int nBytes = numberOfBytes();
 		final MemorySegment p = sqlite3_aggregate_context(pCtx, nBytes);
 		if (p == null && nBytes > 0) {
-			sqlite3_result_error_nomem(pCtx);
+			pCtx.setResultErrorNoMem();;
 			return;
 		}
 		step(pCtx, p, SQLite3Values.build(nArg, args));

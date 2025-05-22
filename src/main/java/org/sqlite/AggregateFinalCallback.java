@@ -1,10 +1,8 @@
 package org.sqlite;
 
-import org.sqlite.SQLite.SQLite3Context;
-
 import java.lang.foreign.MemorySegment;
 
-import static org.sqlite.SQLite.sqlite3_aggregate_context;
+import static org.sqlite.SQLite3Context.sqlite3_aggregate_context;
 
 /**
  * User defined SQL aggregate function.
