@@ -1,6 +1,7 @@
 package org.sqlite;
 
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 
@@ -164,10 +165,11 @@ public final class sqlite3_values {
 	 * @param i 0...
 	 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_pointer</a>
 	 */
-	public MemorySegment getPointer(int i, MemorySegment name) {
+	public MemorySegment getPointer(int i, MemorySegment name, MemoryLayout ml) {
 		MemorySegment pValue = arg(i);
 		try {
-			return (MemorySegment)sqlite3_value_pointer.invokeExact(pValue, name);
+			final MemorySegment ms = (MemorySegment) sqlite3_value_pointer.invokeExact(pValue, name);
+			return ms.reinterpret(ml.byteSize());
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}

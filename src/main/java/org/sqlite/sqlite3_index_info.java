@@ -5,12 +5,13 @@ import java.lang.foreign.ValueLayout.OfByte;
 import java.lang.foreign.ValueLayout.OfDouble;
 import java.lang.foreign.ValueLayout.OfInt;
 import java.lang.foreign.ValueLayout.OfLong;
+import java.util.Iterator;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static org.sqlite.SQLite.*;
 
 public class sqlite3_index_info {
-	private static final GroupLayout layout = MemoryLayout.structLayout(
+	static final GroupLayout layout = MemoryLayout.structLayout(
 		/* Inputs */
 		C_INT.withName("nConstraint"),
 		MemoryLayout.paddingLayout(4),
@@ -76,11 +77,10 @@ public class sqlite3_index_info {
 		}
 	}
 	private static final AddressLayout aConstraint = (AddressLayout)layout.select(groupElement("aConstraint"));
-	public static MemorySegment aConstraint(MemorySegment struct) {
+	public static Iterator<MemorySegment> aConstraint(MemorySegment struct, int nConstraint) {
 		MemorySegment aConstraint = struct.get(sqlite3_index_info.aConstraint, 8);
-		aConstraint = aConstraint.reinterpret(nConstraint(struct) * sqlite3_index_constraint.layout.byteSize());
-		// aConstraint.getAtIndex(sqlite3_index_constraint.layout, i);
-		return aConstraint;
+		aConstraint = aConstraint.reinterpret(nConstraint * sqlite3_index_constraint.layout.byteSize());
+		return aConstraint.elements(sqlite3_index_constraint.layout).limit(nConstraint).iterator();
 	}
 
 	private static final OfInt nOrderBy = (OfInt)layout.select(groupElement("nOrderBy"));
@@ -104,11 +104,11 @@ public class sqlite3_index_info {
 		}
 	}
 	private static final AddressLayout aOrderBy = (AddressLayout)layout.select(groupElement("aOrderBy"));
-	public static MemorySegment aOrderBy(MemorySegment struct) {
+	public static Iterator<MemorySegment> aOrderBy(MemorySegment struct) {
 		MemorySegment aOrderBy = struct.get(sqlite3_index_info.aOrderBy, 8);
-		aOrderBy = aOrderBy.reinterpret(nOrderBy(struct) * sqlite3_index_orderby.layout.byteSize());
-		// aOrderBy.getAtIndex(sqlite3_index_orderby.layout, i);
-		return aOrderBy;
+		final int nOrderBy = nOrderBy(struct);
+		aOrderBy = aOrderBy.reinterpret(nOrderBy * sqlite3_index_orderby.layout.byteSize());
+		return aOrderBy.elements(sqlite3_index_orderby.layout).limit(nOrderBy).iterator();
 	}
 
 	public static class sqlite3_index_constraint_usage {
@@ -127,11 +127,10 @@ public class sqlite3_index_info {
 		}
 	}
 	private static final AddressLayout aConstraintUsage = (AddressLayout)layout.select(groupElement("aConstraintUsage"));
-	public static MemorySegment aConstraintUsage(MemorySegment struct) {
+	public static Iterator<MemorySegment> aConstraintUsage(MemorySegment struct, int nConstraint) {
 		MemorySegment aConstraintUsage = struct.get(sqlite3_index_info.aConstraintUsage, 32);
-		aConstraintUsage = aConstraintUsage.reinterpret(nConstraint(struct) * sqlite3_index_constraint_usage.layout.byteSize());
-		// aConstraintUsage.getAtIndex(sqlite3_index_constraint_usage.layout, i);
-		return aConstraintUsage;
+		aConstraintUsage = aConstraintUsage.reinterpret(nConstraint * sqlite3_index_constraint_usage.layout.byteSize());
+		return aConstraintUsage.elements(sqlite3_index_constraint_usage.layout).limit(nConstraint).iterator();
 	}
 
 	private static final OfInt idxNum = (OfInt)layout.select(groupElement("idxNum"));

@@ -2,6 +2,7 @@ package org.sqlite;
 
 import java.lang.foreign.*;
 import java.lang.foreign.ValueLayout.OfLong;
+import java.util.Iterator;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static org.sqlite.ErrCodes.SQLITE_NOMEM;
@@ -23,13 +24,47 @@ public class ArrayModule implements EponymousModule {
 	public static void load_module(Conn conn) throws ConnException {
 		conn.createModule("jarray", INSTANCE, true);
 	}
+
+	private static final GroupLayout bind_layout = MemoryLayout.structLayout(
+		C_POINTER.withName("ptr"),
+		C_LONG_LONG.withName("len")
+	).withName("jarray_bind");
+	private static final AddressLayout bind_ptr = (AddressLayout)bind_layout.select(groupElement("ptr"));
+	private static final long bind_ptrOffset = 0;
+	private static MemorySegment bind_ptr(MemorySegment bind) {
+		return bind.get(bind_ptr, bind_ptrOffset);
+	}
+	private static void bind_ptr(MemorySegment bind, MemorySegment ms) {
+		bind.set(bind_ptr, bind_ptrOffset, ms);
+	}
+	private static final OfLong bind_len = (OfLong)bind_layout.select(groupElement("len"));
+	private static final long bind_lenOffset = bind_ptr.byteSize();
+	private static long bind_len(MemorySegment bind) {
+		return bind.get(bind_len, bind_lenOffset);
+	}
+	private static void bind_len(MemorySegment bind, long n) {
+		bind.set(bind_len, bind_lenOffset, n);
+	}
+	@SuppressWarnings("unused")
+	public static void bindDel(MemorySegment bind) {
+		bind = bind.reinterpret(bind_layout.byteSize());
+		sqlite3_free(bind_ptr(bind));
+		sqlite3_free(bind);
+	}
+	private static final MemorySegment xDel = upcallStub(ArrayModule.class, "bindDel", VP);
 	static int bind_array(sqlite3_stmt pStmt, int i, long[] array) {
-		MemorySegment ms = sqlite3_malloc(array.length);
-		if (isNull(ms)) {
+		MemorySegment ptr = sqlite3_malloc(array.length * C_LONG_LONG.byteSize());
+		if (isNull(ptr)) {
 			return SQLITE_NOMEM;
 		}
-		MemorySegment.copy(array, 0, ms, C_LONG_LONG, 0, array.length);
-		return sqlite3_stmt.sqlite3_bind_pointer(pStmt, i, ms, POINTER_NAME, xFree); // FIXME length missing
+		MemorySegment.copy(array, 0, ptr, C_LONG_LONG, 0, array.length);
+		MemorySegment bind = sqlite3_malloc(bind_layout.byteSize());
+		if (isNull(bind)) {
+			return SQLITE_NOMEM;
+		}
+		bind_ptr(bind, ptr);
+		bind_len(bind, array.length);
+		return sqlite3_stmt.sqlite3_bind_pointer(pStmt, i, bind, POINTER_NAME, xDel);
 	}
 
 	private ArrayModule() {
@@ -45,6 +80,7 @@ public class ArrayModule implements EponymousModule {
 			if (isNull(vtab)) {
 				return SQLITE_NOMEM;
 			}
+			pp_vtab = pp_vtab.reinterpret(C_POINTER.byteSize());
 			pp_vtab.set(C_POINTER, 0, vtab); // *pp_vtab = vtab
 		}
 		return rc;
@@ -54,11 +90,13 @@ public class ArrayModule implements EponymousModule {
 	public int bestIndex(MemorySegment vtab, MemorySegment info) {
 		// Index of the pointer= constraint
 		boolean ptr_idx = false;
-		final int nConstraint = nConstraint(info);
-		final MemorySegment aConstraint = aConstraint(info);
-		final MemorySegment aConstraintUsage = aConstraintUsage(info);
-		for (int i = 0; i < nConstraint; i++) {
-			MemorySegment constraint = aConstraint.get(C_POINTER, i * sqlite3_index_constraint.layout.byteSize());
+		info = info.reinterpret(sqlite3_index_info.layout.byteSize());
+		int nConstraint = nConstraint(info);
+		Iterator<MemorySegment> aConstraint = aConstraint(info, nConstraint);
+		Iterator<MemorySegment> aConstraintUsage = aConstraintUsage(info, nConstraint);
+		while (aConstraint.hasNext()) {
+			MemorySegment constraint = aConstraint.next();
+			MemorySegment constraint_usage = aConstraintUsage.next();
 			if (!sqlite3_index_constraint.usable(constraint)) {
 				continue;
 			}
@@ -67,7 +105,6 @@ public class ArrayModule implements EponymousModule {
 			}
 			if (COLUMN_POINTER == sqlite3_index_constraint.iColumn(constraint)) {
 				ptr_idx = true;
-				MemorySegment constraint_usage = aConstraintUsage.get(C_POINTER, i * sqlite3_index_constraint_usage.layout.byteSize());
 				sqlite3_index_constraint_usage.argvIndex(constraint_usage, 1);
 				sqlite3_index_constraint_usage.omit(constraint_usage, (byte)1);
 			}
@@ -96,7 +133,7 @@ public class ArrayModule implements EponymousModule {
 		C_POINTER.withName("ptr"),
 		C_LONG_LONG.withName("len")
 	).withName("jarray_cursor");
-	private static final AddressLayout base = (AddressLayout)layout.select(groupElement("base"));
+	private static final GroupLayout base = (GroupLayout)layout.select(groupElement("base"));
 	private static final OfLong rowId = (OfLong)layout.select(groupElement("rowId"));
 	private static final long rowIdOffset = sqlite3_vtab_cursor.layout.byteSize();
 	private static long rowId(MemorySegment cursor) {
@@ -128,7 +165,8 @@ public class ArrayModule implements EponymousModule {
 		if (isNull(cursor)) {
 			return SQLITE_NOMEM;
 		}
-		pp_cursor.set(C_POINTER, 0, cursor.get(base, 0)); // *ppCursor = &pCur->base;
+		pp_cursor = pp_cursor.reinterpret(C_POINTER.byteSize());
+		pp_cursor.set(C_POINTER, 0, cursor.asSlice(0, base.byteSize())); // *ppCursor = &pCur->base;
 		return SQLITE_OK;
 	}
 
@@ -140,10 +178,11 @@ public class ArrayModule implements EponymousModule {
 
 	@Override
 	public int filter(MemorySegment cursor, int idxNum, MemorySegment idxStr, sqlite3_values values) {
+		cursor = cursor.reinterpret(layout.byteSize());
 		if (idxNum > 0) {
-			final MemorySegment array = values.getPointer(0, POINTER_NAME);
-			ptr(cursor, array);
-			len(cursor, 0); // FIXME length missing
+			MemorySegment bind = values.getPointer(0, POINTER_NAME, bind_layout);
+			ptr(cursor, bind_ptr(bind));
+			len(cursor, bind_len(bind));
 		} else {
 			ptr(cursor, MemorySegment.NULL);
 			len(cursor, 0);
@@ -154,6 +193,7 @@ public class ArrayModule implements EponymousModule {
 
 	@Override
 	public int next(MemorySegment cursor) {
+		cursor = cursor.reinterpret(layout.byteSize());
 		long id = rowId(cursor);
 		rowId(cursor, id + 1);
 		return SQLITE_OK;
@@ -161,6 +201,7 @@ public class ArrayModule implements EponymousModule {
 
 	@Override
 	public int eof(MemorySegment cursor) {
+		cursor = cursor.reinterpret(layout.byteSize());
 		long id = rowId(cursor);
 		long len = len(cursor);
 		return id > len ? 1 : 0;
@@ -171,15 +212,17 @@ public class ArrayModule implements EponymousModule {
 		if (i == COLUMN_POINTER) {
 			return SQLITE_OK;
 		}
+		cursor = cursor.reinterpret(layout.byteSize());
 		MemorySegment ptr = ptr(cursor);
-		ptr = ptr.reinterpret(len(cursor));
-		final long value = ptr.getAtIndex(C_LONG_LONG, Math.toIntExact(rowId(cursor) - 1));
+		ptr = ptr.reinterpret(len(cursor) * C_LONG_LONG.byteSize());
+		long value = ptr.getAtIndex(C_LONG_LONG, rowId(cursor) - 1);
 		sqlite3Context.setResultLong(value);
 		return SQLITE_OK;
 	}
 
 	@Override
 	public int rowId(MemorySegment cursor, MemorySegment p_rowid) {
+		cursor = cursor.reinterpret(layout.byteSize());
 		long id = rowId(cursor);
 		p_rowid.set(C_LONG_LONG, 0, id);
 		return SQLITE_OK;

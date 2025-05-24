@@ -269,7 +269,7 @@ public class ConnTest {
 				assertEquals(1, args.getCount());
 				assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
 				aggrCtx = aggrCtx.reinterpret(numberOfBytes());
-				aggrCtx.setAtIndex(ValueLayout.JAVA_LONG,0, aggrCtx.get(ValueLayout.JAVA_LONG, 0) + args.getLong(0));
+				aggrCtx.set(ValueLayout.JAVA_LONG,0, aggrCtx.get(ValueLayout.JAVA_LONG, 0) + args.getLong(0));
 			}
 		}, new AggregateFinalCallback() {
 			@Override
