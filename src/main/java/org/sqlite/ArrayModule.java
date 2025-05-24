@@ -71,29 +71,16 @@ public class ArrayModule implements EponymousModule {
 	}
 
 	@Override
-	public int connect(MemorySegment db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment pp_vtab, MemorySegment err_msg) {
-		sqlite3 sqlite3 = new sqlite3(db);
-		int rc = sqlite3_declare_vtab(sqlite3, "CREATE TABLE x(value,pointer hidden)");
-		if (rc == SQLITE_OK) {
-			//argv = argv.reinterpret(argc * C_POINTER.byteSize());
-			MemorySegment vtab = sqlite3_malloc(sqlite3_vtab.layout);
-			if (isNull(vtab)) {
-				return SQLITE_NOMEM;
-			}
-			pp_vtab = pp_vtab.reinterpret(C_POINTER.byteSize());
-			pp_vtab.set(C_POINTER, 0, vtab); // *pp_vtab = vtab
-		}
+	public int connect(sqlite3 db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment err_msg) {
+		//argv = argv.reinterpret(argc * C_POINTER.byteSize());
+		int rc = sqlite3_declare_vtab(db, "CREATE TABLE x(value,pointer hidden)");
 		return rc;
 	}
 
 	@Override
-	public int bestIndex(MemorySegment vtab, MemorySegment info) {
+	public int bestIndex(MemorySegment vtab, MemorySegment info, Iterator<MemorySegment> aConstraint, Iterator<MemorySegment> aConstraintUsage) {
 		// Index of the pointer= constraint
 		boolean ptr_idx = false;
-		info = info.reinterpret(sqlite3_index_info.layout.byteSize());
-		int nConstraint = nConstraint(info);
-		Iterator<MemorySegment> aConstraint = aConstraint(info, nConstraint);
-		Iterator<MemorySegment> aConstraintUsage = aConstraintUsage(info, nConstraint);
 		while (aConstraint.hasNext()) {
 			MemorySegment constraint = aConstraint.next();
 			MemorySegment constraint_usage = aConstraintUsage.next();
@@ -121,22 +108,15 @@ public class ArrayModule implements EponymousModule {
 		return SQLITE_OK;
 	}
 
-	@Override
-	public int disconnect(MemorySegment vtab) {
-		sqlite3_free(vtab);
-		return SQLITE_OK;
-	}
-
 	private static final GroupLayout layout = MemoryLayout.structLayout(
 		sqlite3_vtab_cursor.layout.withName("base"),
 		C_LONG_LONG.withName("rowId"),
 		C_POINTER.withName("ptr"),
 		C_LONG_LONG.withName("len")
 	).withName("jarray_cursor");
-	private static final GroupLayout base = (GroupLayout)layout.select(groupElement("base"));
 	private static final OfLong rowId = (OfLong)layout.select(groupElement("rowId"));
 	private static final long rowIdOffset = sqlite3_vtab_cursor.layout.byteSize();
-	private static long rowId(MemorySegment cursor) {
+	public long rowId(MemorySegment cursor) {
 		return cursor.get(rowId, rowIdOffset);
 	}
 	private static void rowId(MemorySegment cursor, long id) {
@@ -160,25 +140,7 @@ public class ArrayModule implements EponymousModule {
 	}
 
 	@Override
-	public int open(MemorySegment vtab, MemorySegment pp_cursor) {
-		MemorySegment cursor = sqlite3_malloc(layout);
-		if (isNull(cursor)) {
-			return SQLITE_NOMEM;
-		}
-		pp_cursor = pp_cursor.reinterpret(C_POINTER.byteSize());
-		pp_cursor.set(C_POINTER, 0, cursor.asSlice(0, base.byteSize())); // *ppCursor = &pCur->base;
-		return SQLITE_OK;
-	}
-
-	@Override
-	public int close(MemorySegment cursor) {
-		sqlite3_free(cursor);
-		return SQLITE_OK;
-	}
-
-	@Override
 	public int filter(MemorySegment cursor, int idxNum, MemorySegment idxStr, sqlite3_values values) {
-		cursor = cursor.reinterpret(layout.byteSize());
 		if (idxNum > 0) {
 			MemorySegment bind = values.getPointer(0, POINTER_NAME, bind_layout);
 			ptr(cursor, bind_ptr(bind));
@@ -192,19 +154,16 @@ public class ArrayModule implements EponymousModule {
 	}
 
 	@Override
-	public int next(MemorySegment cursor) {
-		cursor = cursor.reinterpret(layout.byteSize());
-		long id = rowId(cursor);
-		rowId(cursor, id + 1);
+	public int next(MemorySegment cursor, long rowId) {
+		rowId(cursor, rowId + 1);
 		return SQLITE_OK;
 	}
 
 	@Override
-	public int eof(MemorySegment cursor) {
-		cursor = cursor.reinterpret(layout.byteSize());
+	public boolean isEof(MemorySegment cursor) {
 		long id = rowId(cursor);
 		long len = len(cursor);
-		return id > len ? 1 : 0;
+		return id > len;
 	}
 
 	@Override
@@ -212,7 +171,6 @@ public class ArrayModule implements EponymousModule {
 		if (i == COLUMN_POINTER) {
 			return SQLITE_OK;
 		}
-		cursor = cursor.reinterpret(layout.byteSize());
 		MemorySegment ptr = ptr(cursor);
 		ptr = ptr.reinterpret(len(cursor) * C_LONG_LONG.byteSize());
 		long value = ptr.getAtIndex(C_LONG_LONG, rowId(cursor) - 1);
@@ -221,10 +179,7 @@ public class ArrayModule implements EponymousModule {
 	}
 
 	@Override
-	public int rowId(MemorySegment cursor, MemorySegment p_rowid) {
-		cursor = cursor.reinterpret(layout.byteSize());
-		long id = rowId(cursor);
-		p_rowid.set(C_LONG_LONG, 0, id);
-		return SQLITE_OK;
+	public MemoryLayout layout() {
+		return layout;
 	}
 }

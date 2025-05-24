@@ -11,7 +11,7 @@ import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static org.sqlite.SQLite.*;
 
 public class sqlite3_index_info {
-	static final GroupLayout layout = MemoryLayout.structLayout(
+	public static final GroupLayout layout = MemoryLayout.structLayout(
 		/* Inputs */
 		C_INT.withName("nConstraint"),
 		MemoryLayout.paddingLayout(4),

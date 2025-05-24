@@ -3,6 +3,7 @@ package org.sqlite;
 import java.lang.foreign.MemorySegment;
 
 import static org.sqlite.ErrCodes.SQLITE_OK;
+import static org.sqlite.SQLite.sqlite3_free;
 
 public interface Module extends EponymousModule {
 	/**
@@ -20,6 +21,7 @@ public interface Module extends EponymousModule {
 	 * @param vtab sqlite3_vtab*
 	 */
 	default int destroy(MemorySegment vtab) {
+		sqlite3_free(vtab);
 		return SQLITE_OK;
 	}
 }

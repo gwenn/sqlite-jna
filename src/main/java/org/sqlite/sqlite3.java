@@ -14,7 +14,7 @@ import static org.sqlite.sqlite3_stmt.*;
  *
  * @see <a href="http://sqlite.org/c3ref/sqlite3.html">sqlite3</a>
  */
-final class sqlite3 {
+public final class sqlite3 {
 	private MemorySegment p;
 	int res;
 	// To avoid upcallStub(s) from being GCed before connection is closed

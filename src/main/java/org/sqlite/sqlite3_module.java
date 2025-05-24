@@ -43,7 +43,7 @@ public class sqlite3_module {
 
 	private static final MethodHandle sqlite3_declare_vtab = downcallHandle(
 		"sqlite3_declare_vtab", IPP);
-	static int sqlite3_declare_vtab(sqlite3 pDb, String sql) {
+	public static int sqlite3_declare_vtab(sqlite3 pDb, String sql) {
 		try (Arena arena = Arena.ofConfined()) {
 			return (int)sqlite3_declare_vtab.invokeExact(pDb.getPointer(), nativeString(arena, sql));
 		} catch (Throwable e) {

@@ -269,7 +269,7 @@ public final class SQLite {
 	private static final MethodHandle sqlite3_free = downcallHandle(
 		"sqlite3_free", VP);
 	static final MemorySegment xFree = findOrThrow("sqlite3_free");
-	static void sqlite3_free(MemorySegment p) {
+	public static void sqlite3_free(MemorySegment p) {
 		try {
 			sqlite3_free.invokeExact(p);
 		} catch (Throwable e) {
@@ -278,10 +278,10 @@ public final class SQLite {
 	}
 	static final MethodHandle sqlite3_malloc = downcallHandle(
 		"sqlite3_malloc", FunctionDescriptor.of(C_POINTER, C_INT));
-	static MemorySegment sqlite3_malloc(MemoryLayout ml) {
+	public static MemorySegment sqlite3_malloc(MemoryLayout ml) {
 		return sqlite3_malloc(ml.byteSize());
 	}
-	static MemorySegment sqlite3_malloc(long l) {
+	public static MemorySegment sqlite3_malloc(long l) {
 		try {
 			MemorySegment ms = (MemorySegment) sqlite3_malloc.invokeExact(Math.toIntExact(l));
 			if (ms != null) {
