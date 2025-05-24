@@ -101,12 +101,12 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 
 	@Override
 	public ResultSet executeQuery() throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		stmt.reset();
 		if (!boundChecked) {
 			checkParameters(stmt);
 		}
-		final boolean hasRow = step(false);
+		boolean hasRow = step(false);
 		if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
 			if (stmt.isReadOnly()) {
 				throw new StmtException(stmt, "query does not return a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
@@ -119,7 +119,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 
 	@Override
 	public int executeUpdate() throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		if (!boundChecked) {
 			checkParameters(stmt);
 		}
@@ -128,7 +128,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 	}
 	@Override
 	public long executeLargeUpdate() throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		if (!boundChecked) {
 			checkParameters(stmt);
 		}
@@ -256,14 +256,14 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 		if (null == x) {
 			bindNull(parameterIndex);
 		} else {
-			final String fmt = conn().dateTimeConfig[cfgIdx];
-			final boolean sqlDate = cfgIdx == DateUtil.DATE_CONFIG;
+			String fmt = conn().dateTimeConfig[cfgIdx];
+			boolean sqlDate = cfgIdx == DateUtil.DATE_CONFIG;
 			if (sqlDate && DateUtil.EPOCH_DAY.equals(fmt)) {
 				bindLong(parameterIndex, ((java.sql.Date)x).toLocalDate().toEpochDay());
 			} else if (fmt == null || DateUtil.UNIXEPOCH.equals(fmt)) {
 				bindLong(parameterIndex, sqlDate ? DateUtil.normalizeDate(x.getTime(), null) : x.getTime());
 			} else if (DateUtil.JULIANDAY.equals(fmt)) {
-				final long unixepoch = sqlDate ? DateUtil.normalizeDate(x.getTime(), null) : x.getTime();
+				long unixepoch = sqlDate ? DateUtil.normalizeDate(x.getTime(), null) : x.getTime();
 				bindDouble(parameterIndex, DateUtil.toJulianDay(unixepoch));
 			} else {
 				bindText(parameterIndex, DateUtil.formatDate(x, fmt, null));
@@ -311,7 +311,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 		}
 		if (rowId == null) { // No streaming mode...
 			// throw new SQLException("You must set the associated RowId before opening a Blob");
-			final ByteArrayOutputStream output = new ByteArrayOutputStream();
+			ByteArrayOutputStream output = new ByteArrayOutputStream();
 			try {
 				org.sqlite.Blob.copy(x, output, length);
 			} catch (IOException e) {
@@ -432,7 +432,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 
 	@Override
 	public boolean execute() throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		stmt.reset(); // may be reset twice but I don't see how it can be avoided
 		if (!boundChecked) {
 			checkParameters(stmt);
@@ -469,15 +469,15 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 
 	@Override
 	public int[] executeBatch() throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		batching = false;
 		if (batch == null) {
 			return new int[0]; // FIXME
 		}
-		final int size = batch.size();
+		int size = batch.size();
 		SQLException cause = null;
 		Object[] params;
-		final int[] changes = new int[size];
+		int[] changes = new int[size];
 		for (int i = 0; i < size; ++i) {
 			try {
 				params = batch.get(i);
@@ -546,7 +546,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 
 	@Override
 	public ResultSetMetaData getMetaData() throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		if (stmt.getColumnCount() == 0) {
 			return null;
 		}
@@ -714,7 +714,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 				setLong(parameterIndex, ((Number) x).longValue());
 				return;
 			} else if (x instanceof java.util.Date) {
-				final long unixepoch = ((java.util.Date) x).getTime();
+				long unixepoch = ((java.util.Date) x).getTime();
 				setLong(parameterIndex, x instanceof Date ? DateUtil.normalizeDate(unixepoch, null) : unixepoch);
 				return;
 			} else if (x instanceof LocalDate) {
@@ -726,7 +726,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 				setDouble(parameterIndex, ((Number) x).doubleValue());
 				return;
 			} else if (x instanceof java.util.Date) {
-				final long unixepoch = ((java.util.Date) x).getTime();
+				long unixepoch = ((java.util.Date) x).getTime();
 				setDouble(parameterIndex, DateUtil.toJulianDay(x instanceof Date ? DateUtil.normalizeDate(unixepoch, null) : unixepoch));
 				return;
 			}

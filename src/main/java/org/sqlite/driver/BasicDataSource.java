@@ -42,7 +42,7 @@ public class BasicDataSource extends JDBC implements DataSource, Referenceable {
 	}
 	@Override
 	public Connection getConnection(String username, String password) throws SQLException {
-		final Properties info = new Properties();
+		Properties info = new Properties();
 		if (username != null) {
 			info.put("user", username);
 		}
@@ -81,7 +81,7 @@ public class BasicDataSource extends JDBC implements DataSource, Referenceable {
 
 	@Override
 	public Reference getReference() {
-		final Reference ref = new Reference(getClass().getName());
+		Reference ref = new Reference(getClass().getName());
 		ref.add(new StringRefAddr("filename", filename));
 		return ref;
 	}

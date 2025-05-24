@@ -9,7 +9,7 @@ import static org.sqlite.SQLite.*;
 
 public class sqlite3_module {
 	public static MemorySegment eponymousOnly(EponymousModule m, Arena arena) {
-		final MemorySegment struct = arena.allocate(layout);
+		MemorySegment struct = arena.allocate(layout);
 		iVersion(struct, 2);
 		//  For eponymous-only virtual tables, the xCreate method is NULL
 		xConnect(struct, m, arena);
@@ -26,7 +26,7 @@ public class sqlite3_module {
 	}
 
 	public static MemorySegment eponymous(EponymousModule m, Arena arena) {
-		final MemorySegment struct = eponymousOnly(m, arena);
+		MemorySegment struct = eponymousOnly(m, arena);
 		// A virtual table is eponymous if its xCreate method is the exact same function
 		// as the xConnect method
 		struct.set(xCreate, xCreate_offset, struct.get(xConnect, xConnect_offset));
@@ -35,7 +35,7 @@ public class sqlite3_module {
 	}
 
 	public static MemorySegment readOnly(Module m, Arena arena) {
-		final MemorySegment struct = eponymousOnly(m, arena);
+		MemorySegment struct = eponymousOnly(m, arena);
 		xCreate(struct, m, arena);
 		xDestroy(struct, m, arena);
 		return struct;
@@ -92,16 +92,16 @@ public class sqlite3_module {
 	private static final MethodHandle xCreate_handler = upcallHandle(Module.class, "create",
 		xCreate_or_xConnect_desc);
 	private static void xCreate(MemorySegment struct, Module fi, Arena arena) {
-		final MemorySegment fieldValue = upcallStub(xCreate_handler, fi, xCreate_or_xConnect_desc, arena);
+		MemorySegment fieldValue = upcallStub(xCreate_handler, fi, xCreate_or_xConnect_desc, arena);
 		struct.set(xCreate, xCreate_offset, fieldValue);
 	}
 
 	private static final AddressLayout xConnect = (AddressLayout)layout.select(groupElement("xConnect"));
 	private static final int xConnect_offset = 16;
-	private static final MethodHandle xConnect_handler = upcallHandle(Module.class, "connect",
+	private static final MethodHandle xConnect_handler = upcallHandle(EponymousModule.class, "connect",
 		xCreate_or_xConnect_desc);
 	private static void xConnect(MemorySegment struct, EponymousModule fi, Arena arena) {
-		final MemorySegment fieldValue = upcallStub(xConnect_handler, fi, xCreate_or_xConnect_desc, arena);
+		MemorySegment fieldValue = upcallStub(xConnect_handler, fi, xCreate_or_xConnect_desc, arena);
 		struct.set(xConnect, xConnect_offset, fieldValue);
 	}
 
@@ -109,7 +109,7 @@ public class sqlite3_module {
 	private static final MethodHandle xBestIndex_handler = upcallHandle(EponymousModule.class, "bestIndex",
 		IPP);
 	private static void xBestIndex(MemorySegment struct, EponymousModule fi, Arena arena) {
-		final MemorySegment fieldValue = upcallStub(xBestIndex_handler, fi, IPP, arena);
+		MemorySegment fieldValue = upcallStub(xBestIndex_handler, fi, IPP, arena);
 		struct.set(xBestIndex, 24, fieldValue);
 	}
 
@@ -118,7 +118,7 @@ public class sqlite3_module {
 	private static final MethodHandle xDisconnect_handler = upcallHandle(EponymousModule.class, "disconnect",
 		IP);
 	private static void xDisconnect(MemorySegment struct, EponymousModule fi, Arena arena) {
-		final MemorySegment fieldValue = upcallStub(xDisconnect_handler, fi, IP, arena);
+		MemorySegment fieldValue = upcallStub(xDisconnect_handler, fi, IP, arena);
 		struct.set(xDisconnect, xDisconnect_offset, fieldValue);
 	}
 
@@ -127,7 +127,7 @@ public class sqlite3_module {
 	private static final MethodHandle xDestroy_handler = upcallHandle(Module.class, "destroy",
 		IP);
 	private static void xDestroy(MemorySegment struct, Module fi, Arena arena) {
-		final MemorySegment fieldValue = upcallStub(xDestroy_handler, fi, IP, arena);
+		MemorySegment fieldValue = upcallStub(xDestroy_handler, fi, IP, arena);
 		struct.set(xDestroy, xDestroy_offset, fieldValue);
 	}
 
@@ -135,7 +135,7 @@ public class sqlite3_module {
 	private static final MethodHandle xOpen_handler = upcallHandle(EponymousModule.class, "open",
 		IPP);
 	private static void xOpen(MemorySegment struct, EponymousModule fi, Arena arena) {
-		final MemorySegment fieldValue = upcallStub(xOpen_handler, fi, IPP, arena);
+		MemorySegment fieldValue = upcallStub(xOpen_handler, fi, IPP, arena);
 		struct.set(xOpen, 48, fieldValue);
 	}
 
@@ -143,7 +143,7 @@ public class sqlite3_module {
 	private static final MethodHandle xClose_handler = upcallHandle(EponymousModule.class, "close",
 		IP);
 	private static void xClose(MemorySegment struct, EponymousModule fi, Arena arena) {
-		final MemorySegment fieldValue = upcallStub(xClose_handler, fi, IP, arena);
+		MemorySegment fieldValue = upcallStub(xClose_handler, fi, IP, arena);
 		struct.set(xClose, 56, fieldValue);
 	}
 
@@ -151,7 +151,7 @@ public class sqlite3_module {
 	private static final MethodHandle xFilter_handler = upcallHandle(EponymousModule.class, "filter",
 		IPIPIP);
 	private static void xFilter(MemorySegment struct, EponymousModule fi, Arena arena) {
-		final MemorySegment fieldValue = upcallStub(xFilter_handler, fi, IPIPIP, arena);
+		MemorySegment fieldValue = upcallStub(xFilter_handler, fi, IPIPIP, arena);
 		struct.set(xFilter, 64, fieldValue);
 	}
 
@@ -159,7 +159,7 @@ public class sqlite3_module {
 	private static final MethodHandle xNext_handler = upcallHandle(EponymousModule.class, "next",
 		IP);
 	private static void xNext(MemorySegment struct, EponymousModule fi, Arena arena) {
-		final MemorySegment fieldValue = upcallStub(xNext_handler, fi, IP, arena);
+		MemorySegment fieldValue = upcallStub(xNext_handler, fi, IP, arena);
 		struct.set(xNext, 72, fieldValue);
 	}
 
@@ -167,7 +167,7 @@ public class sqlite3_module {
 	private static final MethodHandle xEof_handler = upcallHandle(EponymousModule.class, "eof",
 		IP);
 	private static void xEof(MemorySegment struct, EponymousModule fi, Arena arena) {
-		final MemorySegment fieldValue = upcallStub(xEof_handler, fi, IP, arena);
+		MemorySegment fieldValue = upcallStub(xEof_handler, fi, IP, arena);
 		struct.set(xEof, 80, fieldValue);
 	}
 
@@ -176,7 +176,7 @@ public class sqlite3_module {
 	private static final MethodHandle xColumn_handler = upcallHandle(EponymousModule.class, "column",
 		column_desc);
 	private static void xColumn(MemorySegment struct, EponymousModule fi, Arena arena) {
-		final MemorySegment fieldValue = upcallStub(xColumn_handler, fi, column_desc, arena);
+		MemorySegment fieldValue = upcallStub(xColumn_handler, fi, column_desc, arena);
 		struct.set(xColumn, 88, fieldValue);
 	}
 
@@ -184,7 +184,7 @@ public class sqlite3_module {
 	private static final MethodHandle xRowid_handler = upcallHandle(EponymousModule.class, "rowId",
 		IPP);
 	private static void xRowid(MemorySegment struct, EponymousModule fi, Arena arena) {
-		final MemorySegment fieldValue = upcallStub(xRowid_handler, fi, IPP, arena);
+		MemorySegment fieldValue = upcallStub(xRowid_handler, fi, IPP, arena);
 		struct.set(xRowid, 96, fieldValue);
 	}
 

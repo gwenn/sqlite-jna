@@ -652,7 +652,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement(
+		PreparedStatement stmt = c.prepareStatement(
 				"select "
 						+ "null as PROCEDURE_CAT, "
 						+ "null as PROCEDURE_SCHEM, "
@@ -671,7 +671,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern) throws SQLException {
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement(
+		PreparedStatement stmt = c.prepareStatement(
 				"select "
 						+ "null as PROCEDURE_CAT, "
 						+ "null as PROCEDURE_SCHEM, "
@@ -703,7 +703,7 @@ class DbMeta implements DatabaseMetaData {
 		checkOpen();
 		tableNamePattern = tableNamePattern == null || tableNamePattern.isEmpty() ? "%" : tableNamePattern;
 
-		final StringBuilder sql = new StringBuilder().append("select").
+		StringBuilder sql = new StringBuilder().append("select").
 				append(" null as TABLE_CAT,").
 				append(" db as TABLE_SCHEM,").
 				append(" name as TABLE_NAME,").
@@ -716,9 +716,9 @@ class DbMeta implements DatabaseMetaData {
 				append(" null as REF_GENERATION").
 				append(" from (");
 
-		final List<String> dbNames = schemaProvider.getDbNames(schemaPattern);
+		List<String> dbNames = schemaProvider.getDbNames(schemaPattern);
 		boolean match = false;
-		final String typeExpr = "CASE WHEN like('sqlite_%', name) THEN 'system ' || type ELSE type END as type";
+		String typeExpr = "CASE WHEN like('sqlite_%', name) THEN 'system ' || type ELSE type END as type";
 		for (String s : dbNames) {
 			if (match) sql.append(" UNION ALL ");
 			if ("main".equalsIgnoreCase(s)) {
@@ -749,7 +749,7 @@ class DbMeta implements DatabaseMetaData {
 
 		sql.append(" order by TABLE_TYPE, TABLE_SCHEM, TABLE_NAME");
 
-		final PreparedStatement stmt = c.prepareStatement(sql.toString());
+		PreparedStatement stmt = c.prepareStatement(sql.toString());
 		stmt.closeOnCompletion();
 		return stmt.executeQuery();
 	}
@@ -761,7 +761,7 @@ class DbMeta implements DatabaseMetaData {
 				"null as TABLE_CATALOG " +
 				"from pragma_database_list() " +
 				"order by TABLE_CATALOG, TABLE_SCHEM";
-		final PreparedStatement stmt = c.prepareStatement(sql);
+		PreparedStatement stmt = c.prepareStatement(sql);
 		stmt.closeOnCompletion();
 		return stmt.executeQuery();
 	}
@@ -770,7 +770,7 @@ class DbMeta implements DatabaseMetaData {
 	public ResultSet getCatalogs() throws SQLException {
 		checkOpen();
 		final String sql = "select null as TABLE_CAT limit 0";
-		final PreparedStatement stmt = c.prepareStatement(sql);
+		PreparedStatement stmt = c.prepareStatement(sql);
 		stmt.closeOnCompletion();
 		return stmt.executeQuery();
 	}
@@ -778,7 +778,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getTableTypes() throws SQLException {
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement("select 'TABLE' as TABLE_TYPE " +
+		PreparedStatement stmt = c.prepareStatement("select 'TABLE' as TABLE_TYPE " +
 				"union select 'VIEW' union select 'SYSTEM TABLE'");
 		stmt.closeOnCompletion();
 		return stmt.executeQuery();
@@ -787,9 +787,9 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
 		checkOpen();
-		final StringBuilder sql = new StringBuilder();
+		StringBuilder sql = new StringBuilder();
 
-		final List<QualifiedName> tbls = schemaProvider.findTables(schemaPattern, tableNamePattern);
+		List<QualifiedName> tbls = schemaProvider.findTables(schemaPattern, tableNamePattern);
 
 		sql.append("select ").
 				append("null as TABLE_CAT, ").
@@ -830,11 +830,11 @@ class DbMeta implements DatabaseMetaData {
 					if (colFound) sql.append(" UNION ALL ");
 					colFound = true;
 
-					final String colType = getSQLiteType(rs.getString(3));
-					final int colJavaType = getJavaType(colType);
+					String colType = getSQLiteType(rs.getString(3));
+					int colJavaType = getJavaType(colType);
 					String hidden = "null";
 					if (xInfo) {
-						final byte b = rs.getByte(7);
+						byte b = rs.getByte(7);
 						if (b == 1) {
 							hidden = "'hidden'";
 						} else if (b == 2) {
@@ -867,7 +867,7 @@ class DbMeta implements DatabaseMetaData {
 		sql.append(colFound ? ") order by TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION" :
 				"SELECT NULL AS db, NULL AS tbl, NULL AS ordpos, NULL AS colnullable, NULL AS ct, "
 						+ "NULL AS cn, NULL AS tn, NULL AS cdflt, NULL AS hidden) limit 0");
-		final PreparedStatement columns = c.prepareStatement(sql.toString());
+		PreparedStatement columns = c.prepareStatement(sql.toString());
 		columns.closeOnCompletion();
 		return columns.executeQuery();
 	}
@@ -893,7 +893,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getColumnPrivileges(String catalog, String schema, String table, String columnNamePattern) throws SQLException {
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement(
+		PreparedStatement stmt = c.prepareStatement(
 				"select "
 						+ "null as TABLE_CAT, "
 						+ "null as TABLE_SCHEM, "
@@ -911,7 +911,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement(
+		PreparedStatement stmt = c.prepareStatement(
 				"select "
 						+ "null as TABLE_CAT, "
 						+ "null as TABLE_SCHEM, "
@@ -928,7 +928,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getBestRowIdentifier(String catalog, String schema, String table, int scope, boolean nullable) throws SQLException {
 		checkOpen();
-		final StringBuilder sql = new StringBuilder();
+		StringBuilder sql = new StringBuilder();
 
 		schema = schemaProvider.getDbName(schema, table);
 		sql.append("select ").
@@ -981,7 +981,7 @@ class DbMeta implements DatabaseMetaData {
 				sql.append(" limit 0");
 			}
 		}
-		final PreparedStatement columns = c.prepareStatement(sql.toString());
+		PreparedStatement columns = c.prepareStatement(sql.toString());
 		columns.closeOnCompletion();
 		return columns.executeQuery();
 	}
@@ -989,7 +989,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getVersionColumns(String catalog, String schema, String table) throws SQLException {
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement(
+		PreparedStatement stmt = c.prepareStatement(
 				"select "
 						+ "null as SCOPE, "
 						+ "null as COLUMN_NAME, "
@@ -1008,7 +1008,7 @@ class DbMeta implements DatabaseMetaData {
 	public ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
 		checkOpen();
 		Select select = EnhancedPragma.getPrimaryKeys(schema, table, schemaProvider);
-		final PreparedStatement columns = c.prepareStatement(select.toSql());
+		PreparedStatement columns = c.prepareStatement(select.toSql());
 		columns.closeOnCompletion();
 		return columns.executeQuery();
 	}
@@ -1017,7 +1017,7 @@ class DbMeta implements DatabaseMetaData {
 	public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
 		checkOpen();
 		Select select = EnhancedPragma.getImportedKeys(schema, table, schemaProvider);
-		final PreparedStatement fks = c.prepareStatement(select.toSql());
+		PreparedStatement fks = c.prepareStatement(select.toSql());
 		fks.closeOnCompletion();
 		return fks.executeQuery();
 	}
@@ -1025,7 +1025,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException {
 		checkOpen();
-		final StringBuilder sql = new StringBuilder();
+		StringBuilder sql = new StringBuilder();
 
 		schema = schemaProvider.getDbName(schema, table);
 		sql.append("select ").
@@ -1045,8 +1045,8 @@ class DbMeta implements DatabaseMetaData {
 				append(importedKeyNotDeferrable).append(" as DEFERRABILITY "). // FIXME
 				append("from (");
 
-		final Collection<String> fkTables = new ArrayList<>();
-		final String s;
+		Collection<String> fkTables = new ArrayList<>();
+		String s;
 		if ("main".equalsIgnoreCase(schema)) {
 			s = "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE ? AND sql LIKE ?";
 		} else if ("temp".equalsIgnoreCase(schema)) {
@@ -1099,7 +1099,7 @@ class DbMeta implements DatabaseMetaData {
 		} else {
 			sql.append(") order by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, KEY_SEQ");
 		}
-		final PreparedStatement eks = c.prepareStatement(sql.toString());
+		PreparedStatement eks = c.prepareStatement(sql.toString());
 		eks.closeOnCompletion();
 		return eks.executeQuery();
 	}
@@ -1107,7 +1107,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getTypeInfo() throws SQLException {
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement(
+		PreparedStatement stmt = c.prepareStatement(
 				"select "
 						+ "tn as TYPE_NAME, "
 						+ "dt as DATA_TYPE, "
@@ -1142,7 +1142,7 @@ class DbMeta implements DatabaseMetaData {
 	public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog, String foreignSchema, String foreignTable) throws SQLException {
 		checkOpen();
 		Select select = EnhancedPragma.getCrossReference(parentSchema, parentTable, foreignSchema, foreignTable, schemaProvider);
-		final PreparedStatement fks = c.prepareStatement(select.toSql());
+		PreparedStatement fks = c.prepareStatement(select.toSql());
 		fks.closeOnCompletion();
 		return fks.executeQuery();
 	}
@@ -1151,7 +1151,7 @@ class DbMeta implements DatabaseMetaData {
 	public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException {
 		checkOpen();
 		schema = schemaProvider.getDbName(schema, table);
-		final StringBuilder sql = new StringBuilder();
+		StringBuilder sql = new StringBuilder();
 		sql.append("select ").
 				append("null as TABLE_CAT, ").
 				append(quote(schema)).append(" as TABLE_SCHEM, ").
@@ -1168,13 +1168,13 @@ class DbMeta implements DatabaseMetaData {
 				append("null as FILTER_CONDITION ").
 				append("from (");
 
-		final Map<String, Boolean> indexes = new HashMap<>();
+		Map<String, Boolean> indexes = new HashMap<>();
 		Pragma pragma = new Pragma(new QualifiedName(schema, "index_list"), new IdExpr(table));
 		try (PreparedStatement index_list = c.prepareStatement(pragma.toSql());
 				 ResultSet rs = index_list.executeQuery()) {
 			// 1:seq|2:name|3:unique
 			while (rs.next()) {
-				final boolean notuniq = !rs.getBoolean(3);
+				boolean notuniq = !rs.getBoolean(3);
 				if (unique && notuniq) {
 					continue;
 				}
@@ -1188,7 +1188,7 @@ class DbMeta implements DatabaseMetaData {
 			sql.append("SELECT NULL AS nu, NULL AS idx, NULL AS seqno, NULL AS cn) limit 0");
 		} else {
 			boolean found = false;
-			for (final Entry<String, Boolean> index : indexes.entrySet()) {
+			for (Entry<String, Boolean> index : indexes.entrySet()) {
 				Pragma _pragma = new Pragma(new QualifiedName(null, "index_info"), new IdExpr(index.getKey()));
 				try (PreparedStatement index_info = c.prepareStatement(_pragma.toSql());
 						 ResultSet rs = index_info.executeQuery()) {
@@ -1214,7 +1214,7 @@ class DbMeta implements DatabaseMetaData {
 			}
 		}
 
-		final PreparedStatement idx = c.prepareStatement(sql.toString());
+		PreparedStatement idx = c.prepareStatement(sql.toString());
 		idx.closeOnCompletion();
 		return idx.executeQuery();
 	}
@@ -1287,7 +1287,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern, int[] types) throws SQLException {
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement(
+		PreparedStatement stmt = c.prepareStatement(
 				"select "
 						+ "null as TYPE_CAT, "
 						+ "null as TYPE_SCHEM, "
@@ -1332,7 +1332,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getSuperTypes(String catalog, String schemaPattern, String typeNamePattern) throws SQLException {
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement(
+		PreparedStatement stmt = c.prepareStatement(
 				"select "
 						+ "null as TYPE_CAT, "
 						+ "null as TYPE_SCHEM, "
@@ -1348,7 +1348,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getSuperTables(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement(
+		PreparedStatement stmt = c.prepareStatement(
 				"select "
 						+ "null as TABLE_CAT, "
 						+ "null as TABLE_SCHEM, "
@@ -1362,7 +1362,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getAttributes(String catalog, String schemaPattern, String typeNamePattern, String attributeNamePattern) throws SQLException {
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement(
+		PreparedStatement stmt = c.prepareStatement(
 				"select "
 						+ "null as TYPE_CAT, "
 						+ "null as TYPE_SCHEM, "
@@ -1411,7 +1411,7 @@ class DbMeta implements DatabaseMetaData {
 
 	@Override
 	public int getDatabaseMinorVersion() {
-		final int v = org.sqlite.Conn.libversionNumber() / 1000;
+		int v = org.sqlite.Conn.libversionNumber() / 1000;
 		return v - ((v / 1000) * 1000);
 	}
 
@@ -1467,7 +1467,7 @@ class DbMeta implements DatabaseMetaData {
 		// TODO http://sqlite.org/pragma.html#pragma_application_id
 		// http://sqlite.org/pragma.html#pragma_user_version
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement(
+		PreparedStatement stmt = c.prepareStatement(
 				"select "
 						+ "null as NAME, "
 						+ "0 as MAX_LEN, "
@@ -1494,7 +1494,7 @@ class DbMeta implements DatabaseMetaData {
 		if (functionNamePattern != null) {
 			sql += "WHERE name LIKE " + quote(functionNamePattern);
 		}
-		final PreparedStatement stmt = c.prepareStatement(sql);
+		PreparedStatement stmt = c.prepareStatement(sql);
 		stmt.closeOnCompletion();
 		return stmt.executeQuery();
 	}
@@ -1507,7 +1507,7 @@ class DbMeta implements DatabaseMetaData {
 	@Override
 	public ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
 		checkOpen();
-		final PreparedStatement stmt = c.prepareStatement( // TODO rowId?
+		PreparedStatement stmt = c.prepareStatement( // TODO rowId?
 				"select "
 						+ "null as TABLE_CAT, "
 						+ "null as TABLE_SCHEM, "

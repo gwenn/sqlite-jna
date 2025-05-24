@@ -29,7 +29,7 @@ record RowIdImpl(long value) implements RowId {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
-		final RowIdImpl rowId = (RowIdImpl) o;
+		RowIdImpl rowId = (RowIdImpl) o;
 
 		return value == rowId.value;
 

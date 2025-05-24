@@ -19,11 +19,11 @@ public class sqlite3_vtab {
 		return struct.get(zErrMsg, zErrMsgOffset);
 	}
 	public static void zErrMsg(MemorySegment struct, String errMsg) {
-		final MemorySegment old = zErrMsg(struct);
+		MemorySegment old = zErrMsg(struct);
 		if (!isNull(old)) {
 			sqlite3_free(old);
 		}
-		final byte[] bytes = errMsg.getBytes(UTF_8);
+		byte[] bytes = errMsg.getBytes(UTF_8);
 		MemorySegment ms = sqlite3_malloc(bytes.length + 1);
 		MemorySegment.copy(bytes, 0, ms, C_CHAR, 0, bytes.length);
 		ms.set(C_CHAR, bytes.length, (byte)0);

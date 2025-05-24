@@ -121,7 +121,7 @@ public class TransactionTest {
 		}
 		conn2.setAutoCommit(true);
 
-		final Set<Integer> seen;
+		Set<Integer> seen;
 		try (ResultSet rs = stat1.executeQuery("select c1 from test")) {
 			seen = new HashSet<Integer>();
 			while (rs.next()) {

@@ -57,7 +57,7 @@ public enum OpenQueryParameter {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
 			// Extension loading is off by default.
-			final boolean enable = uri_boolean(params, this.name, false);
+			boolean enable = uri_boolean(params, this.name, false);
 			if (enable) {
 				conn.enableLoadExtension(enable);
 			}
@@ -66,8 +66,8 @@ public enum OpenQueryParameter {
 	ENABLE_TRIGGERS("enable_triggers") {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
-			final boolean current = conn.areTriggersEnabled();
-			final boolean enable = uri_boolean(params, this.name, current);
+			boolean current = conn.areTriggersEnabled();
+			boolean enable = uri_boolean(params, this.name, current);
 			if (enable != current) {
 				if (enable != conn.enableTriggers(enable)) { // SQLITE_OMIT_TRIGGER
 					throw new ConnException(conn, "Cannot enable or disable triggers", ErrCodes.WRAPPER_SPECIFIC);
@@ -79,11 +79,11 @@ public enum OpenQueryParameter {
 	ENCODING("encoding") {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
-			final String encoding = params.get(this.name);
+			String encoding = params.get(this.name);
 			if (encoding == null) {
 				return;
 			}
-			final String current = conn.encoding(null);
+			String current = conn.encoding(null);
 			if (!current.equals(encoding)) { // Once an encoding has been set for a database, it cannot be changed.
 				throw new ConnException(conn, String.format("'%s' <> '%s'", current, encoding), ErrCodes.WRAPPER_SPECIFIC); // TODO PRAGMA encoding = "..."
 			}
@@ -94,7 +94,7 @@ public enum OpenQueryParameter {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
 			// The extended result codes are disabled by default for historical compatibility.
-			final boolean enable = uri_boolean(params, this.name, false);
+			boolean enable = uri_boolean(params, this.name, false);
 			if (enable) {
 				conn.setExtendedResultCodes(enable);
 			}
@@ -103,8 +103,8 @@ public enum OpenQueryParameter {
 	FOREIGN_KEYS("foreign_keys") {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
-			final boolean current = conn.areForeignKeysEnabled();
-			final boolean enable = uri_boolean(params, this.name, current);
+			boolean current = conn.areForeignKeysEnabled();
+			boolean enable = uri_boolean(params, this.name, current);
 			if (enable != current) {
 				if (enable != conn.enableForeignKeys(enable)) {
 					throw new ConnException(conn, "Cannot enable or disable the enforcement of foreign key constraints", ErrCodes.WRAPPER_SPECIFIC);
@@ -148,11 +148,11 @@ public enum OpenQueryParameter {
 	MMAP_SIZE("mmap_size") {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
-			final String value = params.get(this.name);
+			String value = params.get(this.name);
 			if (value == null) {
 				return;
 			}
-			final long size;
+			long size;
 			try {
 				size = Long.parseLong(value);
 			} catch (NumberFormatException e) {
@@ -165,8 +165,8 @@ public enum OpenQueryParameter {
 	QUERY_ONLY("query_only") {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
-			final boolean current = conn.isQueryOnly(null);
-			final boolean enable = uri_boolean(params, this.name, current);
+			boolean current = conn.isQueryOnly(null);
+			boolean enable = uri_boolean(params, this.name, current);
 			if (enable != current) {
 				conn.setQueryOnly(null, enable);
 			}
@@ -177,7 +177,7 @@ public enum OpenQueryParameter {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
 			// Support for recursive triggers was added in version 3.6.18 but was initially turned OFF by default, for compatibility.
-			final boolean enable = uri_boolean(params, this.name, false);
+			boolean enable = uri_boolean(params, this.name, false);
 			if (enable) {
 				conn.pragma(null, this.name, enable);
 				if (enable != conn.pragma(null, this.name)) {
@@ -223,7 +223,7 @@ public enum OpenQueryParameter {
 		} else if (Arrays.binarySearch(FALSES, value) >= 0) {
 			return false;
 		}
-		final char c = value.charAt(0);
+		char c = value.charAt(0);
 		if (Character.isDigit(c)) {
 			return c != '0';
 		}
@@ -231,14 +231,14 @@ public enum OpenQueryParameter {
 	}
 
 	public static Map<String, String> getQueryParams(String url) {
-		final String[] urlParts = url.split("\\?");
+		String[] urlParts = url.split("\\?");
 		if (urlParts.length < 2) {
 			return Collections.emptyMap();
 		}
 		try {
-			final Map<String, String> params = new HashMap<>();
+			Map<String, String> params = new HashMap<>();
 
-			final String query = urlParts[1];
+			String query = urlParts[1];
 			for (String param : query.split("&")) {
 				String[] pair = param.split("=");
 				String key = URLDecoder.decode(pair[0], SQLite.UTF_8_ECONDING);

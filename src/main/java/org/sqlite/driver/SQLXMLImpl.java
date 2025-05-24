@@ -66,7 +66,7 @@ public class SQLXMLImpl implements SQLXML {
 	@Override
 	public OutputStream setBinaryStream() throws SQLException { // no streaming...
 		checkAndSwitchWritable();
-		final ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); // FileBackedOutputStream
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); // FileBackedOutputStream
 		src = new OutputStreamSrc(outputStream);
 		return outputStream;
 	}
@@ -116,7 +116,7 @@ public class SQLXMLImpl implements SQLXML {
 		} else if (StAXSource.class.equals(sourceClass)) {
 			XMLInputFactory xif = XMLInputFactory.newInstance();
 			try {
-				final XMLStreamReader xsr;
+				XMLStreamReader xsr;
 				if (src.isBinary()) {
 					xsr = xif.createXMLStreamReader(src.getBinaryStream());
 				} else {
@@ -142,7 +142,7 @@ public class SQLXMLImpl implements SQLXML {
 	public <T extends Result> T setResult(Class<T> resultClass) throws SQLException {
 		checkAndSwitchWritable();
 		if (resultClass == null || DOMResult.class.equals(resultClass)) {
-			final DOMResult domResult = new DOMResult();
+			DOMResult domResult = new DOMResult();
 			src = new DOMSrc(domResult);
 			return (T) domResult;
 		} else if (SAXResult.class.equals(resultClass)) {

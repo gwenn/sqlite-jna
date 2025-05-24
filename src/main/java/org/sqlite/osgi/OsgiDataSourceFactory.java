@@ -27,7 +27,7 @@ public class OsgiDataSourceFactory implements DataSourceFactory {
 		// Standard pool properties in OSGi not applicable here
 		rejectPoolingOptions(copy);
 
-		final BasicDataSource ds = new BasicDataSource();
+		BasicDataSource ds = new BasicDataSource();
 		setupDataSource(ds, copy);
 		return ds;
 	}

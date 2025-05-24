@@ -414,9 +414,9 @@ final class sqlite3 {
 	static int sqlite3_create_function_v2(sqlite3 pDb, String functionName, int nArg, int eTextRep,
 										  MemorySegment pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, MemorySegment xDestroy) {
 		try (Arena arena = Arena.ofConfined()) {
-			final MemorySegment xFu = upcallStub(scalar_callback, xFunc, VPIP, pDb.getArena());
-			final MemorySegment xS = upcallStub(aggregate_step_callback, xStep, VPIP, pDb.getArena());
-			final MemorySegment xFi = upcallStub(aggregate_final_callback, xFinal, VP, pDb.getArena());
+			MemorySegment xFu = upcallStub(scalar_callback, xFunc, VPIP, pDb.getArena());
+			MemorySegment xS = upcallStub(aggregate_step_callback, xStep, VPIP, pDb.getArena());
+			MemorySegment xFi = upcallStub(aggregate_final_callback, xFinal, VP, pDb.getArena());
 			return (int)sqlite3_create_function_v2.invokeExact(pDb.getPointer(), nativeString(arena, functionName), nArg, eTextRep, pApp, xFu, xS, xFi, xDestroy);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);

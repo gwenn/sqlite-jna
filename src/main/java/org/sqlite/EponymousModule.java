@@ -43,7 +43,7 @@ public interface EponymousModule {
 	 * @param argv sqlite3_value**
 	 */
 	default int filter(MemorySegment cursor, int idx_num, MemorySegment idx_str, int argc, MemorySegment argv) {
-		final sqlite3_values values = sqlite3_values.build(argc, argv);
+		sqlite3_values values = sqlite3_values.build(argc, argv);
 		//final String idx = getString(idx_str);
 		return filter(cursor, idx_num, idx_str, values);
 	}

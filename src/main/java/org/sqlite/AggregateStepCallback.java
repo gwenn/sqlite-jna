@@ -30,8 +30,8 @@ public abstract class AggregateStepCallback {
 	@SuppressWarnings("unused")
 	public void callback(MemorySegment ms, int nArg, MemorySegment args) {
 		sqlite3_context pCtx = new sqlite3_context(ms);
-		final int nBytes = numberOfBytes();
-		final MemorySegment p = sqlite3_aggregate_context(pCtx, nBytes);
+		int nBytes = numberOfBytes();
+		MemorySegment p = sqlite3_aggregate_context(pCtx, nBytes);
 		if (p == null && nBytes > 0) {
 			pCtx.setResultErrorNoMem();;
 			return;

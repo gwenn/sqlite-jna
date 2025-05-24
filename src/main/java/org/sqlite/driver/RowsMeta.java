@@ -86,7 +86,7 @@ class RowsMeta implements ResultSetMetaData {
 
 	@Override
 	public String getColumnName(int column) throws SQLException {
-		final String name = stmt.getColumnOriginName(fixCol(column));
+		String name = stmt.getColumnOriginName(fixCol(column));
 		if (name == null) {
 			return getColumnLabel(column);
 		}
@@ -128,7 +128,7 @@ class RowsMeta implements ResultSetMetaData {
 
 	@Override
 	public int getColumnType(int column) throws SQLException {
-		final int affinity = stmt.getColumnAffinity(fixCol(column));
+		int affinity = stmt.getColumnAffinity(fixCol(column));
 		return DbMeta.getJavaType(affinity);
 	}
 
@@ -156,7 +156,7 @@ class RowsMeta implements ResultSetMetaData {
 
 	@Override
 	public String getColumnClassName(int column) throws SQLException {
-		final int affinity = stmt.getColumnAffinity(fixCol(column));
+		int affinity = stmt.getColumnAffinity(fixCol(column));
 		return switch (affinity) {
 			case ColAffinities.TEXT -> "java.lang.String";
 			case ColAffinities.INTEGER -> "java.lang.Long";

@@ -34,10 +34,10 @@ class BlobImpl implements Blob, AutoCloseable {
 		if (length < 0) {
 			throw new SQLException(String.format("invalid read length: %d < 0", length), null, ErrCodes.WRAPPER_SPECIFIC);
 		}
-		final int readOffset = checkPosition(pos);
+		int readOffset = checkPosition(pos);
 		blob.setReadOffset(readOffset);
-		final byte[] bytes = new byte[Math.min(blob.getBytes() - readOffset, length)];
-		final int n = blob.read(bytes, 0, bytes.length); // read may be incomplete (n < length)...
+		byte[] bytes = new byte[Math.min(blob.getBytes() - readOffset, length)];
+		int n = blob.read(bytes, 0, bytes.length); // read may be incomplete (n < length)...
 		if (n != bytes.length) {
 			throw new SQLException(String.format("short read: %d < %d", n, bytes.length), null, ErrCodes.WRAPPER_SPECIFIC);
 		}
@@ -104,7 +104,7 @@ class BlobImpl implements Blob, AutoCloseable {
 	public InputStream getBinaryStream(long pos, long length) throws SQLException {
 		checkLength(length);
 		checkOpen();
-		final int readOffset = checkPosition(pos);
+		int readOffset = checkPosition(pos);
 		if (length + readOffset > blob.getBytes()) {
 			throw new SQLException(String.format("pos + length is greater than the number of bytes in the Blob: %d + %d > %d", pos, length, blob.getBytes()), null, ErrCodes.WRAPPER_SPECIFIC);
 		}

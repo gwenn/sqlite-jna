@@ -60,9 +60,9 @@ public class Stmt implements AutoCloseable, Row {
 	}
 
 	public String getExpandedSql() {
-		final MemorySegment ptr = sqlite3_expanded_sql(pStmt);
+		MemorySegment ptr = sqlite3_expanded_sql(pStmt);
 		if (!isNull(ptr)) {
-			final String sql = getString(ptr);
+			String sql = getString(ptr);
 			sqlite3_free(ptr);
 			return sql;
 		}
@@ -93,7 +93,7 @@ public class Stmt implements AutoCloseable, Row {
 	}
 	@Override
 	public void close() throws StmtException {
-		final int res = close(false);
+		int res = close(false);
 		if (res != ErrCodes.SQLITE_OK) {
 			throw new StmtException(this, "error while closing statement '%s'", res);
 		}
@@ -106,7 +106,7 @@ public class Stmt implements AutoCloseable, Row {
 	 * @throws SQLiteException if no row is inserted or many rows are inserted.
 	 */
 	public long insert(Object... params) throws SQLiteException {
-		final int changes = execDml(params);
+		int changes = execDml(params);
 		if (changes == 1) {
 			return c.getLastInsertRowid();
 		} else if (changes == 0) {
@@ -194,7 +194,7 @@ public class Stmt implements AutoCloseable, Row {
 	 */
 	public boolean step(int timeout) throws SQLiteException {
 		c.setQueryTimeout(timeout);
-		final int res = blockingStep();
+		int res = blockingStep();
 		if (res == SQLITE_ROW) {
 			return true;
 		}
@@ -211,7 +211,7 @@ public class Stmt implements AutoCloseable, Row {
 	 */
 	public int stepNoCheck(int timeout) throws SQLiteException {
 		c.setQueryTimeout(timeout);
-		final int res = blockingStep();
+		int res = blockingStep();
 		if (res == SQLITE_ROW) {
 			return res;
 		}
@@ -221,7 +221,7 @@ public class Stmt implements AutoCloseable, Row {
 	}
 	public void exec() throws SQLiteException {
 		c.setQueryTimeout(0);
-		final int res = blockingStep();
+		int res = blockingStep();
 		// Release implicit lock as soon as possible
 		sqlite3_reset(pStmt); // ok if pStmt is null
 		if (res == SQLITE_ROW) {
@@ -350,13 +350,13 @@ public class Stmt implements AutoCloseable, Row {
 
 	@Override
 	public byte[] getColumnBlob(int iCol) throws StmtException {
-		final int type = getColumnType(iCol);
+		int type = getColumnType(iCol);
 		if (type == SQLITE_NULL) {
 			return null;
 		}
-		final MemorySegment p = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
+		MemorySegment p = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
 		if (p == null) {
-			final int bytes = getColumnBytes(iCol);
+			int bytes = getColumnBytes(iCol);
 			// The return value from sqlite3_column_blob() for a zero-length BLOB is a NULL pointer.
 			if (bytes == 0) {
 				return new byte[0];
@@ -391,11 +391,11 @@ public class Stmt implements AutoCloseable, Row {
 	}
 	@Override
 	public String getColumnText(int iCol) throws StmtException {
-		final int type = getColumnType(iCol);
+		int type = getColumnType(iCol);
 		if (type == SQLITE_NULL) {
 			return null;
 		}
-		final String text = sqlite3_column_text(pStmt, iCol);
+		String text = sqlite3_column_text(pStmt, iCol);
 		if (text == null) {
 			throw new StmtException(this, String.format("sqlite3_column_text returns a NULL pointer for a %d type", type),
 					ErrCodes.WRAPPER_SPECIFIC);
@@ -476,11 +476,11 @@ public class Stmt implements AutoCloseable, Row {
 		if (params == null) {
 			params = new HashMap<>(getBindParameterCount());
 		}
-		final Integer index = params.get(name);
+		Integer index = params.get(name);
 		if (index != null) {
 			return index;
 		}
-		final int i = sqlite3_bind_parameter_index(pStmt, name); // ok if pStmt is null
+		int i = sqlite3_bind_parameter_index(pStmt, name); // ok if pStmt is null
 		if (i == 0) { // Invalid name
 			return i;
 		}
@@ -565,7 +565,7 @@ public class Stmt implements AutoCloseable, Row {
 
 	private static final boolean[] UNKNOWN = new boolean[3];
 	public boolean[] getMetadata(int iCol) throws StmtException, ConnException {
-		final String colName = getColumnOriginName(iCol);
+		String colName = getColumnOriginName(iCol);
 		if (colName != null) {
 			return c.getTableColumnMetadata(
 					getColumnDatabaseName(iCol), getColumnTableName(iCol), colName);
@@ -621,7 +621,7 @@ public class Stmt implements AutoCloseable, Row {
     if (ColTypes.SQLITE_NULL == type) { // cannot open value of type null
       return null;
     }*/
-		final String colName = getColumnOriginName(iCol);
+		String colName = getColumnOriginName(iCol);
 		if (colName != null) {
 			return c.open(getColumnDatabaseName(iCol), getColumnTableName(iCol), colName, iRow, rw);
 		}

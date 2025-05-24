@@ -58,8 +58,8 @@ public class Blob implements AutoCloseable {
 			throw new NullPointerException();
 		}
 		checkOpen();
-		final int n = len - off;
-		final int res = sqlite3_blob_read(pBlob, b, off, len, readOffset);
+		int n = len - off;
+		int res = sqlite3_blob_read(pBlob, b, off, len, readOffset);
 		if (res != SQLITE_OK) {
 			throw new SQLiteException(c, "error while reading blob", res);
 		}
@@ -78,8 +78,8 @@ public class Blob implements AutoCloseable {
 			throw new NullPointerException();
 		}
 		checkOpen();
-		final int n = len - off;
-		final int res = sqlite3_blob_write(pBlob, b, off, len, writeOffset);
+		int n = len - off;
+		int res = sqlite3_blob_write(pBlob, b, off, len, writeOffset);
 		if (res != SQLITE_OK) {
 			throw new SQLiteException(c, "error while writing blob", res);
 		}
@@ -95,7 +95,7 @@ public class Blob implements AutoCloseable {
 	 */
 	public void reopen(long iRow) throws SQLiteException {
 		checkOpen();
-		final int res = sqlite3_blob_reopen(pBlob, iRow);
+		int res = sqlite3_blob_reopen(pBlob, iRow);
 		if (res != SQLITE_OK) {
 			throw new SQLiteException(c, "error while reopening blob", res);
 		}
@@ -118,7 +118,7 @@ public class Blob implements AutoCloseable {
 	 */
 	@Override
 	public void close() throws SQLiteException {
-		final int res = closeNoCheck();
+		int res = closeNoCheck();
 		if (res != ErrCodes.SQLITE_OK) {
 			throw new SQLiteException(c, "error while closing Blob", res);
 		}
@@ -170,8 +170,8 @@ public class Blob implements AutoCloseable {
 			if (isEOF()) {
 				return -1;
 			}
-			final byte[] b = new byte[1];
-			final int i = read(b);
+			byte[] b = new byte[1];
+			int i = read(b);
 			if (i < 0) {
 				return i;
 			}
@@ -188,7 +188,7 @@ public class Blob implements AutoCloseable {
 			if (isEOF()) {
 				return -1;
 			}
-			final int avail = available();
+			int avail = available();
 			if (len > avail) {
 				len = avail;
 			}
@@ -286,7 +286,7 @@ public class Blob implements AutoCloseable {
 
 	private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
 	public static int copy(InputStream input, OutputStream output, int length) throws IOException {
-		final byte[] buffer = new byte[Math.min(length, DEFAULT_BUFFER_SIZE)];
+		byte[] buffer = new byte[Math.min(length, DEFAULT_BUFFER_SIZE)];
 		int count = 0;
 		int n = buffer.length;
 		while (length > 0 && (n = input.read(buffer, 0, n)) >= 0) {

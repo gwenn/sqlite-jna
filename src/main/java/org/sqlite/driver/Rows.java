@@ -80,14 +80,14 @@ class Rows implements ResultSet {
 			row++;
 			return true;
 		}
-		final int maxRows = s.getMaxRows();
+		int maxRows = s.getMaxRows();
 		if (maxRows != 0 && row >= maxRows) {
 			row = -2;
 			stmt.reset();
 			return false;
 		}
 
-		final boolean hasRow = s.step(false);
+		boolean hasRow = s.step(false);
 		if (hasRow) {
 			row++;
 		} else {
@@ -143,7 +143,7 @@ class Rows implements ResultSet {
 
 	@Override
 	public String getString(int columnIndex) throws SQLException {
-		final String str = getStmt().getColumnText(fixCol(columnIndex));
+		String str = getStmt().getColumnText(fixCol(columnIndex));
 		wasNull = str == null;
 		return str;
 	}
@@ -165,9 +165,9 @@ class Rows implements ResultSet {
 
 	@Override
 	public int getInt(int columnIndex) throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
-		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+		int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		stmt.checkTypeMismatch(fixCol(columnIndex), sourceType, ColTypes.SQLITE_INTEGER);
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
 		if (wasNull) {
@@ -179,9 +179,9 @@ class Rows implements ResultSet {
 
 	@Override
 	public long getLong(int columnIndex) throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
-		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+		int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		stmt.checkTypeMismatch(fixCol(columnIndex), sourceType, ColTypes.SQLITE_INTEGER);
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
 		if (wasNull) {
@@ -198,9 +198,9 @@ class Rows implements ResultSet {
 
 	@Override
 	public double getDouble(int columnIndex) throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
-		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+		int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		stmt.checkTypeMismatch(fixCol(columnIndex), sourceType, ColTypes.SQLITE_FLOAT);
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
 		if (wasNull) {
@@ -218,7 +218,7 @@ class Rows implements ResultSet {
 
 	@Override
 	public byte[] getBytes(int columnIndex) throws SQLException {
-		final byte[] blob = getStmt().getColumnBlob(fixCol(columnIndex));
+		byte[] blob = getStmt().getColumnBlob(fixCol(columnIndex));
 		wasNull = blob == null;
 		return blob;
 	}
@@ -252,10 +252,10 @@ class Rows implements ResultSet {
 	@Override
 	public InputStream getBinaryStream(int columnIndex) throws SQLException {
 		if (rowId != null) {
-			final Blob blob = getBlob(columnIndex);
+			Blob blob = getBlob(columnIndex);
 			return blob == null ? null : blob.getBinaryStream();
 		} else { // no streaming...
-			final byte[] bytes = getBytes(columnIndex);
+			byte[] bytes = getBytes(columnIndex);
 			if (bytes == null) {
 				return null;
 			}
@@ -373,14 +373,14 @@ class Rows implements ResultSet {
 
 	@Override
 	public Object getObject(int columnIndex) throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
-		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+		int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		switch (sourceType) {
 			case ColTypes.SQLITE_TEXT:
 				return getString(columnIndex);
 			case ColTypes.SQLITE_INTEGER:
-				final long l = getLong(columnIndex);
+				long l = getLong(columnIndex);
 				if (l <= Integer.MAX_VALUE && l >= Integer.MIN_VALUE) {
 					return (int) l;
 				}
@@ -412,7 +412,7 @@ class Rows implements ResultSet {
 	public Reader getCharacterStream(int columnIndex) throws SQLException {
 		if (rowId != null) {
 			try {
-				final InputStream in = getBinaryStream(columnIndex);
+				InputStream in = getBinaryStream(columnIndex);
 				if (in == null) {
 					return null;
 				}
@@ -421,7 +421,7 @@ class Rows implements ResultSet {
 				throw new StmtException(getStmt(), e.getMessage(), ErrCodes.WRAPPER_SPECIFIC);
 			}
 		} else { // no streaming...
-			final String s = getString(columnIndex);
+			String s = getString(columnIndex);
 			if (s == null) {
 				return null;
 			}
@@ -436,7 +436,7 @@ class Rows implements ResultSet {
 
 	@Override
 	public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
-		final String stringValue = getString(columnIndex);
+		String stringValue = getString(columnIndex);
 		if (stringValue == null) {
 			return null;
 		} else {
@@ -474,7 +474,7 @@ class Rows implements ResultSet {
 	@Override
 	public boolean isLast() throws SQLException {
 		checkOpen();
-		final int maxRows = s.getMaxRows();
+		int maxRows = s.getMaxRows();
 		if (maxRows != 0 && row == maxRows) {
 			return true;
 		}
@@ -835,7 +835,7 @@ class Rows implements ResultSet {
 		if (rowId == null) { // FIXME check PrepStmt.rowId as well...
 			throw new SQLException("You must read the associated RowId before opening a Blob");
 		}
-		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+		int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
 		if (wasNull) {
 			return null;
@@ -892,24 +892,24 @@ class Rows implements ResultSet {
 
 	@Override
 	public Date getDate(int columnIndex, Calendar cal) throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
-		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+		int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
 		switch (sourceType) {
 			case ColTypes.SQLITE_NULL:
 				return null;
 			case ColTypes.SQLITE_TEXT: // does not work as expected if column type affinity is TEXT but inserted value was a numeric
-				final String txt = stmt.getColumnText(fixCol(columnIndex));
+				String txt = stmt.getColumnText(fixCol(columnIndex));
 				return DateUtil.toDate(txt, cal);
 			case ColTypes.SQLITE_INTEGER:
-				final long l = stmt.getColumnLong(fixCol(columnIndex));
+				long l = stmt.getColumnLong(fixCol(columnIndex));
 				if (cal == null && DateUtil.EPOCH_DAY.equals(s.conn().dateTimeConfig[DateUtil.DATE_CONFIG])) {
 					return Date.valueOf(LocalDate.ofEpochDay(l));
 				}
 				return DateUtil.toDate(l, cal);
 			case ColTypes.SQLITE_FLOAT: // does not work as expected if column affinity is REAL but inserted value was an integer
-				final double jd = stmt.getColumnDouble(fixCol(columnIndex));
+				double jd = stmt.getColumnDouble(fixCol(columnIndex));
 				return DateUtil.toDate(jd, cal);
 			default:
 				throw new SQLException("The column type is not one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, or SQLITE_NULL");
@@ -923,22 +923,22 @@ class Rows implements ResultSet {
 
 	@Override
 	public Time getTime(int columnIndex, Calendar cal) throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
-		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+		int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
 		return switch (sourceType) {
 			case ColTypes.SQLITE_NULL -> null;
 			case ColTypes.SQLITE_TEXT -> {
-				final String txt = stmt.getColumnText(fixCol(columnIndex));
+				String txt = stmt.getColumnText(fixCol(columnIndex));
 				yield DateUtil.toTime(txt, cal);
 			}
 			case ColTypes.SQLITE_INTEGER -> {
-				final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
+				long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
 				yield DateUtil.toTime(unixepoch);
 			}
 			case ColTypes.SQLITE_FLOAT -> {
-				final double jd = stmt.getColumnDouble(fixCol(columnIndex));
+				double jd = stmt.getColumnDouble(fixCol(columnIndex));
 				yield DateUtil.toTime(jd);
 			}
 			default ->
@@ -953,22 +953,22 @@ class Rows implements ResultSet {
 
 	@Override
 	public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
-		final org.sqlite.Stmt stmt = getStmt();
+		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
-		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+		int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
 		return switch (sourceType) {
 			case ColTypes.SQLITE_NULL -> null;
 			case ColTypes.SQLITE_TEXT -> {
-				final String txt = stmt.getColumnText(fixCol(columnIndex));
+				String txt = stmt.getColumnText(fixCol(columnIndex));
 				yield DateUtil.toTimestamp(txt, cal);
 			}
 			case ColTypes.SQLITE_INTEGER -> {
-				final long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
+				long unixepoch = stmt.getColumnLong(fixCol(columnIndex));
 				yield DateUtil.toTimestamp(unixepoch);
 			}
 			case ColTypes.SQLITE_FLOAT -> {
-				final double jd = stmt.getColumnDouble(fixCol(columnIndex));
+				double jd = stmt.getColumnDouble(fixCol(columnIndex));
 				yield DateUtil.toTimestamp(jd);
 			}
 			default ->
@@ -1094,7 +1094,7 @@ class Rows implements ResultSet {
 
 	@Override
 	public SQLXML getSQLXML(int columnIndex) throws SQLException {
-		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+		int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
 		if (wasNull) {
 			return null;
@@ -1282,20 +1282,20 @@ class Rows implements ResultSet {
 		if (type == null) {
 			throw Util.error("Null type specified");
 		}
-		final int sourceType = stmt.getColumnType(fixCol(columnIndex));
+		int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
 		return switch (sourceType) {
 			case ColTypes.SQLITE_NULL -> null;
 			case ColTypes.SQLITE_TEXT -> {
-				final String txt = stmt.getColumnText(fixCol(columnIndex));
+				String txt = stmt.getColumnText(fixCol(columnIndex));
 				yield convert(txt, type);
 			}
 			case ColTypes.SQLITE_INTEGER -> {
-				final long l = stmt.getColumnLong(fixCol(columnIndex));
+				long l = stmt.getColumnLong(fixCol(columnIndex));
 				yield convert(l, type);
 			}
 			case ColTypes.SQLITE_FLOAT -> {
-				final double d = stmt.getColumnDouble(fixCol(columnIndex));
+				double d = stmt.getColumnDouble(fixCol(columnIndex));
 				yield convert(d, type);
 			}
 			default ->

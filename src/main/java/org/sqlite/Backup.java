@@ -38,7 +38,7 @@ public class Backup implements AutoCloseable {
 	 */
 	public boolean step(int nPage) throws ConnException {
 		checkInit();
-		final int res = sqlite3_backup_step(pBackup, nPage);
+		int res = sqlite3_backup_step(pBackup, nPage);
 		if (res == SQLITE_OK || (res&0xFF) == ErrCodes.SQLITE_BUSY || (res&0xFF) == ErrCodes.SQLITE_LOCKED) {
 			sqlite3_log(-1, "busy/locked error during backup.");
 			return true;
@@ -103,7 +103,7 @@ public class Backup implements AutoCloseable {
 	 */
 	@Override
 	public void close() throws ConnException {
-		final int res = finish();
+		int res = finish();
 		if (res != SQLITE_OK) {
 			throw new ConnException(dst, "backup finish failed", res);
 		}

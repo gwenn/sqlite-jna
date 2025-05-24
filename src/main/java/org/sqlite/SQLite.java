@@ -10,7 +10,6 @@ package org.sqlite;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.Unsafe;
 
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
@@ -74,8 +73,8 @@ public final class SQLite {
 	static MethodHandle upcallHandle(Class<?> fi, String name, FunctionDescriptor fdesc) {
 		try {
 			return MH_LOOKUP.findVirtual(fi, name, fdesc.toMethodType());
-		} catch (ReflectiveOperationException ex) {
-			throw new AssertionError(ex);
+		} catch (ReflectiveOperationException e) {
+			throw new AssertionError(e);
 		}
 	}
 	static MemorySegment upcallStub(MethodHandle mh, Object x, FunctionDescriptor fd, Arena arena) {
@@ -83,6 +82,14 @@ public final class SQLite {
 			return MemorySegment.NULL;
 		}
 		return LINKER.upcallStub(mh.bindTo(x), fd, arena);
+	}
+	static MemorySegment upcallStub(Class<?> clz, String name, FunctionDescriptor fd) {
+		try {
+			MethodHandle handle = MH_LOOKUP.findStatic(clz, name, fd.toMethodType());
+			return LINKER.upcallStub(handle, fd, Arena.global());
+		} catch (ReflectiveOperationException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	static String getString(MemorySegment ms) {
@@ -206,8 +213,7 @@ public final class SQLite {
 	//sqlite3_config(SQLITE_CONFIG_LOG, void(*)(void *udp, int err, const char *msg), void *udp)
 	public static int sqlite3_config(int op, Class<?> clz, String name, MemorySegment udp) {
 		try {
-			MethodHandle xLogHandle = MH_LOOKUP.findStatic(clz, name, VPIP.toMethodType());
-			MemorySegment xLog = LINKER.upcallStub(xLogHandle, VPIP, Arena.global());
+			MemorySegment xLog = upcallStub(clz, name, VPIP);
 			return (int) sqlite3_config_log.invokeExact(op, xLog, udp);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
@@ -275,14 +281,23 @@ public final class SQLite {
 	static MemorySegment sqlite3_malloc(MemoryLayout ml) {
 		return sqlite3_malloc(ml.byteSize());
 	}
-	static MemorySegment sqlite3_malloc(long n) {
+	static MemorySegment sqlite3_malloc(long l) {
 		try {
-			final MemorySegment ms = (MemorySegment) sqlite3_malloc.invokeExact(Math.toIntExact(n));
+			MemorySegment ms = (MemorySegment) sqlite3_malloc.invokeExact(Math.toIntExact(l));
 			if (ms != null) {
-				ms.reinterpret(n);
-				Unsafe.getUnsafe().setMemory(ms.address(), n, (byte)0); // memset
+				ms = ms.reinterpret(l);
+				memset(ms, 0, l);
 			}
 			return ms;
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
+	static final MethodHandle memset = LINKER.downcallHandle(LINKER.defaultLookup()
+		.find("memset").orElseThrow(), FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT, C_LONG_LONG));
+	static MemorySegment memset(MemorySegment ms, int c, long n) {
+		try {
+			return (MemorySegment) memset.invokeExact(ms, c, n);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -329,6 +344,7 @@ public final class SQLite {
 		return identifier;
 	}
 
+	@SuppressWarnings("unused")
 	private static void log_callback(MemorySegment udp, int err, MemorySegment msg) {
 		if (err == ErrCodes.WRAPPER_SPECIFIC) {
 			log.error("{}: {}", err, getString(msg));
@@ -344,7 +360,7 @@ public final class SQLite {
 	static {
 		if (!System.getProperty("sqlite.config.log", "").isEmpty()) {
 			// DriverManager.getLogWriter();
-			final int res = sqlite3_config(SQLITE_CONFIG_LOG, SQLite.class, "log_callback", MemorySegment.NULL);
+			int res = sqlite3_config(SQLITE_CONFIG_LOG, SQLite.class, "log_callback", MemorySegment.NULL);
 			if (res != SQLITE_OK) {
 				throw new ExceptionInInitializerError("sqlite3_config(SQLITE_CONFIG_LOG, ...) = " + res);
 			}

@@ -50,7 +50,7 @@ final class DateUtil {
 		if (info == null) {
 			return new String[]{YYYY_MM_DD, HH_MM_SS, DEFAULT_FORMAT};
 		}
-		final String[] config = new String[3];
+		String[] config = new String[3];
 		config[DATE_CONFIG] = info.getProperty(DATE_FORMAT, YYYY_MM_DD);
 		config[TIME_CONFIG] = info.getProperty(TIME_FORMAT, HH_MM_SS);
 		config[TIMESTAMP_CONFIG] = info.getProperty(TIMESTAMP_FORMAT, DEFAULT_FORMAT);
@@ -75,7 +75,7 @@ final class DateUtil {
 
 	private static ParsedDate parseDate(String txt, Calendar cal) throws SQLException {
 		boolean tz = false;
-		final String layout;
+		String layout;
 		switch (txt.length()) {
 			case 5: // HH:MM
 				layout = "HH:mm";
@@ -102,8 +102,8 @@ final class DateUtil {
 				layout = txt.length() > 10 && txt.charAt(10) == 'T' ? DEFAULT_FORMAT : "yyyy-MM-dd HH:mm:ss.SSSXXX";
 				tz = true;
 		}
-		final DateFormat df = getDateFormat(layout, cal);
-		final Date date;
+		DateFormat df = getDateFormat(layout, cal);
+		Date date;
 		try {
 			date = df.parse(txt);
 		} catch (ParseException e) {
@@ -113,7 +113,7 @@ final class DateUtil {
 	}
 
 	static String formatDate(Date date, int length, Calendar cal) {
-		final String layout = switch (length) {
+		String layout = switch (length) {
 			case 5 -> // HH:MM
 				"HH:mm";
 			case 8 -> // HH:MM:SS
@@ -150,7 +150,7 @@ final class DateUtil {
 	}
 
 	static java.sql.Date toDate(String txt, Calendar cal) throws SQLException {
-		final ParsedDate date = parseDate(txt, cal);
+		ParsedDate date = parseDate(txt, cal);
 		return new java.sql.Date(/*normalizeDate(*/date.value.getTime()/*)*/);
 	}
 	static java.sql.Date toDate(long unixepoch, Calendar cal) {
@@ -161,7 +161,7 @@ final class DateUtil {
 	}
 
 	static Time toTime(String txt, Calendar cal) throws SQLException {
-		final ParsedDate date = parseDate(txt, cal);
+		ParsedDate date = parseDate(txt, cal);
 		return new Time(date.value.getTime());
 	}
 	static Time toTime(long unixepoch) {
@@ -172,7 +172,7 @@ final class DateUtil {
 	}
 
 	static Timestamp toTimestamp(String txt, Calendar cal) throws SQLException {
-		final ParsedDate date = parseDate(txt, cal);
+		ParsedDate date = parseDate(txt, cal);
 		return new Timestamp(date.value.getTime());
 	}
 	static Timestamp toTimestamp(long unixepoch) {
@@ -223,7 +223,7 @@ final class DateUtil {
 		System.out.println("cal = " + cal.getTime());
 
 		final double jd = 2456924.08783652;
-		final Date d = new Date(fromJulianDay(jd));
+		Date d = new Date(fromJulianDay(jd));
 		System.out.println("d = " + d);
 		System.out.println("d.toGMTString() = " + d.toGMTString());
 	}
