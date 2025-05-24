@@ -106,7 +106,7 @@ public class sqlite3_index_info {
 	private static final AddressLayout aOrderBy = (AddressLayout)layout.select(groupElement("aOrderBy"));
 	public static Iterator<MemorySegment> aOrderBy(MemorySegment struct) {
 		MemorySegment aOrderBy = struct.get(sqlite3_index_info.aOrderBy, 8);
-		final int nOrderBy = nOrderBy(struct);
+		int nOrderBy = nOrderBy(struct);
 		aOrderBy = aOrderBy.reinterpret(nOrderBy * sqlite3_index_orderby.layout.byteSize());
 		return aOrderBy.elements(sqlite3_index_orderby.layout).limit(nOrderBy).iterator();
 	}

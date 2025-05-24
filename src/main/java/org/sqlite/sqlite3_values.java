@@ -168,7 +168,7 @@ public final class sqlite3_values {
 	public MemorySegment getPointer(int i, MemorySegment name, MemoryLayout ml) {
 		MemorySegment pValue = arg(i);
 		try {
-			final MemorySegment ms = (MemorySegment) sqlite3_value_pointer.invokeExact(pValue, name);
+			MemorySegment ms = (MemorySegment) sqlite3_value_pointer.invokeExact(pValue, name);
 			return ms.reinterpret(ml.byteSize());
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);

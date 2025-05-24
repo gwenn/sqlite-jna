@@ -293,9 +293,9 @@ public final class SQLite {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-	static final MethodHandle memset = LINKER.downcallHandle(LINKER.defaultLookup()
+	private static final MethodHandle memset = LINKER.downcallHandle(LINKER.defaultLookup()
 		.find("memset").orElseThrow(), FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT, C_LONG_LONG));
-	static MemorySegment memset(MemorySegment ms, int c, long n) {
+	private static MemorySegment memset(MemorySegment ms, int c, long n) {
 		try {
 			return (MemorySegment) memset.invokeExact(ms, c, n);
 		} catch (Throwable e) {
