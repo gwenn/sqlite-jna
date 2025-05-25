@@ -120,14 +120,14 @@ public class VTabLogModule implements Module {
 	@Override
 	public int close(MemorySegment cursor) {
 		cursor = cursor.reinterpret(layout().byteSize());
-		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout);
+		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
 		log.info("{}.{}.xClose(cursor={})", db(vtab), name(vtab), iCursor(cursor));
 		return Module.super.close(cursor);
 	}
 
 	@Override
 	public int filter(MemorySegment cursor, int idxNum, MemorySegment idxStr, sqlite3_values values) {
-		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout);
+		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
 		log.info("{}.{}.xFilter(cursor={})", db(vtab), name(vtab), iCursor(cursor));
 		rowId(cursor, 0);
 		return SQLITE_OK;
@@ -135,7 +135,7 @@ public class VTabLogModule implements Module {
 
 	@Override
 	public int next(MemorySegment cursor, long rowId) {
-		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout);
+		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
 		log.info("{}.{}.xNext(cursor={}) rowId {} -> {}", db(vtab), name(vtab), iCursor(cursor), rowId, rowId + 1);
 		rowId(cursor, rowId + 1);
 		return SQLITE_OK;
@@ -143,7 +143,7 @@ public class VTabLogModule implements Module {
 
 	@Override
 	public boolean isEof(MemorySegment cursor) {
-		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout);
+		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
 		boolean eof = rowId(cursor) >= nRow(vtab);
 		log.info("{}.{}.xEof(cursor={}): {}", db(vtab), name(vtab), iCursor(cursor), eof);
 		return eof;
@@ -157,7 +157,7 @@ public class VTabLogModule implements Module {
 		} else {
 			zVal = String.format("{%d}%d", i, rowId(cursor));
 		}
-		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout);
+		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
 		log.info("{}.{}.xColumn(cursor={}, i={}): [{}]", db(vtab), name(vtab), iCursor(cursor), i, zVal);
 		sqlite3Context.setResultText(zVal);
 		return SQLITE_OK;
@@ -166,8 +166,8 @@ public class VTabLogModule implements Module {
 	@Override
 	public int rowId(MemorySegment cursor, MemorySegment p_rowid) {
 		int rc = Module.super.rowId(cursor, p_rowid);
-		cursor = cursor.reinterpret(layout().byteSize());
-		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout);
+		cursor = cursor.reinterpret(layout().byteSize()).asReadOnly();
+		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
 		p_rowid = p_rowid.reinterpret(C_LONG_LONG.byteSize());
 		log.info("{}.{}.xRowid(cursor={}): {}", db(vtab), name(vtab), iCursor(cursor), p_rowid.get(C_LONG_LONG, 0));
 		return rc;

@@ -18,7 +18,7 @@ final class sqlite3_blob {
 	int res;
 
 	sqlite3_blob(MemorySegment p) {
-		this.p = p;
+		this.p = p.asReadOnly();
 	}
 
 	private static final MethodHandle sqlite3_blob_open = OMIT_INCRBLOB ? null : downcallHandle(

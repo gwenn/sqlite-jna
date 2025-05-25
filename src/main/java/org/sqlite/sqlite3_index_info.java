@@ -79,7 +79,7 @@ public class sqlite3_index_info {
 	private static final AddressLayout aConstraint = (AddressLayout)layout.select(groupElement("aConstraint"));
 	public static Iterator<MemorySegment> aConstraint(MemorySegment struct, int nConstraint) {
 		MemorySegment aConstraint = struct.get(sqlite3_index_info.aConstraint, 8);
-		aConstraint = aConstraint.reinterpret(nConstraint * sqlite3_index_constraint.layout.byteSize());
+		aConstraint = aConstraint.reinterpret(nConstraint * sqlite3_index_constraint.layout.byteSize()).asReadOnly();
 		return aConstraint.elements(sqlite3_index_constraint.layout).limit(nConstraint).iterator();
 	}
 
@@ -107,7 +107,7 @@ public class sqlite3_index_info {
 	public static Iterator<MemorySegment> aOrderBy(MemorySegment struct) {
 		MemorySegment aOrderBy = struct.get(sqlite3_index_info.aOrderBy, 8);
 		int nOrderBy = nOrderBy(struct);
-		aOrderBy = aOrderBy.reinterpret(nOrderBy * sqlite3_index_orderby.layout.byteSize());
+		aOrderBy = aOrderBy.reinterpret(nOrderBy * sqlite3_index_orderby.layout.byteSize()).asReadOnly();
 		return aOrderBy.elements(sqlite3_index_orderby.layout).limit(nOrderBy).iterator();
 	}
 

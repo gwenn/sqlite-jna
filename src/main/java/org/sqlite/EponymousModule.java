@@ -27,7 +27,7 @@ public interface EponymousModule {
 	}
 	default int create_connect(MemorySegment db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment pp_vtab, MemorySegment err_msg, boolean isCreate) {
 		sqlite3 sqlite3 = new sqlite3(db);
-		argv = argv.reinterpret(C_POINTER.byteSize() * argc);
+		argv = argv.reinterpret(C_POINTER.byteSize() * argc).asReadOnly();
 		err_msg = err_msg.reinterpret(C_POINTER.byteSize());
 		Entry<Integer, MemorySegment> entry = connect(sqlite3, aux, argc, argv, err_msg, isCreate);
 		int rc = entry.getKey();
@@ -92,7 +92,7 @@ public interface EponymousModule {
 		return SQLITE_OK;
 	}
 	default MemorySegment open(MemorySegment vtab) {
-		MemorySegment cursor = sqlite3_malloc(layout());
+		MemorySegment cursor = sqlite3_malloc(layout()).asReadOnly();
 		if (isNull(cursor)) {
 			return null;
 		}
@@ -137,7 +137,7 @@ public interface EponymousModule {
 	 */
 	@SuppressWarnings("unused")
 	default int eof(MemorySegment cursor) {
-		cursor = cursor.reinterpret(layout.byteSize());
+		cursor = cursor.reinterpret(layout.byteSize()).asReadOnly();
 		return isEof(cursor) ? 1 : 0;
 	}
 	boolean isEof(MemorySegment cursor);
@@ -149,7 +149,7 @@ public interface EponymousModule {
 	 */
 	// TODO https://sqlite.org/c3ref/vtab_nochange.html
 	default int column(MemorySegment cursor, MemorySegment ctx, int i) {
-		cursor = cursor.reinterpret(layout().byteSize());
+		cursor = cursor.reinterpret(layout().byteSize()).asReadOnly();
 		sqlite3_context sqlite3_context = new sqlite3_context(ctx);
 		return column(cursor, sqlite3_context, i);
 	}
@@ -161,7 +161,7 @@ public interface EponymousModule {
 	 */
 	@SuppressWarnings("unused")
 	default int rowId(MemorySegment cursor, MemorySegment p_rowid) {
-		cursor = cursor.reinterpret(layout().byteSize());
+		cursor = cursor.reinterpret(layout().byteSize()).asReadOnly();
 		p_rowid = p_rowid.reinterpret(C_LONG_LONG.byteSize());
 		p_rowid.set(C_LONG_LONG, 0, rowId(cursor));
 		return SQLITE_OK;

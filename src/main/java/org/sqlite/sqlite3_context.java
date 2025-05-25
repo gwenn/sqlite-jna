@@ -16,7 +16,7 @@ public final class sqlite3_context {
 	private final MemorySegment p;
 
 	sqlite3_context(MemorySegment p) {
-		this.p = p;
+		this.p = p.asReadOnly();
 	}
 
 	private static final MethodHandle sqlite3_get_auxdata = downcallHandle(

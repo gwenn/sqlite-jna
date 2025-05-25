@@ -22,7 +22,7 @@ final class sqlite3_stmt {
 
 	sqlite3_stmt(Object lock, MemorySegment p) {
 		this.lock = lock;
-		this.p = p;
+		this.p = p.asReadOnly();
 	}
 
 	private static final MethodHandle sqlite3_sql = downcallHandle(

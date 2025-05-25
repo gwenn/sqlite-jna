@@ -38,7 +38,7 @@ public class sqlite3_module {
 		MemorySegment struct = eponymousOnly(m, arena);
 		xCreate(struct, m, arena);
 		xDestroy(struct, m, arena);
-		return struct;
+		return struct.asReadOnly();
 	}
 
 	private static final MethodHandle sqlite3_declare_vtab = downcallHandle(

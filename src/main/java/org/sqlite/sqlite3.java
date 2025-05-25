@@ -441,7 +441,7 @@ public final class sqlite3 {
 	}
 
 	sqlite3(MemorySegment p) {
-		this.p = p;
+		this.p = p.asReadOnly();
 	}
 
 	MemorySegment getPointer() {

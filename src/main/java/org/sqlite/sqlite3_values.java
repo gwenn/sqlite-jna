@@ -25,7 +25,7 @@ public final class sqlite3_values {
 	}
 
 	private sqlite3_values(MemorySegment args, int nArg) {
-		this.args = args.reinterpret(nArg * C_POINTER.byteSize());
+		this.args = args.reinterpret(nArg * C_POINTER.byteSize()).asReadOnly();
 		this.nArg = nArg;
 	}
 
@@ -169,7 +169,7 @@ public final class sqlite3_values {
 		MemorySegment pValue = arg(i);
 		try {
 			MemorySegment ms = (MemorySegment) sqlite3_value_pointer.invokeExact(pValue, name);
-			return ms.reinterpret(ml.byteSize());
+			return ms.reinterpret(ml.byteSize()).asReadOnly();
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}

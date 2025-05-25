@@ -54,8 +54,8 @@ public final class SQLite {
 	public static final int SQLITE_ROW = 100;
 	public static final int SQLITE_DONE = 101;
 
-	static final MemorySegment SQLITE_TRANSIENT = MemorySegment.ofAddress(-1L);
-	static final MemorySegment SQLITE_STATIC = MemorySegment.ofAddress(0L);
+	static final MemorySegment SQLITE_TRANSIENT = MemorySegment.ofAddress(-1L).asReadOnly();
+	static final MemorySegment SQLITE_STATIC = MemorySegment.ofAddress(0L).asReadOnly();
 	static final Cleaner cleaner = Cleaner.create();
 	static final Runnable NO_OP = () -> {};
 
@@ -309,7 +309,7 @@ public final class SQLite {
 		if (s == null) {
 			return MemorySegment.NULL;
 		}
-		return arena.allocateFrom(s);
+		return arena.allocateFrom(s).asReadOnly();
 	}
 	static MemorySegment sqlite3OwnedString(String s) {
 		if (s == null) {
@@ -322,7 +322,7 @@ public final class SQLite {
 		}
 		MemorySegment.copy(bytes, 0, ms, C_CHAR, 0, bytes.length);
 		ms.set(C_CHAR, bytes.length, (byte)0);
-		return ms;
+		return ms.asReadOnly();
 	}
 
 	// http://sqlite.org/datatype3.html

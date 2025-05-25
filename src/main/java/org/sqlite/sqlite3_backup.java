@@ -17,7 +17,7 @@ final class sqlite3_backup {
 	int res;
 
 	sqlite3_backup(MemorySegment p) {
-		this.p = p;
+		this.p = p.asReadOnly();
 	}
 
 	private static final MethodHandle sqlite3_backup_init = downcallHandle(
