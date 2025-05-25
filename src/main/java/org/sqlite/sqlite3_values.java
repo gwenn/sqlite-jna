@@ -5,6 +5,7 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 
+import static org.sqlite.ColTypes.*;
 import static org.sqlite.SQLite.*;
 
 /**
@@ -147,7 +148,6 @@ public final class sqlite3_values {
 		"sqlite3_value_numeric_type", IP);
 	/**
 	 * @param i 0...
-	 * @return {@link ColTypes}.*
 	 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_numeric_type</a>
 	 */
 	public int getNumericType(int i) {
@@ -172,6 +172,24 @@ public final class sqlite3_values {
 			return ms.reinterpret(ml.byteSize()).asReadOnly();
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
+		}
+	}
+
+	public Object getObject(int i) {
+		int type = getType(i);
+		switch (type) {
+			case SQLITE_NULL:
+				return null;
+			case SQLITE_INTEGER:
+				return getLong(i);
+			case SQLITE_FLOAT:
+				return getDouble(i);
+			case SQLITE_BLOB:
+				return getBlob(i);
+			case SQLITE_TEXT:
+				return getText(i);
+			default:
+				throw new IllegalStateException();
 		}
 	}
 

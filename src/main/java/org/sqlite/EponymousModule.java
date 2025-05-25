@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import static org.sqlite.ErrCodes.SQLITE_NOMEM;
 import static org.sqlite.ErrCodes.SQLITE_OK;
 import static org.sqlite.SQLite.*;
-import static org.sqlite.SQLite.C_POINTER;
 import static org.sqlite.sqlite3_index_info.*;
 
 public interface EponymousModule {
@@ -27,6 +26,7 @@ public interface EponymousModule {
 	}
 	default int create_connect(MemorySegment db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment pp_vtab, MemorySegment err_msg, boolean isCreate) {
 		sqlite3 sqlite3 = new sqlite3(db);
+		assert argc >= 3;
 		argv = argv.reinterpret(C_POINTER.byteSize() * argc).asReadOnly();
 		err_msg = err_msg.reinterpret(C_POINTER.byteSize());
 		Entry<Integer, MemorySegment> entry = connect(sqlite3, aux, argc, argv, err_msg, isCreate);

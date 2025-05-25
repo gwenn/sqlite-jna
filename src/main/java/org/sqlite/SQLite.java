@@ -34,6 +34,7 @@ public final class SQLite {
 	static final FunctionDescriptor IPI = FunctionDescriptor.of(C_INT, C_POINTER, C_INT);
 	static final FunctionDescriptor IPII = FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_INT);
 	static final FunctionDescriptor IPIPIP = FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_POINTER, C_INT, C_POINTER);
+	static final FunctionDescriptor IPIPP = FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_POINTER, C_POINTER);
 	static final FunctionDescriptor IPP = FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER);
 	static final FunctionDescriptor LP = FunctionDescriptor.of(C_LONG_LONG, C_POINTER);
 	static final FunctionDescriptor PP = FunctionDescriptor.of(C_POINTER, C_POINTER);

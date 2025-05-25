@@ -38,6 +38,11 @@ public class sqlite3_module {
 		MemorySegment struct = eponymousOnly(m, arena);
 		xCreate(struct, m, arena);
 		xDestroy(struct, m, arena);
+		return struct;
+	}
+	public static MemorySegment update(UpdateModule m, Arena arena) {
+		MemorySegment struct = readOnly(m, arena);
+		xUpdate(struct, m, arena);
 		return struct.asReadOnly();
 	}
 
@@ -188,5 +193,11 @@ public class sqlite3_module {
 		struct.set(xRowid, 96, fieldValue);
 	}
 
-	// xUpdate...
+	private static final AddressLayout xUpdate = (AddressLayout)layout.select(groupElement("xUpdate"));
+	private static final MethodHandle xUpdate_handler = upcallHandle(UpdateModule.class, "update",
+		IPIPP);
+	private static void xUpdate(MemorySegment struct, UpdateModule fi, Arena arena) {
+		MemorySegment fieldValue = upcallStub(xUpdate_handler, fi, IPIPP, arena);
+		struct.set(xUpdate, 104, fieldValue);
+	}
 }

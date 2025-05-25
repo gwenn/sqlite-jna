@@ -22,6 +22,9 @@ public class VTabLogModuleTest {
 				}
 				assertEquals(5, count);
 			}
+			conn.execDml("DELETE FROM log WHERE a = ?1", false, "a1");
+			conn.execDml("INSERT INTO log (a, b, c) VALUES (?1, ?2, ?3)", false, "a", "b", "c");
+			conn.execDml("UPDATE log SET b = ?1, c = ?2 WHERE a = ?3", false, "bn", "cn", "a1");
 		}
 	}
 }

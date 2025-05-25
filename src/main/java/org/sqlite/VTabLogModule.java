@@ -7,6 +7,8 @@ import java.lang.foreign.*;
 import java.lang.foreign.ValueLayout.OfInt;
 import java.lang.foreign.ValueLayout.OfLong;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static org.sqlite.EponymousModule.dequote;
@@ -22,7 +24,7 @@ import static org.sqlite.sqlite3_module.sqlite3_declare_vtab;
 /**
  * Port of <a href="https://www.sqlite.org/src/file?name=ext/misc/vtablog.c">vtablog</a>
  */
-public class VTabLogModule implements Module {
+public class VTabLogModule implements UpdateModule {
 	private static final Logger log = LoggerFactory.getLogger(VTabLogModule.class);
 	public static final VTabLogModule INSTANCE = new VTabLogModule();
 
@@ -118,11 +120,35 @@ public class VTabLogModule implements Module {
 	}
 
 	@Override
+	public int delete(MemorySegment vtab, sqlite3_values values) {
+		log.info("{}.{}.xUpdate-delete({})", db(vtab), name(vtab), values.getObject(0));
+		return 0;
+	}
+
+	@Override
+	public Map.Entry<Integer, Long> insert(MemorySegment vtab, sqlite3_values values) {
+		final String args = IntStream.range(1, values.getCount())
+			.mapToObj(i -> String.format("argv[%s]=%s", i, values.getObject(i)))
+			.collect(Collectors.joining(", "));
+		log.info("{}.{}.xUpdate-insert({})", db(vtab), name(vtab), args);
+		return Map.entry(SQLITE_OK, 0L);
+	}
+
+	@Override
+	public int update(MemorySegment vtab, sqlite3_values values) {
+		final String args = IntStream.range(0, values.getCount())
+			.mapToObj(i -> String.format("argv[%s]=%s", i, values.getObject(i)))
+			.collect(Collectors.joining(", "));
+		log.info("{}.{}.xUpdate({})", db(vtab), name(vtab), args);
+		return 0;
+	}
+
+	@Override
 	public int disconnect(MemorySegment vtab, boolean isDestroy) {
 		log.info(isDestroy ? "{}.{}.xDestroy()" : "{}.{}.xDisconnect()", db(vtab), name(vtab));
 		sqlite3_free(zName(vtab));
 		sqlite3_free(zDb(vtab));
-		return Module.super.disconnect(vtab, isDestroy);
+		return UpdateModule.super.disconnect(vtab, isDestroy);
 	}
 
 	@Override
@@ -142,7 +168,7 @@ public class VTabLogModule implements Module {
 		cursor = cursor.reinterpret(layout().byteSize());
 		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
 		log.info("{}.{}.xClose(cursor={})", db(vtab), name(vtab), iCursor(cursor));
-		return Module.super.close(cursor);
+		return UpdateModule.super.close(cursor);
 	}
 
 	@Override
@@ -185,7 +211,7 @@ public class VTabLogModule implements Module {
 
 	@Override
 	public int rowId(MemorySegment cursor, MemorySegment p_rowid) {
-		int rc = Module.super.rowId(cursor, p_rowid);
+		int rc = UpdateModule.super.rowId(cursor, p_rowid);
 		cursor = cursor.reinterpret(layout().byteSize()).asReadOnly();
 		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
 		p_rowid = p_rowid.reinterpret(C_LONG_LONG.byteSize());

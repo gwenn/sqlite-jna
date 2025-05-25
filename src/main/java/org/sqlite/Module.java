@@ -2,9 +2,9 @@ package org.sqlite;
 
 import java.lang.foreign.MemorySegment;
 
-import static org.sqlite.ErrCodes.SQLITE_OK;
-import static org.sqlite.SQLite.sqlite3_free;
-
+/**
+ * Read-only module
+ */
 public interface Module extends EponymousModule {
 	/**
 	 * @param db      sqlite3*

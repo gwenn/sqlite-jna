@@ -427,7 +427,9 @@ public final class sqlite3 {
 	static int sqlite3_create_module_v2(sqlite3 pDb, String moduleName, EponymousModule module, boolean eponymousOnly, MemorySegment pClientData, MemorySegment xDestroy) {
 		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment ms;
-			if (module instanceof Module) {
+			if (module instanceof UpdateModule) {
+				ms = sqlite3_module.update((UpdateModule) module, pDb.getArena());
+			} else if (module instanceof Module) {
 				ms = sqlite3_module.readOnly((Module) module, pDb.getArena());
 			} else if (eponymousOnly) {
 				ms = sqlite3_module.eponymousOnly(module, pDb.getArena());
