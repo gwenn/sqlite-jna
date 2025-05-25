@@ -1,9 +1,10 @@
 package org.sqlite;
 
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.util.Map;
 import java.util.WeakHashMap;
+
+import static org.sqlite.SQLite.C_POINTER;
 
 final class UnlockNotificationCallback implements UnlockNotifyCallback {
 	static final UnlockNotificationCallback INSTANCE = new UnlockNotificationCallback();
@@ -20,7 +21,7 @@ final class UnlockNotificationCallback implements UnlockNotifyCallback {
 	@Override
 	public void notify(MemorySegment args, int nArg) {
 		for (int i = 0; i < nArg; i++) {
-			UnlockNotification notif = unlockNotifications.get(args.getAtIndex(ValueLayout.ADDRESS, i));
+			UnlockNotification notif = unlockNotifications.get(args.getAtIndex(C_POINTER, i));
 			notif.fire();
 		}
 	}

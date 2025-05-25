@@ -23,10 +23,7 @@ public class sqlite3_vtab {
 		if (!isNull(old)) {
 			sqlite3_free(old);
 		}
-		byte[] bytes = errMsg.getBytes(UTF_8);
-		MemorySegment ms = sqlite3_malloc(bytes.length + 1);
-		MemorySegment.copy(bytes, 0, ms, C_CHAR, 0, bytes.length);
-		ms.set(C_CHAR, bytes.length, (byte)0);
+		MemorySegment ms = sqlite3OwnedString(errMsg);
 		struct.set(zErrMsg, zErrMsgOffset, ms);
 	}
 }

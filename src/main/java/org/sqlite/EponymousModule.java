@@ -3,6 +3,8 @@ package org.sqlite;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import static org.sqlite.ErrCodes.SQLITE_NOMEM;
 import static org.sqlite.ErrCodes.SQLITE_OK;
@@ -21,10 +23,16 @@ public interface EponymousModule {
 	 */
 	// TODO https://sqlite.org/c3ref/vtab_config.html
 	default int connect(MemorySegment db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment pp_vtab, MemorySegment err_msg) {
+		return create_connect(db, aux, argc, argv, pp_vtab, err_msg, false);
+	}
+	default int create_connect(MemorySegment db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment pp_vtab, MemorySegment err_msg, boolean isCreate) {
 		sqlite3 sqlite3 = new sqlite3(db);
-		final int rc = connect(sqlite3, aux, argc, argv, err_msg);
-		if (rc == SQLITE_OK) {
-			MemorySegment vtab = sqlite3_malloc(vtab_layout());
+		argv = argv.reinterpret(C_POINTER.byteSize() * argc);
+		err_msg = err_msg.reinterpret(C_POINTER.byteSize());
+		Entry<Integer, MemorySegment> entry = connect(sqlite3, aux, argc, argv, err_msg, isCreate);
+		int rc = entry.getKey();
+		if (entry.getKey() == SQLITE_OK) {
+			MemorySegment vtab = entry.getValue();
 			if (isNull(vtab)) {
 				return SQLITE_NOMEM;
 			}
@@ -33,7 +41,11 @@ public interface EponymousModule {
 		}
 		return rc;
 	}
-	int connect(sqlite3 db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment errMsg);
+	Entry<Integer,MemorySegment> connect(sqlite3 db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment errMsg, boolean isCreate);
+	static Entry<Integer,MemorySegment> error(MemorySegment errMsg, int rc, String fmt, Object... args) {
+		errMsg.set(C_POINTER, 0, sqlite3OwnedString(String.format(fmt, args)));
+		return Map.entry(rc, MemorySegment.NULL);
+	}
 
 	/**
 	 * @param vtab sqlite3_vtab*
@@ -45,6 +57,7 @@ public interface EponymousModule {
 	// TODO https://sqlite.org/c3ref/vtab_distinct.html
 	@SuppressWarnings("unused")
 	default int bestIndex(MemorySegment vtab, MemorySegment info) {
+		vtab = vtab.reinterpret(vtab_layout().byteSize());
 		info = info.reinterpret(sqlite3_index_info.layout.byteSize());
 		int nConstraint = nConstraint(info);
 		Iterator<MemorySegment> aConstraint = aConstraint(info, nConstraint);
@@ -58,22 +71,34 @@ public interface EponymousModule {
 	 */
 	@SuppressWarnings("unused")
 	default int disconnect(MemorySegment vtab) {
+		vtab = vtab.reinterpret(vtab_layout().byteSize());
+		return disconnect(vtab, false);
+	}
+	default int disconnect(MemorySegment vtab, boolean isDestroy) {
 		sqlite3_free(vtab);
 		return SQLITE_OK;
 	}
+
 	/**
 	 * @param vtab      sqlite3_vtab*
 	 * @param pp_cursor sqlite3_vtab_cursor**
 	 */
 	default int open(MemorySegment vtab, MemorySegment pp_cursor) {
-		MemorySegment cursor = sqlite3_malloc(layout());
-		if (isNull(cursor)) {
-			return SQLITE_NOMEM;
-		}
+		vtab = vtab.reinterpret(vtab_layout().byteSize());
+		MemorySegment cursor = open(vtab);
+		if (cursor == null) return SQLITE_NOMEM;
 		pp_cursor = pp_cursor.reinterpret(C_POINTER.byteSize());
 		pp_cursor.set(C_POINTER, 0, cursor.asSlice(0, sqlite3_vtab_cursor.layout.byteSize())); // *ppCursor = &pCur->base;
 		return SQLITE_OK;
 	}
+	default MemorySegment open(MemorySegment vtab) {
+		MemorySegment cursor = sqlite3_malloc(layout());
+		if (isNull(cursor)) {
+			return null;
+		}
+		return cursor;
+	}
+
 	/**
 	 * @param cursor sqlite3_vtab_cursor*
 	 */
@@ -110,6 +135,7 @@ public interface EponymousModule {
 	/**
 	 * @param cursor sqlite3_vtab_cursor*
 	 */
+	@SuppressWarnings("unused")
 	default int eof(MemorySegment cursor) {
 		cursor = cursor.reinterpret(layout.byteSize());
 		return isEof(cursor) ? 1 : 0;
@@ -150,5 +176,24 @@ public interface EponymousModule {
 	 */
 	default MemoryLayout vtab_layout() {
 		return sqlite3_vtab.layout;
+	}
+
+	static String dequote(String s) {
+		if (s == null || s.isBlank() || s.length() < 2) {
+			return s;
+		}
+		char quote = s.charAt(0);
+		if (quote != '\'' && quote != '"') {
+			return s;
+		} else if (s.charAt(s.length()-1) != quote) {
+			return s;
+		}
+		char[] data = s.toCharArray();
+		int j = 0;
+		for (int i = 1; i < data.length - 1; i++, j++) {
+			if (data[i] == quote && data[i+1] == quote) i++;
+			data[j] = data[i];
+		}
+		return new String(data, 0, j);
 	}
 }

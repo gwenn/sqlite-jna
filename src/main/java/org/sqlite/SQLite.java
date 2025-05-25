@@ -305,11 +305,24 @@ public final class SQLite {
 
 	public static final Charset UTF_8 = StandardCharsets.UTF_8;
 	public static final String UTF_8_ECONDING = UTF_8.name();
-	static MemorySegment nativeString(Arena arena, String sql) {
-		if (sql == null) {
+	static MemorySegment nativeString(Arena arena, String s) {
+		if (s == null) {
 			return MemorySegment.NULL;
 		}
-		return arena.allocateFrom(sql);
+		return arena.allocateFrom(s);
+	}
+	static MemorySegment sqlite3OwnedString(String s) {
+		if (s == null) {
+			return MemorySegment.NULL;
+		}
+		byte[] bytes = s.getBytes(UTF_8);
+		MemorySegment ms = sqlite3_malloc(bytes.length + 1);
+		if (isNull(ms)) {
+			return ms;
+		}
+		MemorySegment.copy(bytes, 0, ms, C_CHAR, 0, bytes.length);
+		ms.set(C_CHAR, bytes.length, (byte)0);
+		return ms;
 	}
 
 	// http://sqlite.org/datatype3.html

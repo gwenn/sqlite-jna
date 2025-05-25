@@ -3,6 +3,8 @@ package org.sqlite;
 import java.lang.foreign.*;
 import java.lang.foreign.ValueLayout.OfLong;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static org.sqlite.ErrCodes.SQLITE_NOMEM;
@@ -13,7 +15,7 @@ import static org.sqlite.sqlite3_index_info.sqlite3_index_constraint.SQLITE_INDE
 import static org.sqlite.sqlite3_module.sqlite3_declare_vtab;
 
 /**
- * Port of <a href="http://www.sqlite.org/cgi/src/finfo?name=ext/misc/carray.c">carray</a>
+ * Port of <a href="https://www.sqlite.org/src/file?name=ext/misc/carray.c">carray</a>
  * C extension: <a href="https://www.sqlite.org/carray.html">carray</a>
  */
 public class ArrayModule implements EponymousModule {
@@ -30,20 +32,18 @@ public class ArrayModule implements EponymousModule {
 		C_LONG_LONG.withName("len")
 	).withName("jarray_bind");
 	private static final AddressLayout bind_ptr = (AddressLayout)bind_layout.select(groupElement("ptr"));
-	private static final long bind_ptrOffset = 0;
 	private static MemorySegment bind_ptr(MemorySegment bind) {
-		return bind.get(bind_ptr, bind_ptrOffset);
+		return bind.get(bind_ptr, 0);
 	}
 	private static void bind_ptr(MemorySegment bind, MemorySegment ms) {
-		bind.set(bind_ptr, bind_ptrOffset, ms);
+		bind.set(bind_ptr, 0, ms);
 	}
 	private static final OfLong bind_len = (OfLong)bind_layout.select(groupElement("len"));
-	private static final long bind_lenOffset = bind_ptr.byteSize();
 	private static long bind_len(MemorySegment bind) {
-		return bind.get(bind_len, bind_lenOffset);
+		return bind.get(bind_len, 8);
 	}
 	private static void bind_len(MemorySegment bind, long n) {
-		bind.set(bind_len, bind_lenOffset, n);
+		bind.set(bind_len, 8, n);
 	}
 	@SuppressWarnings("unused")
 	public static void bindDel(MemorySegment bind) {
@@ -71,10 +71,13 @@ public class ArrayModule implements EponymousModule {
 	}
 
 	@Override
-	public int connect(sqlite3 db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment err_msg) {
-		//argv = argv.reinterpret(argc * C_POINTER.byteSize());
+	public Entry<Integer, MemorySegment> connect(sqlite3 db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment err_msg, boolean isCreate) {
 		int rc = sqlite3_declare_vtab(db, "CREATE TABLE x(value,pointer hidden)");
-		return rc;
+		MemorySegment vtab = MemorySegment.NULL;
+		if (rc == SQLITE_OK) {
+			vtab = sqlite3_malloc(vtab_layout());
+		}
+		return Map.entry(rc, vtab);
 	}
 
 	@Override
@@ -115,28 +118,26 @@ public class ArrayModule implements EponymousModule {
 		C_LONG_LONG.withName("len")
 	).withName("jarray_cursor");
 	private static final OfLong rowId = (OfLong)layout.select(groupElement("rowId"));
-	private static final long rowIdOffset = sqlite3_vtab_cursor.layout.byteSize();
+	@Override
 	public long rowId(MemorySegment cursor) {
-		return cursor.get(rowId, rowIdOffset);
+		return cursor.get(rowId, 8);
 	}
 	private static void rowId(MemorySegment cursor, long id) {
-		cursor.set(rowId, rowIdOffset, id);
+		cursor.set(rowId, 8, id);
 	}
 	private static final AddressLayout ptr = (AddressLayout)layout.select(groupElement("ptr"));
-	private static final long ptrOffset = sqlite3_vtab_cursor.layout.byteSize() + rowId.byteSize();
 	private static MemorySegment ptr(MemorySegment cursor) {
-		return cursor.get(ptr, ptrOffset);
+		return cursor.get(ptr, 16);
 	}
 	private static void ptr(MemorySegment cursor, MemorySegment ms) {
-		cursor.set(ptr, ptrOffset, ms);
+		cursor.set(ptr, 16, ms);
 	}
 	private static final OfLong len = (OfLong)layout.select(groupElement("len"));
-	private static final long lenOffset = ptrOffset + ptr.byteSize();
 	private static long len(MemorySegment cursor) {
-		return cursor.get(len, lenOffset);
+		return cursor.get(len, 24);
 	}
 	private static void len(MemorySegment cursor, long n) {
-		cursor.set(len, lenOffset, n);
+		cursor.set(len, 24, n);
 	}
 
 	@Override

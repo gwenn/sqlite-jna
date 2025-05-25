@@ -15,13 +15,13 @@ public interface Module extends EponymousModule {
 	 * @param err_msg char**
 	 */
 	default int create(MemorySegment db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment pp_vtab, MemorySegment err_msg) {
-		return connect(db, aux, argc, argv, pp_vtab, err_msg);
+		return create_connect(db, aux, argc, argv, pp_vtab, err_msg, true);
 	}
 	/**
 	 * @param vtab sqlite3_vtab*
 	 */
 	default int destroy(MemorySegment vtab) {
-		sqlite3_free(vtab);
-		return SQLITE_OK;
+		vtab = vtab.reinterpret(vtab_layout().byteSize());
+		return disconnect(vtab, true);
 	}
 }

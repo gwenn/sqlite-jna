@@ -11,7 +11,8 @@ public class sqlite3_vtab_cursor {
 	).withName("sqlite3_vtab_cursor");
 
 	private static final AddressLayout pVtab = (AddressLayout) layout.select(groupElement("pVtab"));
-	public static MemorySegment pVtab(MemorySegment struct) {
-		return struct.get(pVtab, 0);
+	public static MemorySegment pVtab(MemorySegment struct, MemoryLayout layout) {
+		MemorySegment vtab = struct.get(pVtab, 0);
+		return vtab.reinterpret(layout.byteSize());
 	}
 }
