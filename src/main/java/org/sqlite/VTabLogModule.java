@@ -14,6 +14,9 @@ import static org.sqlite.EponymousModule.error;
 import static org.sqlite.ErrCodes.*;
 import static org.sqlite.SQLite.*;
 import static org.sqlite.SQLite.SQLITE_OK;
+import static org.sqlite.sqlite3_index_info.*;
+import static org.sqlite.sqlite3_index_info.sqlite3_index_constraint.*;
+import static org.sqlite.sqlite3_index_info.sqlite3_index_orderby.desc;
 import static org.sqlite.sqlite3_module.sqlite3_declare_vtab;
 
 /**
@@ -94,6 +97,23 @@ public class VTabLogModule implements Module {
 
 	@Override
 	public int bestIndex(MemorySegment vtab, MemorySegment info, Iterator<MemorySegment> aConstraint, Iterator<MemorySegment> aConstraintUsage) {
+		log.info("{}.{}.xBestIndex(): colUsed: 0x{}, nConstraint: {}, nOrderBy: {}", db(vtab), name(vtab), Long.toHexString(colUsed(info)), nConstraint(info), nOrderBy(info));
+		int i = 0;
+		while (aConstraint.hasNext()) {
+			MemorySegment constraint = aConstraint.next();
+			log.info("  constraint[{}]: col={} op={} usable={}", i, iColumn(constraint), op(constraint), usable(constraint));
+			// TODO sqlite3_vtab_collation
+			i++;
+		}
+		final Iterator<MemorySegment> aOrderBy = aOrderBy(info);
+		i = 0;
+		while (aOrderBy.hasNext()) {
+			final MemorySegment orderBy = aOrderBy.next();
+			log.info("  orderBy[{}]: col={} desc={}", i, sqlite3_index_orderby.iColumn(orderBy), desc(orderBy));
+			i++;
+		}
+		estimatedCost(info, 500);
+		estimatedRows(info, 500);
 		return SQLITE_OK;
 	}
 

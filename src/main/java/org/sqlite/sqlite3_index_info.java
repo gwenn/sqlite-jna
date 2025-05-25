@@ -35,8 +35,8 @@ public class sqlite3_index_info {
 	).withName("sqlite3_index_info");
 
 	private static final OfInt nConstraint = (OfInt)layout.select(groupElement("nConstraint"));
-	public static int nConstraint(MemorySegment struct) {
-		return struct.get(nConstraint, 0);
+	public static int nConstraint(MemorySegment info) {
+		return info.get(nConstraint, 0);
 	}
 
 	public static class sqlite3_index_constraint {
@@ -48,8 +48,8 @@ public class sqlite3_index_info {
 			C_INT.withName("iTermOffset")
 		).withName("sqlite3_index_constraint");
 		private static final OfInt iColumn = (OfInt)layout.select(groupElement("iColumn"));
-		public static int iColumn(MemorySegment struct) {
-			return struct.get(iColumn, 0);
+		public static int iColumn(MemorySegment constraint) {
+			return constraint.get(iColumn, 0);
 		}
 		public static final byte SQLITE_INDEX_CONSTRAINT_EQ = 2;
 		public static final byte SQLITE_INDEX_CONSTRAINT_GT = 4;
@@ -68,45 +68,45 @@ public class sqlite3_index_info {
 		public static final byte SQLITE_INDEX_CONSTRAINT_LIMIT = 73;
 		public static final byte SQLITE_INDEX_CONSTRAINT_OFFSET = 74;
 		private static final OfByte op = (OfByte)layout.select(groupElement("op"));
-		public static byte op(MemorySegment struct) {
-			return struct.get(op, 4);
+		public static byte op(MemorySegment constraint) {
+			return constraint.get(op, 4);
 		}
 		private static final OfByte usable = (OfByte)layout.select(groupElement("usable"));
-		public static boolean usable(MemorySegment struct) {
-			return struct.get(usable, 5) != 0;
+		public static boolean usable(MemorySegment constraint) {
+			return constraint.get(usable, 5) != 0;
 		}
 	}
 	private static final AddressLayout aConstraint = (AddressLayout)layout.select(groupElement("aConstraint"));
-	public static Iterator<MemorySegment> aConstraint(MemorySegment struct, int nConstraint) {
-		MemorySegment aConstraint = struct.get(sqlite3_index_info.aConstraint, 8);
+	public static Iterator<MemorySegment> aConstraint(MemorySegment info, int nConstraint) {
+		MemorySegment aConstraint = info.get(sqlite3_index_info.aConstraint, 8);
 		aConstraint = aConstraint.reinterpret(nConstraint * sqlite3_index_constraint.layout.byteSize()).asReadOnly();
 		return aConstraint.elements(sqlite3_index_constraint.layout).limit(nConstraint).iterator();
 	}
 
 	private static final OfInt nOrderBy = (OfInt)layout.select(groupElement("nOrderBy"));
-	public static int nOrderBy(MemorySegment struct) {
-		return struct.get(nOrderBy, 16);
+	public static int nOrderBy(MemorySegment info) {
+		return info.get(nOrderBy, 16);
 	}
 
-	private static class sqlite3_index_orderby {
+	public static class sqlite3_index_orderby {
 		private static final GroupLayout layout = MemoryLayout.structLayout(
 			C_INT.withName("iColumn"),
 			C_CHAR.withName("desc"),
 			MemoryLayout.paddingLayout(3)
 		).withName("sqlite3_index_orderby");
 		private static final OfInt iColumn = (OfInt)layout.select(groupElement("iColumn"));
-		public static int iColumn(MemorySegment struct) {
-			return struct.get(iColumn, 0);
+		public static int iColumn(MemorySegment orderBy) {
+			return orderBy.get(iColumn, 0);
 		}
 		private static final OfByte desc = (OfByte)layout.select(groupElement("desc"));
-		public static byte desc(MemorySegment struct) {
-			return struct.get(desc, 4);
+		public static byte desc(MemorySegment orderBy) {
+			return orderBy.get(desc, 4);
 		}
 	}
 	private static final AddressLayout aOrderBy = (AddressLayout)layout.select(groupElement("aOrderBy"));
-	public static Iterator<MemorySegment> aOrderBy(MemorySegment struct) {
-		MemorySegment aOrderBy = struct.get(sqlite3_index_info.aOrderBy, 8);
-		int nOrderBy = nOrderBy(struct);
+	public static Iterator<MemorySegment> aOrderBy(MemorySegment info) {
+		MemorySegment aOrderBy = info.get(sqlite3_index_info.aOrderBy, 8);
+		int nOrderBy = nOrderBy(info);
 		aOrderBy = aOrderBy.reinterpret(nOrderBy * sqlite3_index_orderby.layout.byteSize()).asReadOnly();
 		return aOrderBy.elements(sqlite3_index_orderby.layout).limit(nOrderBy).iterator();
 	}
@@ -118,56 +118,56 @@ public class sqlite3_index_info {
 			MemoryLayout.paddingLayout(3)
 		).withName("sqlite3_index_constraint_usage");
 		private static final OfInt argvIndex = (OfInt) layout.select(groupElement("argvIndex"));
-		public static void argvIndex(MemorySegment struct, int fieldValue) {
-			struct.set(argvIndex, 0, fieldValue);
+		public static void argvIndex(MemorySegment usage, int fieldValue) {
+			usage.set(argvIndex, 0, fieldValue);
 		}
 		private static final OfByte omit = (OfByte) layout.select(groupElement("omit"));
-		public static void omit(MemorySegment struct, byte fieldValue) {
-			struct.set(omit, 4, fieldValue);
+		public static void omit(MemorySegment usage, byte fieldValue) {
+			usage.set(omit, 4, fieldValue);
 		}
 	}
 	private static final AddressLayout aConstraintUsage = (AddressLayout)layout.select(groupElement("aConstraintUsage"));
-	public static Iterator<MemorySegment> aConstraintUsage(MemorySegment struct, int nConstraint) {
-		MemorySegment aConstraintUsage = struct.get(sqlite3_index_info.aConstraintUsage, 32);
+	public static Iterator<MemorySegment> aConstraintUsage(MemorySegment info, int nConstraint) {
+		MemorySegment aConstraintUsage = info.get(sqlite3_index_info.aConstraintUsage, 32);
 		aConstraintUsage = aConstraintUsage.reinterpret(nConstraint * sqlite3_index_constraint_usage.layout.byteSize());
 		return aConstraintUsage.elements(sqlite3_index_constraint_usage.layout).limit(nConstraint).iterator();
 	}
 
 	private static final OfInt idxNum = (OfInt)layout.select(groupElement("idxNum"));
-	public static void idxNum(MemorySegment struct, int fieldValue) {
-		struct.set(idxNum, 40, fieldValue);
+	public static void idxNum(MemorySegment info, int fieldValue) {
+		info.set(idxNum, 40, fieldValue);
 	}
 
 	private static final AddressLayout idxStr = (AddressLayout)layout.select(groupElement("idxStr"));
-	public static void idxStr(MemorySegment struct, MemorySegment fieldValue) {
-		struct.set(idxStr, 48, fieldValue);
+	public static void idxStr(MemorySegment info, MemorySegment fieldValue) {
+		info.set(idxStr, 48, fieldValue);
 	}
 	private static final OfInt needToFreeIdxStr = (OfInt)layout.select(groupElement("needToFreeIdxStr"));
-	public static void needToFreeIdxStr(MemorySegment struct, int fieldValue) {
-		struct.set(needToFreeIdxStr, 56, fieldValue);
+	public static void needToFreeIdxStr(MemorySegment info, int fieldValue) {
+		info.set(needToFreeIdxStr, 56, fieldValue);
 	}
 
 	private static final OfInt orderByConsumed = (OfInt)layout.select(groupElement("orderByConsumed"));
-	public static void orderByConsumed(MemorySegment struct, int fieldValue) {
-		struct.set(orderByConsumed, 60, fieldValue);
+	public static void orderByConsumed(MemorySegment info, int fieldValue) {
+		info.set(orderByConsumed, 60, fieldValue);
 	}
 	private static final OfDouble estimatedCost = (OfDouble)layout.select(groupElement("estimatedCost"));
-	public static void estimatedCost(MemorySegment struct, double fieldValue) {
-		struct.set(estimatedCost, 64, fieldValue);
+	public static void estimatedCost(MemorySegment info, double fieldValue) {
+		info.set(estimatedCost, 64, fieldValue);
 	}
 
 	private static final OfLong estimatedRows = (OfLong)layout.select(groupElement("estimatedRows"));
-	public static void estimatedRows(MemorySegment struct, long fieldValue) {
-		struct.set(estimatedRows, 72, fieldValue);
+	public static void estimatedRows(MemorySegment info, long fieldValue) {
+		info.set(estimatedRows, 72, fieldValue);
 	}
 
 	private static final OfInt idxFlags = (OfInt)layout.select(groupElement("idxFlags"));
-	public static void idxFlags(MemorySegment struct, int fieldValue) {
-		struct.set(idxFlags, 80, fieldValue);
+	public static void idxFlags(MemorySegment info, int fieldValue) {
+		info.set(idxFlags, 80, fieldValue);
 	}
 
 	private static final OfLong colUsed = (OfLong)layout.select(groupElement("colUsed"));
-	public static long colUsed(MemorySegment struct) {
-		return struct.get(colUsed, 88);
+	public static long colUsed(MemorySegment info) {
+		return info.get(colUsed, 88);
 	}
 }
