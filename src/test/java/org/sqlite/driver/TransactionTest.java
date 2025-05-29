@@ -53,7 +53,7 @@ import static org.junit.Assert.*;
  */
 public class TransactionTest {
 	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
+	public final TemporaryFolder folder = new TemporaryFolder();
 	private Connection conn1, conn2, conn3;
 	private Statement stat1, stat2, stat3;
 	private boolean done;
@@ -123,13 +123,13 @@ public class TransactionTest {
 
 		Set<Integer> seen;
 		try (ResultSet rs = stat1.executeQuery("select c1 from test")) {
-			seen = new HashSet<Integer>();
+			seen = new HashSet<>();
 			while (rs.next()) {
 				assertTrue(seen.add(rs.getInt(1)));
 			}
 		}
 
-		assertEquals(new HashSet<Integer>(Arrays.asList(1, 2, 3)), seen);
+		assertEquals(new HashSet<>(Arrays.asList(1, 2, 3)), seen);
 	}
 
 	@Test
@@ -277,22 +277,19 @@ public class TransactionTest {
 
 		final TransactionTest lock = this;
 		lock.done = false;
-		new Thread() {
-			@Override
-			public void run() {
-				try {
-					stat2.executeUpdate("insert into t values (3);");
-				} catch (SQLException e) {
-					e.printStackTrace();
-					return;
-				}
-
-				synchronized (lock) {
-					lock.done = true;
-					lock.notifyAll();
-				}
+		new Thread(() -> {
+			try {
+				stat2.executeUpdate("insert into t values (3);");
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return;
 			}
-		}.start();
+
+			synchronized (lock) {
+				lock.done = true;
+				lock.notifyAll();
+			}
+		}).start();
 
 		Thread.sleep(100);
 		rs.close();

@@ -464,7 +464,7 @@ public class SqliteConnectionTest extends SqliteTestHelper {
 
 	@Ignore
 	@Test
-	public void testSetClientInfo() throws Exception {
+	public void testSetClientInfo() {
 		Properties props = new Properties();
 
 		props.put("AppName", "Test");
@@ -494,7 +494,7 @@ public class SqliteConnectionTest extends SqliteTestHelper {
 
 	@Test(expected = SQLFeatureNotSupportedException.class)
 	public void testSetTypeMap() throws Exception {
-		conn.setTypeMap(new HashMap<String, Class<?>>());
+		conn.setTypeMap(new HashMap<>());
 	}
 
 	@Test

@@ -429,32 +429,21 @@ public class Stmt implements AutoCloseable, Row {
 	}
 
 	public void bindByIndex(int i, Object value) throws StmtException {
-		if (value == null) {
-			bindNull(i);
-		} else if (value instanceof String) {
-			bindText(i, (String) value);
-		} else if (value instanceof Integer) {
-			bindInt(i, (Integer) value);
-		} else if (value instanceof Byte) {
-			bindInt(i, (Byte) value);
-		} else if (value instanceof Short) {
-			bindInt(i, (Short) value);
-		} else if (value instanceof Boolean) {
-			bindInt(i, (Boolean) value ? 1 : 0);
-		} else if (value instanceof Long) {
-			bindLong(i, (Long) value);
-		} else if (value instanceof Double) {
-			bindDouble(i, (Double) value);
-		} else if (value instanceof Float) {
-			bindDouble(i, (Float) value);
-		} else if (value instanceof byte[]) {
-			bindBlob(i, (byte[]) value);
-		} else if (value instanceof ZeroBlob) {
-			bindZeroblob(i, ((ZeroBlob) value).n());
-		} else if (value instanceof long[]) {
-			bindArray(i, (long[]) value);
-		} else {
-			throw new StmtException(this, String.format("unsupported type in bind: %s", value.getClass().getSimpleName()), ErrCodes.WRAPPER_SPECIFIC);
+		switch (value) {
+			case null -> bindNull(i);
+			case String s -> bindText(i, s);
+			case Integer integer -> bindInt(i, integer);
+			case Byte b -> bindInt(i, b);
+			case Short aShort -> bindInt(i, aShort);
+			case Boolean b -> bindInt(i, b ? 1 : 0);
+			case Long l -> bindLong(i, l);
+			case Double v -> bindDouble(i, v);
+			case Float v -> bindDouble(i, v);
+			case byte[] bytes -> bindBlob(i, bytes);
+			case ZeroBlob zeroBlob -> bindZeroblob(i, zeroBlob.n());
+			case long[] longs -> bindArray(i, longs);
+			default ->
+				throw new StmtException(this, String.format("unsupported type in bind: %s", value.getClass().getSimpleName()), ErrCodes.WRAPPER_SPECIFIC);
 		}
 	}
 

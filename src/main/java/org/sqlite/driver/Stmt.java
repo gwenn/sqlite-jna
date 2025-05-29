@@ -127,16 +127,20 @@ class Stmt implements Statement {
 			if (stmt.isClosed()) {
 				return new Rows(this, false);
 			}
-			boolean hasRow = step(false);
-			if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
-				if (stmt.isReadOnly()) {
-					throw new StmtException(stmt, "query does not return a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
-				} else {
-					throw new StmtException(stmt, "update statement", ErrCodes.WRAPPER_SPECIFIC);
-				}
-			}
-			return new Rows(this, hasRow);
+			return createRows();
 		}
+	}
+
+	Rows createRows() throws SQLException {
+		boolean hasRow = step(false);
+		if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
+			if (stmt.isReadOnly()) {
+				throw new StmtException(stmt, "query does not return a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
+			} else {
+				throw new StmtException(stmt, "update statement", ErrCodes.WRAPPER_SPECIFIC);
+			}
+		}
+		return new Rows(this, hasRow);
 	}
 
 	@Override

@@ -117,7 +117,7 @@ public class ResultSetTest {
 
 	/**
 	 * Can't produce a case where column name contains table name
-	 * https://www.sqlite.org/c3ref/column_name.html :
+	 * <a href="https://www.sqlite.org/c3ref/column_name.html">column_name</a> :
 	 * "If there is no AS clause then the name of the column is unspecified"
 	 */
 	@Test(expected = SQLException.class)

@@ -33,7 +33,7 @@ public abstract class AggregateStepCallback {
 		int nBytes = numberOfBytes();
 		MemorySegment p = sqlite3_aggregate_context(pCtx, nBytes);
 		if (p == null && nBytes > 0) {
-			pCtx.setResultErrorNoMem();;
+			pCtx.setResultErrorNoMem();
 			return;
 		}
 		step(pCtx, p, sqlite3_values.build(nArg, args));

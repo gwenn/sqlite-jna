@@ -29,7 +29,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class SavepointTest {
 	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
+	public final TemporaryFolder folder = new TemporaryFolder();
 	private Connection conn1, conn2;
 	private Statement stat1, stat2;
 

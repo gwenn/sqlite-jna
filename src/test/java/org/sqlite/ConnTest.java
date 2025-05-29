@@ -18,10 +18,10 @@ import static org.sqlite.SQLite.*;
 
 public class ConnTest {
 	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
+	public final TemporaryFolder folder = new TemporaryFolder();
 
 	@Test
-	public void checkLibversion() throws SQLiteException {
+	public void checkLibversion() {
 		assertTrue(Conn.libversion().startsWith("3"));
 	}
 
@@ -34,7 +34,7 @@ public class ConnTest {
 	}
 
 	@Test
-	public void checkOpenDir() throws SQLiteException, IOException {
+	public void checkOpenDir() throws IOException {
 		File folder = this.folder.newFolder();
 		try(Conn c = Conn.open(folder.getPath(), OpenFlags.SQLITE_OPEN_READWRITE, null)) {
 			fail("SQLiteException expected");
@@ -206,12 +206,7 @@ public class ConnTest {
 	@Test
 	public void setBusyHandler() throws SQLiteException {
 		final Conn c = open();
-		c.setBusyHandler(new BusyHandler() {
-			@Override
-			public boolean busy(int count) {
-				return false;
-			}
-		});
+		c.setBusyHandler(count -> false);
 		final String sql = "SELECT 1";
 		c.fastExec(sql);
 	}
@@ -323,12 +318,7 @@ public class ConnTest {
 	public void updateHook() throws SQLiteException {
 		try (Conn c = open()) {
 			AtomicInteger count = new AtomicInteger();
-			c.updateHook(new UpdateHook() {
-				@Override
-				public void update(int actionCode, String dbName, String tblName, long rowId) {
-					count.incrementAndGet();
-				}
-			});
+			c.updateHook((actionCode, dbName, tblName, rowId) -> count.incrementAndGet());
 			c.fastExec("CREATE TABLE test AS SELECT 0 as x;");
 			assertEquals(1, c.execDml("UPDATE test SET x = 1;", false));
 			assertEquals(1, count.get());
@@ -432,12 +422,9 @@ public class ConnTest {
 
 	static Conn open() throws SQLiteException {
 		final Conn conn = Conn.open(Conn.MEMORY, OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_FULLMUTEX, null);
-		conn.setAuhtorizer(new Authorizer() {
-			@Override
-			public int authorize(int actionCode, String arg1, String arg2, String dbName, String triggerName) {
-				//System.out.println("actionCode = [" + actionCode + "], arg1 = [" + arg1 + "], arg2 = [" + arg2 + "], dbName = [" + dbName + "], triggerName = [" + triggerName + "]");
-				return Authorizer.SQLITE_OK;
-			}
+		conn.setAuhtorizer((actionCode, arg1, arg2, dbName, triggerName) -> {
+			//System.out.println("actionCode = [" + actionCode + "], arg1 = [" + arg1 + "], arg2 = [" + arg2 + "], dbName = [" + dbName + "], triggerName = [" + triggerName + "]");
+			return Authorizer.SQLITE_OK;
 		});
 		return conn;
 	}

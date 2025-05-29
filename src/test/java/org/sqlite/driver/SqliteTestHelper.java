@@ -44,7 +44,7 @@ import java.util.List;
 
 public class SqliteTestHelper {
 	@Rule
-	public TemporaryFolder testFolder = new TemporaryFolder();
+	public final TemporaryFolder testFolder = new TemporaryFolder();
 
 	protected File dbFile;
 	protected Connection conn;
@@ -102,6 +102,6 @@ public class SqliteTestHelper {
 			rows.add(formatResultSetRow(rs));
 		}
 
-		return rows.toArray(new String[rows.size()]);
+		return rows.toArray(new String[0]);
 	}
 }

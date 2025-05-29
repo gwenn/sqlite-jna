@@ -177,20 +177,14 @@ public final class sqlite3_values {
 
 	public Object getObject(int i) {
 		int type = getType(i);
-		switch (type) {
-			case SQLITE_NULL:
-				return null;
-			case SQLITE_INTEGER:
-				return getLong(i);
-			case SQLITE_FLOAT:
-				return getDouble(i);
-			case SQLITE_BLOB:
-				return getBlob(i);
-			case SQLITE_TEXT:
-				return getText(i);
-			default:
-				throw new IllegalStateException();
-		}
+		return switch (type) {
+			case SQLITE_NULL -> null;
+			case SQLITE_INTEGER -> getLong(i);
+			case SQLITE_FLOAT -> getDouble(i);
+			case SQLITE_BLOB -> getBlob(i);
+			case SQLITE_TEXT -> getText(i);
+			default -> throw new IllegalStateException();
+		};
 	}
 
 	private MemorySegment arg(int i) {

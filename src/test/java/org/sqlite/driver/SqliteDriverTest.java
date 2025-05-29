@@ -44,7 +44,7 @@ import static org.junit.Assert.*;
 
 public class SqliteDriverTest {
 	@Rule
-	public TemporaryFolder testFolder = new TemporaryFolder();
+	public final TemporaryFolder testFolder = new TemporaryFolder();
 	private Driver driver;
 
 	@Before
@@ -115,7 +115,7 @@ public class SqliteDriverTest {
 	}
 
 	@Test
-	public void testCompliance() throws Exception {
+	public void testCompliance() {
 		assertFalse(driver.jdbcCompliant());
 	}
 

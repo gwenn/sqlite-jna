@@ -106,15 +106,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 		if (!boundChecked) {
 			checkParameters(stmt);
 		}
-		boolean hasRow = step(false);
-		if (!hasRow && stmt.getColumnCount() == 0) { // FIXME some pragma may return zero...
-			if (stmt.isReadOnly()) {
-				throw new StmtException(stmt, "query does not return a ResultSet", ErrCodes.WRAPPER_SPECIFIC);
-			} else {
-				throw new StmtException(stmt, "update statement", ErrCodes.WRAPPER_SPECIFIC);
-			}
-		}
-		return new Rows(this, hasRow);
+		return createRows();
 	}
 
 	@Override
@@ -381,48 +373,29 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 
 	@Override
 	public void setObject(int parameterIndex, Object x) throws SQLException {
-		if (x == null) {
-			bindNull(parameterIndex);
-		} else if (x instanceof String) {
-			setString(parameterIndex, (String) x);
-		} else if (x instanceof Boolean) {
-			setBoolean(parameterIndex, (Boolean) x);
-		} else if (x instanceof Integer) {
-			setInt(parameterIndex, (Integer) x);
-		} else if (x instanceof Long) {
-			setLong(parameterIndex, (Long) x);
-		} else if (x instanceof Float) {
-			setFloat(parameterIndex, (Float) x);
-		} else if (x instanceof Double) {
-			setDouble(parameterIndex, (Double) x);
-		} else if (x instanceof Date) {
-			setDate(parameterIndex, (Date) x);
-		} else if (x instanceof Time) {
-			setTime(parameterIndex, (Time) x);
-		} else if (x instanceof Timestamp) {
-			setTimestamp(parameterIndex, (Timestamp) x);
-		} else if (x instanceof BigDecimal) {
-			setBigDecimal(parameterIndex, (BigDecimal) x);
-		} else if (x instanceof Byte) {
-			setByte(parameterIndex, (Byte) x);
-		} else if (x instanceof Short) {
-			setShort(parameterIndex, (Short) x);
-		} else if (x instanceof Character) {
-			setString(parameterIndex, x.toString());
-		} else if (x instanceof byte[]) {
-			setBytes(parameterIndex, (byte[]) x);
-		} else if (x instanceof ZeroBlob) {
-			bindZeroBlob(parameterIndex, (ZeroBlob) x);
-		} else if (x instanceof Blob) {
-			setBlob(parameterIndex, (Blob) x);
-		} else if (x instanceof Clob) {
-			setClob(parameterIndex, (Clob) x);
-		} else if (x instanceof Array) {
-			setArray(parameterIndex, (Array) x);
-		} else if (x instanceof Temporal) {
-			setString(parameterIndex, x.toString());
-		} else {
-			throw new StmtException(getStmt(), String.format("Unsupported type: %s", x.getClass().getName()), ErrCodes.WRAPPER_SPECIFIC);
+		switch (x) {
+			case null -> bindNull(parameterIndex);
+			case String s -> setString(parameterIndex, s);
+			case Boolean b -> setBoolean(parameterIndex, b);
+			case Integer i -> setInt(parameterIndex, i);
+			case Long l -> setLong(parameterIndex, l);
+			case Float v -> setFloat(parameterIndex, v);
+			case Double v -> setDouble(parameterIndex, v);
+			case Date date -> setDate(parameterIndex, date);
+			case Time time -> setTime(parameterIndex, time);
+			case Timestamp timestamp -> setTimestamp(parameterIndex, timestamp);
+			case BigDecimal bigDecimal -> setBigDecimal(parameterIndex, bigDecimal);
+			case Byte b -> setByte(parameterIndex, b);
+			case Short i -> setShort(parameterIndex, i);
+			case Character c -> setString(parameterIndex, c.toString());
+			case byte[] bytes -> setBytes(parameterIndex, bytes);
+			case ZeroBlob zeroBlob -> bindZeroBlob(parameterIndex, zeroBlob);
+			case Blob blob -> setBlob(parameterIndex, blob);
+			case Clob clob -> setClob(parameterIndex, clob);
+			case Array array -> setArray(parameterIndex, array);
+			case Temporal temporal -> setString(parameterIndex, temporal.toString());
+			default ->
+				throw new StmtException(getStmt(), String.format("Unsupported type: %s", x.getClass().getName()), ErrCodes.WRAPPER_SPECIFIC);
 		}
 	}
 	@Override

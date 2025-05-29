@@ -37,7 +37,7 @@ public class ResultSetIterableTest {
 		try (Connection c = DriverManager.getConnection(JDBC.MEMORY);
 				 PreparedStatement s = c.prepareStatement("SELECT 1 UNION ALL SELECT 2");
 				 ResultSetIterable<Long> rsi = new ResultSetIterable<>(Query.from(s), rs -> rs.getLong(1))) {
-			assertEquals(3L, rsi.stream().mapToLong(l -> l.longValue()).sum());
+			assertEquals(3L, rsi.stream().mapToLong(Long::longValue).sum());
 		}
 	}
 

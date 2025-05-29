@@ -232,9 +232,7 @@ public class SqliteStatementTest extends SqliteTestHelper {
 					try {
 						Thread.sleep(10);
 						stmt.cancel();
-					} catch (InterruptedException e) {
-
-					} catch (SQLException e) {
+					} catch (InterruptedException | SQLException e) {
 
 					}
 				}
@@ -383,11 +381,12 @@ public class SqliteStatementTest extends SqliteTestHelper {
 			return;
 		}
 		try (Statement stmt = conn.createStatement()) {
-			stmt.execute("CREATE TABLE t0(\n" +
-					"  a INTEGER PRIMARY KEY,\n" +
-					"  b DATE DEFAULT CURRENT_TIMESTAMP,\n" +
-					"  c INTEGER\n" +
-					");");
+			stmt.execute("""
+				CREATE TABLE t0(
+				  a INTEGER PRIMARY KEY,
+				  b DATE DEFAULT CURRENT_TIMESTAMP,
+				  c INTEGER
+				);""");
 			int changes = stmt.executeUpdate("INSERT INTO t0(c) VALUES(random()) RETURNING *;", Statement.RETURN_GENERATED_KEYS);
 			assertEquals(1, changes);
 			try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {

@@ -45,7 +45,7 @@ import static org.junit.Assert.*;
 
 public class ConnectionTest {
 	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
+	public final TemporaryFolder folder = new TemporaryFolder();
 
 	@Test
 	public void isValid() throws SQLException {
@@ -267,7 +267,7 @@ public class ConnectionTest {
     }*/
 
 	@Test
-	public void openNewFile() throws SQLException, IOException {
+	public void openNewFile() throws SQLException {
 		File testdb = new File(folder.getRoot(), "test.db");
 
 		assertFalse(testdb.exists());

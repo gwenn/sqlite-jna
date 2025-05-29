@@ -177,7 +177,7 @@ public class PrepStmtTest {
 	}
 
 	@Test
-	public void set() throws SQLException, UnsupportedEncodingException {
+	public void set() throws SQLException {
 		PreparedStatement prep = conn.prepareStatement("select ?, ?, ?;");
 		// integers
 		prep.setInt(1, Integer.MIN_VALUE);

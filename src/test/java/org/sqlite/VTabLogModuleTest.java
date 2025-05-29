@@ -9,10 +9,11 @@ public class VTabLogModuleTest {
 	public void basic() throws SQLiteException {
 		try (Conn conn = Conn.open(Conn.MEMORY, OpenFlags.SQLITE_OPEN_READWRITE | OpenFlags.SQLITE_OPEN_FULLMUTEX, null)) {
 			VTabLogModule.load_module(conn);
-			conn.fastExec("CREATE VIRTUAL TABLE temp.log USING vtablog(\n" +
-				"                    schema='CREATE TABLE x(a,b,c)',\n" +
-				"                    rows=5\n" +
-				"                );");
+			conn.fastExec("""
+				CREATE VIRTUAL TABLE temp.log USING vtablog(
+				                    schema='CREATE TABLE x(a,b,c)',
+				                    rows=5
+				                );""");
 			try (Stmt stmt = conn.prepare("SELECT *, rowId FROM log;", false)) {
 				long count = 0;
 				while (stmt.step(0)) {

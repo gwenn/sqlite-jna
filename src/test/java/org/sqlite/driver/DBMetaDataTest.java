@@ -217,13 +217,14 @@ public class DBMetaDataTest {
 
 	@Test
 	public void getGeneratedColumns() throws SQLException {
-		stat.executeUpdate("CREATE TABLE t1(\n" +
-				"   a INTEGER PRIMARY KEY,\n" +
-				"   b INT,\n" +
-				"   c TEXT,\n" +
-				"   gd INT AS (a*abs(b)),\n" +
-				"   ge TEXT AS (substr(c,b,b+1)) STORED\n" +
-				");");
+		stat.executeUpdate("""
+			CREATE TABLE t1(
+			   a INTEGER PRIMARY KEY,
+			   b INT,
+			   c TEXT,
+			   gd INT AS (a*abs(b)),
+			   ge TEXT AS (substr(c,b,b+1)) STORED
+			);""");
 
 		try (ResultSet rs = meta.getColumns(null, null, "t1", "g%")) {
 			assertTrue(rs.next());

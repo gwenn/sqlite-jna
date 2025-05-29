@@ -28,7 +28,6 @@ See License FAQ <http://www.apache.org/foundation/licence-FAQ.html> for more det
 
 package org.sqlite.driver;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,18 +43,13 @@ import java.sql.Statement;
 
 public class InsertQueryTest {
 	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
+	public final TemporaryFolder folder = new TemporaryFolder();
 	private String dbName;
 
 	@Before
 	public void setUp() throws Exception {
 		File tmpFile = folder.newFile("tmp-sqlite.db");
 		dbName = tmpFile.getAbsolutePath();
-	}
-
-	@After
-	public void tearDown() throws Exception {
-
 	}
 
 	interface ConnectionFactory {
@@ -69,7 +63,7 @@ public class InsertQueryTest {
 			return DriverManager.getConnection(JDBC.PREFIX + dbName);
 		}
 
-		public void dispose() throws SQLException {
+		public void dispose() {
 
 		}
 
@@ -182,7 +176,7 @@ public class InsertQueryTest {
 			try (PreparedStatement stat = factory.getConnection().prepareStatement(query);
 					ResultSet rs = stat.executeQuery()) {
 				rs.next();
-				Long result = 0L;
+				long result = 0L;
 				result = rs.getLong(1);
 				//System.out.println("count = " + result);
 			}

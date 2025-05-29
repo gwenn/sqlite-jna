@@ -146,13 +146,14 @@ public class StmtTest {
 	@Test
 	public void params() throws Exception {
 		try (Conn c = ConnTest.open()) {
-			c.fastExec("CREATE TABLE IF NOT EXISTS my_context (\n" +
-							 "    elt_name TEXT NOT NULL COLLATE NOCASE,\n" +
-							 "    attr_prefix TEXT NOT NULL COLLATE NOCASE, -- empty if there is no '/' in complete attr name\n" +
-							 "    entity_kind TEXT NULL, -- COLLATE NOCASE\n" +
-							 "    pdl TEXT, -- NOT NULL (CASE WHEN attr_prefix IS NULL THEN 'all PDL element attributes without prefix' ELSE 'all PDL attributes with prefix equals to attr_prefix' END)\n" +
-							 "    PRIMARY KEY (elt_name, attr_prefix)\n" +
-							 ") WITHOUT ROWID;");
+			c.fastExec("""
+				CREATE TABLE IF NOT EXISTS my_context (
+				    elt_name TEXT NOT NULL COLLATE NOCASE,
+				    attr_prefix TEXT NOT NULL COLLATE NOCASE, -- empty if there is no '/' in complete attr name
+				    entity_kind TEXT NULL, -- COLLATE NOCASE
+				    pdl TEXT, -- NOT NULL (CASE WHEN attr_prefix IS NULL THEN 'all PDL element attributes without prefix' ELSE 'all PDL attributes with prefix equals to attr_prefix' END)
+				    PRIMARY KEY (elt_name, attr_prefix)
+				) WITHOUT ROWID;""");
 
 			try (Stmt stmt = c.prepare("SELECT json_type(pdl, '$.\"' || :attr_radix || '\"') AS attr_type, json_extract(pdl, '$.\"' || :attr_radix || '\"') AS attr_value\n" +
 											 " FROM my_context WHERE elt_name = :elt_name AND attr_prefix = :attr_prefix;", false)) {
