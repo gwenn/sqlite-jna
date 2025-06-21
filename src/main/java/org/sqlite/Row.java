@@ -1,5 +1,7 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 /**
  * A single result row of a query.
  */
@@ -48,7 +50,7 @@ public interface Row {
 	 * @param iCol The leftmost column is number 0.
 	 * @return BLOB value
 	 */
-	byte[] getColumnBlob(int iCol) throws StmtException;
+	byte@Nullable[] getColumnBlob(int iCol) throws StmtException;
 	/**
 	 * @param iCol The leftmost column is number 0.
 	 * @return the number of bytes in that BLOB or string.
@@ -73,5 +75,6 @@ public interface Row {
 	 * @param iCol The leftmost column is number 0.
 	 * @return text value
 	 */
+	@Nullable
 	String getColumnText(int iCol) throws StmtException;
 }

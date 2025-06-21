@@ -1,5 +1,7 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.lang.foreign.MemorySegment;
 
 /**
@@ -14,13 +16,13 @@ public interface Module extends EponymousModule {
 	 * @param pp_vtab sqlite3_vtab**
 	 * @param err_msg char**
 	 */
-	default int create(MemorySegment db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment pp_vtab, MemorySegment err_msg) {
+	default int create(@NonNull MemorySegment db, @NonNull MemorySegment aux, int argc, @NonNull MemorySegment argv, @NonNull MemorySegment pp_vtab, @NonNull MemorySegment err_msg) {
 		return create_connect(db, aux, argc, argv, pp_vtab, err_msg, true);
 	}
 	/**
 	 * @param vtab sqlite3_vtab*
 	 */
-	default int destroy(MemorySegment vtab) {
+	default int destroy(@NonNull MemorySegment vtab) {
 		vtab = vtab.reinterpret(vtab_layout().byteSize());
 		return disconnect(vtab, true);
 	}

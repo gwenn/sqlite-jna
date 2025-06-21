@@ -1,5 +1,7 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.lang.foreign.*;
 import java.lang.foreign.ValueLayout.OfInt;
 import java.lang.invoke.MethodHandle;
@@ -8,7 +10,8 @@ import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static org.sqlite.SQLite.*;
 
 public class sqlite3_module {
-	public static MemorySegment eponymousOnly(EponymousModule m, Arena arena) {
+	@NonNull
+	public static MemorySegment eponymousOnly(@NonNull EponymousModule m, @NonNull Arena arena) {
 		MemorySegment struct = arena.allocate(layout);
 		iVersion(struct, 2);
 		//  For eponymous-only virtual tables, the xCreate method is NULL
@@ -24,8 +27,8 @@ public class sqlite3_module {
 		xRowid(struct, m, arena);
 		return struct;
 	}
-
-	public static MemorySegment eponymous(EponymousModule m, Arena arena) {
+	@NonNull
+	public static MemorySegment eponymous(@NonNull EponymousModule m, @NonNull Arena arena) {
 		MemorySegment struct = eponymousOnly(m, arena);
 		// A virtual table is eponymous if its xCreate method is the exact same function
 		// as the xConnect method
@@ -33,14 +36,15 @@ public class sqlite3_module {
 		struct.set(xDestroy, xDestroy_offset, struct.get(xDisconnect, xDisconnect_offset));
 		return struct;
 	}
-
-	public static MemorySegment readOnly(Module m, Arena arena) {
+	@NonNull
+	public static MemorySegment readOnly(@NonNull Module m, @NonNull Arena arena) {
 		MemorySegment struct = eponymousOnly(m, arena);
 		xCreate(struct, m, arena);
 		xDestroy(struct, m, arena);
 		return struct;
 	}
-	public static MemorySegment update(UpdateModule m, Arena arena) {
+	@NonNull
+	public static MemorySegment update(@NonNull UpdateModule m, @NonNull Arena arena) {
 		MemorySegment struct = readOnly(m, arena);
 		xUpdate(struct, m, arena);
 		return struct.asReadOnly();
@@ -48,7 +52,7 @@ public class sqlite3_module {
 
 	private static final MethodHandle sqlite3_declare_vtab = downcallHandle(
 		"sqlite3_declare_vtab", IPP);
-	public static int sqlite3_declare_vtab(sqlite3 pDb, String sql) {
+	public static int sqlite3_declare_vtab(@NonNull sqlite3 pDb, @NonNull String sql) {
 		try (Arena arena = Arena.ofConfined()) {
 			return (int)sqlite3_declare_vtab.invokeExact(pDb.getPointer(), nativeString(arena, sql));
 		} catch (Throwable e) {

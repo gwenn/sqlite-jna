@@ -1,5 +1,8 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
@@ -15,6 +18,7 @@ import static org.sqlite.sqlite3_stmt.*;
  * @see <a href="http://sqlite.org/c3ref/sqlite3.html">sqlite3</a>
  */
 public final class sqlite3 {
+	@NonNull
 	private MemorySegment p;
 	int res;
 	// To avoid upcallStub(s) from being GCed before connection is closed
@@ -24,7 +28,7 @@ public final class sqlite3 {
 
 	private static final MethodHandle sqlite3_errmsg = downcallHandle(
 		"sqlite3_errmsg", PP);
-	static String sqlite3_errmsg(sqlite3 pDb) { // copy needed: the error string might be overwritten or deallocated by subsequent calls to other SQLite interface functions.
+	static String sqlite3_errmsg(@NonNull sqlite3 pDb) { // copy needed: the error string might be overwritten or deallocated by subsequent calls to other SQLite interface functions.
 		try {
 			return getString((MemorySegment) sqlite3_errmsg.invokeExact(pDb.getPointer()));
 		} catch (Throwable e) {
@@ -33,7 +37,7 @@ public final class sqlite3 {
 	}
 	private static final MethodHandle sqlite3_errcode = downcallHandle(
 		"sqlite3_errcode", IP);
-	static int sqlite3_errcode(sqlite3 pDb) {
+	static int sqlite3_errcode(@NonNull sqlite3 pDb) {
 		try {
 			return (int) sqlite3_errcode.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
@@ -43,7 +47,7 @@ public final class sqlite3 {
 
 	private static final MethodHandle sqlite3_extended_result_codes = downcallHandle(
 		"sqlite3_extended_result_codes", IPI);
-	static int sqlite3_extended_result_codes(sqlite3 pDb, boolean onoff) {
+	static int sqlite3_extended_result_codes(@NonNull sqlite3 pDb, boolean onoff) {
 		try {
 			return (int) sqlite3_extended_result_codes.invokeExact(pDb.getPointer(), onoff ? 1 : 0);
 		} catch (Throwable e) {
@@ -52,7 +56,7 @@ public final class sqlite3 {
 	}
 	private static final MethodHandle sqlite3_extended_errcode = downcallHandle(
 		"sqlite3_extended_errcode", IP);
-	static int sqlite3_extended_errcode(sqlite3 pDb) {
+	static int sqlite3_extended_errcode(@NonNull sqlite3 pDb) {
 		try {
 			return (int) sqlite3_extended_errcode.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
@@ -62,7 +66,7 @@ public final class sqlite3 {
 
 	private static final MethodHandle sqlite3_open_v2 = downcallHandle(
 		"sqlite3_open_v2", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_INT, C_POINTER));
-	static int sqlite3_open_v2(String filename, MemorySegment ppDb, int flags, String vfs) { // no copy needed
+	static int sqlite3_open_v2(@NonNull String filename, @NonNull MemorySegment ppDb, int flags, @Nullable String vfs) { // no copy needed
 		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment filenameSegment = arena.allocateFrom(filename);
 			MemorySegment vfsSegment = vfs == null ? MemorySegment.NULL : arena.allocateFrom(vfs);
@@ -73,7 +77,7 @@ public final class sqlite3 {
 	}
 	private static final MethodHandle sqlite3_close = downcallHandle(
 		"sqlite3_close", IP);
-	static int sqlite3_close(sqlite3 pDb) {
+	static int sqlite3_close(@NonNull sqlite3 pDb) {
 		try {
 			return (int) sqlite3_close.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
@@ -82,7 +86,7 @@ public final class sqlite3 {
 	}
 	private static final MethodHandle sqlite3_close_v2 = downcallHandle(
 		"sqlite3_close_v2", IP);
-	private static int sqlite3_close_v2(sqlite3 pDb) { // since 3.7.14
+	private static int sqlite3_close_v2(@NonNull sqlite3 pDb) { // since 3.7.14
 		try {
 			return (int) sqlite3_close_v2.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
@@ -92,7 +96,7 @@ public final class sqlite3 {
 
 	private static final MethodHandle sqlite3_interrupt = downcallHandle(
 		"sqlite3_interrupt", VP);
-	static void sqlite3_interrupt(sqlite3 pDb) {
+	static void sqlite3_interrupt(@NonNull sqlite3 pDb) {
 		try {
 			sqlite3_interrupt.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
@@ -104,7 +108,7 @@ public final class sqlite3 {
 		"sqlite3_busy_handler", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER));
 	private static final MethodHandle busy_handler = upcallHandle(BusyHandler.class, "callback",
 		IPI);
-	static int sqlite3_busy_handler(sqlite3 pDb, BusyHandler bh, MemorySegment pArg) {
+	static int sqlite3_busy_handler(@NonNull sqlite3 pDb, BusyHandler bh, MemorySegment pArg) {
 		try {
 			// FIXME previous busyHandler will not be freed until pDb is closed & gced
 			MemorySegment busyHandler = upcallStub(busy_handler, bh, IPI, pDb.getArena());
@@ -115,7 +119,7 @@ public final class sqlite3 {
 	}
 	private static final MethodHandle sqlite3_busy_timeout = downcallHandle(
 		"sqlite3_busy_timeout", IPI);
-	static int sqlite3_busy_timeout(sqlite3 pDb, int ms) {
+	static int sqlite3_busy_timeout(@NonNull sqlite3 pDb, int ms) {
 		try {
 			// TODO How to free previous busyHandler ?
 			return (int) sqlite3_busy_timeout.invokeExact(pDb.getPointer(), ms);
@@ -125,7 +129,7 @@ public final class sqlite3 {
 	}
 	private static final MethodHandle sqlite3_db_status = downcallHandle(
 		"sqlite3_db_status", FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_POINTER, C_POINTER, C_INT));
-	static int sqlite3_db_status(sqlite3 pDb, int op, MemorySegment pCur, MemorySegment pHiwtr, boolean resetFlg) {
+	static int sqlite3_db_status(@NonNull sqlite3 pDb, int op, MemorySegment pCur, MemorySegment pHiwtr, boolean resetFlg) {
 		try {
 			return (int) sqlite3_db_status.invokeExact(pDb.getPointer(), op, pCur, pCur, resetFlg ? 1 : 0);
 		} catch (Throwable e) {
@@ -135,7 +139,7 @@ public final class sqlite3 {
 	// TODO https://sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfiglookaside constants
 	private static final MethodHandle sqlite3_db_config = downcallHandle(
 		"sqlite3_db_config", FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_INT, C_POINTER));
-	static int sqlite3_db_config(sqlite3 pDb, int op, int v, MemorySegment pOk) {
+	static int sqlite3_db_config(@NonNull sqlite3 pDb, int op, int v, MemorySegment pOk) {
 		try {
 			return (int) sqlite3_db_config.invokeExact(pDb.getPointer(), op, v, pOk);
 		} catch (Throwable e) {
@@ -145,7 +149,7 @@ public final class sqlite3 {
 
 	private static final MethodHandle sqlite3_enable_load_extension = OMIT_LOAD_EXTENSION ? null : downcallHandle(
 		"sqlite3_enable_load_extension", IPI);
-	static int sqlite3_enable_load_extension(sqlite3 pDb, boolean onoff) {
+	static int sqlite3_enable_load_extension(@NonNull sqlite3 pDb, boolean onoff) {
 		checkActivated(sqlite3_enable_load_extension, "SQLITE_OMIT_LOAD_EXTENSION activated");
 		try {
 			return (int) sqlite3_enable_load_extension.invokeExact(pDb.getPointer(), onoff ? 1 : 0);
@@ -156,7 +160,7 @@ public final class sqlite3 {
 
 	private static final MethodHandle sqlite3_load_extension = OMIT_LOAD_EXTENSION ? null : downcallHandle(
 		"sqlite3_load_extension", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
-	static int sqlite3_load_extension(sqlite3 pDb, String file, String proc, MemorySegment errMsg) {
+	static int sqlite3_load_extension(@NonNull sqlite3 pDb, @NonNull String file, @Nullable String proc, MemorySegment errMsg) {
 		checkActivated(sqlite3_load_extension, "SQLITE_OMIT_LOAD_EXTENSION activated");
 		try (Arena arena = Arena.ofConfined()) {
 			return (int) sqlite3_load_extension.invokeExact(pDb.getPointer(), nativeString(arena, file), nativeString(arena, proc), errMsg);
@@ -166,7 +170,7 @@ public final class sqlite3 {
 	}
 	private static final MethodHandle sqlite3_limit = downcallHandle(
 		"sqlite3_limit", IPII);
-	static int sqlite3_limit(sqlite3 pDb, int id, int newVal) {
+	static int sqlite3_limit(@NonNull sqlite3 pDb, int id, int newVal) {
 		try {
 			return (int) sqlite3_limit.invokeExact(pDb.getPointer(), id, newVal);
 		} catch (Throwable e) {
@@ -175,7 +179,7 @@ public final class sqlite3 {
 	}
 	private static final MethodHandle sqlite3_get_autocommit = downcallHandle(
 		"sqlite3_get_autocommit", IP);
-	static boolean sqlite3_get_autocommit(sqlite3 pDb) {
+	static boolean sqlite3_get_autocommit(@NonNull sqlite3 pDb) {
 		try {
 			return ((int) sqlite3_get_autocommit.invokeExact(pDb.getPointer())) != 0;
 		} catch (Throwable e) {
@@ -185,7 +189,7 @@ public final class sqlite3 {
 
 	private static final MethodHandle sqlite3_changes = downcallHandle(
 		"sqlite3_changes", IP);
-	static int sqlite3_changes(sqlite3 pDb) {
+	static int sqlite3_changes(@NonNull sqlite3 pDb) {
 		try {
 			return (int) sqlite3_changes.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
@@ -195,7 +199,7 @@ public final class sqlite3 {
 
 	private static final MethodHandle sqlite3_changes64 = versionAtLeast(3037000) ? downcallHandle(
 		"sqlite3_changes64", LP) : null;
-	static long sqlite3_changes64(sqlite3 pDb) throws SQLFeatureNotSupportedException { // 3.37.0
+	static long sqlite3_changes64(@NonNull sqlite3 pDb) throws SQLFeatureNotSupportedException { // 3.37.0
 		if (sqlite3_changes64 == null) {
 			throw new SQLFeatureNotSupportedException("LargeUpdate not implemented for " + sqlite3_libversion());
 		}
@@ -207,7 +211,7 @@ public final class sqlite3 {
 	}
 	private static final MethodHandle sqlite3_total_changes = downcallHandle(
 		"sqlite3_total_changes", IP);
-	static int sqlite3_total_changes(sqlite3 pDb) {
+	static int sqlite3_total_changes(@NonNull sqlite3 pDb) {
 		try {
 			return (int) sqlite3_total_changes.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
@@ -216,7 +220,7 @@ public final class sqlite3 {
 	}
 	private static final MethodHandle sqlite3_total_changes64 = versionAtLeast(3037000) ? downcallHandle(
 		"sqlite3_total_changes64", LP) : null;
-	static long sqlite3_total_changes64(sqlite3 pDb) throws SQLFeatureNotSupportedException { // 3.37.0
+	static long sqlite3_total_changes64(@NonNull sqlite3 pDb) throws SQLFeatureNotSupportedException { // 3.37.0
 		if (sqlite3_total_changes64 == null) {
 			throw new SQLFeatureNotSupportedException("LargeUpdate not implemented for " + sqlite3_libversion());
 		}
@@ -228,7 +232,7 @@ public final class sqlite3 {
 	}
 	private static final MethodHandle sqlite3_last_insert_rowid = downcallHandle(
 		"sqlite3_last_insert_rowid", LP);
-	static long sqlite3_last_insert_rowid(sqlite3 pDb) {
+	static long sqlite3_last_insert_rowid(@NonNull sqlite3 pDb) {
 		try {
 			return (long) sqlite3_last_insert_rowid.invokeExact(pDb.getPointer());
 		} catch (Throwable e) {
@@ -238,7 +242,8 @@ public final class sqlite3 {
 
 	private static final MethodHandle sqlite3_db_filename = downcallHandle(
 		"sqlite3_db_filename", PPP);
-	static String sqlite3_db_filename(sqlite3 pDb, String dbName) { // no copy needed
+	@Nullable
+	static String sqlite3_db_filename(@NonNull sqlite3 pDb, String dbName) { // no copy needed
 		try (Arena arena = Arena.ofConfined()) {
 			return getString((MemorySegment) sqlite3_db_filename.invokeExact(pDb.getPointer(), nativeString(arena, dbName)));
 		} catch (Throwable e) {
@@ -248,7 +253,7 @@ public final class sqlite3 {
 
 	private static final MethodHandle sqlite3_db_readonly = downcallHandle(
 		"sqlite3_db_readonly", IPP);
-	static int sqlite3_db_readonly(sqlite3 pDb, String dbName) { // no copy needed
+	static int sqlite3_db_readonly(@NonNull sqlite3 pDb, String dbName) { // no copy needed
 		try (Arena arena = Arena.ofConfined()) {
 			return (int) sqlite3_db_readonly.invokeExact(pDb.getPointer(), nativeString(arena, dbName));
 		} catch (Throwable e) {
@@ -258,7 +263,8 @@ public final class sqlite3 {
 
 	private static final MethodHandle sqlite3_next_stmt = downcallHandle(
 		"sqlite3_next_stmt", PPP);
-	private static MemorySegment sqlite3_next_stmt(sqlite3 pDb, MemorySegment stmt) {
+	@NonNull
+	private static MemorySegment sqlite3_next_stmt(@NonNull sqlite3 pDb, @NonNull MemorySegment stmt) {
 		try {
 			return (MemorySegment) sqlite3_next_stmt.invokeExact(pDb.getPointer(), stmt);
 		} catch (Throwable e) {
@@ -269,7 +275,7 @@ public final class sqlite3 {
 	private static final MethodHandle sqlite3_table_column_metadata = downcallHandle(
 		"sqlite3_table_column_metadata", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER,
 			C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
-	static int sqlite3_table_column_metadata(sqlite3 pDb, String dbName, String tableName, String columnName,
+	static int sqlite3_table_column_metadata(@NonNull sqlite3 pDb, @Nullable String dbName, @NonNull String tableName, @NonNull String columnName,
 											 MemorySegment pzDataType, MemorySegment pzCollSeq,
 											 MemorySegment pNotNull, MemorySegment pPrimaryKey, MemorySegment pAutoinc) { // no copy needed
 		try (Arena arena = Arena.ofConfined()) {
@@ -283,7 +289,7 @@ public final class sqlite3 {
 
 	private static final MethodHandle sqlite3_exec = downcallHandle(
 		"sqlite3_exec", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
-	static int sqlite3_exec(sqlite3 pDb, String cmd, MemorySegment c, MemorySegment udp, MemorySegment errMsg) {
+	static int sqlite3_exec(@NonNull sqlite3 pDb, @NonNull String cmd, MemorySegment c, MemorySegment udp, MemorySegment errMsg) {
 		try (Arena arena = Arena.ofConfined()) {
 			return (int)sqlite3_exec.invokeExact(pDb.getPointer(), nativeString(arena, cmd), c, udp, errMsg);
 		} catch (Throwable e) {
@@ -294,7 +300,7 @@ public final class sqlite3 {
 	public static final int SQLITE_PREPARE_PERSISTENT = 0x01/*, SQLITE_PREPARE_NORMALIZE = 0x02*/, SQLITE_PREPARE_NO_VTAB = 0x04;
 	private static final MethodHandle sqlite3_prepare_v3 = downcallHandle(
 		"sqlite3_prepare_v3", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_INT, C_INT, C_POINTER, C_POINTER));
-	static int sqlite3_prepare_v3(sqlite3 pDb, MemorySegment sql, int nByte, int prepFlags, MemorySegment ppStmt,
+	static int sqlite3_prepare_v3(@NonNull sqlite3 pDb, @NonNull MemorySegment sql, int nByte, int prepFlags, @NonNull MemorySegment ppStmt,
 								  MemorySegment pTail) {
 		try {
 			return (int)sqlite3_prepare_v3.invokeExact(pDb.getPointer(), sql, nByte, prepFlags, ppStmt, pTail);
@@ -309,7 +315,7 @@ public final class sqlite3 {
 		downcallHandle("sqlite3_progress_handler", FunctionDescriptor.ofVoid(C_POINTER, C_INT, C_POINTER, C_POINTER));
 	private static final MethodHandle progress_callback = upcallHandle(SQLite.ProgressCallback.class, "callback",
 		IP);
-	static void sqlite3_progress_handler(sqlite3 pDb, int nOps, SQLite.ProgressCallback xProgress, MemorySegment pArg) {
+	static void sqlite3_progress_handler(@NonNull sqlite3 pDb, int nOps, SQLite.ProgressCallback xProgress, MemorySegment pArg) {
 		checkActivated(sqlite3_progress_handler, "SQLITE_OMIT_PROGRESS_CALLBACK activated");
 		try {
 			// FIXME previous pc will not be freed until pDb is closed & gced
@@ -325,7 +331,7 @@ public final class sqlite3 {
 	private static final FunctionDescriptor trace_callback_desc = FunctionDescriptor.ofVoid(C_POINTER, C_POINTER);
 	private static final MethodHandle trace_callback = upcallHandle(TraceCallback.class, "callback",
 		trace_callback_desc);
-	static void sqlite3_trace(sqlite3 pDb, TraceCallback xTrace, MemorySegment pArg) {
+	static void sqlite3_trace(@NonNull sqlite3 pDb, TraceCallback xTrace, MemorySegment pArg) {
 		checkActivated(sqlite3_trace, "SQLITE_OMIT_TRACE activated");
 		try {
 			// FIXME previous tc will not be freed until pDb is closed & gced
@@ -340,7 +346,7 @@ public final class sqlite3 {
 	private static final FunctionDescriptor profile_callback_desc = FunctionDescriptor.ofVoid(C_POINTER, C_POINTER, C_LONG_LONG);
 	private static final MethodHandle profile_callback = upcallHandle(ProfileCallback.class, "callback",
 		profile_callback_desc);
-	static void sqlite3_profile(sqlite3 pDb, ProfileCallback xProfile, MemorySegment pArg) {
+	static void sqlite3_profile(@NonNull sqlite3 pDb, ProfileCallback xProfile, MemorySegment pArg) {
 		checkActivated(sqlite3_profile, "SQLITE_OMIT_TRACE activated");
 		try {
 			// FIXME previous pc will not be freed until pDb is closed & gced
@@ -357,7 +363,8 @@ public final class sqlite3 {
 	private static final FunctionDescriptor update_hook_desc = FunctionDescriptor.ofVoid(C_POINTER, C_INT, C_POINTER, C_POINTER, C_LONG_LONG);
 	private static final MethodHandle update_hook = upcallHandle(UpdateHook.class, "callback",
 		update_hook_desc);
-	static MemorySegment sqlite3_update_hook(sqlite3 pDb, UpdateHook xUpdate, MemorySegment pArg) {
+	@NonNull
+	static MemorySegment sqlite3_update_hook(@NonNull sqlite3 pDb, UpdateHook xUpdate, MemorySegment pArg) {
 		try {
 			// FIXME previous uh will not be freed until pDb is closed & gced
 			MemorySegment uh = upcallStub(update_hook, xUpdate, update_hook_desc, pDb.getArena());
@@ -371,7 +378,7 @@ public final class sqlite3 {
 	private static final FunctionDescriptor authorizer_desc = FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER);
 	private static final MethodHandle authorizer_up = upcallHandle(Authorizer.class, "callback",
 		authorizer_desc);
-	static int sqlite3_set_authorizer(sqlite3 pDb, Authorizer authorizer, MemorySegment pUserData) {
+	static int sqlite3_set_authorizer(@NonNull sqlite3 pDb, Authorizer authorizer, MemorySegment pUserData) {
 		checkActivated(sqlite3_set_authorizer, "SQLITE_OMIT_AUTHORIZATION activated");
 		try {
 			// FIXME previous auth will not be freed until pDb is closed & gced
@@ -385,7 +392,7 @@ public final class sqlite3 {
 		"sqlite3_unlock_notify", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER)) : null;
 	private static final MethodHandle unlock_notify_up = upcallHandle(UnlockNotifyCallback.class, "callback",
 		VPI);
-	static int sqlite3_unlock_notify(sqlite3 pBlocked, UnlockNotifyCallback xNotify, MemorySegment pNotifyArg) {
+	static int sqlite3_unlock_notify(@NonNull sqlite3 pBlocked, UnlockNotifyCallback xNotify, MemorySegment pNotifyArg) {
 		checkActivated(sqlite3_unlock_notify, "SQLITE_ENABLE_UNLOCK_NOTIFY not activated");
 		try {
 			// FIXME previous unc will not be freed until pDb is closed & gced
@@ -411,7 +418,7 @@ public final class sqlite3 {
 		VPIP);
 	private static final MethodHandle aggregate_final_callback = upcallHandle(AggregateFinalCallback.class, "callback",
 		VP);
-	static int sqlite3_create_function_v2(sqlite3 pDb, String functionName, int nArg, int eTextRep,
+	static int sqlite3_create_function_v2(@NonNull sqlite3 pDb, @NonNull String functionName, int nArg, int eTextRep,
 										  MemorySegment pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, MemorySegment xDestroy) {
 		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment xFu = upcallStub(scalar_callback, xFunc, VPIP, pDb.getArena());
@@ -424,7 +431,7 @@ public final class sqlite3 {
 	}
 	private static final MethodHandle sqlite3_create_module_v2 = downcallHandle(
 		"sqlite3_create_module_v2", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
-	static int sqlite3_create_module_v2(sqlite3 pDb, String moduleName, EponymousModule module, boolean eponymousOnly, MemorySegment pClientData, MemorySegment xDestroy) {
+	static int sqlite3_create_module_v2(@NonNull sqlite3 pDb, @NonNull String moduleName, @NonNull EponymousModule module, boolean eponymousOnly, MemorySegment pClientData, MemorySegment xDestroy) {
 		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment ms;
 			if (module instanceof UpdateModule) {
@@ -442,7 +449,7 @@ public final class sqlite3 {
 		}
 	}
 
-	sqlite3(MemorySegment p) {
+	sqlite3(@NonNull MemorySegment p) {
 		this.p = p.asReadOnly();
 	}
 

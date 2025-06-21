@@ -1,5 +1,7 @@
 package org.sqlite.driver;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sqlite.ErrCodes;
 import org.sqlite.SQLiteException;
 import org.xml.sax.InputSource;
@@ -45,6 +47,7 @@ class SQLXMLFromRows implements SQLXML {
 	}
 
 	@Override
+	@Nullable
 	public InputStream getBinaryStream() throws SQLException {
 		checkAndSwitchReadable();
 		return rs.getBinaryStream(columnIndex);
@@ -78,7 +81,8 @@ class SQLXMLFromRows implements SQLXML {
 	}
 
 	@Override
-	public <T extends Source> T getSource(Class<T> sourceClass) throws SQLException {
+	@NonNull
+	public <T extends Source> T getSource(@Nullable Class<T> sourceClass) throws SQLException {
 		checkAndSwitchReadable();
 		if (sourceClass == null || DOMSource.class.equals(sourceClass)) {
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

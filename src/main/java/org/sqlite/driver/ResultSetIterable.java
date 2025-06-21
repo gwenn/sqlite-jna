@@ -1,5 +1,7 @@
 package org.sqlite.driver;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
@@ -37,6 +39,7 @@ public class ResultSetIterable<T> implements Iterable<T>, Guard {
 	}
 
 	@Override
+	@NonNull
 	public Iterator<T> iterator() {
 		try {
 			if (rs != null) {

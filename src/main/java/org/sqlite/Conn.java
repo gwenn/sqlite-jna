@@ -8,6 +8,8 @@
  */
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sqlite.parser.ast.LiteralExpr;
 import org.sqlite.parser.ast.Pragma;
 import org.sqlite.parser.ast.QualifiedName;
@@ -70,7 +72,7 @@ public final class Conn implements AutoCloseable {
 	 * @param vfs may be null
 	 * @return Opened Connection
 	 */
-	public static Conn open(String filename, int flags, String vfs) throws SQLiteException {
+	public static Conn open(@NonNull String filename, int flags, @Nullable String vfs) throws SQLiteException {
 		if (!sqlite3_threadsafe()) {
 			throw new SQLiteException("sqlite library was not compiled for thread-safe operation", ErrCodes.WRAPPER_SPECIFIC);
 		} else if (versionAtLeast(3037000)) {
@@ -156,7 +158,7 @@ public final class Conn implements AutoCloseable {
 	 * @throws ConnException if current connection is closed or <code>dbName</code> is not valid.
 	 * @see <a href="http://sqlite.org/c3ref/db_readonly.html">sqlite3_db_readonly</a>
 	 */
-	public boolean isReadOnly(String dbName) throws ConnException {
+	public boolean isReadOnly(@Nullable String dbName) throws ConnException {
 		checkOpen();
 		int res = sqlite3_db_readonly(pDb, dbName); // ko if pDb is null
 		if (res < 0) {
@@ -172,7 +174,7 @@ public final class Conn implements AutoCloseable {
 	 * @throws SQLiteException if current connection is closed or <code>dbName</code> is not valid.
 	 * @see <a href="http://sqlite.org/pragma.html#pragma_query_only">pragma query_only</a>
 	 */
-	public boolean isQueryOnly(String dbName) throws SQLiteException { // since 3.8.0
+	public boolean isQueryOnly(@Nullable String dbName) throws SQLiteException { // since 3.8.0
 		return pragma(dbName, "query_only");
 	}
 	/**
@@ -181,7 +183,7 @@ public final class Conn implements AutoCloseable {
 	 * @param queryOnly <code>true</code> to activate query-only mode
 	 * @throws ConnException if current connection is closed or <code>dbName</code> is not valid.
 	 */
-	public void setQueryOnly(String dbName, boolean queryOnly) throws ConnException { // since 3.8.0
+	public void setQueryOnly(@Nullable String dbName, boolean queryOnly) throws ConnException { // since 3.8.0
 		pragma(dbName, "query_only", queryOnly);
 	}
 
@@ -201,7 +203,7 @@ public final class Conn implements AutoCloseable {
 	 * @return <code>true</code> if READ UNCOMMITTED isolation is active.
 	 * @throws SQLiteException if current connection is closed or <code>dbName</code> is not valid.
 	 */
-	public boolean getReadUncommitted(String dbName) throws SQLiteException {
+	public boolean getReadUncommitted(@Nullable String dbName) throws SQLiteException {
 		return pragma(dbName, "read_uncommitted");
 	}
 	/**
@@ -210,7 +212,7 @@ public final class Conn implements AutoCloseable {
 	 * @param flag <code>true</code> to activate READ UNCOMMITTED isolation
 	 * @throws ConnException if current connection is closed or <code>dbName</code> is not valid.
 	 */
-	public void setReadUncommitted(String dbName, boolean flag) throws ConnException {
+	public void setReadUncommitted(@Nullable String dbName, boolean flag) throws ConnException {
 		pragma(dbName, "read_uncommitted", flag);
 	}
 
@@ -232,7 +234,7 @@ public final class Conn implements AutoCloseable {
 	 * @throws ConnException if current connection is closed or an error occurred during statement compilation.
 	 * @see <a href="https://www.sqlite.org/c3ref/prepare.html">sqlite3_prepare_v3</a>
 	 */
-	public Stmt prepare(String sql, boolean cacheable) throws ConnException {
+	public Stmt prepare(@NonNull String sql, boolean cacheable) throws ConnException {
 		checkOpen();
 		if (cacheable) {
 			Stmt stmt = find(sql);
@@ -253,7 +255,7 @@ public final class Conn implements AutoCloseable {
 	}
 
 	// http://sqlite.org/unlock_notify.html
-	private int blockingPrepare(MemorySegment pSql, int flags, MemorySegment ppStmt, MemorySegment ppTail) throws ConnException {
+	private int blockingPrepare(@NonNull MemorySegment pSql, int flags, @NonNull MemorySegment ppStmt, MemorySegment ppTail) throws ConnException {
 		if (!ENABLE_UNLOCK_NOTIFY) {
 			return sqlite3_prepare_v3(pDb, pSql, -1, flags, ppStmt, ppTail); // FIXME nbytes + 1
 		}
@@ -294,7 +296,7 @@ public final class Conn implements AutoCloseable {
 		return sqlite3_libversion_number();
 	}
 
-	public Stmt prepareAndBind(String sql, boolean cacheable, Object... params) throws SQLiteException {
+	public Stmt prepareAndBind(@NonNull String sql, boolean cacheable, Object... params) throws SQLiteException {
 		Stmt s = null;
 		try {
 			s = prepare(sql, cacheable);
@@ -315,7 +317,7 @@ public final class Conn implements AutoCloseable {
 	 * @return the rowid inserted.
 	 * @throws SQLiteException if no row is inserted or many rows are inserted.
 	 */
-	public long insert(String sql, boolean cacheable, Object... params) throws SQLiteException {
+	public long insert(@NonNull String sql, boolean cacheable, Object... params) throws SQLiteException {
 		try (Stmt s = prepare(sql, cacheable)) {
 			return s.insert(params);
 		}
@@ -327,7 +329,7 @@ public final class Conn implements AutoCloseable {
 	 * @param params SQL statement parameters
 	 * @return the number of database rows that were changed or inserted or deleted.
 	 */
-	public int execDml(String sql, boolean cacheable, Object... params) throws SQLiteException {
+	public int execDml(@NonNull String sql, boolean cacheable, Object... params) throws SQLiteException {
 		try (Stmt s = prepare(sql, cacheable)) {
 			return s.execDml(params);
 		}
@@ -339,7 +341,7 @@ public final class Conn implements AutoCloseable {
 	 * @return returns <code>true</code> if a query in the SQL statement returns one or more rows and
 	 * <code>false</code> if the SQL returns an empty set.
 	 */
-	public boolean exists(String sql, boolean cacheable, Object... params) throws SQLiteException {
+	public boolean exists(@NonNull String sql, boolean cacheable, Object... params) throws SQLiteException {
 		try (Stmt s = prepare(sql, cacheable)) {
 			return s.exists(params);
 		}
@@ -382,7 +384,7 @@ public final class Conn implements AutoCloseable {
 	 * @throws SQLiteException if current connection is closed or an error occurred during BLOB open.
 	 * @see <a href="https://www.sqlite.org/c3ref/blob_open.html">sqlite3_blob_open</a>
 	 */
-	public Blob open(String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
+	public Blob open(@Nullable String dbName, String tblName, String colName, long iRow, boolean rw) throws SQLiteException {
 		checkOpen();
 		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment ppBlob = arena.allocate(C_POINTER);
@@ -472,7 +474,7 @@ public final class Conn implements AutoCloseable {
 	 * @return result code
 	 * @see <a href="http://sqlite.org/c3ref/busy_handler.html">sqlite3_busy_handler</a>
 	 */
-	public int setBusyHandler(BusyHandler bh) throws ConnException {
+	public int setBusyHandler(@Nullable BusyHandler bh) throws ConnException {
 		checkOpen();
 		return sqlite3_busy_handler(pDb, bh, MemorySegment.NULL);
 	}
@@ -481,6 +483,7 @@ public final class Conn implements AutoCloseable {
 	 * @return the filename for the current "main" database connection
 	 * @see <a href="https://www.sqlite.org/c3ref/db_filename.html">sqlite3_db_filename</a>
 	 */
+	@Nullable
 	public String getFilename() {
 		if (pDb.isClosed()) {
 			return null;
@@ -582,7 +585,7 @@ public final class Conn implements AutoCloseable {
 	 * @return error message or null
 	 * @see <a href="https://www.sqlite.org/c3ref/load_extension.html">sqlite3_load_extension</a>
 	 */
-	public String loadExtension(String file, String proc) throws ConnException {
+	public String loadExtension(@NonNull String file, @Nullable String proc) throws ConnException {
 		checkOpen();
 		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment pErrMsg = arena.allocate(C_POINTER);
@@ -619,7 +622,7 @@ public final class Conn implements AutoCloseable {
 		return sqlite3_limit(pDb, id, newVal);
 	}
 
-	boolean[] getTableColumnMetadata(String dbName, String tblName, String colName) throws ConnException {
+	boolean[] getTableColumnMetadata(@Nullable String dbName, @NonNull String tblName, @NonNull String colName) throws ConnException {
 		checkOpen();
 		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment pNotNull = arena.allocate(C_INT);
@@ -651,7 +654,7 @@ public final class Conn implements AutoCloseable {
 	 * @throws ConnException if backup init failed.
 	 * @see <a href="https://www.sqlite.org/c3ref/backup_finish.html#sqlite3backupinit">sqlite3_backup_init</a>
 	 */
-	public static Backup open(Conn dst, String dstName, Conn src, String srcName) throws ConnException {
+	public static Backup open(@NonNull Conn dst, @NonNull String dstName, @NonNull Conn src, @NonNull String srcName) throws ConnException {
 		dst.checkOpen();
 		src.checkOpen();
 		sqlite3_backup pBackup = sqlite3_backup_init(dst.pDb, dstName, src.pDb, srcName);
@@ -683,7 +686,7 @@ public final class Conn implements AutoCloseable {
 	 * @param tc Tracing callback
 	 * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_trace</a>
 	 */
-	public void trace(TraceCallback tc) throws ConnException {
+	public void trace(@Nullable TraceCallback tc) throws ConnException {
 		checkOpen();
 		sqlite3_trace(pDb, tc, MemorySegment.NULL);
 	}
@@ -692,7 +695,7 @@ public final class Conn implements AutoCloseable {
 	 * @param pc Profiling callback
 	 * @see <a href="http://sqlite.org/c3ref/profile.html">sqlite3_profile</a>
 	 */
-	public void profile(ProfileCallback pc) throws ConnException {
+	public void profile(@Nullable ProfileCallback pc) throws ConnException {
 		checkOpen();
 		sqlite3_profile(pDb, pc, MemorySegment.NULL);
 	}
@@ -701,7 +704,8 @@ public final class Conn implements AutoCloseable {
 	 * @param uh Data change notification callback.
 	 * @see <a href="http://sqlite.org/c3ref/update_hook.html">sqlite3_update_hook</a>
 	 */
-	public MemorySegment updateHook(UpdateHook uh) throws ConnException {
+	@NonNull
+	public MemorySegment updateHook(@Nullable UpdateHook uh) throws ConnException {
 		checkOpen();
 		return sqlite3_update_hook(pDb, uh, MemorySegment.NULL);
 	}
@@ -711,7 +715,7 @@ public final class Conn implements AutoCloseable {
 	 * @return result code
 	 * @see <a href="http://sqlite.org/c3ref/set_authorizer.html">sqlite3_set_authorizer</a>
 	 */
-	public int setAuhtorizer(Authorizer auth) throws ConnException {
+	public int setAuhtorizer(@Nullable Authorizer auth) throws ConnException {
 		checkOpen();
 		return sqlite3_set_authorizer(pDb, auth, MemorySegment.NULL);
 	}
@@ -724,7 +728,7 @@ public final class Conn implements AutoCloseable {
 	 * @param xFunc function implementation
 	 * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
 	 */
-	public void createScalarFunction(String name, int nArg, int flags, ScalarCallback xFunc) throws ConnException {
+	public void createScalarFunction(@NonNull String name, int nArg, int flags, ScalarCallback xFunc) throws ConnException {
 		checkOpen();
 		check(sqlite3_create_function_v2(pDb, name, nArg, flags, MemorySegment.NULL, xFunc, null, null, MemorySegment.NULL),
 				"error while registering function %s", name);
@@ -738,7 +742,7 @@ public final class Conn implements AutoCloseable {
 	 * @param xFinal function implementation
 	 * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
 	 */
-	public void createAggregateFunction(String name, int nArg, int flags, AggregateStepCallback xStep,
+	public void createAggregateFunction(@NonNull String name, int nArg, int flags, AggregateStepCallback xStep,
 			AggregateFinalCallback xFinal) throws ConnException {
 		checkOpen();
 		check(sqlite3_create_function_v2(pDb, name, nArg, flags, MemorySegment.NULL, null, xStep, xFinal, MemorySegment.NULL),
@@ -751,7 +755,7 @@ public final class Conn implements AutoCloseable {
 	 * @param module module impl
 	 * @see <a href-"https://sqlite.org/c3ref/create_module.html">sqlite3_create_module_v2</a>
 	 */
-	public void createModule(String name, EponymousModule module, boolean eponymousOnly) throws ConnException {
+	public void createModule(@NonNull String name, @NonNull EponymousModule module, boolean eponymousOnly) throws ConnException {
 		checkOpen();
 		check(sqlite3.sqlite3_create_module_v2(pDb, name, module, eponymousOnly, MemorySegment.NULL, MemorySegment.NULL),
 			"error while registering module %s", name);
@@ -762,7 +766,7 @@ public final class Conn implements AutoCloseable {
 	 * @return the text encoding used by the <code>dbName</code> database
 	 * @see <a href="http://sqlite.org/pragma.html#pragma_encoding">pragma encoding</a>
 	 */
-	public String encoding(String dbName) throws SQLiteException {
+	public String encoding(@Nullable String dbName) throws SQLiteException {
 		Pragma pragma = new Pragma(new QualifiedName(dbName, "encoding"), null);
 		try (Stmt s = prepare(pragma.toSql(), false)) {
 			if (!s.step(0)) {
@@ -794,7 +798,7 @@ public final class Conn implements AutoCloseable {
 		}
 	}
 
-	boolean pragma(String dbName, String name) throws SQLiteException {
+	boolean pragma(@Nullable String dbName, @NonNull String name) throws SQLiteException {
 		Pragma pragma = new Pragma(new QualifiedName(dbName, name), null);
 		try (Stmt s = prepare(pragma.toSql(), false)) {
 			if (!s.step(0)) {
@@ -803,7 +807,7 @@ public final class Conn implements AutoCloseable {
 			return s.getColumnInt(0) == 1;
 		}
 	}
-	void pragma(String dbName, String name, boolean value) throws ConnException {
+	void pragma(@Nullable String dbName, @NonNull String name, boolean value) throws ConnException {
 		Pragma pragma = new Pragma(new QualifiedName(dbName, name), LiteralExpr.integer(value ? 1 : 0));
 		fastExec(pragma.toSql());
 	}

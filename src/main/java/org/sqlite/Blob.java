@@ -8,6 +8,8 @@
  */
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -21,14 +23,16 @@ import static org.sqlite.sqlite3_blob.*;
  * <a href="https://www.sqlite.org/c3ref/blob.html">sqlite3_blob</a>
  */
 public class Blob implements AutoCloseable {
+	@NonNull
 	private final Conn c;
+	@NonNull
 	private final sqlite3_blob pBlob;
 	private final Cleaner.Cleanable cleanable;
 	private int readOffset;
 	private int writeOffset;
 	private int size = -1;
 
-	Blob(Conn c, sqlite3_blob pBlob) {
+	Blob(@NonNull Conn c, @NonNull sqlite3_blob pBlob) {
 		assert c != null;
 		this.c = c;
 		this.pBlob = pBlob;
@@ -73,7 +77,7 @@ public class Blob implements AutoCloseable {
 	 * @return number of bytes written
 	 * <a href="https://www.sqlite.org/c3ref/blob_write.html">sqlite3_blob_write</a>
 	 */
-	public int write(byte[] b, int off, int len) throws SQLiteException {
+	public int write(byte @NonNull [] b, int off, int len) throws SQLiteException {
 		if (b == null) {
 			throw new NullPointerException();
 		}
@@ -148,7 +152,7 @@ public class Blob implements AutoCloseable {
 		}
 		this.writeOffset = writeOffset;
 	}
-
+	@NonNull
 	public InputStream getInputStream() {
 		return new BlobInputStream();
 	}
@@ -179,7 +183,7 @@ public class Blob implements AutoCloseable {
 		}
 
 		@Override
-		public int read(byte[] b, int off, int len) throws IOException {
+		public int read(byte @NonNull[] b, int off, int len) throws IOException {
 			if (b == null) {
 				throw new NullPointerException();
 			} else if (off < 0 || len < 0 || len > b.length - off) {
@@ -266,7 +270,7 @@ public class Blob implements AutoCloseable {
 		}
 
 		@Override
-		public void write(byte[] b, int off, int len) throws IOException {
+		public void write(byte @NonNull [] b, int off, int len) throws IOException {
 			try {
 				Blob.this.write(b, off, len);
 			} catch (SQLiteException e) {
@@ -285,7 +289,7 @@ public class Blob implements AutoCloseable {
 	}
 
 	private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
-	public static int copy(InputStream input, OutputStream output, int length) throws IOException {
+	public static int copy(@NonNull InputStream input, @NonNull OutputStream output, int length) throws IOException {
 		byte[] buffer = new byte[Math.min(length, DEFAULT_BUFFER_SIZE)];
 		int count = 0;
 		int n = buffer.length;

@@ -1,5 +1,8 @@
 package org.sqlite.driver;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import javax.naming.Reference;
 import javax.naming.Referenceable;
 import javax.naming.StringRefAddr;
@@ -14,6 +17,7 @@ import java.util.Properties;
  * must set the property filename.
  */
 public class BasicDataSource extends JDBC implements DataSource, Referenceable {
+	@NonNull
 	private String filename = org.sqlite.Conn.TEMP_FILE;
 	private int loginTimeout;
 	private PrintWriter logWriter;
@@ -29,7 +33,7 @@ public class BasicDataSource extends JDBC implements DataSource, Referenceable {
 	 * Sets the path of the SQLite database. If this is changed, it will only affect future calls to getConnection.
 	 * @param filename path of the SQLite database.
 	 */
-	public void setFilename(String filename) {
+	public void setFilename(@Nullable String filename) {
 		if (filename == null) {
 			filename = org.sqlite.Conn.TEMP_FILE;
 		}
@@ -41,7 +45,7 @@ public class BasicDataSource extends JDBC implements DataSource, Referenceable {
 		return connect(filename.startsWith(PREFIX) ? filename : PREFIX + filename, null);
 	}
 	@Override
-	public Connection getConnection(String username, String password) throws SQLException {
+	public Connection getConnection(@Nullable String username, @Nullable String password) throws SQLException {
 		Properties info = new Properties();
 		if (username != null) {
 			info.put("user", username);
@@ -52,11 +56,12 @@ public class BasicDataSource extends JDBC implements DataSource, Referenceable {
 		return connect(filename.startsWith(PREFIX) ? filename : PREFIX + filename, info);
 	}
 	@Override
+	@Nullable
 	public PrintWriter getLogWriter() {
 		return logWriter;
 	}
 	@Override
-	public void setLogWriter(PrintWriter out) {
+	public void setLogWriter(@Nullable PrintWriter out) {
 		logWriter = out;
 	}
 	@Override
@@ -68,18 +73,19 @@ public class BasicDataSource extends JDBC implements DataSource, Referenceable {
 		return loginTimeout;
 	}
 	@Override
-	public <T> T unwrap(Class<T> iface) throws SQLException {
+	public <T> T unwrap(@NonNull Class<T> iface) throws SQLException {
 		if (iface.isAssignableFrom(getClass())) {
 			return iface.cast(this);
 		}
 		throw new SQLException("Cannot unwrap to " + iface.getName());
 	}
 	@Override
-	public boolean isWrapperFor(Class<?> iface) {
+	public boolean isWrapperFor(@NonNull Class<?> iface) {
 		return iface.isAssignableFrom(getClass());
 	}
 
 	@Override
+	@NonNull
 	public Reference getReference() {
 		Reference ref = new Reference(getClass().getName());
 		ref.add(new StringRefAddr("filename", filename));

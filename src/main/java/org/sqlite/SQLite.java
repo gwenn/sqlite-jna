@@ -8,6 +8,8 @@
  */
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,8 +61,8 @@ public final class SQLite {
 	static final MemorySegment SQLITE_STATIC = MemorySegment.ofAddress(0L).asReadOnly();
 	static final Cleaner cleaner = Cleaner.create();
 	static final Runnable NO_OP = () -> {};
-
-	private static MemorySegment findOrThrow(String symbol) {
+	@NonNull
+	private static MemorySegment findOrThrow(@NonNull String symbol) {
 		return SYMBOL_LOOKUP.find(symbol)
 			.orElseThrow(() -> new UnsatisfiedLinkError("unresolved symbol: " + symbol));
 	}
@@ -71,20 +73,22 @@ public final class SQLite {
 		return LINKER.downcallHandle(findOrThrow(symbol), desc, options);
 	}
 	private static final MethodHandles.Lookup MH_LOOKUP = MethodHandles.lookup();
-	static MethodHandle upcallHandle(Class<?> fi, String name, FunctionDescriptor fdesc) {
+	static MethodHandle upcallHandle(@NonNull Class<?> fi, @NonNull String name, @NonNull FunctionDescriptor fdesc) {
 		try {
 			return MH_LOOKUP.findVirtual(fi, name, fdesc.toMethodType());
 		} catch (ReflectiveOperationException e) {
 			throw new AssertionError(e);
 		}
 	}
-	static MemorySegment upcallStub(MethodHandle mh, Object x, FunctionDescriptor fd, Arena arena) {
+	@NonNull
+	static MemorySegment upcallStub(@NonNull MethodHandle mh, @Nullable Object x, @NonNull FunctionDescriptor fd, @NonNull Arena arena) {
 		if (x == null) {
 			return MemorySegment.NULL;
 		}
 		return LINKER.upcallStub(mh.bindTo(x), fd, arena);
 	}
-	static MemorySegment upcallStub(Class<?> clz, String name, FunctionDescriptor fd) {
+	@NonNull
+	static MemorySegment upcallStub(@NonNull Class<?> clz, @NonNull String name, @NonNull FunctionDescriptor fd) {
 		try {
 			MethodHandle handle = MH_LOOKUP.findStatic(clz, name, fd.toMethodType());
 			return LINKER.upcallStub(handle, fd, Arena.global());
@@ -92,8 +96,8 @@ public final class SQLite {
 			throw new AssertionError(e);
 		}
 	}
-
-	static String getString(MemorySegment ms) {
+	@Nullable
+	static String getString(@NonNull MemorySegment ms) {
 		if (isNull(ms)) {
 			return null;
 		}
@@ -212,7 +216,7 @@ public final class SQLite {
 		sqlite3_config_option);
 
 	//sqlite3_config(SQLITE_CONFIG_LOG, void(*)(void *udp, int err, const char *msg), void *udp)
-	public static int sqlite3_config(int op, Class<?> clz, String name, MemorySegment udp) {
+	public static int sqlite3_config(int op, @NonNull Class<?> clz, @NonNull String name, MemorySegment udp) {
 		try {
 			MemorySegment xLog = upcallStub(clz, name, VPIP);
 			return (int) sqlite3_config_log.invokeExact(op, xLog, udp);
@@ -234,6 +238,7 @@ public final class SQLite {
 
 	private static final MethodHandle sqlite3_errstr = downcallHandle(
 		"sqlite3_errstr", FunctionDescriptor.of(C_POINTER, C_INT));
+	@Nullable
 	static String sqlite3_errstr(int rc) {
 		try {
 			return getString((MemorySegment) sqlite3_errstr.invokeExact(rc));
@@ -279,13 +284,15 @@ public final class SQLite {
 	}
 	static final MethodHandle sqlite3_malloc = downcallHandle(
 		"sqlite3_malloc", FunctionDescriptor.of(C_POINTER, C_INT));
+	@NonNull
 	public static MemorySegment sqlite3_malloc(MemoryLayout ml) {
 		return sqlite3_malloc(ml.byteSize());
 	}
+	@NonNull
 	public static MemorySegment sqlite3_malloc(long l) {
 		try {
 			MemorySegment ms = (MemorySegment) sqlite3_malloc.invokeExact(Math.toIntExact(l));
-			if (ms != null) {
+			if (!isNull(ms)) {
 				ms = ms.reinterpret(l);
 				memset(ms, 0, l);
 			}
@@ -296,7 +303,8 @@ public final class SQLite {
 	}
 	private static final MethodHandle memset = LINKER.downcallHandle(LINKER.defaultLookup()
 		.find("memset").orElseThrow(), FunctionDescriptor.of(C_POINTER, C_POINTER, C_INT, C_LONG_LONG));
-	private static MemorySegment memset(MemorySegment ms, int c, long n) {
+	@NonNull
+	private static MemorySegment memset(@NonNull MemorySegment ms, int c, long n) {
 		try {
 			return (MemorySegment) memset.invokeExact(ms, c, n);
 		} catch (Throwable e) {
@@ -306,13 +314,15 @@ public final class SQLite {
 
 	public static final Charset UTF_8 = StandardCharsets.UTF_8;
 	public static final String UTF_8_ECONDING = UTF_8.name();
-	static MemorySegment nativeString(Arena arena, String s) {
+	@NonNull
+	static MemorySegment nativeString(Arena arena, @Nullable String s) {
 		if (s == null) {
 			return MemorySegment.NULL;
 		}
 		return arena.allocateFrom(s).asReadOnly();
 	}
-	static MemorySegment sqlite3OwnedString(String s) {
+	@NonNull
+	static MemorySegment sqlite3OwnedString(@Nullable String s) {
 		if (s == null) {
 			return MemorySegment.NULL;
 		}
@@ -327,7 +337,7 @@ public final class SQLite {
 	}
 
 	// http://sqlite.org/datatype3.html
-	public static int getAffinity(String declType) {
+	public static int getAffinity(@Nullable String declType) {
 		if (declType == null || declType.isEmpty()) {
 			return ColAffinities.NONE;
 		}
@@ -347,8 +357,8 @@ public final class SQLite {
 
 	private SQLite() {
 	}
-
-	public static String escapeIdentifier(String identifier) {
+	@NonNull
+	public static String escapeIdentifier(@Nullable String identifier) {
 		if (identifier == null) {
 			return "";
 		}

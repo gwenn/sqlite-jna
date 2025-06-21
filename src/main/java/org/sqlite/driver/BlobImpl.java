@@ -8,6 +8,9 @@
  */
 package org.sqlite.driver;
 
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.Positive;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.sqlite.ErrCodes;
 
 import java.io.InputStream;
@@ -29,7 +32,7 @@ class BlobImpl implements Blob, AutoCloseable {
 	}
 
 	@Override
-	public byte[] getBytes(long pos, int length) throws SQLException {
+	public byte @NonNull [] getBytes(@Positive long pos, @NonNegative int length) throws SQLException {
 		checkOpen();
 		if (length < 0) {
 			throw new SQLException(String.format("invalid read length: %d < 0", length), null, ErrCodes.WRAPPER_SPECIFIC);
@@ -45,6 +48,7 @@ class BlobImpl implements Blob, AutoCloseable {
 	}
 
 	@Override
+	@NonNull
 	public InputStream getBinaryStream() throws SQLException {
 		checkOpen();
 		return blob.getInputStream();
@@ -63,19 +67,19 @@ class BlobImpl implements Blob, AutoCloseable {
 	}
 
 	@Override
-	public int setBytes(long pos, byte[] bytes) throws SQLException {
+	public int setBytes(@Positive long pos, byte @NonNull [] bytes) throws SQLException {
 		return setBytes(pos, bytes, 0, bytes.length);
 	}
 
 	@Override
-	public int setBytes(long pos, byte[] bytes, int offset, int len) throws SQLException {
+	public int setBytes(@Positive long pos, byte[] bytes, int offset, int len) throws SQLException {
 		checkOpen();
 		blob.setWriteOffset(checkPosition(pos));
 		return blob.write(bytes, offset, len);
 	}
 
 	@Override
-	public OutputStream setBinaryStream(long pos) throws SQLException {
+	public OutputStream setBinaryStream(@Positive long pos) throws SQLException {
 		checkOpen();
 		blob.setWriteOffset(checkPosition(pos));
 		return blob.getOutputStream();
@@ -101,7 +105,8 @@ class BlobImpl implements Blob, AutoCloseable {
 	}
 
 	@Override
-	public InputStream getBinaryStream(long pos, long length) throws SQLException {
+	@NonNull
+	public InputStream getBinaryStream(@Positive long pos, @NonNegative long length) throws SQLException {
 		checkLength(length);
 		checkOpen();
 		int readOffset = checkPosition(pos);

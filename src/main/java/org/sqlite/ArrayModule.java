@@ -1,5 +1,7 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.lang.foreign.*;
 import java.lang.foreign.ValueLayout.OfLong;
 import java.util.Iterator;
@@ -23,7 +25,7 @@ public class ArrayModule implements EponymousModule {
 	private static final int COLUMN_POINTER = 1;
 	private static final MemorySegment POINTER_NAME = nativeString(Arena.global(), "jarray");
 
-	public static void load_module(Conn conn) throws ConnException {
+	public static void load_module(@NonNull Conn conn) throws ConnException {
 		conn.createModule("jarray", INSTANCE, true);
 	}
 
@@ -32,10 +34,11 @@ public class ArrayModule implements EponymousModule {
 		C_LONG_LONG.withName("len")
 	).withName("jarray_bind");
 	private static final AddressLayout bind_ptr = (AddressLayout)bind_layout.select(groupElement("ptr"));
-	private static MemorySegment bind_ptr(MemorySegment bind) {
+	@NonNull
+	private static MemorySegment bind_ptr(@NonNull MemorySegment bind) {
 		return bind.get(bind_ptr, 0);
 	}
-	private static void bind_ptr(MemorySegment bind, MemorySegment ms) {
+	private static void bind_ptr(@NonNull MemorySegment bind, @NonNull MemorySegment ms) {
 		bind.set(bind_ptr, 0, ms);
 	}
 	private static final OfLong bind_len = (OfLong)bind_layout.select(groupElement("len"));
@@ -71,7 +74,7 @@ public class ArrayModule implements EponymousModule {
 	}
 
 	@Override
-	public Entry<Integer, MemorySegment> connect(sqlite3 db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment err_msg, boolean isCreate) {
+	public Entry<Integer, MemorySegment> connect(@NonNull sqlite3 db, @NonNull MemorySegment aux, int argc, @NonNull MemorySegment argv, @NonNull MemorySegment err_msg, boolean isCreate) {
 		int rc = sqlite3_declare_vtab(db, "CREATE TABLE x(value,pointer hidden)");
 		MemorySegment vtab = MemorySegment.NULL;
 		if (rc == SQLITE_OK) {
@@ -81,7 +84,7 @@ public class ArrayModule implements EponymousModule {
 	}
 
 	@Override
-	public int bestIndex(MemorySegment vtab, MemorySegment info, Iterator<MemorySegment> aConstraint, Iterator<MemorySegment> aConstraintUsage) {
+	public int bestIndex(@NonNull MemorySegment vtab, @NonNull MemorySegment info, Iterator<MemorySegment> aConstraint, @NonNull Iterator<MemorySegment> aConstraintUsage) {
 		// Index of the pointer= constraint
 		boolean ptr_idx = false;
 		while (aConstraint.hasNext()) {
@@ -126,6 +129,7 @@ public class ArrayModule implements EponymousModule {
 		cursor.set(rowId, 8, id);
 	}
 	private static final AddressLayout ptr = (AddressLayout)layout.select(groupElement("ptr"));
+	@NonNull
 	private static MemorySegment ptr(MemorySegment cursor) {
 		return cursor.get(ptr, 16);
 	}
@@ -141,7 +145,7 @@ public class ArrayModule implements EponymousModule {
 	}
 
 	@Override
-	public int filter(MemorySegment cursor, int idxNum, MemorySegment idxStr, sqlite3_values values) {
+	public int filter(@NonNull MemorySegment cursor, int idxNum, @NonNull MemorySegment idxStr, @NonNull sqlite3_values values) {
 		if (idxNum > 0) {
 			MemorySegment bind = values.getPointer(0, POINTER_NAME, bind_layout);
 			ptr(cursor, bind_ptr(bind));
@@ -155,20 +159,20 @@ public class ArrayModule implements EponymousModule {
 	}
 
 	@Override
-	public int next(MemorySegment cursor, long rowId) {
+	public int next(@NonNull MemorySegment cursor, long rowId) {
 		rowId(cursor, rowId + 1);
 		return SQLITE_OK;
 	}
 
 	@Override
-	public boolean isEof(MemorySegment cursor) {
+	public boolean isEof(@NonNull MemorySegment cursor) {
 		long id = rowId(cursor);
 		long len = len(cursor);
 		return id > len;
 	}
 
 	@Override
-	public int column(MemorySegment cursor, sqlite3_context sqlite3Context, int i) {
+	public int column(@NonNull MemorySegment cursor, @NonNull sqlite3_context sqlite3Context, int i) {
 		if (i == COLUMN_POINTER) {
 			return SQLITE_OK;
 		}
@@ -180,6 +184,7 @@ public class ArrayModule implements EponymousModule {
 	}
 
 	@Override
+	@NonNull
 	public MemoryLayout layout() {
 		return layout;
 	}

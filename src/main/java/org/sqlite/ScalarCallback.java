@@ -8,6 +8,8 @@
  */
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.lang.foreign.MemorySegment;
 
 import static org.sqlite.sqlite3_context.sqlite3_get_auxdata;
@@ -48,12 +50,13 @@ public abstract class ScalarCallback {
 	/**
 	 * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_set_auxdata</a>
 	 */
-	public static void setAuxData(sqlite3_context pCtx, int n, MemorySegment auxData, Destructor free) {
+	public static void setAuxData(@NonNull sqlite3_context pCtx, int n, MemorySegment auxData, Destructor free) {
 		sqlite3_set_auxdata(pCtx, n, auxData, free);
 	}
 	/**
 	 * @see <a href="http://sqlite.org/c3ref/get_auxdata.html">sqlite3_get_auxdata</a>
 	 */
+	@NonNull
 	public static MemorySegment getAuxData(sqlite3_context pCtx, int n) {
 		return sqlite3_get_auxdata(pCtx, n);
 	}

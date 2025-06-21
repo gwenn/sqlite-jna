@@ -1,5 +1,8 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
@@ -25,7 +28,7 @@ public final class sqlite3_values {
 		return new sqlite3_values(args, nArg);
 	}
 
-	private sqlite3_values(MemorySegment args, int nArg) {
+	private sqlite3_values(@NonNull MemorySegment args, int nArg) {
 		this.args = args.reinterpret(nArg * C_POINTER.byteSize()).asReadOnly();
 		this.nArg = nArg;
 	}
@@ -52,7 +55,7 @@ public final class sqlite3_values {
 	 * @param i 0...
 	 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_blob</a>
 	 */
-	public byte[] getBlob(int i) {
+	public byte @Nullable [] getBlob(int i) {
 		MemorySegment arg = arg(i);
 		MemorySegment blob;
 		try {
@@ -118,6 +121,7 @@ public final class sqlite3_values {
 	 * @param i 0...
 	 * @see <a href="http://sqlite.org/c3ref/value_blob.html">sqlite3_value_text</a>
 	 */
+	@Nullable
 	public String getText(int i) {
 		MemorySegment pValue = arg(i);
 		try {
@@ -174,7 +178,7 @@ public final class sqlite3_values {
 			throw new AssertionError("should not reach here", e);
 		}
 	}
-
+	@Nullable
 	public Object getObject(int i) {
 		int type = getType(i);
 		return switch (type) {

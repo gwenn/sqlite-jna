@@ -2,6 +2,7 @@ package org.sqlite;
 
 import java.lang.foreign.MemorySegment;
 
+import static org.sqlite.SQLite.isNull;
 import static org.sqlite.sqlite3_context.sqlite3_aggregate_context;
 
 /**
@@ -32,7 +33,7 @@ public abstract class AggregateStepCallback {
 		sqlite3_context pCtx = new sqlite3_context(ms);
 		int nBytes = numberOfBytes();
 		MemorySegment p = sqlite3_aggregate_context(pCtx, nBytes);
-		if (p == null && nBytes > 0) {
+		if (isNull(p) && nBytes > 0) {
 			pCtx.setResultErrorNoMem();
 			return;
 		}

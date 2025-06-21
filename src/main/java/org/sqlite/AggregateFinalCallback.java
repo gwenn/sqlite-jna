@@ -1,5 +1,7 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.lang.foreign.MemorySegment;
 
 import static org.sqlite.sqlite3_context.sqlite3_aggregate_context;
@@ -33,7 +35,7 @@ public abstract class AggregateFinalCallback {
 		finalStep(pCtx, getAggregateContext(pCtx));
 	}
 
-	protected abstract void finalStep(sqlite3_context pCtx, MemorySegment aggrCtx);
+	protected abstract void finalStep(@NonNull sqlite3_context pCtx, @NonNull MemorySegment aggrCtx);
 
 	/**
 	 * Obtain aggregate function context.
@@ -41,6 +43,7 @@ public abstract class AggregateFinalCallback {
 	 * @return <code>null</code> when no rows match an aggregate query.
 	 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_aggregate_context</a>
 	 */
+	@NonNull
 	protected static MemorySegment getAggregateContext(sqlite3_context pCtx) {
 		// Within the xFinal callback, it is customary to set N=0 in calls to sqlite3_aggregate_context(C,N)
 		// so that no pointless memory allocations occur.

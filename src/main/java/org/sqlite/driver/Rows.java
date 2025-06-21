@@ -8,6 +8,9 @@
  */
 package org.sqlite.driver;
 
+import org.checkerframework.checker.index.qual.Positive;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sqlite.ColTypes;
 import org.sqlite.ErrCodes;
 import org.sqlite.StmtException;
@@ -142,29 +145,30 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public String getString(int columnIndex) throws SQLException {
+	@Nullable
+	public String getString(@Positive int columnIndex) throws SQLException {
 		String str = getStmt().getColumnText(fixCol(columnIndex));
 		wasNull = str == null;
 		return str;
 	}
 
 	@Override
-	public boolean getBoolean(int columnIndex) throws SQLException {
+	public boolean getBoolean(@Positive int columnIndex) throws SQLException {
 		return getInt(columnIndex) != 0;
 	}
 
 	@Override
-	public byte getByte(int columnIndex) throws SQLException {
+	public byte getByte(@Positive int columnIndex) throws SQLException {
 		return (byte) getInt(columnIndex);
 	}
 
 	@Override
-	public short getShort(int columnIndex) throws SQLException {
+	public short getShort(@Positive int columnIndex) throws SQLException {
 		return (short) getInt(columnIndex);
 	}
 
 	@Override
-	public int getInt(int columnIndex) throws SQLException {
+	public int getInt(@Positive int columnIndex) throws SQLException {
 		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
 		int sourceType = stmt.getColumnType(fixCol(columnIndex));
@@ -178,7 +182,7 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public long getLong(int columnIndex) throws SQLException {
+	public long getLong(@Positive int columnIndex) throws SQLException {
 		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
 		int sourceType = stmt.getColumnType(fixCol(columnIndex));
@@ -192,12 +196,12 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public float getFloat(int columnIndex) throws SQLException {
+	public float getFloat(@Positive int columnIndex) throws SQLException {
 		return (float) getDouble(columnIndex);
 	}
 
 	@Override
-	public double getDouble(int columnIndex) throws SQLException {
+	public double getDouble(@Positive int columnIndex) throws SQLException {
 		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
 		int sourceType = stmt.getColumnType(fixCol(columnIndex));
@@ -217,24 +221,27 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public byte[] getBytes(int columnIndex) throws SQLException {
+	public byte @Nullable[] getBytes(@Positive int columnIndex) throws SQLException {
 		byte[] blob = getStmt().getColumnBlob(fixCol(columnIndex));
 		wasNull = blob == null;
 		return blob;
 	}
 
 	@Override
-	public Date getDate(int columnIndex) throws SQLException {
+	@Nullable
+	public Date getDate(@Positive int columnIndex) throws SQLException {
 		return getDate(columnIndex, null);
 	}
 
 	@Override
-	public Time getTime(int columnIndex) throws SQLException {
+	@Nullable
+	public Time getTime(@Positive int columnIndex) throws SQLException {
 		return getTime(columnIndex, null);
 	}
 
 	@Override
-	public Timestamp getTimestamp(int columnIndex) throws SQLException {
+	@Nullable
+	public Timestamp getTimestamp(@Positive int columnIndex) throws SQLException {
 		return getTimestamp(columnIndex, null);
 	}
 
@@ -250,7 +257,8 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public InputStream getBinaryStream(int columnIndex) throws SQLException {
+	@Nullable
+	public InputStream getBinaryStream(@Positive int columnIndex) throws SQLException {
 		if (rowId != null) {
 			Blob blob = getBlob(columnIndex);
 			return blob == null ? null : blob.getBinaryStream();
@@ -264,88 +272,94 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public String getString(String columnLabel) throws SQLException {
+	@Nullable
+	public String getString(@NonNull String columnLabel) throws SQLException {
 		return getString(findColumn(columnLabel));
 	}
 
 	@Override
-	public boolean getBoolean(String columnLabel) throws SQLException {
+	public boolean getBoolean(@NonNull String columnLabel) throws SQLException {
 		return getBoolean(findColumn(columnLabel));
 	}
 
 	@Override
-	public byte getByte(String columnLabel) throws SQLException {
+	public byte getByte(@NonNull String columnLabel) throws SQLException {
 		return getByte(findColumn(columnLabel));
 	}
 
 	@Override
-	public short getShort(String columnLabel) throws SQLException {
+	public short getShort(@NonNull String columnLabel) throws SQLException {
 		return getShort(findColumn(columnLabel));
 	}
 
 	@Override
-	public int getInt(String columnLabel) throws SQLException {
+	public int getInt(@NonNull String columnLabel) throws SQLException {
 		return getInt(findColumn(columnLabel));
 	}
 
 	@Override
-	public long getLong(String columnLabel) throws SQLException {
+	public long getLong(@NonNull String columnLabel) throws SQLException {
 		return getLong(findColumn(columnLabel));
 	}
 
 	@Override
-	public float getFloat(String columnLabel) throws SQLException {
+	public float getFloat(@NonNull String columnLabel) throws SQLException {
 		return getFloat(findColumn(columnLabel));
 	}
 
 	@Override
-	public double getDouble(String columnLabel) throws SQLException {
+	public double getDouble(@NonNull String columnLabel) throws SQLException {
 		return getDouble(findColumn(columnLabel));
 	}
 
 	@Override
 	@SuppressWarnings("deprecation")
-	public BigDecimal getBigDecimal(String columnLabel, int scale) throws SQLException {
+	public BigDecimal getBigDecimal(@NonNull String columnLabel, int scale) throws SQLException {
 		return getBigDecimal(findColumn(columnLabel), scale);
 	}
 
 	@Override
-	public byte[] getBytes(String columnLabel) throws SQLException {
+	public byte @Nullable[] getBytes(@NonNull String columnLabel) throws SQLException {
 		return getBytes(findColumn(columnLabel));
 	}
 
 	@Override
-	public Date getDate(String columnLabel) throws SQLException {
+	@Nullable
+	public Date getDate(@NonNull String columnLabel) throws SQLException {
 		return getDate(findColumn(columnLabel));
 	}
 
 	@Override
-	public Time getTime(String columnLabel) throws SQLException {
+	@Nullable
+	public Time getTime(@NonNull String columnLabel) throws SQLException {
 		return getTime(findColumn(columnLabel));
 	}
 
 	@Override
-	public Timestamp getTimestamp(String columnLabel) throws SQLException {
+	@Nullable
+	public Timestamp getTimestamp(@NonNull String columnLabel) throws SQLException {
 		return getTimestamp(findColumn(columnLabel));
 	}
 
 	@Override
-	public InputStream getAsciiStream(String columnLabel) throws SQLException {
+	public InputStream getAsciiStream(@NonNull String columnLabel) throws SQLException {
 		return getAsciiStream(findColumn(columnLabel));
 	}
 
 	@Override
 	@SuppressWarnings("deprecation")
-	public InputStream getUnicodeStream(String columnLabel) throws SQLException {
+	public InputStream getUnicodeStream(@NonNull String columnLabel) throws SQLException {
 		return getUnicodeStream(findColumn(columnLabel));
 	}
 
 	@Override
-	public InputStream getBinaryStream(String columnLabel) throws SQLException {
+	@Nullable
+	public InputStream getBinaryStream(@NonNull String columnLabel) throws SQLException {
 		return getBinaryStream(findColumn(columnLabel));
 	}
 
 	@Override
+	@Nullable
 	public SQLWarning getWarnings() {
 		// checkOpen();
 		return null;
@@ -357,12 +371,14 @@ class Rows implements ResultSet {
 	}
 
 	@Override
+	@Nullable
 	public String getCursorName() throws SQLException {
 		checkOpen();
 		return null;
 	}
 
 	@Override
+	@NonNull
 	public ResultSetMetaData getMetaData() throws SQLException { // Used by Hibernate
 		checkOpen();
 		if (meta == null) {
@@ -372,7 +388,8 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public Object getObject(int columnIndex) throws SQLException {
+	@Nullable
+	public Object getObject(@Positive int columnIndex) throws SQLException {
 		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
 		int sourceType = stmt.getColumnType(fixCol(columnIndex));
@@ -398,18 +415,20 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public Object getObject(String columnLabel) throws SQLException {
+	@Nullable
+	public Object getObject(@NonNull String columnLabel) throws SQLException {
 		return getObject(findColumn(columnLabel));
 	}
 
 	@Override
-	public int findColumn(String columnLabel) throws SQLException {
+	public int findColumn(@NonNull String columnLabel) throws SQLException {
 		checkOpen();
 		return s.findCol(columnLabel);
 	}
 
 	@Override
-	public Reader getCharacterStream(int columnIndex) throws SQLException {
+	@Nullable
+	public Reader getCharacterStream(@Positive int columnIndex) throws SQLException {
 		if (rowId != null) {
 			try {
 				InputStream in = getBinaryStream(columnIndex);
@@ -430,12 +449,14 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public Reader getCharacterStream(String columnLabel) throws SQLException {
+	@Nullable
+	public Reader getCharacterStream(@NonNull String columnLabel) throws SQLException {
 		return getCharacterStream(findColumn(columnLabel));
 	}
 
 	@Override
-	public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
+	@Nullable
+	public BigDecimal getBigDecimal(@Positive int columnIndex) throws SQLException {
 		String stringValue = getString(columnIndex);
 		if (stringValue == null) {
 			return null;
@@ -449,7 +470,8 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public BigDecimal getBigDecimal(String columnLabel) throws SQLException {
+	@Nullable
+	public BigDecimal getBigDecimal(@NonNull String columnLabel) throws SQLException {
 		return getBigDecimal(findColumn(columnLabel));
 	}
 
@@ -817,7 +839,8 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
+	@Nullable
+	public Object getObject(@Positive int columnIndex, @Nullable Map<String, Class<?>> map) throws SQLException {
 		if (map == null || map.isEmpty()) {
 			return getObject(columnIndex);
 		}
@@ -830,7 +853,8 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public Blob getBlob(int columnIndex) throws SQLException {
+	@Nullable
+	public Blob getBlob(@Positive int columnIndex) throws SQLException {
 		checkOpen();
 		if (rowId == null) { // FIXME check PrepStmt.rowId as well...
 			throw new SQLException("You must read the associated RowId before opening a Blob");
@@ -866,32 +890,35 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public Object getObject(String columnLabel, Map<String, Class<?>> map) throws SQLException {
+	@Nullable
+	public Object getObject(@NonNull String columnLabel, @Nullable Map<String, Class<?>> map) throws SQLException {
 		return getObject(findColumn(columnLabel), map);
 	}
 
 	@Override
-	public Ref getRef(String columnLabel) throws SQLException {
+	public Ref getRef(@NonNull String columnLabel) throws SQLException {
 		return getRef(findColumn(columnLabel));
 	}
 
 	@Override
-	public Blob getBlob(String columnLabel) throws SQLException {
+	@Nullable
+	public Blob getBlob(@NonNull String columnLabel) throws SQLException {
 		return getBlob(findColumn(columnLabel));
 	}
 
 	@Override
-	public Clob getClob(String columnLabel) throws SQLException {
+	public Clob getClob(@NonNull String columnLabel) throws SQLException {
 		return getClob(findColumn(columnLabel));
 	}
 
 	@Override
-	public Array getArray(String columnLabel) throws SQLException {
+	public Array getArray(@NonNull String columnLabel) throws SQLException {
 		return getArray(findColumn(columnLabel));
 	}
 
 	@Override
-	public Date getDate(int columnIndex, Calendar cal) throws SQLException {
+	@Nullable
+	public Date getDate(@Positive int columnIndex, @Nullable Calendar cal) throws SQLException {
 		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
 		int sourceType = stmt.getColumnType(fixCol(columnIndex));
@@ -917,12 +944,14 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public Date getDate(String columnLabel, Calendar cal) throws SQLException {
+	@Nullable
+	public Date getDate(@NonNull String columnLabel, @Nullable Calendar cal) throws SQLException {
 		return getDate(findColumn(columnLabel), cal);
 	}
 
 	@Override
-	public Time getTime(int columnIndex, Calendar cal) throws SQLException {
+	@Nullable
+	public Time getTime(@Positive int columnIndex, @Nullable Calendar cal) throws SQLException {
 		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
 		int sourceType = stmt.getColumnType(fixCol(columnIndex));
@@ -947,12 +976,14 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public Time getTime(String columnLabel, Calendar cal) throws SQLException {
+	@Nullable
+	public Time getTime(@NonNull String columnLabel, @Nullable Calendar cal) throws SQLException {
 		return getTime(findColumn(columnLabel), cal);
 	}
 
 	@Override
-	public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
+	@Nullable
+	public Timestamp getTimestamp(@Positive int columnIndex, @Nullable Calendar cal) throws SQLException {
 		org.sqlite.Stmt stmt = getStmt();
 		// After a type conversion, the value returned by sqlite3_column_type() is undefined.
 		int sourceType = stmt.getColumnType(fixCol(columnIndex));
@@ -977,7 +1008,8 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
+	@Nullable
+	public Timestamp getTimestamp(@NonNull String columnLabel, @Nullable Calendar cal) throws SQLException {
 		return getTimestamp(findColumn(columnLabel), cal);
 	}
 
@@ -987,7 +1019,7 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public URL getURL(String columnLabel) throws SQLException {
+	public URL getURL(@NonNull String columnLabel) throws SQLException {
 		return getURL(findColumn(columnLabel));
 	}
 
@@ -1032,13 +1064,15 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public RowId getRowId(int columnIndex) throws SQLException {
+	@NonNull
+	public RowId getRowId(@Positive int columnIndex) throws SQLException {
 		rowId = new RowIdImpl(getLong(columnIndex));
 		return rowId;
 	}
 
 	@Override
-	public RowId getRowId(String columnLabel) throws SQLException {
+	@NonNull
+	public RowId getRowId(@NonNull String columnLabel) throws SQLException {
 		return getRowId(findColumn(columnLabel));
 	}
 
@@ -1088,12 +1122,13 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public NClob getNClob(String columnLabel) throws SQLException {
+	public NClob getNClob(@NonNull String columnLabel) throws SQLException {
 		return getNClob(findColumn(columnLabel));
 	}
 
 	@Override
-	public SQLXML getSQLXML(int columnIndex) throws SQLException {
+	@Nullable
+	public SQLXML getSQLXML(@Positive int columnIndex) throws SQLException {
 		int sourceType = stmt.getColumnType(fixCol(columnIndex));
 		wasNull = sourceType == ColTypes.SQLITE_NULL;
 		if (wasNull) {
@@ -1103,7 +1138,8 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public SQLXML getSQLXML(String columnLabel) throws SQLException {
+	@Nullable
+	public SQLXML getSQLXML(@NonNull String columnLabel) throws SQLException {
 		return getSQLXML(findColumn(columnLabel));
 	}
 
@@ -1118,22 +1154,26 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public String getNString(int columnIndex) throws SQLException {
+	@Nullable
+	public String getNString(@Positive int columnIndex) throws SQLException {
 		return getString(columnIndex);
 	}
 
 	@Override
-	public String getNString(String columnLabel) throws SQLException {
+	@Nullable
+	public String getNString(@NonNull String columnLabel) throws SQLException {
 		return getNString(findColumn(columnLabel));
 	}
 
 	@Override
-	public Reader getNCharacterStream(int columnIndex) throws SQLException {
+	@Nullable
+	public Reader getNCharacterStream(@Positive int columnIndex) throws SQLException {
 		return getCharacterStream(columnIndex);
 	}
 
 	@Override
-	public Reader getNCharacterStream(String columnLabel) throws SQLException {
+	@Nullable
+	public Reader getNCharacterStream(@NonNull String columnLabel) throws SQLException {
 		return getNCharacterStream(findColumn(columnLabel));
 	}
 
@@ -1278,7 +1318,8 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+	@Nullable
+	public <T> T getObject(@Positive int columnIndex, Class<T> type) throws SQLException {
 		if (type == null) {
 			throw Util.error("Null type specified");
 		}
@@ -1303,7 +1344,7 @@ class Rows implements ResultSet {
 		};
 	}
 
-	private static <T> T convert(String txt, Class<T> type) throws SQLException {
+	private static <T> T convert(@NonNull String txt, @NonNull Class<T> type) throws SQLException {
 		if (LocalDate.class.equals(type)) {
 			return (T)LocalDate.parse(txt); // TODO wrap DateTimeParseException into SQLException
 		} else if (LocalDateTime.class.equals(type)) {
@@ -1316,24 +1357,25 @@ class Rows implements ResultSet {
 		throw new SQLException("Conversion from text to " + type + " is not supported");
 	}
 
-	private static <T> T convert(long l, Class<T> type) throws SQLException {
+	private static <T> T convert(long l, @NonNull Class<T> type) throws SQLException {
 		if (LocalDate.class.equals(type)) {
 			return (T)LocalDate.ofEpochDay(l);
 		}
 		throw new SQLException("Conversion from long to " + type + " is not supported");
 	}
 
-	private static <T> T convert(double d, Class<T> type) throws SQLException {
+	private static <T> T convert(double d, @NonNull Class<T> type) throws SQLException {
 		throw new SQLException("Conversion from double to " + type + " is not supported");
 	}
 
 	@Override
-	public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+	@Nullable
+	public <T> T getObject(@NonNull String columnLabel, @NonNull Class<T> type) throws SQLException {
 		return getObject(findColumn(columnLabel), type);
 	}
 
 	@Override
-	public <T> T unwrap(Class<T> iface) throws SQLException {
+	public <T> T unwrap(@NonNull Class<T> iface) throws SQLException {
 		if (iface.isAssignableFrom(getClass())) {
 			return iface.cast(this);
 		}
@@ -1341,7 +1383,7 @@ class Rows implements ResultSet {
 	}
 
 	@Override
-	public boolean isWrapperFor(Class<?> iface) {
+	public boolean isWrapperFor(@NonNull Class<?> iface) {
 		return iface.isAssignableFrom(getClass());
 	}
 

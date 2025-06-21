@@ -8,6 +8,11 @@
  */
 package org.sqlite;
 
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.index.qual.Positive;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.lang.foreign.MemorySegment;
 import java.lang.ref.Cleaner;
 import java.util.Arrays;
@@ -25,8 +30,10 @@ public class Stmt implements AutoCloseable, Row {
 	final Conn c;
 	// Whole SQL (including tail)...
 	final String sql;
+	@Nullable
 	private final sqlite3_stmt pStmt;
 	private final Cleaner.Cleanable cleanable;
+	@Nullable
 	private final String tail;
 	// cached parameter count
 	private int paramCount = -1;
@@ -34,8 +41,8 @@ public class Stmt implements AutoCloseable, Row {
 	private Map<String, Integer> params;
 	// cached column count
 	private int columnCount = -1;
-	private String[] columnNames;
-	private int[] columnAffinities;
+	private String @Nullable[] columnNames;
+	private int @Nullable [] columnAffinities;
 	private boolean cacheable;
 
 	Stmt(Conn c, String sql, sqlite3_stmt pStmt, MemorySegment tail, boolean cacheable) {
@@ -51,14 +58,15 @@ public class Stmt implements AutoCloseable, Row {
 	boolean isDumb() {
 		return pStmt == null;
 	}
-
+	@NonNull
 	public String getSql() {
 		return sqlite3_sql(pStmt); // ok if pStmt is null
 	}
+	@Nullable
 	public String getTail() {
 		return tail;
 	}
-
+	@Nullable
 	public String getExpandedSql() {
 		MemorySegment ptr = sqlite3_expanded_sql(pStmt);
 		if (!isNull(ptr)) {
@@ -292,20 +300,21 @@ public class Stmt implements AutoCloseable, Row {
 	}
 
 	@Override
-	public int getColumnType(int iCol) throws StmtException {
+	public int getColumnType(@NonNegative int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		return sqlite3_column_type(pStmt, iCol); // ok if pStmt is null
 	}
 
 	@Override
-	public String getColumnDeclType(int iCol) throws StmtException {
+	@Nullable
+	public String getColumnDeclType(@NonNegative int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
 		return sqlite3_column_decltype(pStmt, iCol); // ko if pStmt is null
 	}
 
 	@Override
-	public int getColumnAffinity(int iCol) throws StmtException {
+	public int getColumnAffinity(@NonNegative int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		if (null == columnAffinities) {
 			columnAffinities = new int[getColumnCount()];
@@ -318,7 +327,7 @@ public class Stmt implements AutoCloseable, Row {
 	}
 
 	@Override
-	public String getColumnName(int iCol) throws StmtException {
+	public String getColumnName(@NonNegative int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
 		if (null == columnNames) {
@@ -330,32 +339,35 @@ public class Stmt implements AutoCloseable, Row {
 		return columnNames[iCol];
 	}
 	@Override
-	public String getColumnOriginName(int iCol) throws StmtException {
+	@Nullable
+	public String getColumnOriginName(@NonNegative int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
 		return sqlite3_column_origin_name(pStmt, iCol); // ko if pStmt is null
 	}
 	@Override
-	public String getColumnTableName(int iCol) throws StmtException {
+	@Nullable
+	public String getColumnTableName(@NonNegative int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
 		return sqlite3_column_table_name(pStmt, iCol); // ko if pStmt is null
 	}
 	@Override
-	public String getColumnDatabaseName(int iCol) throws StmtException {
+	@Nullable
+	public String getColumnDatabaseName(@NonNegative int iCol) throws StmtException {
 		checkOpen();
 		checkColumnIndex(iCol);
 		return sqlite3_column_database_name(pStmt, iCol); // ko if pStmt is null
 	}
 
 	@Override
-	public byte[] getColumnBlob(int iCol) throws StmtException {
+	public byte @Nullable[] getColumnBlob(@NonNegative int iCol) throws StmtException {
 		int type = getColumnType(iCol);
 		if (type == SQLITE_NULL) {
 			return null;
 		}
 		MemorySegment p = sqlite3_column_blob(pStmt, iCol); // ok if pStmt is null
-		if (p == null) {
+		if (isNull(p)) {
 			int bytes = getColumnBytes(iCol);
 			// The return value from sqlite3_column_blob() for a zero-length BLOB is a NULL pointer.
 			if (bytes == 0) {
@@ -369,28 +381,29 @@ public class Stmt implements AutoCloseable, Row {
 	}
 
 	@Override
-	public int getColumnBytes(int iCol) throws StmtException {
+	public int getColumnBytes(@NonNegative int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		return sqlite3_column_bytes(pStmt, iCol); // ok if pStmt is null
 	}
 
 	@Override
-	public double getColumnDouble(int iCol) throws StmtException {
+	public double getColumnDouble(@NonNegative int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		return sqlite3_column_double(pStmt, iCol); // ok if pStmt is null
 	}
 	@Override
-	public int getColumnInt(int iCol) throws StmtException {
+	public int getColumnInt(@NonNegative int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		return sqlite3_column_int(pStmt, iCol); // ok if pStmt is null
 	}
 	@Override
-	public long getColumnLong(int iCol) throws StmtException {
+	public long getColumnLong(@NonNegative int iCol) throws StmtException {
 		checkColumnIndex(iCol);
 		return sqlite3_column_int64(pStmt, iCol); // ok if pStmt is null
 	}
 	@Override
-	public String getColumnText(int iCol) throws StmtException {
+	@Nullable
+	public String getColumnText(@NonNegative int iCol) throws StmtException {
 		int type = getColumnType(iCol);
 		if (type == SQLITE_NULL) {
 			return null;
@@ -428,7 +441,7 @@ public class Stmt implements AutoCloseable, Row {
 		}
 	}
 
-	public void bindByIndex(int i, Object value) throws StmtException {
+	public void bindByIndex(@Positive int i, @Nullable Object value) throws StmtException {
 		switch (value) {
 			case null -> bindNull(i);
 			case String s -> bindText(i, s);
@@ -461,7 +474,7 @@ public class Stmt implements AutoCloseable, Row {
 	 * @param name SQL parameter name
 	 * @return SQL parameter index or 0 if no match (cached)
 	 */
-	public int getBindParameterIndex(String name) {
+	public int getBindParameterIndex(@NonNull String name) {
 		if (params == null) {
 			params = new HashMap<>(getBindParameterCount());
 		}
@@ -480,6 +493,7 @@ public class Stmt implements AutoCloseable, Row {
 	 * @param i The leftmost SQL parameter has an index of 1
 	 * @return SQL parameter name or null.
 	 */
+	@Nullable
 	public String getBindParameterName(int i) { // TODO Cache?
 		return sqlite3_bind_parameter_name(pStmt, i); // ok if pStmt is null
 	}
@@ -488,7 +502,7 @@ public class Stmt implements AutoCloseable, Row {
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
 	 */
-	public void bindBlob(int i, byte[] value) throws StmtException {
+	public void bindBlob(@Positive int i, byte @Nullable[] value) throws StmtException {
 		if (value == null) {
 			bindNull(i);
 			return;
@@ -500,7 +514,7 @@ public class Stmt implements AutoCloseable, Row {
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
 	 */
-	public void bindDouble(int i, double value) throws StmtException {
+	public void bindDouble(@Positive int i, double value) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
 		checkBind(sqlite3_bind_double(pStmt, i, value), "sqlite3_bind_double", i);
 	}
@@ -508,7 +522,7 @@ public class Stmt implements AutoCloseable, Row {
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
 	 */
-	public void bindInt(int i, int value) throws StmtException {
+	public void bindInt(@Positive int i, int value) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
 		checkBind(sqlite3_bind_int(pStmt, i, value), "sqlite3_bind_int", i);
 	}
@@ -516,14 +530,14 @@ public class Stmt implements AutoCloseable, Row {
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
 	 */
-	public void bindLong(int i, long value) throws StmtException {
+	public void bindLong(@Positive int i, long value) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
 		checkBind(sqlite3_bind_int64(pStmt, i, value), "sqlite3_bind_int64", i);
 	}
 	/**
 	 * @param i The leftmost SQL parameter has an index of 1
 	 */
-	public void bindNull(int i) throws StmtException {
+	public void bindNull(@Positive int i) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
 		checkBind(sqlite3_bind_null(pStmt, i), "sqlite3_bind_null", i);
 	}
@@ -531,7 +545,7 @@ public class Stmt implements AutoCloseable, Row {
 	 * @param i     The leftmost SQL parameter has an index of 1
 	 * @param value SQL parameter value
 	 */
-	public void bindText(int i, String value) throws StmtException {
+	public void bindText(@Positive int i, String value) throws StmtException {
 		if (value == null) {
 			bindNull(i);
 			return;
@@ -543,17 +557,17 @@ public class Stmt implements AutoCloseable, Row {
 	 * @param i The leftmost SQL parameter has an index of 1
 	 * @param n length of BLOB
 	 */
-	public void bindZeroblob(int i, int n) throws StmtException {
+	public void bindZeroblob(@Positive int i, int n) throws StmtException {
 		// ok if pStmt is null => SQLITE_MISUSE
 		checkBind(sqlite3_bind_zeroblob(pStmt, i, n), "sqlite3_bind_zeroblob", i);
 	}
 
-	public void bindArray(int i, long[] array) throws StmtException {
+	public void bindArray(@Positive int i, long[] array) throws StmtException {
 		checkBind(ArrayModule.bind_array(pStmt, i, array), "sqlite3_bind_pointer", i);
 	}
 
 	private static final boolean[] UNKNOWN = new boolean[3];
-	public boolean[] getMetadata(int iCol) throws StmtException, ConnException {
+	public boolean[] getMetadata(@NonNegative int iCol) throws StmtException, ConnException {
 		String colName = getColumnOriginName(iCol);
 		if (colName != null) {
 			return c.getTableColumnMetadata(
@@ -605,7 +619,7 @@ public class Stmt implements AutoCloseable, Row {
 		}
 	}
 
-	public Blob open(int iCol, long iRow, boolean rw) throws SQLiteException {
+	public Blob open(@NonNegative int iCol, long iRow, boolean rw) throws SQLiteException {
 		/*final int type = getColumnType(iCol);
     if (ColTypes.SQLITE_NULL == type) { // cannot open value of type null
       return null;
@@ -616,7 +630,7 @@ public class Stmt implements AutoCloseable, Row {
 		}
 		return null;
 	}
-	public String encoding(int iCol) throws SQLiteException {
+	public String encoding(@NonNegative int iCol) throws SQLiteException {
 		return c.encoding(getColumnDatabaseName(iCol));
 	}
 

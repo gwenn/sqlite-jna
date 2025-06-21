@@ -1,5 +1,6 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -268,7 +269,7 @@ public class ConnTest {
 			}
 		}, new AggregateFinalCallback() {
 			@Override
-			protected void finalStep(sqlite3_context pCtx, MemorySegment aggrCtx) {
+			protected void finalStep(@NonNull sqlite3_context pCtx, @NonNull MemorySegment aggrCtx) {
 				assertNotNull(pCtx);
 				if (isNull(aggrCtx)) {
 					pCtx.setResultNull();

@@ -8,6 +8,7 @@
  */
 package org.sqlite.driver;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sqlite.ConnException;
 import org.sqlite.ErrCodes;
 import org.sqlite.OpenFlags;
@@ -51,7 +52,8 @@ public class JDBC implements Driver {
 	public static final String CACHE = "cache";
 
 	@Override
-	public Connection connect(String url, Properties info) throws SQLException {
+	@Nullable
+	public Connection connect(String url, @Nullable Properties info) throws SQLException {
 		if (!acceptsURL(url)) return null;
 		String vfs = info == null ? null : info.getProperty(VFS);
 		int flags = getOpenFlags(info == null ? null : info.getProperty(MODE),
@@ -93,7 +95,7 @@ public class JDBC implements Driver {
 	}
 
 	@Override
-	public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) {
+	public DriverPropertyInfo[] getPropertyInfo(String url, @Nullable Properties info) {
 		// TODO parse url
 		DriverPropertyInfo vfs = new DriverPropertyInfo(VFS, info == null ? null : info.getProperty(VFS));
 		vfs.description = "Specify the name of a VFS object that provides the operating system interface that should be used to access the database file on disk.";
@@ -202,6 +204,7 @@ public class JDBC implements Driver {
 		throw Util.unsupported("Driver.getParentLogger");
 	}
 
+	@Nullable
 	private static Driver registeredDriver;
 	public static void register() throws SQLException {
 		if (isRegistered()) {

@@ -1,5 +1,6 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,7 @@ public class VTabLogModule implements UpdateModule {
 	private static final Logger log = LoggerFactory.getLogger(VTabLogModule.class);
 	public static final VTabLogModule INSTANCE = new VTabLogModule();
 
-	public static void load_module(Conn conn) throws ConnException {
+	public static void load_module(@NonNull Conn conn) throws ConnException {
 		conn.createModule("vtablog", INSTANCE, false);
 	}
 
@@ -36,7 +37,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public Map.Entry<Integer, MemorySegment> connect(sqlite3 db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment errMsg, boolean isCreate) {
+	public Map.Entry<Integer, MemorySegment> connect(@NonNull sqlite3 db, @NonNull MemorySegment aux, int argc, @NonNull MemorySegment argv, @NonNull MemorySegment errMsg, boolean isCreate) {
 		MemorySegment zModuleName = argv.getAtIndex(C_POINTER, 0);
 		MemorySegment zDb =  argv.getAtIndex(C_POINTER, 1);
 		MemorySegment zName = argv.getAtIndex(C_POINTER, 2);
@@ -98,7 +99,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public int bestIndex(MemorySegment vtab, MemorySegment info, Iterator<MemorySegment> aConstraint, Iterator<MemorySegment> aConstraintUsage) {
+	public int bestIndex(@NonNull MemorySegment vtab, @NonNull MemorySegment info, Iterator<MemorySegment> aConstraint, @NonNull Iterator<MemorySegment> aConstraintUsage) {
 		log.info("{}.{}.xBestIndex(): colUsed: 0x{}, nConstraint: {}, nOrderBy: {}", db(vtab), name(vtab), Long.toHexString(colUsed(info)), nConstraint(info), nOrderBy(info));
 		int i = 0;
 		while (aConstraint.hasNext()) {
@@ -120,13 +121,13 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public int delete(MemorySegment vtab, sqlite3_values values) {
+	public int delete(@NonNull MemorySegment vtab, sqlite3_values values) {
 		log.info("{}.{}.xUpdate-delete({})", db(vtab), name(vtab), values.getObject(0));
 		return 0;
 	}
 
 	@Override
-	public Map.Entry<Integer, Long> insert(MemorySegment vtab, sqlite3_values values) {
+	public Map.Entry<Integer, Long> insert(@NonNull MemorySegment vtab, sqlite3_values values) {
 		final String args = IntStream.range(1, values.getCount())
 			.mapToObj(i -> String.format("argv[%s]=%s", i, values.getObject(i)))
 			.collect(Collectors.joining(", "));
@@ -135,7 +136,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public int update(MemorySegment vtab, sqlite3_values values) {
+	public int update(@NonNull MemorySegment vtab, sqlite3_values values) {
 		final String args = IntStream.range(0, values.getCount())
 			.mapToObj(i -> String.format("argv[%s]=%s", i, values.getObject(i)))
 			.collect(Collectors.joining(", "));
@@ -144,7 +145,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public int disconnect(MemorySegment vtab, boolean isDestroy) {
+	public int disconnect(@NonNull MemorySegment vtab, boolean isDestroy) {
 		log.info(isDestroy ? "{}.{}.xDestroy()" : "{}.{}.xDisconnect()", db(vtab), name(vtab));
 		sqlite3_free(zName(vtab));
 		sqlite3_free(zDb(vtab));
@@ -152,7 +153,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public MemorySegment open(MemorySegment vtab) {
+	public MemorySegment open(@NonNull MemorySegment vtab) {
 		int nCursor = nCursor(vtab);
 		log.info("{}.{}.xOpen(cursor={})", db(vtab), name(vtab), nCursor);
 		MemorySegment cursor = sqlite3_malloc(layout());
@@ -164,7 +165,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public int close(MemorySegment cursor) {
+	public int close(@NonNull MemorySegment cursor) {
 		cursor = cursor.reinterpret(layout().byteSize());
 		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
 		log.info("{}.{}.xClose(cursor={})", db(vtab), name(vtab), iCursor(cursor));
@@ -172,7 +173,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public int filter(MemorySegment cursor, int idxNum, MemorySegment idxStr, sqlite3_values values) {
+	public int filter(@NonNull MemorySegment cursor, int idxNum, @NonNull MemorySegment idxStr, @NonNull sqlite3_values values) {
 		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
 		log.info("{}.{}.xFilter(cursor={})", db(vtab), name(vtab), iCursor(cursor));
 		rowId(cursor, 0);
@@ -180,7 +181,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public int next(MemorySegment cursor, long rowId) {
+	public int next(@NonNull MemorySegment cursor, long rowId) {
 		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
 		log.info("{}.{}.xNext(cursor={}) rowId {} -> {}", db(vtab), name(vtab), iCursor(cursor), rowId, rowId + 1);
 		rowId(cursor, rowId + 1);
@@ -188,7 +189,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public boolean isEof(MemorySegment cursor) {
+	public boolean isEof(@NonNull MemorySegment cursor) {
 		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
 		boolean eof = rowId(cursor) >= nRow(vtab);
 		log.info("{}.{}.xEof(cursor={}): {}", db(vtab), name(vtab), iCursor(cursor), eof);
@@ -196,7 +197,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public int column(MemorySegment cursor, sqlite3_context sqlite3Context, int i) {
+	public int column(@NonNull MemorySegment cursor, @NonNull sqlite3_context sqlite3Context, int i) {
 		String zVal;
 		if (i < 26) {
 			zVal = String.format("%s%d", "abcdefghijklmnopqrstuvwyz".charAt(i), rowId(cursor));
@@ -210,7 +211,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public int rowId(MemorySegment cursor, MemorySegment p_rowid) {
+	public int rowId(@NonNull MemorySegment cursor, @NonNull MemorySegment p_rowid) {
 		int rc = UpdateModule.super.rowId(cursor, p_rowid);
 		cursor = cursor.reinterpret(layout().byteSize()).asReadOnly();
 		MemorySegment vtab = sqlite3_vtab_cursor.pVtab(cursor, vtab_layout).asReadOnly();
@@ -241,6 +242,7 @@ public class VTabLogModule implements UpdateModule {
 		cursor.set(iCursor, 16, nCursor);
 	}
 	@Override
+	@NonNull
 	public MemoryLayout layout() {
 		return layout;
 	}
@@ -253,6 +255,7 @@ public class VTabLogModule implements UpdateModule {
 		C_INT.withName("nCursor") /* Number of cursors created */
 	).withName("vtablog_vtab");
 	private static final AddressLayout zDb = (AddressLayout)vtab_layout.select(groupElement("zDb"));
+	@NonNull
 	private static MemorySegment zDb(MemorySegment vtab) {
 		return vtab.get(zDb, 24);
 	}
@@ -263,6 +266,7 @@ public class VTabLogModule implements UpdateModule {
 		return getString(zDb(vtab));
 	}
 	private static final AddressLayout zName = (AddressLayout)vtab_layout.select(groupElement("zName"));
+	@NonNull
 	private static MemorySegment zName(MemorySegment vtab) {
 		return vtab.get(zName, 32);
 	}
@@ -286,6 +290,7 @@ public class VTabLogModule implements UpdateModule {
 		return nc;
 	}
 	@Override
+	@NonNull
 	public MemoryLayout vtab_layout() {
 		return vtab_layout;
 	}

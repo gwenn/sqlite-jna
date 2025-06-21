@@ -8,6 +8,7 @@
  */
 package org.sqlite.driver;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.sqlite.SQLite;
 
 import java.sql.RowId;
@@ -15,7 +16,7 @@ import java.sql.RowId;
 record RowIdImpl(long value) implements RowId {
 
 	@Override
-	public byte[] getBytes() {
+	public byte @NonNull[] getBytes() {
 		return toString().getBytes(SQLite.UTF_8);
 	}
 
@@ -40,7 +41,7 @@ record RowIdImpl(long value) implements RowId {
 		return Long.hashCode(value);
 	}
 
-	static long getValue(RowId rowId) {
+	static long getValue(@NonNull RowId rowId) {
 		if (rowId instanceof RowIdImpl) {
 			return ((RowIdImpl) rowId).value;
 		} else {

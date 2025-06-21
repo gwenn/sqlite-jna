@@ -8,6 +8,8 @@
  */
 package org.sqlite.driver;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sqlite.ColAffinities;
 import org.sqlite.ErrCodes;
 import org.sqlite.SQLite;
@@ -650,7 +652,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getProcedures(String catalog, String schemaPattern, String procedureNamePattern) throws SQLException {
+	@NonNull
+	public ResultSet getProcedures(@Nullable String catalog, @Nullable String schemaPattern, @Nullable String procedureNamePattern) throws SQLException {
 		checkOpen();
 		PreparedStatement stmt = c.prepareStatement(
 				"select "
@@ -669,7 +672,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getProcedureColumns(String catalog, String schemaPattern, String procedureNamePattern, String columnNamePattern) throws SQLException {
+	@NonNull
+	public ResultSet getProcedureColumns(@Nullable String catalog, @Nullable String schemaPattern, @Nullable String procedureNamePattern, @Nullable String columnNamePattern) throws SQLException {
 		checkOpen();
 		PreparedStatement stmt = c.prepareStatement(
 				"select "
@@ -699,7 +703,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
+	@NonNull
+	public ResultSet getTables(@Nullable String catalog, @Nullable String schemaPattern, @Nullable String tableNamePattern, @Nullable String[] types) throws SQLException {
 		checkOpen();
 		tableNamePattern = tableNamePattern == null || tableNamePattern.isEmpty() ? "%" : tableNamePattern;
 
@@ -755,6 +760,7 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
+	@NonNull
 	public ResultSet getSchemas() throws SQLException {
 		checkOpen();
 		final String sql = "select name as TABLE_SCHEM, " +
@@ -767,6 +773,7 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
+	@NonNull
 	public ResultSet getCatalogs() throws SQLException {
 		checkOpen();
 		final String sql = "select null as TABLE_CAT limit 0";
@@ -776,6 +783,7 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
+	@NonNull
 	public ResultSet getTableTypes() throws SQLException {
 		checkOpen();
 		PreparedStatement stmt = c.prepareStatement("select 'TABLE' as TABLE_TYPE " +
@@ -785,7 +793,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
+	@NonNull
+	public ResultSet getColumns(@Nullable String catalog, @Nullable String schemaPattern, @Nullable String tableNamePattern, @Nullable String columnNamePattern) throws SQLException {
 		checkOpen();
 		StringBuilder sql = new StringBuilder();
 
@@ -891,7 +900,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getColumnPrivileges(String catalog, String schema, String table, String columnNamePattern) throws SQLException {
+	@NonNull
+	public ResultSet getColumnPrivileges(@Nullable String catalog, @Nullable String schema, String table, @Nullable String columnNamePattern) throws SQLException {
 		checkOpen();
 		PreparedStatement stmt = c.prepareStatement(
 				"select "
@@ -909,7 +919,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getTablePrivileges(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
+	@NonNull
+	public ResultSet getTablePrivileges(@Nullable String catalog, @Nullable String schemaPattern, @Nullable String tableNamePattern) throws SQLException {
 		checkOpen();
 		PreparedStatement stmt = c.prepareStatement(
 				"select "
@@ -926,7 +937,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getBestRowIdentifier(String catalog, String schema, String table, int scope, boolean nullable) throws SQLException {
+	@NonNull
+	public ResultSet getBestRowIdentifier(@Nullable String catalog, @Nullable String schema, String table, int scope, boolean nullable) throws SQLException {
 		checkOpen();
 		StringBuilder sql = new StringBuilder();
 
@@ -987,7 +999,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getVersionColumns(String catalog, String schema, String table) throws SQLException {
+	@NonNull
+	public ResultSet getVersionColumns(@Nullable String catalog, @Nullable String schema, String table) throws SQLException {
 		checkOpen();
 		PreparedStatement stmt = c.prepareStatement(
 				"select "
@@ -1005,7 +1018,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
+	@NonNull
+	public ResultSet getPrimaryKeys(@Nullable String catalog, @Nullable String schema, String table) throws SQLException {
 		checkOpen();
 		Select select = EnhancedPragma.getPrimaryKeys(schema, table, schemaProvider);
 		PreparedStatement columns = c.prepareStatement(select.toSql());
@@ -1014,7 +1028,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getImportedKeys(String catalog, String schema, String table) throws SQLException {
+	@NonNull
+	public ResultSet getImportedKeys(@Nullable String catalog, @Nullable String schema, String table) throws SQLException {
 		checkOpen();
 		Select select = EnhancedPragma.getImportedKeys(schema, table, schemaProvider);
 		PreparedStatement fks = c.prepareStatement(select.toSql());
@@ -1023,7 +1038,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getExportedKeys(String catalog, String schema, String table) throws SQLException {
+	@NonNull
+	public ResultSet getExportedKeys(@Nullable String catalog, @Nullable String schema, String table) throws SQLException {
 		checkOpen();
 		StringBuilder sql = new StringBuilder();
 
@@ -1105,6 +1121,7 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
+	@NonNull
 	public ResultSet getTypeInfo() throws SQLException {
 		checkOpen();
 		PreparedStatement stmt = c.prepareStatement(
@@ -1139,7 +1156,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getCrossReference(String parentCatalog, String parentSchema, String parentTable, String foreignCatalog, String foreignSchema, String foreignTable) throws SQLException {
+	@NonNull
+	public ResultSet getCrossReference(@Nullable String parentCatalog, @Nullable String parentSchema, String parentTable, @Nullable String foreignCatalog, @Nullable String foreignSchema, String foreignTable) throws SQLException {
 		checkOpen();
 		Select select = EnhancedPragma.getCrossReference(parentSchema, parentTable, foreignSchema, foreignTable, schemaProvider);
 		PreparedStatement fks = c.prepareStatement(select.toSql());
@@ -1148,7 +1166,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException {
+	@NonNull
+	public ResultSet getIndexInfo(@Nullable String catalog, @Nullable String schema, String table, boolean unique, boolean approximate) throws SQLException {
 		checkOpen();
 		schema = schemaProvider.getDbName(schema, table);
 		StringBuilder sql = new StringBuilder();
@@ -1285,7 +1304,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern, int[] types) throws SQLException {
+	@NonNull
+	public ResultSet getUDTs(@Nullable String catalog, @Nullable String schemaPattern, @Nullable String typeNamePattern, int @Nullable [] types) throws SQLException {
 		checkOpen();
 		PreparedStatement stmt = c.prepareStatement(
 				"select "
@@ -1330,7 +1350,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getSuperTypes(String catalog, String schemaPattern, String typeNamePattern) throws SQLException {
+	@NonNull
+	public ResultSet getSuperTypes(@Nullable String catalog, @Nullable String schemaPattern, @Nullable String typeNamePattern) throws SQLException {
 		checkOpen();
 		PreparedStatement stmt = c.prepareStatement(
 				"select "
@@ -1346,7 +1367,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getSuperTables(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
+	@NonNull
+	public ResultSet getSuperTables(@Nullable String catalog, @Nullable String schemaPattern, @Nullable String tableNamePattern) throws SQLException {
 		checkOpen();
 		PreparedStatement stmt = c.prepareStatement(
 				"select "
@@ -1360,7 +1382,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getAttributes(String catalog, String schemaPattern, String typeNamePattern, String attributeNamePattern) throws SQLException {
+	@NonNull
+	public ResultSet getAttributes(@Nullable String catalog, @Nullable String schemaPattern, @Nullable String typeNamePattern, @Nullable String attributeNamePattern) throws SQLException {
 		checkOpen();
 		PreparedStatement stmt = c.prepareStatement(
 				"select "
@@ -1442,13 +1465,15 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
+	@NonNull
 	public RowIdLifetime getRowIdLifetime() {
 		return RowIdLifetime.ROWID_VALID_FOREVER; // TODO http://www.sqlite.org/autoinc.html
 	}
 
 	@Override
-	public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
 		return getSchemas();
+	@NonNull
+	public ResultSet getSchemas(@Nullable String catalog, @Nullable String schemaPattern) throws SQLException {
 	}
 
 	@Override
@@ -1463,6 +1488,7 @@ class DbMeta implements DatabaseMetaData {
 
 	/** @see Conn#getClientInfo() */
 	@Override
+	@NonNull
 	public ResultSet getClientInfoProperties() throws SQLException {
 		// TODO http://sqlite.org/pragma.html#pragma_application_id
 		// http://sqlite.org/pragma.html#pragma_user_version
@@ -1480,7 +1506,8 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getFunctions(String catalog, String schemaPattern, String functionNamePattern) throws SQLException {
+	@NonNull
+	public ResultSet getFunctions(@Nullable String catalog, @Nullable String schemaPattern, @Nullable String functionNamePattern) throws SQLException {
 		checkOpen();
 		String sql;
 		sql = "select "
@@ -1500,12 +1527,13 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public ResultSet getFunctionColumns(String catalog, String schemaPattern, String functionNamePattern, String columnNamePattern) {
+	public ResultSet getFunctionColumns(@Nullable String catalog, @Nullable String schemaPattern, @Nullable String functionNamePattern, @Nullable String columnNamePattern) {
 		return null;
 	}
 
 	@Override
-	public ResultSet getPseudoColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException {
+	@NonNull
+	public ResultSet getPseudoColumns(@Nullable  String catalog, @Nullable String schemaPattern, @Nullable String tableNamePattern, @Nullable String columnNamePattern) throws SQLException {
 		checkOpen();
 		PreparedStatement stmt = c.prepareStatement( // TODO rowId?
 				"select "
@@ -1532,7 +1560,7 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public <T> T unwrap(Class<T> iface) throws SQLException {
+	public <T> T unwrap(@NonNull Class<T> iface) throws SQLException {
 		if (iface.isAssignableFrom(getClass())) {
 			return iface.cast(this);
 		}
@@ -1540,7 +1568,7 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-	public boolean isWrapperFor(Class<?> iface) {
+	public boolean isWrapperFor(@NonNull Class<?> iface) {
 		return iface.isAssignableFrom(getClass());
 	}
 

@@ -1,5 +1,8 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.util.Iterator;
@@ -21,10 +24,10 @@ public interface EponymousModule {
 	 * @param err_msg char**
 	 */
 	// TODO https://sqlite.org/c3ref/vtab_config.html
-	default int connect(MemorySegment db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment pp_vtab, MemorySegment err_msg) {
+	default int connect(@NonNull MemorySegment db, @NonNull MemorySegment aux, int argc, @NonNull MemorySegment argv, @NonNull MemorySegment pp_vtab, @NonNull MemorySegment err_msg) {
 		return create_connect(db, aux, argc, argv, pp_vtab, err_msg, false);
 	}
-	default int create_connect(MemorySegment db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment pp_vtab, MemorySegment err_msg, boolean isCreate) {
+	default int create_connect(@NonNull MemorySegment db, @NonNull MemorySegment aux, int argc, @NonNull MemorySegment argv, @NonNull MemorySegment pp_vtab, @NonNull MemorySegment err_msg, boolean isCreate) {
 		sqlite3 sqlite3 = new sqlite3(db);
 		assert argc >= 3;
 		argv = argv.reinterpret(C_POINTER.byteSize() * argc).asReadOnly();
@@ -41,8 +44,8 @@ public interface EponymousModule {
 		}
 		return rc;
 	}
-	Entry<Integer,MemorySegment> connect(sqlite3 db, MemorySegment aux, int argc, MemorySegment argv, MemorySegment errMsg, boolean isCreate);
-	static Entry<Integer,MemorySegment> error(MemorySegment errMsg, int rc, String fmt, Object... args) {
+	Entry<Integer,MemorySegment> connect(@NonNull sqlite3 db, @NonNull MemorySegment aux, int argc, @NonNull MemorySegment argv, @NonNull MemorySegment errMsg, boolean isCreate);
+	static Entry<Integer,MemorySegment> error(@NonNull MemorySegment errMsg, int rc, @NonNull String fmt, Object... args) {
 		errMsg.set(C_POINTER, 0, sqlite3OwnedString(String.format(fmt, args)));
 		return Map.entry(rc, MemorySegment.NULL);
 	}
@@ -56,7 +59,7 @@ public interface EponymousModule {
 	// TODO https://sqlite.org/c3ref/vtab_rhs_value.html
 	// TODO https://sqlite.org/c3ref/vtab_distinct.html
 	@SuppressWarnings("unused")
-	default int bestIndex(MemorySegment vtab, MemorySegment info) {
+	default int bestIndex(@NonNull MemorySegment vtab, @NonNull MemorySegment info) {
 		vtab = vtab.reinterpret(vtab_layout().byteSize());
 		info = info.reinterpret(sqlite3_index_info.layout.byteSize());
 		int nConstraint = nConstraint(info);
@@ -64,17 +67,17 @@ public interface EponymousModule {
 		Iterator<MemorySegment> aConstraintUsage = aConstraintUsage(info, nConstraint);
 		return bestIndex(vtab, info, aConstraint, aConstraintUsage);
 	}
-	int bestIndex(MemorySegment vtab, MemorySegment info, Iterator<MemorySegment> aConstraint, Iterator<MemorySegment> aConstraintUsage);
+	int bestIndex(@NonNull MemorySegment vtab, @NonNull MemorySegment info, @NonNull Iterator<MemorySegment> aConstraint, @NonNull Iterator<MemorySegment> aConstraintUsage);
 
 	/**
 	 * @param vtab sqlite3_vtab*
 	 */
 	@SuppressWarnings("unused")
-	default int disconnect(MemorySegment vtab) {
+	default int disconnect(@NonNull MemorySegment vtab) {
 		vtab = vtab.reinterpret(vtab_layout().byteSize());
 		return disconnect(vtab, false);
 	}
-	default int disconnect(MemorySegment vtab, boolean isDestroy) {
+	default int disconnect(@NonNull MemorySegment vtab, boolean isDestroy) {
 		sqlite3_free(vtab);
 		return SQLITE_OK;
 	}
@@ -83,7 +86,7 @@ public interface EponymousModule {
 	 * @param vtab      sqlite3_vtab*
 	 * @param pp_cursor sqlite3_vtab_cursor**
 	 */
-	default int open(MemorySegment vtab, MemorySegment pp_cursor) {
+	default int open(@NonNull MemorySegment vtab, @NonNull MemorySegment pp_cursor) {
 		vtab = vtab.reinterpret(vtab_layout().byteSize());
 		MemorySegment cursor = open(vtab);
 		if (cursor == null) return SQLITE_NOMEM;
@@ -91,7 +94,8 @@ public interface EponymousModule {
 		pp_cursor.set(C_POINTER, 0, cursor.asSlice(0, sqlite3_vtab_cursor.layout.byteSize())); // *ppCursor = &pCur->base;
 		return SQLITE_OK;
 	}
-	default MemorySegment open(MemorySegment vtab) {
+	@Nullable
+	default MemorySegment open(@NonNull MemorySegment vtab) {
 		MemorySegment cursor = sqlite3_malloc(layout()).asReadOnly();
 		if (isNull(cursor)) {
 			return null;
@@ -102,7 +106,7 @@ public interface EponymousModule {
 	/**
 	 * @param cursor sqlite3_vtab_cursor*
 	 */
-	default int close(MemorySegment cursor) {
+	default int close(@NonNull MemorySegment cursor) {
 		sqlite3_free(cursor);
 		return SQLITE_OK;
 	}
@@ -114,33 +118,33 @@ public interface EponymousModule {
 	 * @param argv sqlite3_value**
 	 */
 	@SuppressWarnings("unused")
-	default int filter(MemorySegment cursor, int idx_num, MemorySegment idx_str, int argc, MemorySegment argv) {
+	default int filter(@NonNull MemorySegment cursor, int idx_num, @NonNull MemorySegment idx_str, int argc, @NonNull MemorySegment argv) {
 		cursor = cursor.reinterpret(layout().byteSize());
 		sqlite3_values values = sqlite3_values.build(argc, argv);
 		//final String idx = getString(idx_str);
 		return filter(cursor, idx_num, idx_str, values);
 	}
 	// TODO https://sqlite.org/c3ref/vtab_in_first.html
-	int filter(MemorySegment cursor, int idxNum, MemorySegment idxStr, sqlite3_values values);
+	int filter(@NonNull MemorySegment cursor, int idxNum, @NonNull MemorySegment idxStr, @NonNull sqlite3_values values);
 
 	/**
 	 * @param cursor sqlite3_vtab_cursor*
 	 */
-	default int next(MemorySegment cursor) {
+	default int next(@NonNull MemorySegment cursor) {
 		cursor = cursor.reinterpret(layout().byteSize());
 		return next(cursor, rowId(cursor));
 	}
-	int next(MemorySegment cursor, long rowId);
+	int next(@NonNull MemorySegment cursor, long rowId);
 
 	/**
 	 * @param cursor sqlite3_vtab_cursor*
 	 */
 	@SuppressWarnings("unused")
-	default int eof(MemorySegment cursor) {
+	default int eof(@NonNull MemorySegment cursor) {
 		cursor = cursor.reinterpret(layout.byteSize()).asReadOnly();
 		return isEof(cursor) ? 1 : 0;
 	}
-	boolean isEof(MemorySegment cursor);
+	boolean isEof(@NonNull MemorySegment cursor);
 
 	/**
 	 * @param cursor sqlite3_vtab_cursor*
@@ -148,37 +152,39 @@ public interface EponymousModule {
 	 * @param i int
 	 */
 	// TODO https://sqlite.org/c3ref/vtab_nochange.html
-	default int column(MemorySegment cursor, MemorySegment ctx, int i) {
+	default int column(@NonNull MemorySegment cursor, @NonNull MemorySegment ctx, int i) {
 		cursor = cursor.reinterpret(layout().byteSize()).asReadOnly();
 		sqlite3_context sqlite3_context = new sqlite3_context(ctx);
 		return column(cursor, sqlite3_context, i);
 	}
-	int column(MemorySegment cursor, sqlite3_context sqlite3Context, int i);
+	int column(@NonNull MemorySegment cursor, @NonNull sqlite3_context sqlite3Context, int i);
 
 	/**
 	 * @param cursor sqlite3_vtab_cursor*
 	 * @param p_rowid sqlite3_int64*
 	 */
 	@SuppressWarnings("unused")
-	default int rowId(MemorySegment cursor, MemorySegment p_rowid) {
+	default int rowId(@NonNull MemorySegment cursor, @NonNull MemorySegment p_rowid) {
 		cursor = cursor.reinterpret(layout().byteSize()).asReadOnly();
 		p_rowid = p_rowid.reinterpret(C_LONG_LONG.byteSize());
 		p_rowid.set(C_LONG_LONG, 0, rowId(cursor));
 		return SQLITE_OK;
 	}
-	long rowId(MemorySegment cursor);
+	long rowId(@NonNull MemorySegment cursor);
 	/**
 	 * @return cursor layout
 	 */
+	@NonNull
 	MemoryLayout layout();
 	/**
 	 * @return vtab layout
 	 */
+	@NonNull
 	default MemoryLayout vtab_layout() {
 		return sqlite3_vtab.layout;
 	}
 
-	static String dequote(String s) {
+	static @Nullable String dequote(@Nullable String s) {
 		if (s == null || s.isBlank() || s.length() < 2) {
 			return s;
 		}

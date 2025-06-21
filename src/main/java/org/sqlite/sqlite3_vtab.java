@@ -1,5 +1,8 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.lang.foreign.*;
 
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
@@ -15,10 +18,11 @@ public class sqlite3_vtab {
 
 	private static final AddressLayout zErrMsg = (AddressLayout)layout.select(groupElement("zErrMsg"));
 	private static final int zErrMsgOffset = 16;
+	@NonNull
 	public static MemorySegment zErrMsg(MemorySegment struct) {
 		return struct.get(zErrMsg, zErrMsgOffset);
 	}
-	public static void zErrMsg(MemorySegment struct, String errMsg) {
+	public static void zErrMsg(@NonNull MemorySegment struct, @Nullable String errMsg) {
 		MemorySegment old = zErrMsg(struct);
 		if (!isNull(old)) {
 			sqlite3_free(old);

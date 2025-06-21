@@ -1,5 +1,7 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.lang.foreign.MemorySegment;
 import java.util.Map.Entry;
 
@@ -14,7 +16,7 @@ public interface UpdateModule extends Module {
 	 * @param argv sqlite3_value **argv
 	 * @param p_rowid sqlite_int64 *
 	 */
-	default int update(MemorySegment vtab, int argc, MemorySegment argv, MemorySegment p_rowid) {
+	default int update(@NonNull MemorySegment vtab, int argc, @NonNull MemorySegment argv, @NonNull MemorySegment p_rowid) {
 		vtab = vtab.reinterpret(vtab_layout().byteSize());
 		sqlite3_values values = sqlite3_values.build(argc, argv);
 		assert argc >= 1;
@@ -33,7 +35,7 @@ public interface UpdateModule extends Module {
 			return update(vtab, values);
 		}
 	}
-	int delete(MemorySegment vtab, sqlite3_values values);
-	Entry<Integer, Long> insert(MemorySegment vtab, sqlite3_values values);
-	int update(MemorySegment vtab, sqlite3_values values);
+	int delete(@NonNull MemorySegment vtab, @NonNull sqlite3_values values);
+	Entry<Integer, Long> insert(@NonNull MemorySegment vtab, @NonNull sqlite3_values values);
+	int update(@NonNull MemorySegment vtab, @NonNull sqlite3_values values);
 }

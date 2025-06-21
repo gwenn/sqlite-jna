@@ -1,5 +1,7 @@
 package org.sqlite.driver;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sqlite.ErrCodes;
 import org.sqlite.SQLiteException;
 import org.xml.sax.InputSource;
@@ -98,7 +100,8 @@ public class SQLXMLImpl implements SQLXML {
 	}
 
 	@Override
-	public <T extends Source> T getSource(Class<T> sourceClass) throws SQLException {
+	@Nullable
+	public <T extends Source> T getSource(@Nullable Class<T> sourceClass) throws SQLException {
 		checkAndSwitchReadable();
 		if (src == NULL) {
 			return null;
@@ -139,7 +142,8 @@ public class SQLXMLImpl implements SQLXML {
 	}
 
 	@Override
-	public <T extends Result> T setResult(Class<T> resultClass) throws SQLException {
+	@NonNull
+	public <T extends Result> T setResult(@Nullable Class<T> resultClass) throws SQLException {
 		checkAndSwitchWritable();
 		if (resultClass == null || DOMResult.class.equals(resultClass)) {
 			DOMResult domResult = new DOMResult();
@@ -233,6 +237,7 @@ public class SQLXMLImpl implements SQLXML {
 		}
 
 		@Override
+		@NonNull
 		public Reader getCharacterStream() {
 			return new StringReader(value);
 		}
@@ -241,6 +246,7 @@ public class SQLXMLImpl implements SQLXML {
 			return value;
 		}
 		@Override
+		@NonNull
 		public InputStream getBinaryStream() {
 			return new ByteArrayInputStream(value.getBytes(charset));
 		}
@@ -262,6 +268,7 @@ public class SQLXMLImpl implements SQLXML {
 		}
 
 		@Override
+		@NonNull
 		public Reader getCharacterStream() {
 			return new StringReader(getString());
 		}
@@ -270,6 +277,7 @@ public class SQLXMLImpl implements SQLXML {
 			return outputStream.toString(charset);
 		}
 		@Override
+		@NonNull
 		public InputStream getBinaryStream() {
 			return new ByteArrayInputStream(outputStream.toByteArray());
 		}
@@ -291,6 +299,7 @@ public class SQLXMLImpl implements SQLXML {
 		}
 
 		@Override
+		@NonNull
 		public Reader getCharacterStream() {
 			return new StringReader(getString());
 		}
@@ -299,6 +308,7 @@ public class SQLXMLImpl implements SQLXML {
 			return writer.toString();
 		}
 		@Override
+		@NonNull
 		public InputStream getBinaryStream() {
 			return new ByteArrayInputStream(getString().getBytes(charset));
 		}
@@ -320,6 +330,7 @@ public class SQLXMLImpl implements SQLXML {
 		}
 
 		@Override
+		@NonNull
 		public Reader getCharacterStream() throws SQLException {
 			return new StringReader(getString());
 		}
@@ -331,6 +342,7 @@ public class SQLXMLImpl implements SQLXML {
 		}
 
 		@Override
+		@NonNull
 		public InputStream getBinaryStream() throws SQLException {
 			return new ByteArrayInputStream(getString().getBytes(charset));
 		}

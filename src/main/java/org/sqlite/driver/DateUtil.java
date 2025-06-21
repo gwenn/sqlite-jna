@@ -8,6 +8,9 @@
  */
 package org.sqlite.driver;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -45,8 +48,8 @@ final class DateUtil {
 
 	private DateUtil() {
 	}
-
-	static String[] config(Properties info) {
+	@NonNull
+	static String[] config(@Nullable Properties info) {
 		if (info == null) {
 			return new String[]{YYYY_MM_DD, HH_MM_SS, DEFAULT_FORMAT};
 		}
@@ -72,8 +75,8 @@ final class DateUtil {
 
 	private record ParsedDate(Date value, boolean tz) {
 	}
-
-	private static ParsedDate parseDate(String txt, Calendar cal) throws SQLException {
+	@NonNull
+	private static ParsedDate parseDate(@NonNull String txt, @Nullable Calendar cal) throws SQLException {
 		boolean tz = false;
 		String layout;
 		switch (txt.length()) {
@@ -111,8 +114,8 @@ final class DateUtil {
 		}
 		return new ParsedDate(date, tz);
 	}
-
-	static String formatDate(Date date, int length, Calendar cal) {
+	@NonNull
+	static String formatDate(@NonNull Date date, int length, @Nullable Calendar cal) {
 		String layout = switch (length) {
 			case 5 -> // HH:MM
 				"HH:mm";
@@ -133,12 +136,12 @@ final class DateUtil {
 		};
 		return formatDate(date, layout, cal);
 	}
-
-	static String formatDate(Date date, String layout, Calendar cal) {
+	@NonNull
+	static String formatDate(@NonNull Date date, @NonNull String layout, @Nullable Calendar cal) {
 		return getDateFormat(layout, cal).format(date);
 	}
-
-	private static DateFormat getDateFormat(String layout, Calendar cal) {
+	@NonNull
+	private static DateFormat getDateFormat(@NonNull String layout, @Nullable Calendar cal) {
 		DateFormat df = DATE_FORMATS.get().get(layout);
 		if (df == null) {
 			df = new SimpleDateFormat(layout);
@@ -149,50 +152,54 @@ final class DateUtil {
 		return df;
 	}
 
-	static java.sql.Date toDate(String txt, Calendar cal) throws SQLException {
+	static java.sql.@NonNull Date toDate(@NonNull String txt, @Nullable Calendar cal) throws SQLException {
 		ParsedDate date = parseDate(txt, cal);
 		return new java.sql.Date(/*normalizeDate(*/date.value.getTime()/*)*/);
 	}
-	static java.sql.Date toDate(long unixepoch, Calendar cal) {
+	static java.sql.@NonNull Date toDate(long unixepoch, @Nullable Calendar cal) {
 		return new java.sql.Date(normalizeDate(unixepoch, cal));
 	}
-	static java.sql.Date toDate(double jd, Calendar cal) {
-		return new java.sql.Date(normalizeDate(fromJulianDay(jd), null));
+	static java.sql.@NonNull Date toDate(double jd, @Nullable Calendar cal) {
+		return new java.sql.Date(normalizeDate(fromJulianDay(jd), cal));
 	}
-
-	static Time toTime(String txt, Calendar cal) throws SQLException {
+	@NonNull
+	static Time toTime(@NonNull String txt, @Nullable Calendar cal) throws SQLException {
 		ParsedDate date = parseDate(txt, cal);
 		return new Time(date.value.getTime());
 	}
+	@NonNull
 	static Time toTime(long unixepoch) {
 		return new Time(unixepoch);
 	}
+	@NonNull
 	static Time toTime(double jd) {
 		return new Time(fromJulianDay(jd));
 	}
-
-	static Timestamp toTimestamp(String txt, Calendar cal) throws SQLException {
+	@NonNull
+	static Timestamp toTimestamp(@NonNull String txt, @Nullable Calendar cal) throws SQLException {
 		ParsedDate date = parseDate(txt, cal);
 		return new Timestamp(date.value.getTime());
 	}
+	@NonNull
 	static Timestamp toTimestamp(long unixepoch) {
 		return new Timestamp(unixepoch);
 	}
+	@NonNull
 	static Timestamp toTimestamp(double jd) {
 		return new Timestamp(fromJulianDay(jd));
 	}
 
 	// must be 'normalized' by setting the hours, minutes, seconds, and milliseconds to zero in the particular time zone with which the instance is associated.
-	static long normalizeDate(long unixepoch, Calendar cal) {
+	static long normalizeDate(long unixepoch, @Nullable Calendar cal) {
 		if (cal == null) {
 			synchronized (UTC) {
 				return normalize(unixepoch, UTC);
 			}
 		} else {
-			return normalize(unixepoch, UTC);
+			return normalize(unixepoch, cal);
 		}
 	}
-	private static long normalize(long unixepoch, Calendar cal) {
+	private static long normalize(long unixepoch, @NonNull Calendar cal) {
 		cal.setTimeInMillis(unixepoch);
 		cal.set(Calendar.HOUR_OF_DAY, 0);
 		cal.set(Calendar.MINUTE, 0);

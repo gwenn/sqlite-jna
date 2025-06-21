@@ -1,5 +1,8 @@
 package org.sqlite;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
@@ -13,15 +16,17 @@ import static org.sqlite.SQLite.*;
  * @see <a href="http://sqlite.org/c3ref/context.html">sqlite3_context</a>
  */
 public final class sqlite3_context {
+	@NonNull
 	private final MemorySegment p;
 
-	sqlite3_context(MemorySegment p) {
+	sqlite3_context(@NonNull MemorySegment p) {
 		this.p = p.asReadOnly();
 	}
 
 	private static final MethodHandle sqlite3_get_auxdata = downcallHandle(
 		"sqlite3_get_auxdata", PPI);
-	static MemorySegment sqlite3_get_auxdata(sqlite3_context pCtx, int n) {
+	@NonNull
+	static MemorySegment sqlite3_get_auxdata(@NonNull sqlite3_context pCtx, int n) {
 		try {
 			return (MemorySegment) sqlite3_get_auxdata.invokeExact(pCtx.p, n);
 		} catch (Throwable e) {
@@ -31,7 +36,7 @@ public final class sqlite3_context {
 
 	private static final MethodHandle sqlite3_set_auxdata = downcallHandle(
 		"sqlite3_set_auxdata", FunctionDescriptor.ofVoid(C_POINTER, C_INT, C_POINTER, C_POINTER));
-	static void sqlite3_set_auxdata(sqlite3_context pCtx, int n, MemorySegment p, Destructor free) {
+	static void sqlite3_set_auxdata(@NonNull sqlite3_context pCtx, int n, MemorySegment p, Destructor free) {
 		try {
 			sqlite3_set_auxdata.invokeExact(pCtx.p, n, p, free);
 		} catch (Throwable e) {
@@ -41,7 +46,8 @@ public final class sqlite3_context {
 
 	private static final MethodHandle sqlite3_aggregate_context = downcallHandle(
 		"sqlite3_aggregate_context", PPI);
-	static MemorySegment sqlite3_aggregate_context(sqlite3_context pCtx, int nBytes) {
+	@NonNull
+	static MemorySegment sqlite3_aggregate_context(@NonNull sqlite3_context pCtx, int nBytes) {
 		try {
 			return (MemorySegment) sqlite3_aggregate_context.invokeExact(pCtx.p, nBytes);
 		} catch (Throwable e) {
@@ -72,7 +78,7 @@ public final class sqlite3_context {
 	 *
 	 * @see <a href="http://sqlite.org/c3ref/result_blob.html">sqlite3_result_blob</a>
 	 */
-	public void setResultBlob(byte[] result) {
+	public void setResultBlob(byte @NonNull [] result) {
 		try {
 			MemorySegment ms = MemorySegment.ofArray(result);
 			sqlite3_result_blob.invokeExact(p, ms, result.length, SQLITE_TRANSIENT);
@@ -148,7 +154,7 @@ public final class sqlite3_context {
 	 *
 	 * @see <a href="http://sqlite.org/c3ref/result_blob.html">sqlite3_result_text</a>
 	 */
-	public void setResultText(String result) {
+	public void setResultText(@Nullable String result) {
 		// no copy needed when xDel == SQLITE_TRANSIENT == -1
 		try (Arena arena = Arena.ofConfined()) {
 			// How to avoid copying twice ? nativeString + SQLite
@@ -165,7 +171,7 @@ public final class sqlite3_context {
 	 *
 	 * @see <a href="http://sqlite.org/c3ref/result_blob.html">sqlite3_result_zeroblob</a>
 	 */
-	public void setResultZeroBlob(ZeroBlob result) {
+	public void setResultZeroBlob(@NonNull ZeroBlob result) {
 		try {
 			sqlite3_result_zeroblob.invokeExact(p, result.n());
 		} catch (Throwable e) {
@@ -188,7 +194,7 @@ public final class sqlite3_context {
 	 *
 	 * @see <a href="http://sqlite.org/c3ref/result_blob.html">sqlite3_result_error</a>
 	 */
-	public void setResultError(String errMsg) {
+	public void setResultError(@NonNull String errMsg) {
 		try (Arena arena = Arena.ofConfined()) {
 			sqlite3_result_error.invokeExact(p, nativeString(arena, errMsg), -1);
 		} catch (Throwable e) {

@@ -8,6 +8,8 @@
  */
 package org.sqlite.driver;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.sqlite.ColAffinities;
 import org.sqlite.ErrCodes;
 import org.sqlite.Stmt;
@@ -94,6 +96,7 @@ class RowsMeta implements ResultSetMetaData {
 	}
 
 	@Override
+	@NonNull
 	public String getSchemaName(int column) throws SQLException {
 		return nullToEmpty(stmt.getColumnDatabaseName(fixCol(column)));
 	}
@@ -117,11 +120,13 @@ class RowsMeta implements ResultSetMetaData {
 	}
 
 	@Override
+	@NonNull
 	public String getTableName(int column) throws SQLException {
 		return nullToEmpty(stmt.getColumnTableName(fixCol(column)));
 	}
 
 	@Override
+	@NonNull
 	public String getCatalogName(int column) {
 		return "";
 	}
@@ -133,6 +138,7 @@ class RowsMeta implements ResultSetMetaData {
 	}
 
 	@Override
+	@Nullable
 	public String getColumnTypeName(int column) throws SQLException {
 		return stmt.getColumnDeclType(fixCol(column));
 	}
@@ -167,7 +173,7 @@ class RowsMeta implements ResultSetMetaData {
 	}
 
 	@Override
-	public <T> T unwrap(Class<T> iface) throws SQLException {
+	public <T> T unwrap(@NonNull Class<T> iface) throws SQLException {
 		if (iface.isAssignableFrom(getClass())) {
 			return iface.cast(this);
 		}
@@ -175,7 +181,7 @@ class RowsMeta implements ResultSetMetaData {
 	}
 
 	@Override
-	public boolean isWrapperFor(Class<?> iface) {
+	public boolean isWrapperFor(@NonNull Class<?> iface) {
 		return iface.isAssignableFrom(getClass());
 	}
 
@@ -184,8 +190,8 @@ class RowsMeta implements ResultSetMetaData {
 			throw new StmtException(stmt, String.format("column index (%d) > column count (%d)", column, getColumnCount()), ErrCodes.WRAPPER_SPECIFIC);
 		}
 	}
-
-	private static String nullToEmpty(String s) {
+	@NonNull
+	private static String nullToEmpty(@Nullable String s) {
 		return s == null ? "" : s;
 	}
 }
