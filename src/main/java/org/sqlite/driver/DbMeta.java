@@ -1471,9 +1471,9 @@ class DbMeta implements DatabaseMetaData {
 	}
 
 	@Override
-		return getSchemas();
 	@NonNull
 	public ResultSet getSchemas(@Nullable String catalog, @Nullable String schemaPattern) throws SQLException {
+		return getSchemas();
 	}
 
 	@Override
