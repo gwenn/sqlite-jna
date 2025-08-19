@@ -96,7 +96,7 @@
         <plugins>
           <plugin>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.11.2</version>
+            <version>3.11.3</version>
             <configuration>
               <doclint>none</doclint>
             </configuration>
@@ -154,7 +154,7 @@
           </plugin>
           <plugin>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.11.2</version>
+            <version>3.11.3</version>
             <configuration>
               <doclint>none</doclint>
             </configuration>
@@ -300,7 +300,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.11.2</version>
+        <version>3.11.3</version>
       </plugin>
     </plugins>
   </reporting>
