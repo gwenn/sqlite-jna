@@ -250,34 +250,49 @@ public class ConnTest {
 		}
 	}
 
+	private static final ValueLayout.OfLong SUM_LAYOUT = ValueLayout.JAVA_LONG;
+	private static class SumStep extends AggregateStepCallback {
+		public SumStep(boolean inverse) {
+			super(SUM_LAYOUT, inverse);
+		}
+
+		@Override
+		protected void step(sqlite3_context pCtx, MemorySegment aggrCtx, sqlite3_values args) {
+			assertNotNull(pCtx);
+			assertNotNull(aggrCtx);
+			assertEquals(1, args.getCount());
+			assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
+			long sum = aggrCtx.get(ValueLayout.JAVA_LONG, 0);
+			long value = args.getLong(0);
+			if (inverse) {
+				sum -= value;
+			} else {
+				sum += value;
+			}
+			aggrCtx.set(ValueLayout.JAVA_LONG, 0, sum);
+		}
+	}
+	private static class SumCompute extends AggregateComputeCallback {
+		public SumCompute(boolean isFinal) {
+			super(isFinal);
+		}
+
+		@Override
+		protected void compute(@NonNull sqlite3_context pCtx, @NonNull MemorySegment aggrCtx) {
+			assertNotNull(pCtx);
+			if (isNull(aggrCtx)) {
+				pCtx.setResultNull();
+				return;
+			}
+			pCtx.setResultLong(aggrCtx.reinterpret(SUM_LAYOUT.byteSize()).get(SUM_LAYOUT, 0));
+		}
+	}
+
 	@Test
 	public void createAggregateFunction() throws SQLiteException {
 		final Conn c = open();
-		c.createAggregateFunction("my_sum", 1, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC, new AggregateStepCallback() {
-			@Override
-			protected int numberOfBytes() {
-				return (int)ValueLayout.JAVA_LONG.byteSize();
-			}
-			@Override
-			protected void step(sqlite3_context pCtx, MemorySegment aggrCtx, sqlite3_values args) {
-				assertNotNull(pCtx);
-				assertNotNull(aggrCtx);
-				assertEquals(1, args.getCount());
-				assertEquals(ColTypes.SQLITE_INTEGER, args.getNumericType(0));
-				aggrCtx = aggrCtx.reinterpret(numberOfBytes());
-				aggrCtx.set(ValueLayout.JAVA_LONG,0, aggrCtx.get(ValueLayout.JAVA_LONG, 0) + args.getLong(0));
-			}
-		}, new AggregateFinalCallback() {
-			@Override
-			protected void finalStep(@NonNull sqlite3_context pCtx, @NonNull MemorySegment aggrCtx) {
-				assertNotNull(pCtx);
-				if (isNull(aggrCtx)) {
-					pCtx.setResultNull();
-					return;
-				}
-				pCtx.setResultLong(aggrCtx.reinterpret(ValueLayout.JAVA_LONG.byteSize()).get(ValueLayout.JAVA_LONG, 0));
-			}
-		});
+		c.createAggregateFunction("my_sum", 1, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC,
+			new SumStep(false), new SumCompute(true));
 
 		try (Stmt stmt = c.prepare("SELECT my_sum(i) FROM (SELECT 2 AS i WHERE 1 <> 1)", false)) {
 			assertTrue(stmt.step(0));
@@ -297,6 +312,46 @@ public class ConnTest {
 		}
 
 		c.close();
+	}
+
+	@Test
+	public void createWindowFunction() throws SQLiteException {
+		try (Conn c = open()) {
+			c.createWindowFunction("sumint", 1, FunctionFlags.SQLITE_UTF8 | FunctionFlags.SQLITE_DETERMINISTIC,
+				new SumStep(false), new SumCompute(true), new SumCompute(false), new SumStep(true));
+
+			c.fastExec("""
+					  CREATE TABLE t3(x, y);
+					  INSERT INTO t3 VALUES('a', 4),
+					  ('b', 5),
+					  ('c', 3),
+					  ('d', 8),
+					  ('e', 1);
+				""");
+
+			try (Stmt stmt = c.prepare("""
+				SELECT x, sumint(y) OVER (
+				  ORDER BY x ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING
+				) AS sum_y
+				FROM t3 ORDER BY x""", false)) {
+				assertTrue(stmt.step(0));
+				assertEquals("a", stmt.getColumnText(0));
+				assertEquals(9L, stmt.getColumnLong(1));
+				assertTrue(stmt.step(0));
+				assertEquals("b", stmt.getColumnText(0));
+				assertEquals(12L, stmt.getColumnLong(1));
+				assertTrue(stmt.step(0));
+				assertEquals("c", stmt.getColumnText(0));
+				assertEquals(16L, stmt.getColumnLong(1));
+				assertTrue(stmt.step(0));
+				assertEquals("d", stmt.getColumnText(0));
+				assertEquals(12L, stmt.getColumnLong(1));
+				assertTrue(stmt.step(0));
+				assertEquals("e", stmt.getColumnText(0));
+				assertEquals(9L, stmt.getColumnLong(1));
+				assertFalse(stmt.step(0));
+			}
+		}
 	}
 
 	@Test(expected = ConnException.class)
@@ -323,6 +378,44 @@ public class ConnTest {
 			c.fastExec("CREATE TABLE test AS SELECT 0 as x;");
 			assertEquals(1, c.execDml("UPDATE test SET x = 1;", false));
 			assertEquals(1, count.get());
+		}
+	}
+
+	@Test
+	public void serialize() throws SQLiteException {
+		try (Conn c = open()) {
+			c.fastExec("CREATE TABLE x AS SELECT 'data'");
+			Serialized data = c._serialize(null);
+			assertFalse(data.shared());
+			assertTrue(data.ptr().byteSize() > 0);
+			sqlite3_free(data.ptr());
+		}
+	}
+	@Test
+	public void serializeBytes() throws SQLiteException {
+		byte[] data;
+		try (Conn src = open()) {
+			src.fastExec("CREATE TABLE x AS SELECT 'data'");
+			data = src.serialize(null);
+			assertTrue(data.length > 0);
+		}
+		try (Conn dst = open()) {
+			dst.deserialize(null, data);
+			dst.fastExec("DELETE FROM x");
+		}
+	}
+
+	@Test
+	public void deserialize() throws SQLiteException {
+		Serialized data;
+		try (Conn src = open()) {
+			src.fastExec("CREATE TABLE x AS SELECT 'data'");
+			data = src._serialize(null);
+			assertFalse(data.shared());
+		}
+		try (Conn dst = open()) {
+			dst._deserialize(null, data, false);
+			dst.fastExec("DELETE FROM x");
 		}
 	}
 

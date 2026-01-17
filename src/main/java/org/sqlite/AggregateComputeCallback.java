@@ -22,20 +22,29 @@ import static org.sqlite.sqlite3_context.sqlite3_aggregate_context;
  * }
  * }</pre>
  *
- * @see Conn#createAggregateFunction(String, int, int, AggregateStepCallback, AggregateFinalCallback)
+ * @see Conn#createAggregateFunction(String, int, int, AggregateStepCallback, AggregateComputeCallback)
  * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
  */
-public abstract class AggregateFinalCallback {
+public abstract class AggregateComputeCallback {
+	protected final boolean isFinal;
+
+	/**
+	 * @param isFinal xFinal versus xValue
+	 */
+	protected AggregateComputeCallback(boolean isFinal) {
+		this.isFinal = isFinal;
+	}
+
 	/**
 	 * @param ms <code>sqlite3_context*</code>
 	 */
 	@SuppressWarnings("unused")
 	public void callback(MemorySegment ms) {
 		sqlite3_context pCtx = new sqlite3_context(ms);
-		finalStep(pCtx, getAggregateContext(pCtx));
+		compute(pCtx, getAggregateContext(pCtx));
 	}
 
-	protected abstract void finalStep(@NonNull sqlite3_context pCtx, @NonNull MemorySegment aggrCtx);
+	protected abstract void compute(@NonNull sqlite3_context pCtx, @NonNull MemorySegment aggrCtx);
 
 	/**
 	 * Obtain aggregate function context.
@@ -45,7 +54,7 @@ public abstract class AggregateFinalCallback {
 	 */
 	@NonNull
 	protected static MemorySegment getAggregateContext(sqlite3_context pCtx) {
-		// Within the xFinal callback, it is customary to set N=0 in calls to sqlite3_aggregate_context(C,N)
+		// Within the xFinal/xValue callback, it is customary to set N=0 in calls to sqlite3_aggregate_context(C,N)
 		// so that no pointless memory allocations occur.
 		return sqlite3_aggregate_context(pCtx, 0);
 	}

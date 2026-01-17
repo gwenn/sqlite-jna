@@ -84,7 +84,7 @@
 - [X] `sqlite3_errstr`
 - [ ] `sqlite3_error_offset`
 
-- [ ] `sqlite3_limit`
+- [X] `sqlite3_limit`
 
 - [ ] `sqlite3_prepare`
 - [ ] `sqlite3_prepare_v2`
@@ -133,7 +133,7 @@
 - [X] `sqlite3_column_int64`
 - [X] `sqlite3_column_text`
 - [ ] `sqlite3_column_value`
-- [ ] `sqlite3_column_bytes`
+- [X] `sqlite3_column_bytes`
 - [X] `sqlite3_column_type`
 
 - [X] `sqlite3_finalize`
@@ -141,7 +141,7 @@
 
 - [ ] `sqlite3_create_function`
 - [X] `sqlite3_create_function_v2`
-- [ ] `sqlite3_create_window_function`
+- [X] `sqlite3_create_window_function`
 
 - [X] `sqlite3_value_blob`
 - [X] `sqlite3_value_double`
@@ -316,8 +316,8 @@
 - [ ] `sqlite3_snapshot_cmp`
 - [ ] `sqlite3_snapshot_recover`
 
-- [ ] `sqlite3_serialize`
-- [ ] `sqlite3_deserialize`
+- [X] `sqlite3_serialize`
+- [X] `sqlite3_deserialize`
 
 - [ ] `sqlite3_rtree_geometry_callback`
 - [ ] `sqlite3_rtree_query_callback`

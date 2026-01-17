@@ -416,15 +416,32 @@ public final class sqlite3 {
 		VPIP);
 	private static final MethodHandle aggregate_step_callback = upcallHandle(AggregateStepCallback.class, "callback",
 		VPIP);
-	private static final MethodHandle aggregate_final_callback = upcallHandle(AggregateFinalCallback.class, "callback",
+	private static final MethodHandle aggregate_compute_callback = upcallHandle(AggregateComputeCallback.class, "callback",
 		VP);
 	static int sqlite3_create_function_v2(@NonNull sqlite3 pDb, @NonNull String functionName, int nArg, int eTextRep,
-										  MemorySegment pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateFinalCallback xFinal, MemorySegment xDestroy) {
+										  MemorySegment pApp, ScalarCallback xFunc, AggregateStepCallback xStep, AggregateComputeCallback xFinal, MemorySegment xDestroy) {
+		assert (xStep == null || !xStep.inverse) && (xFinal == null || xFinal.isFinal);
 		try (Arena arena = Arena.ofConfined()) {
 			MemorySegment xFu = upcallStub(scalar_callback, xFunc, VPIP, pDb.getArena());
 			MemorySegment xS = upcallStub(aggregate_step_callback, xStep, VPIP, pDb.getArena());
-			MemorySegment xFi = upcallStub(aggregate_final_callback, xFinal, VP, pDb.getArena());
+			MemorySegment xFi = upcallStub(aggregate_compute_callback, xFinal, VP, pDb.getArena());
 			return (int)sqlite3_create_function_v2.invokeExact(pDb.getPointer(), nativeString(arena, functionName), nArg, eTextRep, pApp, xFu, xS, xFi, xDestroy);
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
+	private static final MethodHandle sqlite3_create_window_function = downcallHandle(
+		"sqlite3_create_window_function", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_INT, C_INT, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_POINTER));
+	static int sqlite3_create_window_function(@NonNull sqlite3 pDb, @NonNull String functionName, int nArg, int eTextRep,
+											  MemorySegment pApp, AggregateStepCallback xStep, AggregateComputeCallback xFinal,
+											  AggregateComputeCallback xValue, AggregateStepCallback xInverse, MemorySegment xDestroy) {
+		assert !xStep.inverse && xFinal.isFinal && !xValue.isFinal && xInverse.inverse;
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment xS = upcallStub(aggregate_step_callback, xStep, VPIP, pDb.getArena());
+			MemorySegment xFi = upcallStub(aggregate_compute_callback, xFinal, VP, pDb.getArena());
+			MemorySegment xV = upcallStub(aggregate_compute_callback, xValue, VP, pDb.getArena());
+			MemorySegment xI = upcallStub(aggregate_step_callback, xInverse, VPIP, pDb.getArena());
+			return (int)sqlite3_create_window_function.invokeExact(pDb.getPointer(), nativeString(arena, functionName), nArg, eTextRep, pApp, xS, xFi, xV, xI, xDestroy);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}
@@ -444,6 +461,41 @@ public final class sqlite3 {
 				ms = sqlite3_module.eponymous(module, pDb.getArena());
 			}
 			return (int)sqlite3_create_module_v2.invokeExact(pDb.getPointer(), nativeString(arena, moduleName), ms, pClientData, xDestroy);
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
+
+	/** Do no memory allocations */
+	public static int SQLITE_SERIALIZE_NOCOPY = 0x001;
+	private static final MethodHandle sqlite3_serialize = downcallHandle(
+		"sqlite3_serialize", FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_INT));
+	static @Nullable Serialized sqlite3_serialize(@NonNull sqlite3 pDb, @Nullable String dbName) {
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment piSize = arena.allocate(C_POINTER);
+			MemorySegment ptr = (MemorySegment) sqlite3_serialize.invokeExact(pDb.getPointer(), nativeString(arena, dbName), piSize, SQLITE_SERIALIZE_NOCOPY);
+			boolean shared;
+			if (isNull(ptr)) {
+				ptr = (MemorySegment) sqlite3_serialize.invokeExact(pDb.getPointer(), nativeString(arena, dbName), piSize, 0);
+				if (isNull(ptr)) {
+					return null;
+				}
+				shared = false;
+			} else {
+				shared = true;
+			}
+			long size = piSize.reinterpret(C_LONG_LONG.byteSize()).get(C_LONG_LONG, 0);
+			return new Serialized(shared, ptr.reinterpret(size));
+		} catch (Throwable e) {
+			throw new AssertionError("should not reach here", e);
+		}
+	}
+	private static final MethodHandle sqlite3_deserialize = downcallHandle(
+		"sqlite3_deserialize", FunctionDescriptor.of(C_INT, C_POINTER, C_POINTER, C_POINTER, C_LONG_LONG, C_LONG_LONG, C_INT));
+	static int sqlite3_deserialize(@NonNull sqlite3 pDb, @Nullable String dbName, Serialized data, int flags) {
+		try (Arena arena = Arena.ofConfined()) {
+			MemorySegment ptr = data.ptr();
+			return (int)sqlite3_deserialize.invokeExact(pDb.getPointer(), nativeString(arena, dbName), ptr, ptr.byteSize(), ptr.byteSize(), flags);
 		} catch (Throwable e) {
 			throw new AssertionError("should not reach here", e);
 		}

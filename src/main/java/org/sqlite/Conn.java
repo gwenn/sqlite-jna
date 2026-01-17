@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static org.sqlite.ErrCodes.SQLITE_NOMEM;
 import static org.sqlite.SQLite.*;
 import static org.sqlite.sqlite3.*;
 import static org.sqlite.sqlite3_backup.*;
@@ -743,10 +744,26 @@ public final class Conn implements AutoCloseable {
 	 * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_function_v2</a>
 	 */
 	public void createAggregateFunction(@NonNull String name, int nArg, int flags, AggregateStepCallback xStep,
-			AggregateFinalCallback xFinal) throws ConnException {
+			AggregateComputeCallback xFinal) throws ConnException {
 		checkOpen();
 		check(sqlite3_create_function_v2(pDb, name, nArg, flags, MemorySegment.NULL, null, xStep, xFinal, MemorySegment.NULL),
 				"error while registering function %s", name);
+	}
+
+	/**
+	 * Create a user defined SQL window function.
+	 * @param name function name
+	 * @param nArg number of arguments expected
+	 * @param flags {@link org.sqlite.FunctionFlags}.*
+	 * @param xStep function implementation
+	 * @param xFinal function implementation
+	 * @see <a href=http://sqlite.org/c3ref/create_function.html>sqlite3_create_window_function</a>
+	 */
+	public void createWindowFunction(@NonNull String name, int nArg, int flags, AggregateStepCallback xStep,
+		 AggregateComputeCallback xFinal, AggregateComputeCallback xValue, AggregateStepCallback xInverse) throws ConnException {
+		checkOpen();
+		check(sqlite3_create_window_function(pDb, name, nArg, flags, MemorySegment.NULL, xStep, xFinal, xValue, xInverse, MemorySegment.NULL),
+			"error while registering function %s", name);
 	}
 
 	/**
@@ -759,6 +776,72 @@ public final class Conn implements AutoCloseable {
 		checkOpen();
 		check(sqlite3.sqlite3_create_module_v2(pDb, name, module, eponymousOnly, MemorySegment.NULL, MemorySegment.NULL),
 			"error while registering module %s", name);
+	}
+
+	/**
+	 * Serialize a database
+	 * @param dbName Which DB to serialize. ex: "main", "temp", ...
+	 * @see <a href-https://sqlite.org/c3ref/serialize.html>sqlite3_serialize</a>
+	 */
+	Serialized _serialize(@Nullable String dbName) throws SQLiteException {
+		checkOpen();
+		Serialized serialized = sqlite3_serialize(pDb, dbName);
+		if (serialized == null) {
+			throw new ConnException(this, "error while serializing", SQLITE_NOMEM);
+		}
+		return serialized;
+	}
+	/**
+	 * Serialize a database
+	 * @param dbName Which DB to serialize. ex: "main", "temp", ...
+	 * @see <a href-https://sqlite.org/c3ref/serialize.html>sqlite3_serialize</a>
+	 */
+	public byte[] serialize(@Nullable String dbName) throws SQLiteException {
+		Serialized serialized = _serialize(dbName);
+		byte[] bytes = serialized.ptr().toArray(C_CHAR);
+		if (!serialized.shared()) {
+			sqlite3_free(serialized.ptr());
+		}
+		return bytes;
+	}
+
+	private static final int SQLITE_DESERIALIZE_FREEONCLOSE = 1, /* Call sqlite3_free() on close */
+		SQLITE_DESERIALIZE_RESIZEABLE = 2, /* Resize using sqlite3_realloc64() */
+		SQLITE_DESERIALIZE_READONLY  = 4; /* Database is read-only */
+	/**
+	 * Deserialize a database
+	 * @param dbName Which DB to reopen with the deserialization
+	 * @param data the serialized database content
+	 * @param readonly SQLITE_DESERIALIZE_READONLY
+	 * @see <a href-https://sqlite.org/c3ref/deserialize.html>sqlite3_deserialize</a>
+	 */
+	void _deserialize(@Nullable String dbName, Serialized data, boolean readonly) throws SQLiteException {
+		checkOpen();
+		int flags = 0;
+		if (data.shared()) {
+			if (readonly) {
+				flags = SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_READONLY;
+			} else {
+				flags = SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_RESIZEABLE;
+			}
+		} else if (readonly) {
+			flags = SQLITE_DESERIALIZE_READONLY;
+		}
+		check(sqlite3_deserialize(pDb, dbName, data, flags), "error while deserializing %s", dbName);
+	}
+	/**
+	 * Deserialize a database
+	 * @param dbName Which DB to reopen with the deserialization
+	 * @param data the serialized database content
+	 * @see <a href-https://sqlite.org/c3ref/deserialize.html>sqlite3_deserialize</a>
+	 */
+	public void deserialize(@Nullable String dbName, byte[] data) throws SQLiteException {
+		MemorySegment ptr = sqlite3_malloc(data.length);
+		if (isNull(ptr)) {
+			throw new ConnException(this, "error while deserializing", SQLITE_NOMEM);
+		}
+		MemorySegment.copy(data, 0, ptr, C_CHAR, 0, data.length);
+		_deserialize(dbName, new Serialized(false, ptr), false);
 	}
 
 	/**

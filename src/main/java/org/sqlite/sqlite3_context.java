@@ -59,7 +59,7 @@ public final class sqlite3_context {
 		"sqlite3_context_db_handle", PP);
 	/**
 	 * @return a copy of the pointer to the database connection (the 1st parameter) of
-	 * {@link sqlite3#sqlite3_create_function_v2(sqlite3, String, int, int, MemorySegment, ScalarCallback, AggregateStepCallback, AggregateFinalCallback, MemorySegment)}
+	 * {@link sqlite3#sqlite3_create_function_v2(sqlite3, String, int, int, MemorySegment, ScalarCallback, AggregateStepCallback, AggregateComputeCallback, MemorySegment)}
 	 * @see <a href="http://sqlite.org/c3ref/context_db_handle.html">sqlite3_context_db_handle</a>
 	 */
 	public sqlite3 getDbHandle() {
