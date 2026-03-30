@@ -757,7 +757,7 @@ public final class Conn implements AutoCloseable {
 	 * @param flags {@link org.sqlite.FunctionFlags}.*
 	 * @param xStep function implementation
 	 * @param xFinal function implementation
-	 * @see <a href=http://sqlite.org/c3ref/create_function.html>sqlite3_create_window_function</a>
+	 * @see <a href="http://sqlite.org/c3ref/create_function.html">sqlite3_create_window_function</a>
 	 */
 	public void createWindowFunction(@NonNull String name, int nArg, int flags, AggregateStepCallback xStep,
 		 AggregateComputeCallback xFinal, AggregateComputeCallback xValue, AggregateStepCallback xInverse) throws ConnException {
@@ -770,7 +770,7 @@ public final class Conn implements AutoCloseable {
 	 * Register A Virtual Table Implementation
 	 * @param name module name
 	 * @param module module impl
-	 * @see <a href-"https://sqlite.org/c3ref/create_module.html">sqlite3_create_module_v2</a>
+	 * @see <a href="https://sqlite.org/c3ref/create_module.html">sqlite3_create_module_v2</a>
 	 */
 	public void createModule(@NonNull String name, @NonNull EponymousModule module, boolean eponymousOnly) throws ConnException {
 		checkOpen();
@@ -781,7 +781,7 @@ public final class Conn implements AutoCloseable {
 	/**
 	 * Serialize a database
 	 * @param dbName Which DB to serialize. ex: "main", "temp", ...
-	 * @see <a href-https://sqlite.org/c3ref/serialize.html>sqlite3_serialize</a>
+	 * @see <a href="https://sqlite.org/c3ref/serialize.html">sqlite3_serialize</a>
 	 */
 	Serialized _serialize(@Nullable String dbName) throws SQLiteException {
 		checkOpen();
@@ -794,7 +794,7 @@ public final class Conn implements AutoCloseable {
 	/**
 	 * Serialize a database
 	 * @param dbName Which DB to serialize. ex: "main", "temp", ...
-	 * @see <a href-https://sqlite.org/c3ref/serialize.html>sqlite3_serialize</a>
+	 * @see <a href="https://sqlite.org/c3ref/serialize.html">sqlite3_serialize</a>
 	 */
 	public byte[] serialize(@Nullable String dbName) throws SQLiteException {
 		Serialized serialized = _serialize(dbName);
@@ -813,7 +813,7 @@ public final class Conn implements AutoCloseable {
 	 * @param dbName Which DB to reopen with the deserialization
 	 * @param data the serialized database content
 	 * @param readonly SQLITE_DESERIALIZE_READONLY
-	 * @see <a href-https://sqlite.org/c3ref/deserialize.html>sqlite3_deserialize</a>
+	 * @see <a href="https://sqlite.org/c3ref/deserialize.html">sqlite3_deserialize</a>
 	 */
 	void _deserialize(@Nullable String dbName, Serialized data, boolean readonly) throws SQLiteException {
 		checkOpen();
@@ -833,7 +833,7 @@ public final class Conn implements AutoCloseable {
 	 * Deserialize a database
 	 * @param dbName Which DB to reopen with the deserialization
 	 * @param data the serialized database content
-	 * @see <a href-https://sqlite.org/c3ref/deserialize.html>sqlite3_deserialize</a>
+	 * @see <a href="https://sqlite.org/c3ref/deserialize.html">sqlite3_deserialize</a>
 	 */
 	public void deserialize(@Nullable String dbName, byte[] data) throws SQLiteException {
 		MemorySegment ptr = sqlite3_malloc(data.length);

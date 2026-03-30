@@ -9,10 +9,10 @@ import static org.sqlite.sqlite3_context.sqlite3_aggregate_context;
 /**
  * User defined SQL aggregate function.
  * <pre>{@code
- * new AggregateFinalCallback() {
+ * new AggregateComputeCallback(true) {
  *   \@Override
- *   public void finalStep(SQLite3Context pCtx, MemorySegment aggrCtx) {
- *     if (aggrCtx == null) {
+ *   public void compute(SQLite3Context pCtx, MemorySegment aggrCtx) {
+ *     if (isNull(aggrCtx)) {
  *       pCtx.setResultNull();
  *       return;
  *     }

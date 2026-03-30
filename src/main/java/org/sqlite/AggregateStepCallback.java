@@ -25,7 +25,10 @@ import static org.sqlite.sqlite3_context.sqlite3_aggregate_context;
 public abstract class AggregateStepCallback {
 	protected final ValueLayout layout;
 	protected final boolean inverse;
-
+	/**
+	 * @param layout number of bytes to allocate.
+	 * @see <a href="http://sqlite.org/c3ref/aggregate_context.html">sqlite3_aggregate_context</a>
+	 */
 	protected AggregateStepCallback(ValueLayout layout, boolean inverse) {
 		this.layout = layout;
 		this.inverse = inverse;
