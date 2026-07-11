@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 
 /*
 Blob Incremental I/O:
@@ -402,6 +403,7 @@ class PrepStmt extends Stmt implements ParameterMetaData, SQLitePreparedStatemen
 			case Clob clob -> setClob(parameterIndex, clob);
 			case Array array -> setArray(parameterIndex, array);
 			case Temporal temporal -> setString(parameterIndex, temporal.toString());
+			case UUID uuid -> setString(parameterIndex, uuid.toString());
 			default ->
 				throw new StmtException(getStmt(), String.format("Unsupported type: %s", x.getClass().getName()), ErrCodes.WRAPPER_SPECIFIC);
 		}

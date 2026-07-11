@@ -46,6 +46,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 
 class Rows implements ResultSet {
 	private Stmt s;
@@ -1353,6 +1354,8 @@ class Rows implements ResultSet {
 			return (T)OffsetDateTime.parse(txt);
 		} else if (LocalTime.class.equals(type)) {
 			return (T)LocalTime.parse(txt);
+		} else if (UUID.class.equals(type)) {
+			return (T)UUID.fromString(txt);
 		}
 		throw new SQLException("Conversion from text to " + type + " is not supported");
 	}
