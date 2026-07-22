@@ -5,6 +5,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 import java.sql.SQLFeatureNotSupportedException;
@@ -137,8 +138,10 @@ public final class sqlite3 {
 		}
 	}
 	// TODO https://sqlite.org/c3ref/c_dbconfig_defensive.html#sqlitedbconfiglookaside constants
+	private static final FunctionDescriptor sqlite3_db_config_base_desc = FunctionDescriptor.of(C_INT, C_POINTER, C_INT);
+	private static final Linker.Option sqlite3_db_config_option = Linker.Option.firstVariadicArg(sqlite3_db_config_base_desc.argumentLayouts().size());
 	private static final MethodHandle sqlite3_db_config = downcallHandle(
-		"sqlite3_db_config", FunctionDescriptor.of(C_INT, C_POINTER, C_INT, C_INT, C_POINTER));
+		"sqlite3_db_config", sqlite3_db_config_base_desc.appendArgumentLayouts(C_INT, C_POINTER), sqlite3_db_config_option);
 	static int sqlite3_db_config(@NonNull sqlite3 pDb, int op, int v, MemorySegment pOk) {
 		try {
 			return (int) sqlite3_db_config.invokeExact(pDb.getPointer(), op, v, pOk);

@@ -66,6 +66,9 @@ public enum OpenQueryParameter {
 	ENABLE_TRIGGERS("enable_triggers") {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
+			if (!params.containsKey(this.name)) {
+				return;
+			}
 			boolean current = conn.areTriggersEnabled();
 			boolean enable = uri_boolean(params, this.name, current);
 			if (enable != current) {
@@ -103,6 +106,9 @@ public enum OpenQueryParameter {
 	FOREIGN_KEYS("foreign_keys") {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
+			if (!params.containsKey(this.name)) {
+				return;
+			}
 			boolean current = conn.areForeignKeysEnabled();
 			boolean enable = uri_boolean(params, this.name, current);
 			if (enable != current) {
@@ -165,6 +171,9 @@ public enum OpenQueryParameter {
 	QUERY_ONLY("query_only") {
 		@Override
 		public void config(Map<String, String> params, Conn conn) throws SQLiteException {
+			if (!params.containsKey(this.name)) {
+				return;
+			}
 			boolean current = conn.isQueryOnly(null);
 			boolean enable = uri_boolean(params, this.name, current);
 			if (enable != current) {

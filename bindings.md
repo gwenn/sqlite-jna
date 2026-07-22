@@ -18,8 +18,8 @@
 - [ ] `sqlite3_os_init`
 - [ ] `sqlite3_os_end`
 
-- [X] `sqlite3_config` (partially)
-- [X] `sqlite3_db_config`
+- [X] `sqlite3_config` (partially, variadic)
+- [X] `sqlite3_db_config` (variadic)
 
 - [X] `sqlite3_extended_result_codes`
 
@@ -278,14 +278,14 @@
 - [ ] `sqlite3_strglob`
 - [ ] `sqlite3_strlike`
 
-- [X] `sqlite3_log`
+- [X] `sqlite3_log` (variadic)
 
 - [ ] `sqlite3_wal_hook`
 - [ ] `sqlite3_wal_autocheckpoint`
 - [ ] `sqlite3_wal_checkpoint`
 - [ ] `sqlite3_wal_checkpoint_v2`
 
-- [ ] `sqlite3_vtab_config`
+- [ ] `sqlite3_vtab_config` (variadic)
 - [ ] `sqlite3_vtab_on_conflict`
 - [ ] `sqlite3_vtab_nochange`
 - [ ] `sqlite3_vtab_collation`
