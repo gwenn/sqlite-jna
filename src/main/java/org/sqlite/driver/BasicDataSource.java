@@ -26,7 +26,7 @@ public class BasicDataSource extends JDBC implements DataSource, Referenceable {
 	 * Gets the path of the SQLite database.
 	 * @return path of the SQLite database.
 	 */
-	public String getFilename() {
+	public @NonNull String getFilename() {
 		return filename;
 	}
 	/**

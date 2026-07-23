@@ -128,7 +128,7 @@ public class Blob implements AutoCloseable {
 		}
 	}
 	/**
-	 * @return whether or not this BLOB is closed
+	 * @return whether this BLOB is closed
 	 */
 	public boolean isClosed() {
 		return pBlob.isClosed();

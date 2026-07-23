@@ -45,7 +45,7 @@ public class Stmt implements AutoCloseable, Row {
 	private int @Nullable [] columnAffinities;
 	private boolean cacheable;
 
-	Stmt(Conn c, String sql, sqlite3_stmt pStmt, MemorySegment tail, boolean cacheable) {
+	Stmt(Conn c, String sql, @Nullable sqlite3_stmt pStmt, MemorySegment tail, boolean cacheable) {
 		assert c != null;
 		this.c = c;
 		this.sql = sql;

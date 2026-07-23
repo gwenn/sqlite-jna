@@ -470,7 +470,7 @@ public final class sqlite3 {
 	}
 
 	/** Do no memory allocations */
-	public static int SQLITE_SERIALIZE_NOCOPY = 0x001;
+	public static final int SQLITE_SERIALIZE_NOCOPY = 0x001;
 	private static final MethodHandle sqlite3_serialize = downcallHandle(
 		"sqlite3_serialize", FunctionDescriptor.of(C_POINTER, C_POINTER, C_POINTER, C_POINTER, C_INT));
 	static @Nullable Serialized sqlite3_serialize(@NonNull sqlite3 pDb, @Nullable String dbName) {

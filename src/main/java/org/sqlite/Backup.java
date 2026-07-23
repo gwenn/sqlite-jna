@@ -109,7 +109,7 @@ public class Backup implements AutoCloseable {
 		}
 	}
 	/**
-	 * @return whether or not this backup is finished
+	 * @return whether this backup is finished
 	 */
 	public boolean isFinished() {
 		return pBackup.isFinished();

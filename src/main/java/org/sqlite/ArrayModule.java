@@ -84,7 +84,7 @@ public class ArrayModule implements EponymousModule {
 	}
 
 	@Override
-	public int bestIndex(@NonNull MemorySegment vtab, @NonNull MemorySegment info, Iterator<MemorySegment> aConstraint, @NonNull Iterator<MemorySegment> aConstraintUsage) {
+	public int bestIndex(@NonNull MemorySegment vtab, @NonNull MemorySegment info, @NonNull Iterator<MemorySegment> aConstraint, @NonNull Iterator<MemorySegment> aConstraintUsage) {
 		// Index of the pointer= constraint
 		boolean ptr_idx = false;
 		while (aConstraint.hasNext()) {
@@ -122,7 +122,7 @@ public class ArrayModule implements EponymousModule {
 	).withName("jarray_cursor");
 	private static final OfLong rowId = (OfLong)layout.select(groupElement("rowId"));
 	@Override
-	public long rowId(MemorySegment cursor) {
+	public long rowId(@NonNull MemorySegment cursor) {
 		return cursor.get(rowId, 8);
 	}
 	private static void rowId(MemorySegment cursor, long id) {

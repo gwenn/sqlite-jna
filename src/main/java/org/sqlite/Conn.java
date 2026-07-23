@@ -538,7 +538,7 @@ public final class Conn implements AutoCloseable {
 		}
 	}
 	/**
-	 * @return whether or not foreign keys constraints enforcement is enabled
+	 * @return whether foreign keys constraints enforcement is enabled
 	 */
 	public boolean areForeignKeysEnabled() throws ConnException {
 		checkOpen();
@@ -560,7 +560,7 @@ public final class Conn implements AutoCloseable {
 		}
 	}
 	/**
-	 * @return whether or not triggers are enabled
+	 * @return whether triggers are enabled
 	 */
 	public boolean areTriggersEnabled() throws ConnException {
 		checkOpen();
@@ -749,7 +749,6 @@ public final class Conn implements AutoCloseable {
 		check(sqlite3_create_function_v2(pDb, name, nArg, flags, MemorySegment.NULL, null, xStep, xFinal, MemorySegment.NULL),
 				"error while registering function %s", name);
 	}
-
 	/**
 	 * Create a user defined SQL window function.
 	 * @param name function name
@@ -860,7 +859,7 @@ public final class Conn implements AutoCloseable {
 	}
 
 	/**
-	 * @return whether or not this database connection is closed
+	 * @return whether this database connection is closed
 	 */
 	public boolean isClosed() {
 		return pDb.isClosed();

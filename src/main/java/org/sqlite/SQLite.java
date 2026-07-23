@@ -363,7 +363,7 @@ public final class SQLite {
 			return "";
 		}
 		if (identifier.indexOf('"') >= 0) { // escape quote by doubling them
-			identifier = identifier.replaceAll("\"", "\"\"");
+			identifier = identifier.replace("\"", "\"\"");
 		}
 		return identifier;
 	}

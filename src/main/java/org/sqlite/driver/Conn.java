@@ -49,7 +49,7 @@ class Conn implements Connection {
 	private SQLWarning warnings;
 	private int transactionIsolation = TRANSACTION_SERIALIZABLE;
 
-	Conn(org.sqlite.Conn c, String @NonNull[] dateTimeConfig, SQLWarning warnings) {
+	Conn(org.sqlite.Conn c, String @NonNull[] dateTimeConfig, @Nullable SQLWarning warnings) {
 		this.c = c;
 		this.dateTimeConfig = dateTimeConfig;
 		this.warnings = warnings;

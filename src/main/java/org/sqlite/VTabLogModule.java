@@ -99,7 +99,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public int bestIndex(@NonNull MemorySegment vtab, @NonNull MemorySegment info, Iterator<MemorySegment> aConstraint, @NonNull Iterator<MemorySegment> aConstraintUsage) {
+	public int bestIndex(@NonNull MemorySegment vtab, @NonNull MemorySegment info, @NonNull Iterator<MemorySegment> aConstraint, @NonNull Iterator<MemorySegment> aConstraintUsage) {
 		log.info("{}.{}.xBestIndex(): colUsed: 0x{}, nConstraint: {}, nOrderBy: {}", db(vtab), name(vtab), Long.toHexString(colUsed(info)), nConstraint(info), nOrderBy(info));
 		int i = 0;
 		while (aConstraint.hasNext()) {
@@ -121,13 +121,13 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public int delete(@NonNull MemorySegment vtab, sqlite3_values values) {
+	public int delete(@NonNull MemorySegment vtab, @NonNull sqlite3_values values) {
 		log.info("{}.{}.xUpdate-delete({})", db(vtab), name(vtab), values.getObject(0));
 		return 0;
 	}
 
 	@Override
-	public Map.Entry<Integer, Long> insert(@NonNull MemorySegment vtab, sqlite3_values values) {
+	public Map.Entry<Integer, Long> insert(@NonNull MemorySegment vtab, @NonNull sqlite3_values values) {
 		final String args = IntStream.range(1, values.getCount())
 			.mapToObj(i -> String.format("argv[%s]=%s", i, values.getObject(i)))
 			.collect(Collectors.joining(", "));
@@ -136,7 +136,7 @@ public class VTabLogModule implements UpdateModule {
 	}
 
 	@Override
-	public int update(@NonNull MemorySegment vtab, sqlite3_values values) {
+	public int update(@NonNull MemorySegment vtab, @NonNull sqlite3_values values) {
 		final String args = IntStream.range(0, values.getCount())
 			.mapToObj(i -> String.format("argv[%s]=%s", i, values.getObject(i)))
 			.collect(Collectors.joining(", "));
@@ -228,7 +228,7 @@ public class VTabLogModule implements UpdateModule {
 	).withName("vtablog_cursor");
 	private static final OfLong rowId = (OfLong) layout.select(groupElement("rowId"));
 	@Override
-	public long rowId(MemorySegment cursor) {
+	public long rowId(@NonNull MemorySegment cursor) {
 		return cursor.get(VTabLogModule.rowId, 8);
 	}
 	private static void rowId(MemorySegment cursor, long id) {

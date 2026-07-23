@@ -1582,7 +1582,7 @@ class DbMeta implements DatabaseMetaData {
 			return "NULL";
 		}
 		if (data.indexOf('\'') >= 0) { // escape quote by doubling them
-			data = data.replaceAll("'", "''");
+			data = data.replace("'", "''");
 		}
 		return '\'' + data + '\'';
 	}

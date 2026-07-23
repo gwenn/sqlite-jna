@@ -21,7 +21,7 @@ record RowIdImpl(long value) implements RowId {
 	}
 
 	@Override
-	public String toString() {
+	public @NonNull String toString() {
 		return String.valueOf(value);
 	}
 
