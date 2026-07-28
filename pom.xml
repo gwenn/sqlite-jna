@@ -254,7 +254,7 @@
       <!--  mvn package shade:shade -->
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.2</version>
       </plugin>
     </plugins>
   </build>
